@@ -1,0 +1,2 @@
+# scipipe
+Scientific workflow engine
