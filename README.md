@@ -1,2 +1,2 @@
-# scipipe
-Scientific workflow engine
+# SciPipe
+Scientific Workflow Engine
