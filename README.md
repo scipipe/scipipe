@@ -11,24 +11,25 @@ using this library:
 package main
 
 import (
-	sci "github.com/samuell/scipipe"
+    sci "github.com/samuell/scipipe"
 )
 
 func main() {
-	barReplacer := sci.Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	barReplacer.OutPathFuncs["bar"] = func() string {
-		return barReplacer.GetInPath("foo") + ".bar"
-	}
-	barReplacer.Init()
+    fooWriter := sci.Sh("echo foo > {o:foo1}")
+    fooWriter.OutPathFuncs["foo1"] = func() string {
+        return "foo.txt"
+    }
 
-	for _, name := range []string{"foo1.txt", "foo2.txt", "foo3.txt"} {
-		barReplacer.InPorts["foo"] <- sci.NewFileTarget(name)
-	}
-	close(barReplacer.InPorts["foo"])
+    barReplacer := sci.Sh("sed 's/foo/bar/g' {i:foo2} > {o:bar}")
+    barReplacer.OutPathFuncs["bar"] = func() string {
+        return barReplacer.GetInPath("foo2") + ".bar"
+    }
+    barReplacer.InPorts["foo2"] = fooWriter.OutPorts["foo1"]
 
-	for {
-		<-barReplacer.OutPorts["bar"]
-	}
+    fooWriter.Init()
+    barReplacer.Init()
+
+    <-barReplacer.OutPorts["bar"]
 }
 ```
 
