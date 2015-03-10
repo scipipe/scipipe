@@ -5,19 +5,18 @@ import (
 )
 
 func main() {
-	fooWriter := sci.Sh("echo foo > {o:foo1}")
-	fooWriter.OutPathFuncs["foo1"] = func() string {
-		return "foo.txt"
-	}
-
-	barReplacer := sci.Sh("sed 's/foo/bar/g' {i:foo2} > {o:bar}")
+	barReplacer := sci.Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	barReplacer.OutPathFuncs["bar"] = func() string {
-		return barReplacer.GetInPath("foo2") + ".bar"
+		return barReplacer.GetInPath("foo") + ".bar"
 	}
-	barReplacer.InPorts["foo2"] = fooWriter.OutPorts["foo1"]
-
-	fooWriter.Init()
 	barReplacer.Init()
 
-	<-barReplacer.OutPorts["bar"]
+	for _, name := range []string{"foo1.txt", "foo2.txt", "foo3.txt"} {
+		barReplacer.InPorts["foo"] <- sci.NewFileTarget(name)
+	}
+	close(barReplacer.InPorts["foo"])
+
+	for {
+		<-barReplacer.OutPorts["bar"]
+	}
 }
