@@ -4,8 +4,6 @@ import (
 	sci "github.com/samuell/scipipe"
 )
 
-// ****** Main ******
-
 func main() {
 	fooWriter := sci.ShOut("echo foo > {o:foo1}")
 	fooWriter.OutPathFuncs["foo1"] = func() string {
