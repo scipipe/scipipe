@@ -20,7 +20,7 @@ func Sh(cmd string) *ShellTask {
 
 	// Find in/out port names, and set up in port lists
 	r, err := re.Compile("{(o|i):([^{}:]+)}")
-	check(err, "hej1")
+	check(err)
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
 		typ := m[1]
@@ -73,12 +73,12 @@ func (t *ShellTask) executeCommands(cmd string) {
 	cmd = t.ReplacePortDefsInCmd(cmd)
 	fmt.Println("ShellTask Init(): Executing command: ", cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
-	check(err, "hej2")
+	check(err)
 }
 
 func (t *ShellTask) ReplacePortDefsInCmd(cmd string) string {
 	r, err := re.Compile("{(o|i):([^{}:]+)}")
-	check(err, "hej1")
+	check(err)
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
 		whole := m[0]
@@ -128,7 +128,7 @@ func ShOut(cmd string) *ShellTaskOutputOnly {
 
 	// Find in/out port names, and set up in port lists
 	r, err := re.Compile("{o:([^{}:]+)}")
-	check(err, "hej1")
+	check(err)
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
 		name := m[1]
