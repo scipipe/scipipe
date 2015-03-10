@@ -35,5 +35,6 @@ func main() {
 
 ### Acknowledgements
 
-- This library is heavily influenced/inspired by (and might make use of on in the near future), [GoFlow](https://github.com/trustmaster/goflow).
+- This library is heavily influenced/inspired by (and might make use of on in the near future),
+  the [GoFlow](https://github.com/trustmaster/goflow) library by [Vladimir Sibirov](https://github.com/trustmaster/goflow).
 - It is alsy heavily influenced by the [Flow-based programming](http://www.jpaulmorrison.com/fbp) by [John-Paul Morrison](http://www.jpaulmorrison.com/fbp).
