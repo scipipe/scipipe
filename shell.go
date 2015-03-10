@@ -7,29 +7,61 @@ import (
 	str "strings"
 )
 
-// ****** ShellTask ******
-
 type ShellTask struct {
-	Task    // Include stuff from "Parent Class"
-	Command string
+	_OutOnly     bool
+	Task         // Include stuff from "Parent Class"
+	Command      string
+	OutPorts     map[string]chan *FileTarget
+	OutPathFuncs map[string]func() string
+}
+
+func NewShellTask(command string, outOnly bool) *ShellTask {
+	t := new(ShellTask)
+	t.Command = command
+	t._OutOnly = outOnly
+	if !t._OutOnly {
+		t.InPorts = make(map[string]chan *FileTarget)
+		t.InPaths = make(map[string]string)
+	}
+	t.OutPorts = make(map[string]chan *FileTarget)
+	t.OutPathFuncs = make(map[string]func() string)
+	return t
 }
 
 func Sh(cmd string) *ShellTask {
-	t := NewShellTask()
-	t.Command = cmd
+	outOnly := false
 
-	// Find in/out port names, and set up in port lists
-	r, err := re.Compile("{(o|i):([^{}:]+)}")
+	r, err := re.Compile(".*{i:([^{}:]+)}.*")
 	check(err)
-	ms := r.FindAllStringSubmatch(cmd, -1)
-	for _, m := range ms {
-		typ := m[1]
-		name := m[2]
-		if typ == "o" {
+	if !r.MatchString(cmd) {
+		outOnly = true
+	}
+
+	t := NewShellTask(cmd, outOnly)
+
+	if t._OutOnly {
+		// Find in/out port names, and set up in port lists
+		r, err := re.Compile("{o:([^{}:]+)}")
+		check(err)
+		ms := r.FindAllStringSubmatch(cmd, -1)
+		for _, m := range ms {
+			name := m[1]
 			t.OutPorts[name] = make(chan *FileTarget)
-		} else if typ == "i" {
-			// TODO: Is this really needed? SHouldn't inport chans be coming from previous tasks?
-			t.InPorts[name] = make(chan *FileTarget)
+		}
+	} else {
+		// Find in/out port names, and set up in port lists
+		r, err := re.Compile("{(o|i):([^{}:]+)}")
+		check(err)
+		ms := r.FindAllStringSubmatch(cmd, -1)
+		for _, m := range ms {
+			typ := m[1]
+			name := m[2]
+			if typ == "o" {
+				t.OutPorts[name] = make(chan *FileTarget)
+			} else if typ == "i" {
+				// TODO: Is this really needed? SHouldn't inport chans be coming from previous tasks?
+				t.InPorts[name] = make(chan *FileTarget)
+			}
 		}
 	}
 
@@ -38,20 +70,7 @@ func Sh(cmd string) *ShellTask {
 
 func (t *ShellTask) Init() {
 	go func() {
-		for {
-			doClose := false
-			// Set up inport / path mappings
-			for iname, ichan := range t.InPorts {
-				infile, open := <-ichan
-				if !open {
-					doClose = true
-				} else {
-					t.InPaths[iname] = infile.GetPath()
-				}
-			}
-			if doClose {
-				break
-			}
+		if t._OutOnly {
 
 			t.executeCommands(t.Command)
 
@@ -61,8 +80,35 @@ func (t *ShellTask) Init() {
 				baseName := fn()
 				nf := NewFileTarget(baseName)
 				ochan <- nf
+				close(ochan)
+			}
+		} else {
+			for {
+				doClose := false
+				// Set up inport / path mappings
+				for iname, ichan := range t.InPorts {
+					infile, open := <-ichan
+					if !open {
+						doClose = true
+					} else {
+						t.InPaths[iname] = infile.GetPath()
+					}
+				}
 				if doClose {
-					close(ochan)
+					break
+				}
+
+				t.executeCommands(t.Command)
+
+				// Send output targets
+				for oname, ochan := range t.OutPorts {
+					fn := t.OutPathFuncs[oname]
+					baseName := fn()
+					nf := NewFileTarget(baseName)
+					ochan <- nf
+					if doClose {
+						close(ochan)
+					}
 				}
 			}
 		}
@@ -98,57 +144,4 @@ func (t *ShellTask) ReplacePortDefsInCmd(cmd string) string {
 func (t *ShellTask) GetInPath(inPort string) string {
 	inPath := t.InPaths[inPort]
 	return inPath
-}
-
-func NewShellTask() *ShellTask {
-	t := new(ShellTask)
-	t.InPorts = make(map[string]chan *FileTarget)
-	t.InPaths = make(map[string]string)
-	t.OutPorts = make(map[string]chan *FileTarget)
-	t.OutPathFuncs = make(map[string]func() string)
-	return t
-}
-
-// ****** ShellTaskOutputOnly ******
-
-type ShellTaskOutputOnly struct {
-	ShellTask
-}
-
-func NewShellTaskOutPutOnly() *ShellTaskOutputOnly {
-	t := new(ShellTaskOutputOnly)
-	t.OutPorts = make(map[string]chan *FileTarget)
-	t.OutPathFuncs = make(map[string]func() string)
-	return t
-}
-
-func ShOut(cmd string) *ShellTaskOutputOnly {
-	t := NewShellTaskOutPutOnly()
-	t.Command = cmd
-
-	// Find in/out port names, and set up in port lists
-	r, err := re.Compile("{o:([^{}:]+)}")
-	check(err)
-	ms := r.FindAllStringSubmatch(cmd, -1)
-	for _, m := range ms {
-		name := m[1]
-		t.OutPorts[name] = make(chan *FileTarget)
-	}
-
-	return t
-}
-
-func (t *ShellTaskOutputOnly) Init() {
-	go func() {
-		t.executeCommands(t.Command)
-
-		// Send output targets
-		for oname, ochan := range t.OutPorts {
-			fn := t.OutPathFuncs[oname]
-			baseName := fn()
-			nf := NewFileTarget(baseName)
-			ochan <- nf
-			close(ochan)
-		}
-	}()
 }
