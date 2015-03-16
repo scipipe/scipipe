@@ -22,6 +22,6 @@ func main() {
 	}
 	close(barReplacer.InPorts["foo2"])
 	for f := range barReplacer.OutPorts["bar"] {
-		fmt.Println("Wrote file", f.GetPath(), "...")
+		fmt.Println("Processed file", f.GetPath(), "...")
 	}
 }
