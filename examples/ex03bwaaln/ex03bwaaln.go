@@ -43,6 +43,10 @@ func main() {
 
 	// For some of the inputs, we just send file targets "manually"
 	// (where they don't come from a previous task)
+
+	// In this specific case we send two inputs on the same port,
+	// basically meaning that the align task will run twice,
+	// producing two outputs:
 	align.InPorts["fastq"] <- fastq1
 	align.InPorts["fastq"] <- fastq2
 
