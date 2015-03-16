@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	sp "github.com/samuell/scipipe"
+	re "regexp"
 )
 
 const (
@@ -29,7 +30,11 @@ func main() {
 	// Step 3 in [1]--------------------------------------------------------------------
 	merge := sp.Sh("bwa sampe " + REF + " {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged}")
 	merge.OutPathFuncs["merged"] = func() string {
-		return merge.GetInPath("sai1") + "." + merge.GetInPath("sai2") + ".merged.sam"
+		ptrn, err := re.Compile("NA[0-9]+")
+		sp.Check(err)
+		ind1 := ptrn.FindString(merge.GetInPath("sai1"))
+		ind2 := ptrn.FindString(merge.GetInPath("sai2"))
+		return ind1 + "." + ind2 + ".merged.sam"
 	}
 
 	// Wire the dataflow network / dependency graph

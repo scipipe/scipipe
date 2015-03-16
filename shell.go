@@ -33,7 +33,7 @@ func Sh(cmd string) *ShellTask {
 	// Determine whether there are any inport, or if this task is "out only"
 	outOnly := false
 	r, err := re.Compile(".*{i:([^{}:]+)}.*")
-	check(err)
+	Check(err)
 	if !r.MatchString(cmd) {
 		outOnly = true
 	}
@@ -44,7 +44,7 @@ func Sh(cmd string) *ShellTask {
 	if t._OutOnly {
 		// Find out port names, and set up in port lists
 		r, err := re.Compile("{o:([^{}:]+)}")
-		check(err)
+		Check(err)
 		ms := r.FindAllStringSubmatch(cmd, -1)
 		for _, m := range ms {
 			name := m[1]
@@ -53,7 +53,7 @@ func Sh(cmd string) *ShellTask {
 	} else {
 		// Find in/out port names, and set up in port lists
 		r, err := re.Compile("{(o|i):([^{}:]+)}")
-		check(err)
+		Check(err)
 		ms := r.FindAllStringSubmatch(cmd, -1)
 		for _, m := range ms {
 			typ := m[1]
@@ -128,12 +128,12 @@ func (t *ShellTask) executeCommands(cmd string) {
 	cmd = t.ReplacePortDefsInCmd(cmd)
 	fmt.Println("ShellTask Init(): Executing command: ", cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
-	check(err)
+	Check(err)
 }
 
 func (t *ShellTask) ReplacePortDefsInCmd(cmd string) string {
 	r, err := re.Compile("{(o|i):([^{}:]+)}")
-	check(err)
+	Check(err)
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
 		whole := m[0]

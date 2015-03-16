@@ -26,5 +26,5 @@ func (ft *FileTarget) GetTempPath() string {
 func (ft *FileTarget) Atomize() {
 	time.Sleep(1 * time.Second) // TODO: Remove in production. Just for demo purposes!
 	err := os.Rename(ft.GetTempPath(), ft.path)
-	check(err)
+	Check(err)
 }
