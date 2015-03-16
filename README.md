@@ -4,104 +4,64 @@ A Go Library for writing Scientific Workflows (so far in pure Go)
 
 This is a work in progress, so more information will come as the
 library is developed, but to give a hint about what is coming,
-this is how you can write a super-simple workflow already today,
-using this library:
-
-```go
-package main
-
-import (
-    sci "github.com/samuell/scipipe"
-)
-
-func main() {
-    // Init fooWriter task
-    fooWriter := sci.Sh("echo foo > {o:foo1}")
-    // Init function for generating output file pattern
-    fooWriter.OutPathFuncs["foo1"] = func() string {
-        return "foo.txt"
-    }
-
-    // Init barReplacer task
-    barReplacer := sci.Sh("sed 's/foo/bar/g' {i:foo2} > {o:bar}")
-    // Init function for generating output file pattern
-    barReplacer.OutPathFuncs["bar"] = func() string {
-        return barReplacer.GetInPath("foo2") + ".bar"
-    }
-
-    // Connect network
-    barReplacer.InPorts["foo2"] = fooWriter.OutPorts["foo1"]
-
-    // Set up tasks for execution
-    fooWriter.Init()
-    barReplacer.Init()
-
-    // Start execution by reading on last port
-    <-barReplacer.OutPorts["bar"]
-}
-```
-
-Executing it will look like so:
-
-```bash
-$ ./ex01shell
-ShellTask Init(): Executing command:  echo foo > foo.txt
-ShellTask Init(): Executing command:  sed 's/foo/bar/g' foo.txt > foo.txt.bar
-```
-
-Note especially the way you connect the network - how you do it by just "assigning"
-what is in the outport of an upstream task, into the inport of a downstream task.
-
-Then, if inports are not assigned with a channel from an outport,  you can also
-manually send targets (filetarget for example) on an inport (they are initialized
-with a default channel to make this possible). This could look like so:
+this is how you can write a simple NGS (sequence alignment)
+bioinformatics workflow already today, using this library:
 
 ```go
 package main
 
 import (
     "fmt"
-    sci "github.com/samuell/scipipe"
+    sp "github.com/samuell/scipipe"
+)
+
+const (
+    REF      = "human_17_v37.fasta"
+    BASENAME = ".ILLUMINA.low_coverage.17q_"
+)
+
+var (
+    INDIVIDUALS = [2]string{"NA06984", "NA07000"}
+    SAMPLES     = [2]string{"1", "2"}
 )
 
 func main() {
-    // Init barReplacer task
-    barReplacer := sci.Sh("sed 's/foo/bar/g' {i:foo2} > {o:bar}")
-    // Init function for generating output file pattern
-    barReplacer.OutPathFuncs["bar"] = func() string {
-        return barReplacer.GetInPath("foo2") + ".bar"
+    // Initialize existing files
+    fastq1 := sp.NewFileTarget(fmt.Sprintf("%s%s1.fq", INDIVIDUALS[0], BASENAME))
+    fastq2 := sp.NewFileTarget(fmt.Sprintf("%s%s2.fq", INDIVIDUALS[1], BASENAME))
+
+    // Step 2 in [1]--------------------------------------------------------------------
+    align := sp.Sh("bwa aln " + REF + " {i:fastq} > {o:sai}")
+    align.OutPathFuncs["sai"] = func() string {
+        return align.GetInPath("fastq") + ".sai"
     }
+
+    // Step 3 in [1]--------------------------------------------------------------------
+    merge := sp.Sh("bwa sampe " + REF + " {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged}")
+    merge.OutPathFuncs["merged"] = func() string {
+        return merge.GetInPath("sai1") + "." + merge.GetInPath("sai2") + ".merged.sam"
+    }
+
+    // Wire the dataflow network / dependency graph
+    merge.InPorts["sai1"] = align.OutPorts["sai"]
+    merge.InPorts["sai2"] = align.OutPorts["sai"]
+
+    // For some of the inputs, we just send file targets "manually"
+    // (where they don't come from a previous task)
+    align.InPorts["fastq"] <- fastq1
+    align.InPorts["fastq"] <- fastq2
+
+    merge.InPorts["fq1"] <- fastq1
+    merge.InPorts["fq2"] <- fastq2
 
     // Set up tasks for execution
-    barReplacer.Init()
+    align.Init()
+    merge.Init()
 
-    // Manually send file targets on the inport of barReplacer
-    for _, name := range []string{"foo1", "foo2", "foo3"} {
-        barReplacer.InPorts["foo2"] <- sci.NewFileTarget(name + ".txt")
-    }
-    // We have to manually close the inport as well here, to
-    // signal that we are done sending targets (the tasks outport will
-    // then automatically be closed as well)
-    close(barReplacer.InPorts["foo2"])
-
-    for f := range barReplacer.OutPorts["bar"] {
-        fmt.Println("Finished processing file", f.GetPath(), "...")
-    }
+    // Run pipeline by asking for the final output
+    <-merge.OutPorts["merged"]
 }
 ```
-
-Executing this second example might look like so:
-
-```bash
-$ ./ex02multifile
-ShellTask Init(): Executing command:  sed 's/foo/bar/g' foo1.txt > foo1.txt.bar
-ShellTask Init(): Executing command:  sed 's/foo/bar/g' foo2.txt > foo2.txt.bar
-Finished processing file foo1.txt.bar ...
-ShellTask Init(): Executing command:  sed 's/foo/bar/g' foo3.txt > foo3.txt.bar
-Finished processing file foo2.txt.bar ...
-Finished processing file foo3.txt.bar ...
-```
-
 
 ### Acknowledgements
 

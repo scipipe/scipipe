@@ -20,29 +20,29 @@ func main() {
 	fastq1 := sp.NewFileTarget(fmt.Sprintf("%s%s1.fq", INDIVIDUALS[0], BASENAME))
 	fastq2 := sp.NewFileTarget(fmt.Sprintf("%s%s2.fq", INDIVIDUALS[1], BASENAME))
 
-	//	# Step 2 in [1]--------------------------------------------------------------------
+	// Step 2 in [1]--------------------------------------------------------------------
 	align := sp.Sh("bwa aln " + REF + " {i:fastq} > {o:sai}")
 	align.OutPathFuncs["sai"] = func() string {
 		return align.GetInPath("fastq") + ".sai"
 	}
 
-	//	# Step 3 in [1]--------------------------------------------------------------------
+	// Step 3 in [1]--------------------------------------------------------------------
 	merge := sp.Sh("bwa sampe " + REF + " {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged}")
 	merge.OutPathFuncs["merged"] = func() string {
 		return merge.GetInPath("sai1") + "." + merge.GetInPath("sai2") + ".merged.sam"
 	}
 
-	// Wire the network
+	// Wire the dataflow network / dependency graph
 	merge.InPorts["sai1"] = align.OutPorts["sai"]
 	merge.InPorts["sai2"] = align.OutPorts["sai"]
+
+	// For some of the inputs, we just send file targets "manually"
+	// (where they don't come from a previous task)
 	align.InPorts["fastq"] <- fastq1
 	align.InPorts["fastq"] <- fastq2
-	//close(align.InPorts["fastq"])
 
 	merge.InPorts["fq1"] <- fastq1
-	//close(merge.InPorts["fq1"])
 	merge.InPorts["fq2"] <- fastq2
-	//close(merge.InPorts["fq2"])
 
 	// Set up tasks for execution
 	align.Init()
