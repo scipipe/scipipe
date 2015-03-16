@@ -1,6 +1,6 @@
 # SciPipe
 
-A Go Library for writing Scientific Workflows (so far in pure Go)
+A [Go(lang)](http://golang.org) Library for writing Scientific Workflows (so far in pure Go)
 
 This is a work in progress, so more information will come as the
 library is developed, but to give a hint about what is coming,
@@ -77,3 +77,7 @@ func main() {
 - This library is heavily influenced/inspired by (and might make use of on in the near future),
   the [GoFlow](https://github.com/trustmaster/goflow) library by [Vladimir Sibirov](https://github.com/trustmaster/goflow).
 - It is also heavily influenced by the [Flow-based programming](http://www.jpaulmorrison.com/fbp) by [John Paul Morrison](http://www.jpaulmorrison.com/fbp).
+
+### Misc notes
+
+- This library is building on an idea for a flow-based like pattern in pure Go, as outlined by the author in [this blog post on Gopher Academy](http://blog.gopheracademy.com/composable-pipelines-pattern)
