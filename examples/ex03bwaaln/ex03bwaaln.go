@@ -48,5 +48,9 @@ func main() {
 	align.Init()
 	merge.Init()
 
+	// Run pipeline by asking for the final output
 	<-merge.OutPorts["merged"]
 }
+
+// === References ===
+// 1. http://uppnex.se/twiki/do/view/Courses/NgsIntro1502/ResequencingAnalysis
