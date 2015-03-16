@@ -100,9 +100,6 @@ func (t *ShellTask) Init() {
 						t.InPaths[iname] = infile.GetPath()
 					}
 				}
-				if doClose {
-					break
-				}
 
 				t.executeCommands(t.Command)
 
@@ -115,6 +112,10 @@ func (t *ShellTask) Init() {
 					if doClose {
 						close(ochan)
 					}
+				}
+
+				if doClose {
+					break
 				}
 			}
 		}
