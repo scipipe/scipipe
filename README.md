@@ -31,13 +31,13 @@ func main() {
     fastq1 := sp.NewFileTarget(fmt.Sprintf("%s%s1.fq", INDIVIDUALS[0], BASENAME))
     fastq2 := sp.NewFileTarget(fmt.Sprintf("%s%s2.fq", INDIVIDUALS[1], BASENAME))
 
-    // Step 2 in [1]--------------------------------------------------------------------
+    // Step 2 in [1]
     align := sp.Sh("bwa aln " + REF + " {i:fastq} > {o:sai}")
     align.OutPathFuncs["sai"] = func() string {
         return align.GetInPath("fastq") + ".sai"
     }
 
-    // Step 3 in [1]--------------------------------------------------------------------
+    // Step 3 in [1]
     merge := sp.Sh("bwa sampe " + REF + " {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged}")
     merge.OutPathFuncs["merged"] = func() string {
         ptrn, err := re.Compile("NA[0-9]+")
