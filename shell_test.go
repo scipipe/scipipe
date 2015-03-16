@@ -11,3 +11,21 @@ func testShellHasInOutPorts(t *t.T) {
 	assert.NotNil(t, testTask.OutPorts["in1"], "InPorts not nil!")
 	assert.NotNil(t, testTask.OutPorts["out1"], "OutPorts not nil!")
 }
+
+func testShellCloseOutPortOnInPortClose(t *t.T) {
+	fooTask := Sh("echo foo > {o:out1}")
+	fooTask.OutPathFuncs["out1"] = func() string {
+		return "foo.txt"
+	}
+
+	barReplacer := Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	barReplacer.OutPathFuncs["bar"] = func() string {
+		return barReplacer.GetInPath("foo") + ".bar"
+	}
+
+	fooTask.Init()
+	barReplacer.Init()
+
+	<-barReplacer.OutPorts["bar"]
+	assert.Nil(t, barReplacer.OutPorts["bar"], "bar OutPort was not nil!")
+}

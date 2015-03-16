@@ -8,7 +8,7 @@ const (
 	TESTPATH = "somepath.txt"
 )
 
-func testFileTargetPath(t *testing.T) {
+func TestFileTargetPath(t *testing.T) {
 	ft := NewFileTarget(TESTPATH)
 	path := ft.GetPath()
 	if path != TESTPATH {
