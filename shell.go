@@ -46,7 +46,7 @@ func Sh(cmd string) *ShellTask {
 		ms := r.FindAllStringSubmatch(cmd, -1)
 		for _, m := range ms {
 			name := m[1]
-			t.OutPorts[name] = make(chan *FileTarget)
+			t.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
 		}
 	} else {
 		// Find in/out port names, and set up in port lists
@@ -57,10 +57,10 @@ func Sh(cmd string) *ShellTask {
 			typ := m[1]
 			name := m[2]
 			if typ == "o" {
-				t.OutPorts[name] = make(chan *FileTarget)
+				t.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
 			} else if typ == "i" {
 				// TODO: Is this really needed? SHouldn't inport chans be coming from previous tasks?
-				t.InPorts[name] = make(chan *FileTarget)
+				t.InPorts[name] = make(chan *FileTarget, BUFSIZE)
 			}
 		}
 	}
