@@ -5,7 +5,9 @@ A [Go(lang)](http://golang.org) Library for writing Scientific Workflows (so far
 This is a work in progress, so more information will come as the
 library is developed, but to give a hint about what is coming,
 this is how you can write a simple NGS (sequence alignment)
-bioinformatics workflow already today, using this library:
+bioinformatics workflow already today, using this library,
+implementing a few steps of an [NGS bioinformatics tutorial](uppnex.se/twiki/do/view/Courses/NgsIntro1502/ResequencingAnalysis)
+held at [SciLifeLab](http://www.scilifelab.se) in Uppsala in February 2015:
 
 ```go
 package main
