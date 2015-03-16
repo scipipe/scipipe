@@ -29,18 +29,20 @@ func NewShellTask(command string, outOnly bool) *ShellTask {
 }
 
 func Sh(cmd string) *ShellTask {
-	outOnly := false
 
+	// Determine whether there are any inport, or if this task is "out only"
+	outOnly := false
 	r, err := re.Compile(".*{i:([^{}:]+)}.*")
 	check(err)
 	if !r.MatchString(cmd) {
 		outOnly = true
 	}
 
+	// Create task
 	t := NewShellTask(cmd, outOnly)
 
 	if t._OutOnly {
-		// Find in/out port names, and set up in port lists
+		// Find out port names, and set up in port lists
 		r, err := re.Compile("{o:([^{}:]+)}")
 		check(err)
 		ms := r.FindAllStringSubmatch(cmd, -1)
@@ -59,7 +61,11 @@ func Sh(cmd string) *ShellTask {
 			if typ == "o" {
 				t.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
 			} else if typ == "i" {
-				// TODO: Is this really needed? SHouldn't inport chans be coming from previous tasks?
+				// Set up a channel on the inports, even though this is
+				// often replaced by another tasks output port channel.
+				// It might be nice to have it init'ed with a channel
+				// anyways, for use cases when we want to send fileTargets
+				// on the inport manually.
 				t.InPorts[name] = make(chan *FileTarget, BUFSIZE)
 			}
 		}
