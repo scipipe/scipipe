@@ -101,22 +101,24 @@ func (t *ShellTask) Init() {
 					}
 				}
 
-				t.executeCommands(t.Command)
-
-				// Send output targets
-				for oname, ochan := range t.OutPorts {
-					fn := t.OutPathFuncs[oname]
-					baseName := fn()
-					nf := NewFileTarget(baseName)
-					ochan <- nf
-					if doClose {
+				if !doClose {
+					t.executeCommands(t.Command)
+					// Send output targets
+					for oname, ochan := range t.OutPorts {
+						fn := t.OutPathFuncs[oname]
+						baseName := fn()
+						nf := NewFileTarget(baseName)
+						ochan <- nf
+					}
+				} else {
+					// Close output channels
+					for _, ochan := range t.OutPorts {
 						close(ochan)
 					}
-				}
-
-				if doClose {
+					// Break out of the main loop
 					break
 				}
+
 			}
 		}
 	}()
