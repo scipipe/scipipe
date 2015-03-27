@@ -14,14 +14,53 @@ In addition to that, it adds convenience methods (see `sp.Sh()` below) for creat
 on the fly, using a shell command, with inputs and outputs defined in-line in the shell command,
 with a syntax of `{i:INPORT_NAME}` for inports, and `{o:OUTPORT_NAME}` for outports.o
 
+Example: Creating two example tasks:
+
+```go
+fooWriter := sp.Sh("echo 'foo' > {o:outfile}")
+fooToBarReplacer := sp.Sh("cat {i:foofile} | sed 's/foo/bar/g' > {o:barfile}")
+```
+
 For these inports and outports, channels for sending and receiving FileTargets are automatically
-created and put in a hashmap added as a struct field of the task, named `InPorts` and `OutPorts` repectively.
+created and put in a hashmap added as a struct field of the task, named `InPorts` and `OutPorts` repectively,
+Eash channel is added to the hashmap with its inport/outport name as key in the hashmap,
+so that the channel can be retrieved from the hashmap using the in/outport name.
+
 Connecting outports of one task to the inport of another task is then done by assigning the
 respective channels to the corresponding places in the hashmap.
 
-This is a work in progress, so more information will come as the library is developed, but
-to give a hint about what is coming, this is how you can write a simple NGS (sequence alignment)
-bioinformatics workflow already today, using this library,
+Example: Connecting the two tasks creating above:
+
+```go
+fooToBarReplacer.InPorts["foofile"] = fooWriter.OutPorts["outfile"]
+```
+
+The only thing remaining after this, is to provide some way for the program to figure out a
+suitable file name for each of the files propagating through this little "network" of tasks.
+This is done by adding a closure (function) to another special hashmap, again keyed by
+the names of the outports of the tasks. So, to define the output filenames of the two tasks
+above, we would add:
+
+```go
+fooWriter.OutPathFuncs["outfile"] = func() string {
+	// Just statically create a file named foo.txt
+	return "foo.txt"
+}
+fooToBarReplacer.OutPathFuncs["barfile"] = func() string {
+	// Here, we instead re-use the file name of the task we depend
+	// on (which we get on the 'foofile' inport), and just
+	// pad '.bar' at the end:
+	return fooToBarReplacer.GetInPath("foofile") + ".bar"
+}
+```
+
+So with this, we have done everything needed to set up a file-based batch workflow system:
+
+- Specified task dependencies by wiring outputs of the upstream tasks to inports in downstream tasks.
+- For each outport, provided a function that will compute a suitable file name for the new file.
+
+For a complete, more real-world example, see the code here below, which shows how you can write a simple
+bioinformatics (sequence alignment) workflow already today, using this library,
 implementing a few steps of an [NGS bioinformatics tutorial](uppnex.se/twiki/do/view/Courses/NgsIntro1502/ResequencingAnalysis)
 held at [SciLifeLab](http://www.scilifelab.se) in Uppsala in February 2015:
 
