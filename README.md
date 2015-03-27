@@ -2,9 +2,25 @@
 
 A [Go(lang)](http://golang.org) Library for writing Scientific Workflows (so far in pure Go)
 
-This is a work in progress, so more information will come as the
-library is developed, but to give a hint about what is coming,
-this is how you can write a simple NGS (sequence alignment)
+This library is an experiment in building a scientific workflow engine in pure Go,
+based on an idea for a flow-based like pattern in pure Go, as presented by the author in
+[this blog post on Gopher Academy](http://blog.gopheracademy.com/composable-pipelines-pattern).
+
+From flow-based programming, It uses the principles of separate network (workflow dependency graph)
+definition, named in- and out-ports and bounded buffers (already available in Go) to make
+writing workflows as easy as possible.
+
+In addition to that, it adds convenience methods (see `sp.Sh()` below) for creating ad hoc tasks
+on the fly, using a shell command, with inputs and outputs defined in-line in the shell command,
+with a syntax of `{i:INPORT_NAME}` for inports, and `{o:OUTPORT_NAME}` for outports.o
+
+For these inports and outports, channels for sending and receiving FileTargets are automatically
+created and put in a hashmap added as a struct field of the task, named `InPorts` and `OutPorts` repectively.
+Connecting outports of one task to the inport of another task is then done by assigning the
+respective channels to the corresponding places in the hashmap.
+
+This is a work in progress, so more information will come as the library is developed, but
+to give a hint about what is coming, this is how you can write a simple NGS (sequence alignment)
 bioinformatics workflow already today, using this library,
 implementing a few steps of an [NGS bioinformatics tutorial](uppnex.se/twiki/do/view/Courses/NgsIntro1502/ResequencingAnalysis)
 held at [SciLifeLab](http://www.scilifelab.se) in Uppsala in February 2015:
@@ -76,12 +92,8 @@ func main() {
 
 ### Acknowledgements
 
-- This library is heavily influenced/inspired by (and might make use of on in the near future),
+- This library is heavily influenced/inspired by (and might make use of on in the future),
   the [GoFlow](https://github.com/trustmaster/goflow) library by [Vladimir Sibirov](https://github.com/trustmaster/goflow).
 - It is also heavily influenced by the [Flow-based programming](http://www.jpaulmorrison.com/fbp) by [John Paul Morrison](http://www.jpaulmorrison.com/fbp).
-- This work is financed by faculty grants and other financing for Jarl Wikberg's [Pharmaceutical Bioinformatics group](http://www.farmbio.uu.se/forskning/researchgroups/pb/) of Dept. of 
+- This work is financed by faculty grants and other financing for Jarl Wikberg's [Pharmaceutical Bioinformatics group](http://www.farmbio.uu.se/forskning/researchgroups/pb/) of Dept. of
   Pharmaceutical Biosciences at Uppsala University. Main supervisor for the project is [Ola Spjuth](http://www.farmbio.uu.se/research/researchgroups/pb/olaspjuth).
-
-### Misc notes
-
-- This library is building on an idea for a flow-based like pattern in pure Go, as outlined by the author in [this blog post on Gopher Academy](http://blog.gopheracademy.com/composable-pipelines-pattern)
