@@ -26,6 +26,8 @@ created and put in a hashmap added as a struct field of the task, named `InPorts
 Eash channel is added to the hashmap with its inport/outport name as key in the hashmap,
 so that the channel can be retrieved from the hashmap using the in/outport name.
 
+### Connecting tasks into a network
+
 Connecting outports of one task to the inport of another task is then done by assigning the
 respective channels to the corresponding places in the hashmap.
 
