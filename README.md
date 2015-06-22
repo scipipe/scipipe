@@ -61,6 +61,8 @@ So with this, we have done everything needed to set up a file-based batch workfl
 - Specified task dependencies by wiring outputs of the upstream tasks to inports in downstream tasks.
 - For each outport, provided a function that will compute a suitable file name for the new file.
 
+## Real-world code example
+
 For a complete, more real-world example, see the code here below, which shows how you can write a simple
 bioinformatics (sequence alignment) workflow already today, using this library,
 implementing a few steps of an [NGS bioinformatics tutorial](uppnex.se/twiki/do/view/Courses/NgsIntro1502/ResequencingAnalysis)
