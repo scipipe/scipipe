@@ -126,7 +126,7 @@ func (t *ShellTask) Init() {
 
 func (t *ShellTask) executeCommands(cmd string) {
 	cmd = t.ReplacePortDefsInCmd(cmd)
-	fmt.Println("ShellTask Init(): Executing command: ", cmd)
+	fmt.Println("ShellTask: Executing command: ", cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
 	Check(err)
 }
