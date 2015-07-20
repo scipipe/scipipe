@@ -9,10 +9,11 @@ import (
 
 type ShellTask struct {
 	_OutOnly     bool
-	Task         // Include stuff from "Parent Class"
-	Command      string
+	InPorts      map[string]chan *FileTarget
+	InPaths      map[string]string
 	OutPorts     map[string]chan *FileTarget
 	OutPathFuncs map[string]func() string
+	Command      string
 }
 
 func NewShellTask(command string, outOnly bool) *ShellTask {
