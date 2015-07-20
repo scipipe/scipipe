@@ -2,24 +2,26 @@ package scipipe
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 )
 
 type fileWriter struct {
-	InFilePath chan string
-	In         chan []byte
+	FilePath chan string
+	In       chan []byte
 }
 
-func NewFileWriter() *fileWriter {
-	return &fileWriter{
-		InFilePath: make(chan string),
-		In:         make(chan []byte, BUFSIZE),
+func NewFileWriter(pl *Pipeline) *fileWriter {
+	t := &fileWriter{
+		FilePath: make(chan string),
 	}
+	pl.AddTask(t)
+	return t
 }
 
 func (self *fileWriter) Run() {
-	f, err := os.Create(<-self.InFilePath)
+	f, err := os.Create(<-self.FilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,7 +29,7 @@ func (self *fileWriter) Run() {
 
 	w := bufio.NewWriter(f)
 	for line := range self.In {
-		w.Write(line)
+		w.WriteString(fmt.Sprint(string(line), "\n"))
 	}
 	w.Flush()
 }
