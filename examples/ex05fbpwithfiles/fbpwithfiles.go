@@ -28,7 +28,7 @@ func main() {
 	upper := NewUpperCaser(pl)
 	zippr := NewZipper(pl)
 	s2byt := sp.NewStrToByte(pl)
-	filew := sp.NewFileWriter(pl)
+	filew := sp.NewFileWriterFromPath(pl, "out2.txt")
 	// prntr := NewPrinter(pl)
 
 	// Network definition *** This is where to look! ***
@@ -39,7 +39,6 @@ func main() {
 	zippr.In2 = upper.Out
 	s2byt.In = zippr.Out
 	filew.In = s2byt.Out
-	go func() { filew.FilePath <- "out.txt" }()
 
 	pl.Run()
 }

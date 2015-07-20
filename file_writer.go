@@ -20,6 +20,17 @@ func NewFileWriter(pl *Pipeline) *fileWriter {
 	return t
 }
 
+func NewFileWriterFromPath(pl *Pipeline, path string) *fileWriter {
+	t := &fileWriter{
+		FilePath: make(chan string),
+	}
+	pl.AddTask(t)
+	go func() {
+		t.FilePath <- path
+	}()
+	return t
+}
+
 func (self *fileWriter) Run() {
 	f, err := os.Create(<-self.FilePath)
 	if err != nil {
