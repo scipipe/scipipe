@@ -28,3 +28,10 @@ func (ft *FileTarget) Atomize() {
 	err := os.Rename(ft.GetTempPath(), ft.path)
 	Check(err)
 }
+
+func (ft *FileTarget) Exists() bool {
+	if _, err := os.Stat(ft.GetPath()); err == nil {
+		return true
+	}
+	return false
+}
