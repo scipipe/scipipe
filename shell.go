@@ -9,9 +9,9 @@ import (
 
 type ShellTask struct {
 	_OutOnly     bool
-	InPorts      map[string]chan *fileTarget
+	InPorts      map[string]chan *FileTarget
 	InPaths      map[string]string
-	OutPorts     map[string]chan *fileTarget
+	OutPorts     map[string]chan *FileTarget
 	OutPathFuncs map[string]func() string
 	Command      string
 }
@@ -21,10 +21,10 @@ func NewShellTask(command string, outOnly bool) *ShellTask {
 	t.Command = command
 	t._OutOnly = outOnly
 	if !t._OutOnly {
-		t.InPorts = make(map[string]chan *fileTarget)
+		t.InPorts = make(map[string]chan *FileTarget)
 		t.InPaths = make(map[string]string)
 	}
-	t.OutPorts = make(map[string]chan *fileTarget)
+	t.OutPorts = make(map[string]chan *FileTarget)
 	t.OutPathFuncs = make(map[string]func() string)
 	return t
 }
@@ -49,7 +49,7 @@ func Sh(cmd string) *ShellTask {
 		ms := r.FindAllStringSubmatch(cmd, -1)
 		for _, m := range ms {
 			name := m[1]
-			t.OutPorts[name] = make(chan *fileTarget, BUFSIZE)
+			t.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
 		}
 	} else {
 		// Find in/out port names, and set up in port lists
@@ -60,14 +60,14 @@ func Sh(cmd string) *ShellTask {
 			typ := m[1]
 			name := m[2]
 			if typ == "o" {
-				t.OutPorts[name] = make(chan *fileTarget, BUFSIZE)
+				t.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
 			} else if typ == "i" {
 				// Set up a channel on the inports, even though this is
 				// often replaced by another tasks output port channel.
 				// It might be nice to have it init'ed with a channel
-				// anyways, for use cases when we want to send fileTargets
+				// anyways, for use cases when we want to send FileTargets
 				// on the inport manually.
-				t.InPorts[name] = make(chan *fileTarget, BUFSIZE)
+				t.InPorts[name] = make(chan *FileTarget, BUFSIZE)
 			}
 		}
 	}
