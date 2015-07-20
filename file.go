@@ -5,25 +5,25 @@ import (
 	"time"
 )
 
-type FileTarget struct {
+type fileTarget struct {
 	path string
 }
 
-func NewFileTarget(path string) *FileTarget {
-	ft := new(FileTarget)
+func NewFileTarget(path string) *fileTarget {
+	ft := new(fileTarget)
 	ft.path = path
 	return ft
 }
 
-func (ft *FileTarget) GetPath() string {
+func (ft *fileTarget) GetPath() string {
 	return ft.path
 }
 
-func (ft *FileTarget) GetTempPath() string {
+func (ft *fileTarget) GetTempPath() string {
 	return ft.path + ".tmp"
 }
 
-func (ft *FileTarget) Atomize() {
+func (ft *fileTarget) Atomize() {
 	time.Sleep(1 * time.Second) // TODO: Remove in production. Just for demo purposes!
 	err := os.Rename(ft.GetTempPath(), ft.path)
 	Check(err)
