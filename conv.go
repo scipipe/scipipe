@@ -1,6 +1,7 @@
 package scipipe
 
 type strToByte struct {
+	task
 	In  chan string
 	Out chan []byte
 }

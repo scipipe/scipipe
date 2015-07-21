@@ -8,6 +8,7 @@ import (
 )
 
 type fileWriter struct {
+	task
 	FilePath chan string
 	In       chan []byte
 }

@@ -8,6 +8,7 @@ import (
 )
 
 type ShellTask struct {
+	task
 	_OutOnly     bool
 	InPorts      map[string]chan *FileTarget
 	InPaths      map[string]string
