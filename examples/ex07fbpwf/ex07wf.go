@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	sci "github.com/samuell/scipipe"
+	"runtime"
+	"sync"
 )
 
 const (
@@ -11,10 +13,10 @@ const (
 )
 
 func main() {
+	runtime.GOMAXPROCS(4)
 	wf := NewExampleWorkflow()
 
 	go func() {
-
 		defer close(wf.In)
 		defer close(wf.AReplaceWith)
 		defer close(wf.CReplaceWith)
@@ -100,6 +102,7 @@ func NewReplaceLetters() *ReplaceLetters {
 
 func (proc *ReplaceLetters) Run() {
 	defer close(proc.Out)
+	wg := new(sync.WaitGroup)
 	for {
 		inFile, okIn := <-proc.In
 		arepl, okA := <-proc.AReplaceWith
@@ -109,14 +112,19 @@ func (proc *ReplaceLetters) Run() {
 		if !okIn || !okA || !okC || !okG || !okT {
 			break
 		}
-		fmt.Println("Processing:", inFile.GetPath(), arepl, crepl, grepl, trepl)
-		outFilePath := fmt.Sprint(inFile.GetPath(), ".Arw", arepl, "_Crw", crepl, "_Grw", grepl, "_Trw", trepl)
-		outFile := sci.NewFileTarget(outFilePath)
-		text := inFile.Read()
-		text = bytes.Replace(text, []byte("A"), []byte(arepl), -1)
-		text = bytes.Replace(text, []byte("C"), []byte(crepl), -1)
-		text = bytes.Replace(text, []byte("G"), []byte(grepl), -1)
-		text = bytes.Replace(text, []byte("T"), []byte(trepl), -1)
-		outFile.Write(text)
+		wg.Add(1)
+		go func() {
+			fmt.Println("Processing:", inFile.GetPath(), arepl, crepl, grepl, trepl)
+			outFilePath := fmt.Sprint(inFile.GetPath(), ".Arw", arepl, "_Crw", crepl, "_Grw", grepl, "_Trw", trepl)
+			outFile := sci.NewFileTarget(outFilePath)
+			text := inFile.Read()
+			text = bytes.Replace(text, []byte("A"), []byte(arepl), -1)
+			text = bytes.Replace(text, []byte("C"), []byte(crepl), -1)
+			text = bytes.Replace(text, []byte("G"), []byte(grepl), -1)
+			text = bytes.Replace(text, []byte("T"), []byte(trepl), -1)
+			outFile.Write(text)
+			wg.Done()
+		}()
 	}
+	wg.Wait()
 }

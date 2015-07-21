@@ -43,7 +43,7 @@ func (ft *FileTarget) Write(dat []byte) {
 }
 
 func (ft *FileTarget) Atomize() {
-	time.Sleep(1 * time.Millisecond) // TODO: Remove in production. Just for demo purposes!
+	time.Sleep(0 * time.Millisecond) // TODO: Remove in production. Just for demo purposes!
 	err := os.Rename(ft.GetTempPath(), ft.path)
 	Check(err)
 }
