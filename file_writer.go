@@ -13,12 +13,10 @@ type fileWriter struct {
 	In       chan []byte
 }
 
-func NewFileWriter(pl *Pipeline) *fileWriter {
-	t := &fileWriter{
+func NewFileWriter() *fileWriter {
+	return &fileWriter{
 		FilePath: make(chan string),
 	}
-	pl.AddTask(t)
-	return t
 }
 
 func NewFileWriterFromPath(pl *Pipeline, path string) *fileWriter {
