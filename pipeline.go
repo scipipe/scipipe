@@ -17,6 +17,12 @@ func (pl *Pipeline) AddTask(t task) {
 	pl.tasks = append(pl.tasks, t)
 }
 
+func (pl *Pipeline) AddTasks(tasks ...task) {
+	for _, task := range tasks {
+		pl.AddTask(task)
+	}
+}
+
 func (pl *Pipeline) PrintPipeline() {
 	for i, task := range pl.tasks {
 		fmt.Printf("Task %d: %v\n", i, reflect.TypeOf(task))
