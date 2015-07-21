@@ -57,16 +57,6 @@ type ExampleWorkflow struct {
 	TReplaceWith chan string
 }
 
-func NewExampleWorkflow() *ExampleWorkflow {
-	return &ExampleWorkflow{
-		In:           make(chan *sci.FileTarget, BUFSIZE),
-		AReplaceWith: make(chan string, BUFSIZE),
-		CReplaceWith: make(chan string, BUFSIZE),
-		GReplaceWith: make(chan string, BUFSIZE),
-		TReplaceWith: make(chan string, BUFSIZE),
-	}
-}
-
 func (wf *ExampleWorkflow) Run() {
 
 	pl := sci.NewPipeline()
@@ -83,6 +73,16 @@ func (wf *ExampleWorkflow) Run() {
 	pl.Run()
 }
 
+func NewExampleWorkflow() *ExampleWorkflow {
+	return &ExampleWorkflow{
+		In:           make(chan *sci.FileTarget, BUFSIZE),
+		AReplaceWith: make(chan string, BUFSIZE),
+		CReplaceWith: make(chan string, BUFSIZE),
+		GReplaceWith: make(chan string, BUFSIZE),
+		TReplaceWith: make(chan string, BUFSIZE),
+	}
+}
+
 // ====== Tasks =======
 
 type ReplaceLetters struct {
@@ -92,12 +92,6 @@ type ReplaceLetters struct {
 	CReplaceWith chan string
 	GReplaceWith chan string
 	TReplaceWith chan string
-}
-
-func NewReplaceLetters() *ReplaceLetters {
-	return &ReplaceLetters{
-		Out: make(chan *sci.FileTarget, BUFSIZE),
-	}
 }
 
 func (proc *ReplaceLetters) Run() {
@@ -127,4 +121,10 @@ func (proc *ReplaceLetters) Run() {
 		}()
 	}
 	wg.Wait()
+}
+
+func NewReplaceLetters() *ReplaceLetters {
+	return &ReplaceLetters{
+		Out: make(chan *sci.FileTarget, BUFSIZE),
+	}
 }
