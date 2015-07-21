@@ -14,8 +14,10 @@ const (
 
 func main() {
 	runtime.GOMAXPROCS(4)
+
 	wf := NewExampleWorkflow()
 
+	// Data producer loop, producing all the combinatorial variants for which to run the workflow
 	go func() {
 		defer close(wf.In)
 		defer close(wf.AReplaceWith)
@@ -42,8 +44,8 @@ func main() {
 		}
 	}()
 
+	// Run the workflow
 	wf.Run()
-
 	fmt.Println("Finished program")
 }
 
@@ -58,7 +60,6 @@ type ExampleWorkflow struct {
 }
 
 func (wf *ExampleWorkflow) Run() {
-
 	pl := sci.NewPipeline()
 
 	repl := NewReplaceLetters()
@@ -69,7 +70,6 @@ func (wf *ExampleWorkflow) Run() {
 	repl.TReplaceWith = wf.TReplaceWith
 
 	pl.AddTask(repl)
-	fmt.Println("Trying to run workflow...")
 	pl.Run()
 }
 
