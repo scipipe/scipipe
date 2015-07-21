@@ -1,6 +1,7 @@
 package scipipe
 
 import (
+	"io/ioutil"
 	"os"
 	"time"
 )
