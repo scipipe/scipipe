@@ -121,9 +121,6 @@ func main() {
     align.InPorts["fastq"] <- fastq1
     align.InPorts["fastq"] <- fastq2
 
-    merge.InPorts["fq1"] <- fastq1
-    merge.InPorts["fq2"] <- fastq2
-
     // Set up tasks for execution
     go align.Run()
     go merge.Run()
