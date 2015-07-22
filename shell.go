@@ -73,6 +73,7 @@ func (t *ShellTask) Run() {
 			breakLoop = true
 		}
 
+		// Read from inports
 		inPortsOpen := t.receiveInputs()
 		if !inPortsOpen {
 			break
@@ -81,16 +82,10 @@ func (t *ShellTask) Run() {
 		// Execute command
 		t.formatAndExecute(t.Command)
 
-		// Send output targets on out ports
-		for oname, ochan := range t.OutPorts {
-			fun := t.OutPathFuncs[oname]
-			baseName := fun()
-			ft := NewFileTarget(baseName)
-			fmt.Println("Sending file:  ", ft.GetPath())
-			ochan <- ft
-		}
-		fmt.Println("Exiting task:  ", t.Command)
+		// Send
+		t.sendOutputs()
 	}
+	fmt.Println("Exiting task:  ", t.Command)
 }
 
 func (t *ShellTask) receiveInputs() bool {
@@ -106,6 +101,17 @@ func (t *ShellTask) receiveInputs() bool {
 		t.InPaths[iname] = infile.GetPath()
 	}
 	return inPortsOpen
+}
+
+func (t *ShellTask) sendOutputs() {
+	// Send output targets on out ports
+	for oname, ochan := range t.OutPorts {
+		fun := t.OutPathFuncs[oname]
+		baseName := fun()
+		ft := NewFileTarget(baseName)
+		fmt.Println("Sending file:  ", ft.GetPath())
+		ochan <- ft
+	}
 }
 
 func (t *ShellTask) formatAndExecute(cmd string) {
