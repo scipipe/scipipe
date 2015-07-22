@@ -119,13 +119,13 @@ func (t *ShellTask) sendOutputs() {
 }
 
 func (t *ShellTask) formatAndExecute(cmd string) {
-	cmd = t.ReplacePlaceholdersInCmd(cmd)
+	cmd = t.replacePlaceholdersInCmd(cmd)
 	fmt.Println("Executing cmd: ", cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
 	Check(err)
 }
 
-func (t *ShellTask) ReplacePlaceholdersInCmd(cmd string) string {
+func (t *ShellTask) replacePlaceholdersInCmd(cmd string) string {
 	r, err := re.Compile("{(o|i):([^{}:]+)}")
 	Check(err)
 	ms := r.FindAllStringSubmatch(cmd, -1)
@@ -163,7 +163,7 @@ func (t *ShellTask) GetInPath(inPort string) string {
 	if t.InPaths[inPort] != "" {
 		inPath = t.InPaths[inPort]
 	} else {
-		msg := fmt.Sprint("Missing inpath for inport '", inPort, "' of shell task '", t.Command, "'")
+		msg := fmt.Sprint("t.GetInPath(): Missing inpath for inport '", inPort, "' of shell task '", t.Command, "'")
 		Check(errors.New(msg))
 	}
 	return inPath

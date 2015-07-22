@@ -60,18 +60,27 @@ func TestReplacePlaceholdersInCmd(t *t.T) {
 		return fmt.Sprint(tt.InPaths["in1"], ".bar")
 	}
 
-	// ift := NewFileTarget("foo.txt")
-	// go func() { tt.InPorts["in1"] <- ift }()
-	// go tt.Run()
-	// <-tt.OutPorts["out1"]
+	tt.InPorts["in1"] = make(chan *FileTarget, BUFSIZE)
+	ift := NewFileTarget("foo.txt")
+	go func() {
+		defer close(tt.InPorts["in1"])
+		tt.InPorts["in1"] <- ift
+	}()
 
-	// assert.Equal(t, tt.GetInPath("in1"), "foo.txt")
-	// assert.True(t, tt.GetInPath("in1") != "foo.txt")
+	// Assert inport is still open after first read
+	inportsOpen := tt.receiveInputs()
+	assert.Equal(t, true, inportsOpen)
 
-	// cmd := tt.ReplacePlaceholdersInCmd(rawCmd)
-	// assert.EqualValues(t, cmd, "echo foo.txt > foo.txt.bar")
+	// Assert inport is closed after second read
+	inportsOpen = tt.receiveInputs()
+	assert.Equal(t, false, inportsOpen)
 
-	// cleanTempFiles()
+	// Assert InPath is correct
+	assert.Equal(t, "foo.txt", tt.InPaths["in1"], "foo.txt")
+
+	// Assert placeholders are correctly replaced in command
+	cmd := tt.replacePlaceholdersInCmd(rawCmd)
+	assert.EqualValues(t, "echo foo.txt > foo.txt.bar", cmd)
 }
 
 func cleanFiles(fileNames ...string) {
