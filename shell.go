@@ -58,13 +58,17 @@ func (t *ShellTask) Run() {
 	for _, ochan := range t.OutPorts {
 		defer close(ochan)
 	}
+
+	// Main loop
 	for {
 		breakLoop := false
+		// If there are no inports, we know we should exit the loop
+		// directly after executing the command, and sending the outputs
 		if len(t.InPorts) == 0 {
 			breakLoop = true
 		}
 
-		// Set up inport / path mappings
+		// Read input targets on in-ports and set up path mappings
 		for iname, ichan := range t.InPorts {
 			infile, open := <-ichan
 			if !open {
@@ -77,9 +81,9 @@ func (t *ShellTask) Run() {
 		}
 
 		// Execute command
-		t.executeCommands(t.Command)
+		t.formatAndExecute(t.Command)
 
-		// Send output targets
+		// Send output targets on out ports
 		for oname, ochan := range t.OutPorts {
 			fn := t.OutPathFuncs[oname]
 			baseName := fn()
@@ -87,6 +91,7 @@ func (t *ShellTask) Run() {
 			fmt.Println("Sending file:", nf.GetPath())
 			ochan <- nf
 		}
+
 		if breakLoop {
 			fmt.Println("Exiting main loop of task", t.Command)
 			break
@@ -94,7 +99,7 @@ func (t *ShellTask) Run() {
 	}
 }
 
-func (t *ShellTask) executeCommands(cmd string) {
+func (t *ShellTask) formatAndExecute(cmd string) {
 	cmd = t.ReplacePortDefsInCmd(cmd)
 	fmt.Println("ShellTask: Executing command: ", cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
