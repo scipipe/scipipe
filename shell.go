@@ -30,9 +30,12 @@ func NewShellTask(command string) *ShellTask {
 }
 
 func Sh(cmd string) *ShellTask {
-	// Create task
 	t := NewShellTask(cmd)
+	t.initPortsFromCmdPattern(cmd)
+	return t
+}
 
+func (t *ShellTask) initPortsFromCmdPattern(cmd string) {
 	// Find in/out port names, and set up in port lists
 	r, err := re.Compile("{(o|i):([^{}:]+)}")
 	Check(err)
@@ -54,7 +57,6 @@ func Sh(cmd string) *ShellTask {
 		// t.InPorts[name] = make(chan *FileTarget, BUFSIZE)
 		// }
 	}
-	return t
 }
 
 func (t *ShellTask) Run() {
