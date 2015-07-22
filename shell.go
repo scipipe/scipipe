@@ -59,18 +59,15 @@ func Sh(cmd string) *ShellTask {
 
 func (t *ShellTask) Run() {
 	fmt.Println("Entering task: ", t.Command)
-	// Close output channels
-	for _, ochan := range t.OutPorts {
-		defer close(ochan)
-	}
+	defer t.closeOutChans()
 
 	// Main loop
-	breakLoop := false
-	for !breakLoop {
+	continueLoop := true
+	for continueLoop {
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
 		if len(t.InPorts) == 0 {
-			breakLoop = true
+			continueLoop = false
 		}
 
 		// Read from inports
@@ -86,6 +83,13 @@ func (t *ShellTask) Run() {
 		t.sendOutputs()
 	}
 	fmt.Println("Exiting task:  ", t.Command)
+}
+
+func (t *ShellTask) closeOutChans() {
+	// Close output channels
+	for _, ochan := range t.OutPorts {
+		close(ochan)
+	}
 }
 
 func (t *ShellTask) receiveInputs() bool {
