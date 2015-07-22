@@ -105,13 +105,13 @@ func (t *ShellTask) Run() {
 }
 
 func (t *ShellTask) formatAndExecute(cmd string) {
-	cmd = t.ReplacePortDefsInCmd(cmd)
+	cmd = t.ReplacePlaceholdersInCmd(cmd)
 	fmt.Println("Executing cmd: ", cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
 	Check(err)
 }
 
-func (t *ShellTask) ReplacePortDefsInCmd(cmd string) string {
+func (t *ShellTask) ReplacePlaceholdersInCmd(cmd string) string {
 	r, err := re.Compile("{(o|i):([^{}:]+)}")
 	Check(err)
 	ms := r.FindAllStringSubmatch(cmd, -1)
