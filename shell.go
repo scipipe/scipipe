@@ -16,6 +16,7 @@ type ShellTask struct {
 	InPaths      map[string]string
 	OutPorts     map[string]chan *FileTarget
 	OutPathFuncs map[string]func() string
+	Params       map[string]chan string
 	Command      string
 }
 
@@ -26,6 +27,7 @@ func NewShellTask(command string) *ShellTask {
 		InPaths:      make(map[string]string),
 		OutPorts:     make(map[string]chan *FileTarget),
 		OutPathFuncs: make(map[string]func() string),
+		Params:       make(map[string]chan string),
 	}
 }
 
@@ -35,10 +37,23 @@ func Sh(cmd string) *ShellTask {
 	return t
 }
 
+func ShParams(cmd string, params map[string]string) *ShellTask {
+	t := NewShellTask(cmd)
+	t.initPortsFromCmdPattern(cmd)
+	if params != nil {
+		// Send eternal list of options
+		go func() {
+			for name, val := range params {
+				t.Params[name] <- val
+			}
+		}()
+	}
+	return t
+}
+
 func (t *ShellTask) initPortsFromCmdPattern(cmd string) {
-	// Find in/out port names, and set up in port lists
-	r, err := re.Compile("{(o|i):([^{}:]+)}")
-	Check(err)
+	// Find in/out port names and Params and set up in struct fields
+	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
 		if len(m) < 3 {
@@ -48,7 +63,11 @@ func (t *ShellTask) initPortsFromCmdPattern(cmd string) {
 		name := m[2]
 		if typ == "o" {
 			t.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
-		} // else if typ == "i" {
+		} else if typ == "p" {
+			t.Params[name] = make(chan string, BUFSIZE)
+		}
+
+		// else if typ == "i" {
 		// Set up a channel on the inports, even though this is
 		// often replaced by another tasks output port channel.
 		// It might be nice to have it init'ed with a channel
@@ -128,8 +147,7 @@ func (t *ShellTask) formatAndExecute(cmd string) {
 }
 
 func (t *ShellTask) replacePlaceholdersInCmd(cmd string) string {
-	r, err := re.Compile("{(o|i):([^{}:]+)}")
-	Check(err)
+	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
 		whole := m[0]
@@ -137,18 +155,18 @@ func (t *ShellTask) replacePlaceholdersInCmd(cmd string) string {
 		name := m[2]
 		var newstr string
 		if typ == "o" {
-			if t.OutPathFuncs[name] != nil {
-				newstr = t.OutPathFuncs[name]()
-			} else {
+			if t.OutPathFuncs[name] == nil {
 				msg := fmt.Sprint("Missing outpath function for outport '", name, "' of shell task '", t.Command, "'")
 				Check(errors.New(msg))
+			} else {
+				newstr = t.OutPathFuncs[name]()
 			}
 		} else if typ == "i" {
-			if t.InPaths[name] != "" {
-				newstr = t.InPaths[name]
-			} else {
+			if t.InPaths[name] == "" {
 				msg := fmt.Sprint("Missing inpath for inport '", name, "' of shell task '", t.Command, "'")
 				Check(errors.New(msg))
+			} else {
+				newstr = t.InPaths[name]
 			}
 		}
 		if newstr == "" {
@@ -169,4 +187,10 @@ func (t *ShellTask) GetInPath(inPort string) string {
 		Check(errors.New(msg))
 	}
 	return inPath
+}
+
+func getPlaceHolderRegex() *re.Regexp {
+	r, err := re.Compile("{(o|i|p):([^{}:]+)}")
+	Check(err)
+	return r
 }
