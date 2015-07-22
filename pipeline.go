@@ -23,7 +23,7 @@ func (pl *Pipeline) AddTasks(tasks ...task) {
 	}
 }
 
-func (pl *Pipeline) PrintPipeline() {
+func (pl *Pipeline) PrintTasks() {
 	for i, task := range pl.tasks {
 		fmt.Printf("Task %d: %v\n", i, reflect.TypeOf(task))
 	}
