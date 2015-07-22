@@ -2,6 +2,8 @@ package scipipe
 
 import (
 	"fmt"
+	// "github.com/go-errors/errors"
+	"os"
 	"os/exec"
 )
 
@@ -11,8 +13,9 @@ func ExecCmd(cmd string) {
 	Check(err)
 }
 
-func Check(e error) {
-	if e != nil {
-		panic(e)
+func Check(err error) {
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
 	}
 }
