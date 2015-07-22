@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	re "regexp"
 	str "strings"
+	// "time"
 )
 
 type ShellTask struct {
@@ -17,113 +18,80 @@ type ShellTask struct {
 	Command      string
 }
 
-func NewShellTask(command string, outOnly bool) *ShellTask {
-	t := new(ShellTask)
-	t.Command = command
-	t._OutOnly = outOnly
-	if !t._OutOnly {
-		t.InPorts = make(map[string]chan *FileTarget)
-		t.InPaths = make(map[string]string)
+func NewShellTask(command string) *ShellTask {
+	return &ShellTask{
+		Command:      command,
+		InPorts:      make(map[string]chan *FileTarget),
+		InPaths:      make(map[string]string),
+		OutPorts:     make(map[string]chan *FileTarget),
+		OutPathFuncs: make(map[string]func() string),
 	}
-	t.OutPorts = make(map[string]chan *FileTarget)
-	t.OutPathFuncs = make(map[string]func() string)
-	return t
 }
 
 func Sh(cmd string) *ShellTask {
-
-	// Determine whether there are any inport, or if this task is "out only"
-	outOnly := false
-	r, err := re.Compile(".*{i:([^{}:]+)}.*")
-	Check(err)
-	if !r.MatchString(cmd) {
-		outOnly = true
-	}
-
 	// Create task
-	t := NewShellTask(cmd, outOnly)
+	t := NewShellTask(cmd)
 
-	if t._OutOnly {
-		// Find out port names, and set up in port lists
-		r, err := re.Compile("{o:([^{}:]+)}")
-		Check(err)
-		ms := r.FindAllStringSubmatch(cmd, -1)
-		for _, m := range ms {
-			name := m[1]
+	// Find in/out port names, and set up in port lists
+	r, err := re.Compile("{(o|i):([^{}:]+)}")
+	Check(err)
+	ms := r.FindAllStringSubmatch(cmd, -1)
+	for _, m := range ms {
+		typ := m[1]
+		name := m[2]
+		if typ == "o" {
 			t.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
-		}
-	} else {
-		// Find in/out port names, and set up in port lists
-		r, err := re.Compile("{(o|i):([^{}:]+)}")
-		Check(err)
-		ms := r.FindAllStringSubmatch(cmd, -1)
-		for _, m := range ms {
-			typ := m[1]
-			name := m[2]
-			if typ == "o" {
-				t.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
-			} else if typ == "i" {
-				// Set up a channel on the inports, even though this is
-				// often replaced by another tasks output port channel.
-				// It might be nice to have it init'ed with a channel
-				// anyways, for use cases when we want to send FileTargets
-				// on the inport manually.
-				t.InPorts[name] = make(chan *FileTarget, BUFSIZE)
-			}
+		} else if typ == "i" {
+			// Set up a channel on the inports, even though this is
+			// often replaced by another tasks output port channel.
+			// It might be nice to have it init'ed with a channel
+			// anyways, for use cases when we want to send FileTargets
+			// on the inport manually.
+			t.InPorts[name] = make(chan *FileTarget, BUFSIZE)
 		}
 	}
-
 	return t
 }
 
-func (t *ShellTask) Init() {
-	go func() {
-		if t._OutOnly {
-
-			t.executeCommands(t.Command)
-
-			// Send output targets
-			for oname, ochan := range t.OutPorts {
-				fn := t.OutPathFuncs[oname]
-				baseName := fn()
-				nf := NewFileTarget(baseName)
-				ochan <- nf
-				close(ochan)
-			}
-		} else {
-			for {
-				doClose := false
-				// Set up inport / path mappings
-				for iname, ichan := range t.InPorts {
-					infile, open := <-ichan
-					if !open {
-						doClose = true
-					} else {
-						t.InPaths[iname] = infile.GetPath()
-					}
-				}
-
-				if !doClose {
-					t.executeCommands(t.Command)
-					// Send output targets
-					for oname, ochan := range t.OutPorts {
-						fn := t.OutPathFuncs[oname]
-						baseName := fn()
-						nf := NewFileTarget(baseName)
-						ochan <- nf
-					}
-				} else {
-					// Close output channels
-					for _, ochan := range t.OutPorts {
-						close(ochan)
-					}
-					// Break out of the main loop
-					break
-				}
-
-			}
+func (t *ShellTask) Run() {
+	// Close output channels
+	for _, ochan := range t.OutPorts {
+		defer close(ochan)
+	}
+	for {
+		breakLoop := false
+		if len(t.InPorts) == 0 {
+			breakLoop = true
 		}
-	}()
+
+		// Set up inport / path mappings
+		for iname, ichan := range t.InPorts {
+			infile, open := <-ichan
+			if !open {
+				fmt.Println("Setting breakLoop to true")
+				breakLoop = true
+				continue
+			}
+			fmt.Println("Infile:", infile.GetPath())
+			t.InPaths[iname] = infile.GetPath()
+		}
+
+		// Execute command
+		t.executeCommands(t.Command)
+
+		// Send output targets
+		for oname, ochan := range t.OutPorts {
+			fn := t.OutPathFuncs[oname]
+			baseName := fn()
+			nf := NewFileTarget(baseName)
+			fmt.Println("Sending file:", nf.GetPath())
+			ochan <- nf
+		}
+		if breakLoop {
+			fmt.Println("Exiting main loop of task", t.Command)
+			break
+		}
+	}
 }
 
 func (t *ShellTask) executeCommands(cmd string) {

@@ -125,8 +125,8 @@ func main() {
     merge.InPorts["fq2"] <- fastq2
 
     // Set up tasks for execution
-    align.Init()
-    merge.Init()
+    go align.Run()
+    go merge.Run()
 
     // Run pipeline by asking for the final output
     <-merge.OutPorts["merged"]

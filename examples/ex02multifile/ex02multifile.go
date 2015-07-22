@@ -14,7 +14,7 @@ func main() {
 	}
 
 	// Set up tasks for execution
-	barReplacer.Init()
+	go barReplacer.Run()
 
 	// Manually send file targets on the inport of barReplacer
 	for _, name := range []string{"foo1", "foo2", "foo3"} {
