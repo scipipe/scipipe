@@ -19,3 +19,12 @@ func Check(err error) {
 		os.Exit(1)
 	}
 }
+
+// Short-hand function to create a slice of strings
+func SS(ss ...string) []string {
+	sslice := []string{}
+	for _, s := range ss {
+		sslice = append(sslice, s)
+	}
+	return sslice
+}

@@ -28,10 +28,10 @@ func main() {
 		for fileNo := 1; fileNo <= 16; fileNo++ {
 			inFile := sci.NewFileTarget(fmt.Sprintf("file%d.txt", fileNo))
 			fmt.Println("Processing file:", inFile.GetPath(), " ...")
-			for _, ar := range []string{"B", "D"} {
-				for _, cr := range []string{"E", "F"} {
-					for _, gr := range []string{"H", "I"} {
-						for _, tr := range []string{"J", "K"} {
+			for _, ar := range sci.SS("B", "D") {
+				for _, cr := range sci.SS("E", "F") {
+					for _, gr := range sci.SS("H", "I") {
+						for _, tr := range sci.SS("J", "K") {
 							wf.In <- inFile
 							wf.AReplaceWith <- ar
 							wf.CReplaceWith <- cr
