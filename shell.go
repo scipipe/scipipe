@@ -67,25 +67,14 @@ func (t *ShellTask) Run() {
 	// Main loop
 	breakLoop := false
 	for !breakLoop {
-		breakMainLoopPrematurely := false
-
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
 		if len(t.InPorts) == 0 {
 			breakLoop = true
 		}
 
-		// Read input targets on in-ports and set up path mappings
-		for iname, ichan := range t.InPorts {
-			infile, open := <-ichan
-			if !open {
-				breakMainLoopPrematurely = true
-				continue
-			}
-			fmt.Println("Receiving file:", infile.GetPath())
-			t.InPaths[iname] = infile.GetPath()
-		}
-		if breakMainLoopPrematurely {
+		inPortsOpen := t.receiveInputs()
+		if !inPortsOpen {
 			break
 		}
 
@@ -102,6 +91,21 @@ func (t *ShellTask) Run() {
 		}
 		fmt.Println("Exiting task:  ", t.Command)
 	}
+}
+
+func (t *ShellTask) receiveInputs() bool {
+	inPortsOpen := true
+	// Read input targets on in-ports and set up path mappings
+	for iname, ichan := range t.InPorts {
+		infile, open := <-ichan
+		if !open {
+			inPortsOpen = false
+			continue
+		}
+		fmt.Println("Receiving file:", infile.GetPath())
+		t.InPaths[iname] = infile.GetPath()
+	}
+	return inPortsOpen
 }
 
 func (t *ShellTask) formatAndExecute(cmd string) {
