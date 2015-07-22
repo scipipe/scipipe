@@ -6,6 +6,7 @@ import (
 	re "regexp"
 	str "strings"
 	// "time"
+	"errors"
 )
 
 type ShellTask struct {
@@ -37,6 +38,9 @@ func Sh(cmd string) *ShellTask {
 	Check(err)
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
+		if len(m) < 3 {
+			Check(errors.New("Too few matches"))
+		}
 		typ := m[1]
 		name := m[2]
 		if typ == "o" {
@@ -54,6 +58,7 @@ func Sh(cmd string) *ShellTask {
 }
 
 func (t *ShellTask) Run() {
+	fmt.Println("Entering task: ", t.Command)
 	// Close output channels
 	for _, ochan := range t.OutPorts {
 		defer close(ochan)
@@ -62,22 +67,25 @@ func (t *ShellTask) Run() {
 	// Main loop
 	for {
 		breakLoop := false
+		breakLoopAtEnd := false
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
 		if len(t.InPorts) == 0 {
-			breakLoop = true
+			breakLoopAtEnd = true
 		}
 
 		// Read input targets on in-ports and set up path mappings
 		for iname, ichan := range t.InPorts {
 			infile, open := <-ichan
 			if !open {
-				fmt.Println("Setting breakLoop to true")
 				breakLoop = true
 				continue
 			}
-			fmt.Println("Infile:", infile.GetPath())
+			fmt.Println("Receiving file:", infile.GetPath())
 			t.InPaths[iname] = infile.GetPath()
+		}
+		if breakLoop {
+			break
 		}
 
 		// Execute command
@@ -88,12 +96,12 @@ func (t *ShellTask) Run() {
 			fn := t.OutPathFuncs[oname]
 			baseName := fn()
 			nf := NewFileTarget(baseName)
-			fmt.Println("Sending file:", nf.GetPath())
+			fmt.Println("Sending file:  ", nf.GetPath())
 			ochan <- nf
 		}
 
-		if breakLoop {
-			fmt.Println("Exiting main loop of task", t.Command)
+		if breakLoopAtEnd {
+			fmt.Println("Exiting task:  ", t.Command)
 			break
 		}
 	}
@@ -101,7 +109,7 @@ func (t *ShellTask) Run() {
 
 func (t *ShellTask) formatAndExecute(cmd string) {
 	cmd = t.ReplacePortDefsInCmd(cmd)
-	fmt.Println("ShellTask: Executing command: ", cmd)
+	fmt.Println("Executing cmd: ", cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
 	Check(err)
 }
@@ -116,9 +124,19 @@ func (t *ShellTask) ReplacePortDefsInCmd(cmd string) string {
 		name := m[2]
 		newstr := "REPLACE_FAILED_FOR_PORT_" + name + "_CHECK_YOUR_CODE"
 		if typ == "o" {
-			newstr = t.OutPathFuncs[name]()
+			if t.OutPathFuncs[name] != nil {
+				newstr = t.OutPathFuncs[name]()
+			} else {
+				msg := fmt.Sprint("Missing outpath function for outport '", name, "' of shell task '", t.Command, "'")
+				Check(errors.New(msg))
+			}
 		} else if typ == "i" {
-			newstr = t.InPaths[name]
+			if t.InPaths[name] != "" {
+				newstr = t.InPaths[name]
+			} else {
+				msg := fmt.Sprint("Missing inpath for inport '", name, "' of shell task '", t.Command, "'")
+				Check(errors.New(msg))
+			}
 		}
 		cmd = str.Replace(cmd, whole, newstr, -1)
 	}
@@ -126,6 +144,12 @@ func (t *ShellTask) ReplacePortDefsInCmd(cmd string) string {
 }
 
 func (t *ShellTask) GetInPath(inPort string) string {
-	inPath := t.InPaths[inPort]
+	var inPath string
+	if t.InPaths[inPort] != "" {
+		inPath = t.InPaths[inPort]
+	} else {
+		msg := fmt.Sprint("Missing inpath for inport '", inPort, "' of shell task '", t.Command, "'")
+		Check(errors.New(msg))
+	}
 	return inPath
 }
