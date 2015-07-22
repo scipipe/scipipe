@@ -45,14 +45,14 @@ func Sh(cmd string) *ShellTask {
 		name := m[2]
 		if typ == "o" {
 			t.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
-		} else if typ == "i" {
-			// Set up a channel on the inports, even though this is
-			// often replaced by another tasks output port channel.
-			// It might be nice to have it init'ed with a channel
-			// anyways, for use cases when we want to send FileTargets
-			// on the inport manually.
-			t.InPorts[name] = make(chan *FileTarget, BUFSIZE)
-		}
+		} // else if typ == "i" {
+		// Set up a channel on the inports, even though this is
+		// often replaced by another tasks output port channel.
+		// It might be nice to have it init'ed with a channel
+		// anyways, for use cases when we want to send FileTargets
+		// on the inport manually.
+		// t.InPorts[name] = make(chan *FileTarget, BUFSIZE)
+		// }
 	}
 	return t
 }
@@ -119,7 +119,7 @@ func (t *ShellTask) ReplacePortDefsInCmd(cmd string) string {
 		whole := m[0]
 		typ := m[1]
 		name := m[2]
-		newstr := "REPLACE_FAILED_FOR_PORT_" + name + "_CHECK_YOUR_CODE"
+		var newstr string
 		if typ == "o" {
 			if t.OutPathFuncs[name] != nil {
 				newstr = t.OutPathFuncs[name]()
@@ -134,6 +134,10 @@ func (t *ShellTask) ReplacePortDefsInCmd(cmd string) string {
 				msg := fmt.Sprint("Missing inpath for inport '", name, "' of shell task '", t.Command, "'")
 				Check(errors.New(msg))
 			}
+		}
+		if newstr == "" {
+			msg := fmt.Sprint("Replace failed for port ", name, " in task '", t.Command, "'")
+			Check(errors.New(msg))
 		}
 		cmd = str.Replace(cmd, whole, newstr, -1)
 	}
