@@ -30,15 +30,15 @@ func NewFileWriterFromPath(pl *Pipeline, path string) *fileWriter {
 	return t
 }
 
-func (self *fileWriter) Run() {
-	f, err := os.Create(<-self.FilePath)
+func (proc *fileWriter) Run() {
+	f, err := os.Create(<-proc.FilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f.Close()
 
 	w := bufio.NewWriter(f)
-	for line := range self.In {
+	for line := range proc.In {
 		w.WriteString(fmt.Sprint(string(line), "\n"))
 	}
 	w.Flush()

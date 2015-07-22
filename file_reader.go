@@ -19,10 +19,10 @@ func NewFileReader() *fileReader {
 	}
 }
 
-func (self *fileReader) Run() {
-	defer close(self.Out)
+func (proc *fileReader) Run() {
+	defer close(proc.Out)
 
-	file, err := os.Open(<-self.FilePath)
+	file, err := os.Open(<-proc.FilePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func (self *fileReader) Run() {
 
 	scan := bufio.NewScanner(file)
 	for scan.Scan() {
-		self.Out <- append([]byte(nil), scan.Bytes()...)
+		proc.Out <- append([]byte(nil), scan.Bytes()...)
 	}
 	if scan.Err() != nil {
 		log.Fatal(scan.Err())
