@@ -65,26 +65,27 @@ func (t *ShellTask) Run() {
 	}
 
 	// Main loop
-	for {
-		breakLoop := false
-		breakLoopAtEnd := false
+	breakLoop := false
+	for !breakLoop {
+		breakMainLoopPrematurely := false
+
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
 		if len(t.InPorts) == 0 {
-			breakLoopAtEnd = true
+			breakLoop = true
 		}
 
 		// Read input targets on in-ports and set up path mappings
 		for iname, ichan := range t.InPorts {
 			infile, open := <-ichan
 			if !open {
-				breakLoop = true
+				breakMainLoopPrematurely = true
 				continue
 			}
 			fmt.Println("Receiving file:", infile.GetPath())
 			t.InPaths[iname] = infile.GetPath()
 		}
-		if breakLoop {
+		if breakMainLoopPrematurely {
 			break
 		}
 
@@ -99,11 +100,7 @@ func (t *ShellTask) Run() {
 			fmt.Println("Sending file:  ", nf.GetPath())
 			ochan <- nf
 		}
-
-		if breakLoopAtEnd {
-			fmt.Println("Exiting task:  ", t.Command)
-			break
-		}
+		fmt.Println("Exiting task:  ", t.Command)
 	}
 }
 
