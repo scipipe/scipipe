@@ -94,11 +94,11 @@ func (t *ShellTask) Run() {
 
 		// Send output targets on out ports
 		for oname, ochan := range t.OutPorts {
-			fn := t.OutPathFuncs[oname]
-			baseName := fn()
-			nf := NewFileTarget(baseName)
-			fmt.Println("Sending file:  ", nf.GetPath())
-			ochan <- nf
+			fun := t.OutPathFuncs[oname]
+			baseName := fun()
+			ft := NewFileTarget(baseName)
+			fmt.Println("Sending file:  ", ft.GetPath())
+			ochan <- ft
 		}
 		fmt.Println("Exiting task:  ", t.Command)
 	}
