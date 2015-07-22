@@ -21,7 +21,7 @@ func TestShellHasInOutPorts(t *t.T) {
 	assert.NotNil(t, tt.InPorts["in1"], "InPorts are nil!")
 	assert.NotNil(t, tt.OutPorts["out1"], "OutPorts are nil!")
 
-	cleanTempFiles()
+	cleanFiles("foo.txt", "foo.txt.bar")
 }
 
 func TestShellCloseOutPortOnInPortClose(t *t.T) {
@@ -45,7 +45,12 @@ func TestShellCloseOutPortOnInPortClose(t *t.T) {
 	assert.Nil(t, <-fooTask.OutPorts["out1"])
 	assert.Nil(t, <-barReplacer.OutPorts["bar"])
 
-	cleanTempFiles()
+	_, fooErr := os.Stat("foo.txt")
+	assert.Nil(t, fooErr)
+	_, barErr := os.Stat("foo.txt.bar")
+	assert.Nil(t, barErr)
+
+	cleanFiles("foo.txt", "foo.txt.bar")
 }
 
 func TestReplacePlaceholdersInCmd(t *t.T) {
@@ -69,7 +74,8 @@ func TestReplacePlaceholdersInCmd(t *t.T) {
 	// cleanTempFiles()
 }
 
-func cleanTempFiles() {
-	os.Remove("foo.txt")
-	os.Remove("foo.txt.bar")
+func cleanFiles(fileNames ...string) {
+	for _, fileName := range fileNames {
+		os.Remove(fileName)
+	}
 }
