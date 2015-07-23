@@ -19,6 +19,7 @@ type ShellTask struct {
 	OutPathFuncs map[string]func() string
 	ParamPorts   map[string]chan string
 	Params       map[string]string
+	Prepend      string
 	Command      string
 	Spawn        bool
 }
@@ -272,6 +273,10 @@ func (t *ShellTask) formatCommand(cmd string, outTargets map[string]*FileTarget)
 			Check(errors.New(msg))
 		}
 		cmd = str.Replace(cmd, whole, newstr, -1)
+	}
+	// Add prepend string to the command
+	if t.Prepend != "" {
+		cmd = fmt.Sprintf("%s %s", t.Prepend, cmd)
 	}
 	return cmd
 }
