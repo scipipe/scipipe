@@ -7,6 +7,7 @@ import (
 	str "strings"
 	// "time"
 	"errors"
+	"sync"
 )
 
 type ShellTask struct {
@@ -84,6 +85,8 @@ func (t *ShellTask) Run() {
 	// fmt.Println("Entering task: ", t.Command)
 	defer t.closeOutChans()
 
+	wg := new(sync.WaitGroup)
+	mx := new(sync.Mutex)
 	// Main loop
 	for {
 		inPortsClosed := t.receiveInputs()
@@ -108,11 +111,15 @@ func (t *ShellTask) Run() {
 		// Format
 		cmd := t.formatCommand(t.Command)
 
-		// Execute
-		t.executeCommand(cmd)
+		wg.Add(1)
+		go func() {
+			// Execute
+			t.executeCommand(cmd)
 
-		// Send
-		t.sendOutputs(outPaths)
+			// Send
+			t.sendOutputs(outPaths, mx)
+			wg.Done()
+		}()
 
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
@@ -121,6 +128,9 @@ func (t *ShellTask) Run() {
 			break
 		}
 	}
+	fmt.Printf("Starting to wait (task '%s')\n", t.Command)
+	wg.Wait()
+	fmt.Printf("Finished waiting (task '%s')\n", t.Command)
 	// fmt.Println("Exiting task:  ", t.Command)
 }
 
@@ -161,14 +171,16 @@ func (t *ShellTask) receiveParams() bool {
 	return paramPortsClosed
 }
 
-func (t *ShellTask) sendOutputs(outPaths map[string]string) {
+func (t *ShellTask) sendOutputs(outPaths map[string]string, mx *sync.Mutex) {
 	// Send output targets on out ports
+	mx.Lock()
 	for oname, ochan := range t.OutPorts {
 		outName := outPaths[oname]
 		ft := NewFileTarget(outName)
 		// fmt.Println("Sending file:  ", ft.GetPath())
 		ochan <- ft
 	}
+	mx.Unlock()
 }
 
 func (t *ShellTask) createOutPaths() (outPaths map[string]string) {
