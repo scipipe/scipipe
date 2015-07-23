@@ -106,26 +106,28 @@ func (t *ShellTask) Run() {
 			break
 		}
 
+		// This is important that it is created anew here, for thread-safety
+		outTargets := t.createOutTargets()
 		// Format
-		cmd := t.formatCommand(t.Command)
+		cmd := t.formatCommand(t.Command, outTargets)
 
-		// Create copy of outPaths, for thread-safety
-		outPaths := copyMapStrStr(t.createOutPaths())
-
-		if t.anyFileExists(outPaths) {
+		if t.anyFileExists(outTargets) {
 			Warn.Printf("Skipping task, one or more outputs already exist: '%s'\n", cmd)
 		} else {
 			Debug.Printf("No outputs exists, so starting task: '%s'\n", cmd)
+
 			if t.Spawn {
 				wg.Add(1)
 				go func() {
 					t.executeCommand(cmd)
-					t.sendOutputs(outPaths, mx)
+					t.atomizeTargets(outTargets)
+					t.sendOutputs(outTargets, mx)
 					wg.Done()
 				}()
 			} else {
 				t.executeCommand(cmd)
-				t.sendOutputs(outPaths, mx)
+				t.atomizeTargets(outTargets)
+				t.sendOutputs(outTargets, mx)
 			}
 		}
 
@@ -179,14 +181,12 @@ func (t *ShellTask) receiveParams() bool {
 	return paramPortsClosed
 }
 
-func (t *ShellTask) sendOutputs(outPaths map[string]string, mx *sync.Mutex) {
+func (t *ShellTask) sendOutputs(outTargets map[string]*FileTarget, mx *sync.Mutex) {
 	// Send output targets on out ports
 	mx.Lock()
 	for oname, ochan := range t.OutPorts {
-		outName := outPaths[oname]
-		ft := NewFileTarget(outName)
-		Debug.Println("Sending file:  ", ft.GetPath())
-		ochan <- ft
+		Debug.Println("Sending file:  ", outTargets[oname].GetPath())
+		ochan <- outTargets[oname]
 	}
 	mx.Unlock()
 }
@@ -199,12 +199,26 @@ func (t *ShellTask) createOutPaths() (outPaths map[string]string) {
 	return outPaths
 }
 
-func (t *ShellTask) anyFileExists(outPaths map[string]string) (anyFileExists bool) {
+func (t *ShellTask) createOutTargets() (outTargets map[string]*FileTarget) {
+	outTargets = make(map[string]*FileTarget)
+	for oname, opath := range t.createOutPaths() {
+		outTargets[oname] = NewFileTarget(opath)
+	}
+	return
+}
+
+func (t *ShellTask) anyFileExists(targets map[string]*FileTarget) (anyFileExists bool) {
 	anyFileExists = false
-	for _, opath := range outPaths {
+	for _, tgt := range targets {
+		opath := tgt.GetPath()
+		otmpPath := tgt.GetTempPath()
 		if _, err := os.Stat(opath); err == nil {
 			anyFileExists = true
 			Info.Println("Output file exists already:", opath)
+		}
+		if _, err := os.Stat(otmpPath); err == nil {
+			anyFileExists = true
+			Warn.Println("Temporary Output file already exists:", otmpPath, ". Check your workflow for correctness!")
 		}
 	}
 	return
@@ -216,7 +230,14 @@ func (t *ShellTask) executeCommand(cmd string) {
 	Check(err)
 }
 
-func (t *ShellTask) formatCommand(cmd string) string {
+func (t *ShellTask) atomizeTargets(targets map[string]*FileTarget) {
+	for _, tgt := range targets {
+		Debug.Printf("Atomizing file: %s -> %s", tgt.GetTempPath(), tgt.GetPath())
+		tgt.Atomize()
+	}
+}
+
+func (t *ShellTask) formatCommand(cmd string, outTargets map[string]*FileTarget) string {
 	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
@@ -225,11 +246,11 @@ func (t *ShellTask) formatCommand(cmd string) string {
 		name := m[2]
 		var newstr string
 		if typ == "o" {
-			if t.OutPathFuncs[name] == nil {
-				msg := fmt.Sprint("Missing outpath function for outport '", name, "' of shell task '", t.Command, "'")
+			if outTargets[name] == nil {
+				msg := fmt.Sprint("Missing outpath for outport '", name, "' of shell task '", t.Command, "'")
 				Check(errors.New(msg))
 			} else {
-				newstr = t.OutPathFuncs[name]()
+				newstr = outTargets[name].GetTempPath() // Means important to Atomize afterwards!
 			}
 		} else if typ == "i" {
 			if t.InPaths[name] == "" {

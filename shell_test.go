@@ -8,10 +8,14 @@ import (
 	"time"
 )
 
-func TestShellHasInOutPorts(t *t.T) {
+func initTestLogs() {
 	InitLogError()
+}
 
-	tt := Sh("echo {i:in1} {o:out1}")
+func TestShellHasInOutPorts(t *t.T) {
+	initTestLogs()
+
+	tt := Sh("echo {i:in1} > {o:out1}")
 	tt.OutPathFuncs["out1"] = func() string {
 		return fmt.Sprint(tt.InPaths["in1"], ".bar")
 	}
@@ -28,7 +32,7 @@ func TestShellHasInOutPorts(t *t.T) {
 }
 
 func TestShellCloseOutPortOnInPortClose(t *t.T) {
-	InitLogError()
+	initTestLogs()
 
 	fooTask := Sh("echo foo > {o:out1}")
 	fooTask.OutPathFuncs["out1"] = func() string {
@@ -59,7 +63,7 @@ func TestShellCloseOutPortOnInPortClose(t *t.T) {
 }
 
 func TestReplacePlaceholdersInCmd(t *t.T) {
-	InitLogError()
+	initTestLogs()
 
 	rawCmd := "echo {i:in1} > {o:out1}"
 	tt := Sh(rawCmd)
@@ -85,13 +89,15 @@ func TestReplacePlaceholdersInCmd(t *t.T) {
 	// Assert InPath is correct
 	assert.Equal(t, "foo.txt", tt.InPaths["in1"], "foo.txt")
 
+	outTargets := tt.createOutTargets()
+
 	// Assert placeholders are correctly replaced in command
-	cmd := tt.formatCommand(rawCmd)
-	assert.EqualValues(t, "echo foo.txt > foo.txt.bar", cmd)
+	cmd := tt.formatCommand(rawCmd, outTargets)
+	assert.EqualValues(t, "echo foo.txt > foo.txt.bar.tmp", cmd)
 }
 
 func TestParameterCommand(t *t.T) {
-	InitLogError()
+	initTestLogs()
 
 	cmb := NewCombinatoricsTask()
 
@@ -127,7 +133,8 @@ func TestParameterCommand(t *t.T) {
 }
 
 func TestTaskWithoutInputsOutputs(t *t.T) {
-	InitLogError()
+	initTestLogs()
+	Debug.Println("Starting test TestTaskWithoutInputsOutputs")
 
 	f := "/tmp/hej.txt"
 	tsk := Sh("echo hej > " + f)
@@ -138,7 +145,8 @@ func TestTaskWithoutInputsOutputs(t *t.T) {
 }
 
 func TestDontOverWriteExistingOutputs(t *t.T) {
-	InitLogError()
+	initTestLogs()
+	Debug.Println("Starting test TestDontOverWriteExistingOutputs")
 
 	f := "/tmp/hej.txt"
 
@@ -165,6 +173,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	// Make sure some time has passed before the second write
 	time.Sleep(1 * time.Millisecond)
 
+	Debug.Println("Try running the same workflow again ...")
 	// Run again with different output
 	tsk = Sh("echo hej > {o:hej}")
 	tsk.OutPathFuncs["hej"] = func() string { return f }
