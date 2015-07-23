@@ -102,8 +102,11 @@ func (t *ShellTask) Run() {
 			break
 		}
 
-		// Execute command
-		t.formatAndExecute(t.Command)
+		// Format
+		cmd := t.formatCommand(t.Command)
+
+		// Execute
+		t.executeCommand(cmd)
 
 		// Send
 		t.sendOutputs()
@@ -166,8 +169,12 @@ func (t *ShellTask) sendOutputs() {
 	}
 }
 
-func (t *ShellTask) formatAndExecute(cmd string) {
+func (t *ShellTask) formatCommand(cmd string) string {
 	cmd = t.replacePlaceholdersInCmd(cmd)
+	return cmd
+}
+
+func (t *ShellTask) executeCommand(cmd string) {
 	fmt.Println("Executing cmd: ", cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
 	// fmt.Println("Command output: ", string(cmdOut))
