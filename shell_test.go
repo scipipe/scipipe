@@ -89,11 +89,15 @@ func TestReplacePlaceholdersInCmd(t *t.T) {
 	// Assert InPath is correct
 	assert.Equal(t, "foo.txt", tt.InPaths["in1"], "foo.txt")
 
-	outTargets := tt.createOutTargets()
-
 	// Assert placeholders are correctly replaced in command
+	outTargets := tt.createOutTargets()
 	cmd := tt.formatCommand(rawCmd, outTargets)
-	assert.EqualValues(t, "echo foo.txt > foo.txt.bar.tmp", cmd)
+	assert.EqualValues(t, "echo foo.txt > foo.txt.bar.tmp", cmd, "Command not properly formatted!")
+
+	// Test prepend
+	tt.Prepend = "dash"
+	cmd = tt.formatCommand(rawCmd, outTargets)
+	assert.EqualValues(t, "dash echo foo.txt > foo.txt.bar.tmp", cmd, "Prepend not working!")
 }
 
 func TestParameterCommand(t *t.T) {
