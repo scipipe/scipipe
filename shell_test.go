@@ -83,30 +83,44 @@ func TestReplacePlaceholdersInCmd(t *t.T) {
 	assert.EqualValues(t, "echo foo.txt > foo.txt.bar", cmd)
 }
 
-// func TestParameterCommand(t *t.T) {
-// 	tt := Sh("echo {p:a} {p:b} {p:c} > {o:out}")
-// 	tt.OutPathFuncs["out"] = func() string {
-// 		return fmt.Sprintf(
-// 			"%s_%s_%s.txt",
-// 			tt.Params["a"],
-// 			tt.Params["b"],
-// 			tt.Params["c"],
-// 		)
-// 	}
-// 	// Feed the task with multiple combinations
-// 	go func() {
-// 		for _, a := range SS("a1", "a2", "a3") {
-// 			for _, b := range SS("b1", "b2", "b3") {
-// 				for _, c := range SS("c1", "c2", "c3") {
-// 					tt.Params["a"] <- a
-// 					tt.Params["b"] <- b
-// 					tt.Params["c"] <- c
-// 				}
-// 			}
-// 		}
-// 	}()
-// 	tt.Run()
-// }
+func TestParameterCommand(t *t.T) {
+	// An abc file printer
+	abc := Sh("echo {p:a} {p:b} {p:c} > {o:out}")
+	abc.OutPathFuncs["out"] = func() string {
+		return fmt.Sprintf(
+			"%s_%s_%s.txt",
+			abc.Params["a"],
+			abc.Params["b"],
+			abc.Params["c"],
+		)
+	}
+
+	// A printer task
+	prt := Sh("cat {i:in} >> out.log")
+
+	// Connection info
+	prt.InPorts["in"] = abc.OutPorts["out"]
+
+	// Feed the task with multiple combinations
+	go func() {
+		defer close(abc.ParamPorts["a"])
+		defer close(abc.ParamPorts["b"])
+		defer close(abc.ParamPorts["c"])
+
+		for _, a := range SS("a1", "a2", "a3") {
+			for _, b := range SS("b1", "b2", "b3") {
+				for _, c := range SS("c1", "c2", "c3") {
+					abc.ParamPorts["a"] <- a
+					abc.ParamPorts["b"] <- b
+					abc.ParamPorts["c"] <- c
+				}
+			}
+		}
+	}()
+
+	go abc.Run()
+	prt.Run()
+}
 
 func cleanFiles(fileNames ...string) {
 	for _, fileName := range fileNames {
