@@ -16,7 +16,8 @@ type ShellTask struct {
 	InPaths      map[string]string
 	OutPorts     map[string]chan *FileTarget
 	OutPathFuncs map[string]func() string
-	Params       map[string]chan string
+	ParamPorts   map[string]chan string
+	Params       map[string]string
 	Command      string
 }
 
@@ -27,7 +28,8 @@ func NewShellTask(command string) *ShellTask {
 		InPaths:      make(map[string]string),
 		OutPorts:     make(map[string]chan *FileTarget),
 		OutPathFuncs: make(map[string]func() string),
-		Params:       make(map[string]chan string),
+		ParamPorts:   make(map[string]chan string),
+		Params:       make(map[string]string),
 	}
 }
 
@@ -44,7 +46,7 @@ func ShParams(cmd string, params map[string]string) *ShellTask {
 		// Send eternal list of options
 		go func() {
 			for name, val := range params {
-				t.Params[name] <- val
+				t.ParamPorts[name] <- val
 			}
 		}()
 	}
@@ -64,7 +66,7 @@ func (t *ShellTask) initPortsFromCmdPattern(cmd string) {
 		if typ == "o" {
 			t.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
 		} else if typ == "p" {
-			t.Params[name] = make(chan string, BUFSIZE)
+			t.ParamPorts[name] = make(chan string, BUFSIZE)
 		}
 
 		// else if typ == "i" {
@@ -83,17 +85,20 @@ func (t *ShellTask) Run() {
 	defer t.closeOutChans()
 
 	// Main loop
-	continueLoop := true
-	for continueLoop {
-		// If there are no inports, we know we should exit the loop
-		// directly after executing the command, and sending the outputs
-		if len(t.InPorts) == 0 {
-			continueLoop = false
-		}
+	for {
+		inPortsClosed := t.receiveInputs()
+		paramPortsClosed := t.receiveParams()
 
-		// Read from inports
-		inPortsOpen := t.receiveInputs()
-		if !inPortsOpen {
+		if len(t.InPorts) == 0 && paramPortsClosed {
+			fmt.Println("Closing loop: No inports, and param ports closed")
+			break
+		}
+		if len(t.ParamPorts) == 0 && inPortsClosed {
+			fmt.Println("Closing loop: No inports, and in ports closed")
+			break
+		}
+		if inPortsClosed && paramPortsClosed {
+			fmt.Println("Closing loop: Both inports and param ports closed")
 			break
 		}
 
@@ -102,6 +107,13 @@ func (t *ShellTask) Run() {
 
 		// Send
 		t.sendOutputs()
+
+		// If there are no inports, we know we should exit the loop
+		// directly after executing the command, and sending the outputs
+		if len(t.InPorts) == 0 && len(t.ParamPorts) == 0 {
+			fmt.Println("Closing after send: No inports or param ports")
+			break
+		}
 	}
 	fmt.Println("Exiting task:  ", t.Command)
 }
@@ -114,18 +126,33 @@ func (t *ShellTask) closeOutChans() {
 }
 
 func (t *ShellTask) receiveInputs() bool {
-	inPortsOpen := true
+	inPortsClosed := false
 	// Read input targets on in-ports and set up path mappings
 	for iname, ichan := range t.InPorts {
 		infile, open := <-ichan
 		if !open {
-			inPortsOpen = false
+			inPortsClosed = true
 			continue
 		}
 		fmt.Println("Receiving file:", infile.GetPath())
 		t.InPaths[iname] = infile.GetPath()
 	}
-	return inPortsOpen
+	return inPortsClosed
+}
+
+func (t *ShellTask) receiveParams() bool {
+	paramPortsClosed := false
+	// Read input targets on in-ports and set up path mappings
+	for pname, pchan := range t.ParamPorts {
+		pval, open := <-pchan
+		if !open {
+			paramPortsClosed = true
+			continue
+		}
+		fmt.Println("Receiving param:", pname, "with value", pval)
+		t.Params[pname] = pval
+	}
+	return paramPortsClosed
 }
 
 func (t *ShellTask) sendOutputs() {
@@ -142,7 +169,8 @@ func (t *ShellTask) sendOutputs() {
 func (t *ShellTask) formatAndExecute(cmd string) {
 	cmd = t.replacePlaceholdersInCmd(cmd)
 	fmt.Println("Executing cmd: ", cmd)
-	_, err := exec.Command("bash", "-c", cmd).Output()
+	cmdOut, err := exec.Command("bash", "-c", cmd).Output()
+	fmt.Println("Command output: ", cmdOut)
 	Check(err)
 }
 
@@ -167,6 +195,13 @@ func (t *ShellTask) replacePlaceholdersInCmd(cmd string) string {
 				Check(errors.New(msg))
 			} else {
 				newstr = t.InPaths[name]
+			}
+		} else if typ == "p" {
+			if t.Params[name] == "" {
+				msg := fmt.Sprint("Missing param value param '", name, "' of shell task '", t.Command, "'")
+				Check(errors.New(msg))
+			} else {
+				newstr = t.Params[name]
 			}
 		}
 		if newstr == "" {
