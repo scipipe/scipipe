@@ -24,5 +24,6 @@ _testmain.go
 *.prof
 
 *.txt
+*.txt.*
 foo.*
 *.bar
