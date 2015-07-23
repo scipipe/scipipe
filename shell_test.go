@@ -117,6 +117,15 @@ func TestParameterCommand(t *t.T) {
 	cleanFiles("/tmp/log.txt")
 }
 
+func TestTaskWithoutInputsOutputs(t *t.T) {
+	f := "/tmp/hej.txt"
+	tsk := Sh("echo hej > " + f)
+	tsk.Run()
+	_, err := os.Stat(f)
+	assert.Nil(t, err)
+	cleanFiles(f)
+}
+
 // Helper functions
 
 func cleanFiles(fileNames ...string) {
