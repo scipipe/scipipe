@@ -96,7 +96,7 @@ func TestParameterCommand(t *t.T) {
 	}
 
 	// A printer task
-	prt := Sh("cat {i:in} >> out.log")
+	prt := Sh("cat {i:in} >> /tmp/log.txt; rm {i:in}")
 
 	// Connection info
 	prt.InPorts["in"] = abc.OutPorts["out"]
@@ -120,10 +120,20 @@ func TestParameterCommand(t *t.T) {
 
 	go abc.Run()
 	prt.Run()
+	fmt.Println("Finished TestParameterCommand")
+
+	_, err := os.Stat("/tmp/log.txt")
+	assert.Nil(t, err)
+
+	cleanFiles("/tmp/log.txt")
 }
 
 func cleanFiles(fileNames ...string) {
 	for _, fileName := range fileNames {
-		os.Remove(fileName)
+		if _, err := os.Stat(fileName); err == nil {
+			fmt.Println("Removing file", fileName)
+			os.Remove(fileName)
+			fmt.Println("Successfully removed file", fileName)
+		}
 	}
 }
