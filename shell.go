@@ -84,7 +84,7 @@ func (t *ShellTask) initPortsFromCmdPattern(cmd string, params map[string]string
 }
 
 func (t *ShellTask) Run() {
-	Debug.Println("Entering task: ", t.Command)
+	Debug.Println("Entering task:", t.Command)
 	defer t.closeOutChans()
 
 	wg := new(sync.WaitGroup)
@@ -142,7 +142,7 @@ func (t *ShellTask) Run() {
 	Debug.Printf("Starting to wait (task '%s')\n", t.Command)
 	wg.Wait()
 	Debug.Printf("Finished waiting (task '%s')\n", t.Command)
-	Debug.Println("Exiting task:  ", t.Command)
+	Debug.Println("Exiting task:", t.Command)
 }
 
 func (t *ShellTask) closeOutChans() {
@@ -186,7 +186,7 @@ func (t *ShellTask) sendOutputs(outTargets map[string]*FileTarget, mx *sync.Mute
 	// Send output targets on out ports
 	mx.Lock()
 	for oname, ochan := range t.OutPorts {
-		Debug.Println("Sending file:  ", outTargets[oname].GetPath())
+		Debug.Println("Sending file:", outTargets[oname].GetPath())
 		ochan <- outTargets[oname]
 	}
 	mx.Unlock()
@@ -226,7 +226,7 @@ func (t *ShellTask) anyFileExists(targets map[string]*FileTarget) (anyFileExists
 }
 
 func (t *ShellTask) executeCommand(cmd string) {
-	Info.Println("Executing cmd: ", cmd)
+	Info.Println("Executing cmd:", cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
 	Check(err)
 }
