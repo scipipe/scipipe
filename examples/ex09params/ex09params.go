@@ -11,7 +11,7 @@ func main() {
 	cmb := NewCombinatoricsTask()
 
 	// An abc file printer
-	abc := sci.Sh("echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
+	abc := sci.ShNoSpawn("echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
 	abc.OutPathFuncs["out"] = func() string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
@@ -22,7 +22,7 @@ func main() {
 	}
 
 	// A printer task
-	prt := sci.Sh("cat {i:in} >> log.txt")
+	prt := sci.ShNoSpawn("cat {i:in} >> log.txt")
 
 	// Connection info
 	abc.ParamPorts["a"] = cmb.A

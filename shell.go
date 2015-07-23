@@ -20,6 +20,7 @@ type ShellTask struct {
 	ParamPorts   map[string]chan string
 	Params       map[string]string
 	Command      string
+	Spawn        bool
 }
 
 func NewShellTask(command string) *ShellTask {
@@ -31,12 +32,20 @@ func NewShellTask(command string) *ShellTask {
 		OutPathFuncs: make(map[string]func() string),
 		ParamPorts:   make(map[string]chan string),
 		Params:       make(map[string]string),
+		Spawn:        true,
 	}
 }
 
 func Sh(cmd string) *ShellTask {
 	t := NewShellTask(cmd)
 	t.initPortsFromCmdPattern(cmd)
+	return t
+}
+
+func ShNoSpawn(cmd string) *ShellTask {
+	t := NewShellTask(cmd)
+	t.initPortsFromCmdPattern(cmd)
+	t.Spawn = false
 	return t
 }
 
@@ -111,15 +120,17 @@ func (t *ShellTask) Run() {
 		// Format
 		cmd := t.formatCommand(t.Command)
 
-		wg.Add(1)
-		go func() {
-			// Execute
+		if t.Spawn {
+			wg.Add(1)
+			go func() {
+				t.executeCommand(cmd)
+				t.sendOutputs(outPaths, mx)
+				wg.Done()
+			}()
+		} else {
 			t.executeCommand(cmd)
-
-			// Send
 			t.sendOutputs(outPaths, mx)
-			wg.Done()
-		}()
+		}
 
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
