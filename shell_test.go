@@ -68,12 +68,12 @@ func TestReplacePlaceholdersInCmd(t *t.T) {
 	}()
 
 	// Assert inport is still open after first read
-	inportsOpen := tt.receiveInputs()
-	assert.Equal(t, true, inportsOpen)
+	inPortsClosed := tt.receiveInputs()
+	assert.Equal(t, false, inPortsClosed)
 
 	// Assert inport is closed after second read
-	inportsOpen = tt.receiveInputs()
-	assert.Equal(t, false, inportsOpen)
+	inPortsClosed = tt.receiveInputs()
+	assert.Equal(t, true, inPortsClosed)
 
 	// Assert InPath is correct
 	assert.Equal(t, "foo.txt", tt.InPaths["in1"], "foo.txt")
