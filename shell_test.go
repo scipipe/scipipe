@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"os"
 	t "testing"
+	"time"
 )
 
 func TestShellHasInOutPorts(t *t.T) {
@@ -123,6 +124,54 @@ func TestTaskWithoutInputsOutputs(t *t.T) {
 	tsk.Run()
 	_, err := os.Stat(f)
 	assert.Nil(t, err)
+	cleanFiles(f)
+}
+
+func TestDontOverWriteExistingOutputs(t *t.T) {
+	f := "/tmp/hej.txt"
+
+	// Assert file does not exist before running
+	_, e1 := os.Stat(f)
+	assert.NotNil(t, e1)
+
+	// Run pipeline a first time
+	tsk := Sh("echo hej > {o:hej}")
+	tsk.OutPathFuncs["hej"] = func() string { return f }
+	prt := Sh("echo {i:in} Done!")
+	prt.InPorts["in"] = tsk.OutPorts["hej"]
+	pl := NewPipeline()
+	pl.AddTasks(tsk, prt)
+	pl.Run()
+
+	// Assert file DO exist after running
+	fiBef, e2 := os.Stat(f)
+	assert.Nil(t, e2)
+
+	// Get modified time before
+	mtBef := fiBef.ModTime()
+
+	// Make sure some time has passed before the second write
+	time.Sleep(1 * time.Millisecond)
+
+	// Run again with different output
+	tsk = Sh("echo hej > {o:hej}")
+	tsk.OutPathFuncs["hej"] = func() string { return f }
+	prt.InPorts["in"] = tsk.OutPorts["hej"]
+	pl = NewPipeline()
+	pl.AddTasks(tsk, prt)
+	pl.Run()
+
+	// Assert exists
+	fiAft, e3 := os.Stat(f)
+	assert.Nil(t, e3)
+
+	// Get modified time AFTER second run
+	mtAft := fiAft.ModTime()
+	fmt.Printf("*** Time after: %s\n", mtAft)
+
+	// Assert file is not modified!
+	assert.EqualValues(t, mtBef, mtAft)
+
 	cleanFiles(f)
 }
 
