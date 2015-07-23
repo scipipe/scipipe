@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// A printer task
-	prt := sci.Sh("cat {i:in} >> log.txt")
+	prt := sci.Sh("cat {i:in} >> log.txt; rm {i:in}")
 
 	// Connection info
 	abc.ParamPorts["a"] = cmb.A
