@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+// ======= FileTarget ========
+
 type FileTarget struct {
 	path string
 }
@@ -53,4 +55,35 @@ func (ft *FileTarget) Exists() bool {
 		return true
 	}
 	return false
+}
+
+// ======= FileQueue =======
+
+type FileQueue struct {
+	task
+	Out       chan *FileTarget
+	FilePaths []string
+}
+
+func FQ(fps ...string) (fq *FileQueue) {
+	return NewFileQueue(fps...)
+}
+
+func NewFileQueue(fps ...string) (fq *FileQueue) {
+	filePaths := []string{}
+	for _, fp := range fps {
+		filePaths = append(filePaths, fp)
+	}
+	fq = &FileQueue{
+		Out:       make(chan *FileTarget, BUFSIZE),
+		FilePaths: filePaths,
+	}
+	return
+}
+
+func (proc *FileQueue) Run() {
+	defer close(proc.Out)
+	for _, fp := range proc.FilePaths {
+		proc.Out <- NewFileTarget(fp)
+	}
 }
