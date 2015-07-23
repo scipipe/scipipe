@@ -24,15 +24,15 @@ func InitLog(
 	errorHandle io.Writer) {
 
 	Trace = log.New(traceHandle,
-		"TRACE: ",
+		"TRACE:   ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 
 	Debug = log.New(debugHandle,
-		"DEBUG: ",
+		"DEBUG:   ",
 		log.Ldate|log.Ltime|log.Lshortfile)
 
 	Info = log.New(infoHandle,
-		"INFO: ",
+		"INFO:    ",
 		log.Ldate|log.Ltime)
 
 	Warn = log.New(warningHandle,
@@ -40,7 +40,7 @@ func InitLog(
 		log.Ldate|log.Ltime)
 
 	Error = log.New(errorHandle,
-		"ERROR: ",
+		"ERROR:   ",
 		log.Ldate|log.Ltime)
 
 	LogExists = true
