@@ -6,6 +6,8 @@ import (
 )
 
 func main() {
+	sci.InitLogInfo()
+
 	h := sci.Sh("echo foo > {o:foo}")
 	h.OutPathFuncs["foo"] = func() string {
 		return "foo.txt"

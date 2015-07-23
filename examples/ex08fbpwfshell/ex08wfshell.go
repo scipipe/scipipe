@@ -14,6 +14,7 @@ const (
 
 func main() {
 	runtime.GOMAXPROCS(4)
+	sci.InitLogWarn()
 
 	wf := NewExampleWorkflow()
 
@@ -27,7 +28,7 @@ func main() {
 
 		for fileNo := 1; fileNo <= 16; fileNo++ {
 			inFile := sci.NewFileTarget(fmt.Sprintf("file%d.txt", fileNo))
-			fmt.Println("Processing file:", inFile.GetPath(), " ...")
+			sci.Info.Println("Processing file:", inFile.GetPath(), " ...")
 			for _, ar := range []string{"B", "D"} {
 				for _, cr := range []string{"E", "F"} {
 					for _, gr := range []string{"H", "I"} {
@@ -46,7 +47,7 @@ func main() {
 
 	// Run the workflow
 	wf.Run()
-	fmt.Println("Finished program")
+	sci.Info.Println("Finished program")
 }
 
 // ======= Workflow task =======
@@ -108,7 +109,7 @@ func (proc *ReplaceLetters) Run() {
 		}
 		wg.Add(1)
 		go func() {
-			fmt.Println("Processing:", inFile.GetPath(), arepl, crepl, grepl, trepl)
+			sci.Info.Println("Processing:", inFile.GetPath(), arepl, crepl, grepl, trepl)
 			outFilePath := fmt.Sprint(inFile.GetPath(), ".Arw", arepl, "_Crw", crepl, "_Grw", grepl, "_Trw", trepl)
 			outFile := sci.NewFileTarget(outFilePath)
 			text := inFile.Read()

@@ -7,6 +7,8 @@ import (
 )
 
 func main() {
+	sci.InitLogWarn()
+
 	runtime.GOMAXPROCS(4)
 	cmb := NewCombinatoricsTask()
 
