@@ -38,32 +38,17 @@ func NewShellTask(command string) *ShellTask {
 
 func Sh(cmd string) *ShellTask {
 	t := NewShellTask(cmd)
-	t.initPortsFromCmdPattern(cmd)
-	return t
-}
-
-func ShNoSpawn(cmd string) *ShellTask {
-	t := NewShellTask(cmd)
-	t.initPortsFromCmdPattern(cmd)
-	t.Spawn = false
+	t.initPortsFromCmdPattern(cmd, nil)
 	return t
 }
 
 func ShParams(cmd string, params map[string]string) *ShellTask {
 	t := NewShellTask(cmd)
-	t.initPortsFromCmdPattern(cmd)
-	if params != nil {
-		// Send eternal list of options
-		go func() {
-			for name, val := range params {
-				t.ParamPorts[name] <- val
-			}
-		}()
-	}
+	t.initPortsFromCmdPattern(cmd, params)
 	return t
 }
 
-func (t *ShellTask) initPortsFromCmdPattern(cmd string) {
+func (t *ShellTask) initPortsFromCmdPattern(cmd string, params map[string]string) {
 	// Find in/out port names and Params and set up in struct fields
 	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
@@ -76,7 +61,11 @@ func (t *ShellTask) initPortsFromCmdPattern(cmd string) {
 		if typ == "o" {
 			t.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
 		} else if typ == "p" {
-			t.ParamPorts[name] = make(chan string, BUFSIZE)
+			if params == nil {
+				t.ParamPorts[name] = make(chan string, BUFSIZE)
+			} else {
+				t.Params[name] = params[name]
+			}
 		}
 
 		// else if typ == "i" {
