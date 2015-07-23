@@ -167,7 +167,6 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 
 	// Get modified time AFTER second run
 	mtAft := fiAft.ModTime()
-	fmt.Printf("*** Time after: %s\n", mtAft)
 
 	// Assert file is not modified!
 	assert.EqualValues(t, mtBef, mtAft)
@@ -180,7 +179,6 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 func cleanFiles(fileNames ...string) {
 	for _, fileName := range fileNames {
 		if _, err := os.Stat(fileName); err == nil {
-			fmt.Println("Removing file", fileName)
 			os.Remove(fileName)
 			fmt.Println("Successfully removed file", fileName)
 		}
