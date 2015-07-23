@@ -81,7 +81,7 @@ func (t *ShellTask) initPortsFromCmdPattern(cmd string) {
 }
 
 func (t *ShellTask) Run() {
-	fmt.Println("Entering task: ", t.Command)
+	// fmt.Println("Entering task: ", t.Command)
 	defer t.closeOutChans()
 
 	// Main loop
@@ -90,15 +90,15 @@ func (t *ShellTask) Run() {
 		paramPortsClosed := t.receiveParams()
 
 		if len(t.InPorts) == 0 && paramPortsClosed {
-			fmt.Println("Closing loop: No inports, and param ports closed")
+			// fmt.Println("Closing loop: No inports, and param ports closed")
 			break
 		}
 		if len(t.ParamPorts) == 0 && inPortsClosed {
-			fmt.Println("Closing loop: No inports, and in ports closed")
+			// fmt.Println("Closing loop: No inports, and in ports closed")
 			break
 		}
 		if inPortsClosed && paramPortsClosed {
-			fmt.Println("Closing loop: Both inports and param ports closed")
+			// fmt.Println("Closing loop: Both inports and param ports closed")
 			break
 		}
 
@@ -115,7 +115,7 @@ func (t *ShellTask) Run() {
 			break
 		}
 	}
-	fmt.Println("Exiting task:  ", t.Command)
+	// fmt.Println("Exiting task:  ", t.Command)
 }
 
 func (t *ShellTask) closeOutChans() {
@@ -134,7 +134,7 @@ func (t *ShellTask) receiveInputs() bool {
 			inPortsClosed = true
 			continue
 		}
-		fmt.Println("Receiving file:", infile.GetPath())
+		// fmt.Println("Receiving file:", infile.GetPath())
 		t.InPaths[iname] = infile.GetPath()
 	}
 	return inPortsClosed
@@ -149,7 +149,7 @@ func (t *ShellTask) receiveParams() bool {
 			paramPortsClosed = true
 			continue
 		}
-		fmt.Println("Receiving param:", pname, "with value", pval)
+		// fmt.Println("Receiving param:", pname, "with value", pval)
 		t.Params[pname] = pval
 	}
 	return paramPortsClosed
@@ -161,7 +161,7 @@ func (t *ShellTask) sendOutputs() {
 		fun := t.OutPathFuncs[oname]
 		baseName := fun()
 		ft := NewFileTarget(baseName)
-		fmt.Println("Sending file:  ", ft.GetPath())
+		// fmt.Println("Sending file:  ", ft.GetPath())
 		ochan <- ft
 	}
 }
@@ -169,8 +169,8 @@ func (t *ShellTask) sendOutputs() {
 func (t *ShellTask) formatAndExecute(cmd string) {
 	cmd = t.replacePlaceholdersInCmd(cmd)
 	fmt.Println("Executing cmd: ", cmd)
-	cmdOut, err := exec.Command("bash", "-c", cmd).Output()
-	fmt.Println("Command output: ", cmdOut)
+	_, err := exec.Command("bash", "-c", cmd).Output()
+	// fmt.Println("Command output: ", string(cmdOut))
 	Check(err)
 }
 
