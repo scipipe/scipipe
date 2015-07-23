@@ -79,7 +79,7 @@ func TestReplacePlaceholdersInCmd(t *t.T) {
 	assert.Equal(t, "foo.txt", tt.InPaths["in1"], "foo.txt")
 
 	// Assert placeholders are correctly replaced in command
-	cmd := tt.replacePlaceholdersInCmd(rawCmd)
+	cmd := tt.formatCommand(rawCmd)
 	assert.EqualValues(t, "echo foo.txt > foo.txt.bar", cmd)
 }
 

@@ -28,3 +28,11 @@ func SS(ss ...string) []string {
 	}
 	return sslice
 }
+
+func copyMapStrStr(m map[string]string) (nm map[string]string) {
+	nm = make(map[string]string)
+	for k, v := range m {
+		nm[k] = v
+	}
+	return nm
+}

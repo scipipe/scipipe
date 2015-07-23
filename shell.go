@@ -102,6 +102,9 @@ func (t *ShellTask) Run() {
 			break
 		}
 
+		// Really needed?
+		outPaths := copyMapStrStr(t.createOutPaths())
+
 		// Format
 		cmd := t.formatCommand(t.Command)
 
@@ -109,7 +112,7 @@ func (t *ShellTask) Run() {
 		t.executeCommand(cmd)
 
 		// Send
-		t.sendOutputs()
+		t.sendOutputs(outPaths)
 
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
@@ -158,20 +161,22 @@ func (t *ShellTask) receiveParams() bool {
 	return paramPortsClosed
 }
 
-func (t *ShellTask) sendOutputs() {
+func (t *ShellTask) sendOutputs(outPaths map[string]string) {
 	// Send output targets on out ports
 	for oname, ochan := range t.OutPorts {
-		fun := t.OutPathFuncs[oname]
-		baseName := fun()
-		ft := NewFileTarget(baseName)
+		outName := outPaths[oname]
+		ft := NewFileTarget(outName)
 		// fmt.Println("Sending file:  ", ft.GetPath())
 		ochan <- ft
 	}
 }
 
-func (t *ShellTask) formatCommand(cmd string) string {
-	cmd = t.replacePlaceholdersInCmd(cmd)
-	return cmd
+func (t *ShellTask) createOutPaths() (outPaths map[string]string) {
+	outPaths = make(map[string]string)
+	for oname, ofun := range t.OutPathFuncs {
+		outPaths[oname] = ofun()
+	}
+	return outPaths
 }
 
 func (t *ShellTask) executeCommand(cmd string) {
@@ -181,7 +186,7 @@ func (t *ShellTask) executeCommand(cmd string) {
 	Check(err)
 }
 
-func (t *ShellTask) replacePlaceholdersInCmd(cmd string) string {
+func (t *ShellTask) formatCommand(cmd string) string {
 	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
