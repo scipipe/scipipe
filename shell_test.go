@@ -84,6 +84,8 @@ func TestReplacePlaceholdersInCmd(t *t.T) {
 }
 
 func TestParameterCommand(t *t.T) {
+	cmb := NewCombinatoricsTask()
+
 	// An abc file printer
 	abc := Sh("echo {p:a} {p:b} {p:c} > {o:out}")
 	abc.OutPathFuncs["out"] = func() string {
@@ -99,34 +101,23 @@ func TestParameterCommand(t *t.T) {
 	prt := Sh("cat {i:in} >> /tmp/log.txt; rm {i:in}")
 
 	// Connection info
+	abc.ParamPorts["a"] = cmb.A
+	abc.ParamPorts["b"] = cmb.B
+	abc.ParamPorts["c"] = cmb.C
 	prt.InPorts["in"] = abc.OutPorts["out"]
 
-	// Feed the task with multiple combinations
-	go func() {
-		defer close(abc.ParamPorts["a"])
-		defer close(abc.ParamPorts["b"])
-		defer close(abc.ParamPorts["c"])
+	pl := NewPipeline()
+	pl.AddTasks(cmb, abc, prt)
+	pl.Run()
 
-		for _, a := range SS("a1", "a2", "a3") {
-			for _, b := range SS("b1", "b2", "b3") {
-				for _, c := range SS("c1", "c2", "c3") {
-					abc.ParamPorts["a"] <- a
-					abc.ParamPorts["b"] <- b
-					abc.ParamPorts["c"] <- c
-				}
-			}
-		}
-	}()
-
-	go abc.Run()
-	prt.Run()
-	fmt.Println("Finished TestParameterCommand")
-
+	// Run tests
 	_, err := os.Stat("/tmp/log.txt")
 	assert.Nil(t, err)
 
 	cleanFiles("/tmp/log.txt")
 }
+
+// Helper functions
 
 func cleanFiles(fileNames ...string) {
 	for _, fileName := range fileNames {
@@ -134,6 +125,39 @@ func cleanFiles(fileNames ...string) {
 			fmt.Println("Removing file", fileName)
 			os.Remove(fileName)
 			fmt.Println("Successfully removed file", fileName)
+		}
+	}
+}
+
+// Helper tasks
+
+type CombinatoricsTask struct {
+	BaseTask
+	A chan string
+	B chan string
+	C chan string
+}
+
+func NewCombinatoricsTask() *CombinatoricsTask {
+	return &CombinatoricsTask{
+		A: make(chan string, BUFSIZE),
+		B: make(chan string, BUFSIZE),
+		C: make(chan string, BUFSIZE),
+	}
+}
+
+func (proc *CombinatoricsTask) Run() {
+	defer close(proc.A)
+	defer close(proc.B)
+	defer close(proc.C)
+
+	for _, a := range SS("a1", "a2", "a3") {
+		for _, b := range SS("b1", "b2", "b3") {
+			for _, c := range SS("c1", "c2", "c3") {
+				proc.A <- a
+				proc.B <- b
+				proc.C <- c
+			}
 		}
 	}
 }
