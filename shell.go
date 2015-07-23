@@ -98,7 +98,7 @@ func (t *ShellTask) Run() {
 			break
 		}
 		if len(t.ParamPorts) == 0 && inPortsClosed {
-			Debug.Println("Closing loop: No inports, and in ports closed")
+			Debug.Println("Closing loop: No param ports, and inports closed")
 			break
 		}
 		if inPortsClosed && paramPortsClosed {
