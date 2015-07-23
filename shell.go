@@ -1,13 +1,12 @@
 package scipipe
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	re "regexp"
 	str "strings"
-	// "time"
-	"errors"
-	"os"
 	"sync"
 )
 
@@ -38,6 +37,9 @@ func NewShellTask(command string) *ShellTask {
 }
 
 func Sh(cmd string) *ShellTask {
+	if !LogExists {
+		InitLogError()
+	}
 	t := NewShellTask(cmd)
 	t.initPortsFromCmdPattern(cmd, nil)
 	return t
@@ -81,7 +83,7 @@ func (t *ShellTask) initPortsFromCmdPattern(cmd string, params map[string]string
 }
 
 func (t *ShellTask) Run() {
-	// fmt.Println("Entering task: ", t.Command)
+	Debug.Println("Entering task: ", t.Command)
 	defer t.closeOutChans()
 
 	wg := new(sync.WaitGroup)
@@ -92,15 +94,15 @@ func (t *ShellTask) Run() {
 		paramPortsClosed := t.receiveParams()
 
 		if len(t.InPorts) == 0 && paramPortsClosed {
-			// fmt.Println("Closing loop: No inports, and param ports closed")
+			Debug.Println("Closing loop: No inports, and param ports closed")
 			break
 		}
 		if len(t.ParamPorts) == 0 && inPortsClosed {
-			// fmt.Println("Closing loop: No inports, and in ports closed")
+			Debug.Println("Closing loop: No inports, and in ports closed")
 			break
 		}
 		if inPortsClosed && paramPortsClosed {
-			// fmt.Println("Closing loop: Both inports and param ports closed")
+			Debug.Println("Closing loop: Both inports and param ports closed")
 			break
 		}
 
@@ -111,9 +113,9 @@ func (t *ShellTask) Run() {
 		outPaths := copyMapStrStr(t.createOutPaths())
 
 		if t.anyFileExists(outPaths) {
-			fmt.Printf("One or more outputs exist, so skipping task: '%s'\n", cmd)
+			Warn.Printf("Skipping task, one or more outputs already exist: '%s'\n", cmd)
 		} else {
-			//fmt.Printf("No outputs exists, so starting task: '%s'\n", cmd)
+			Debug.Printf("No outputs exists, so starting task: '%s'\n", cmd)
 			if t.Spawn {
 				wg.Add(1)
 				go func() {
@@ -130,14 +132,14 @@ func (t *ShellTask) Run() {
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
 		if len(t.InPorts) == 0 && len(t.ParamPorts) == 0 {
-			fmt.Println("Closing after send: No inports or param ports")
+			Debug.Println("Closing after send: No inports or param ports")
 			break
 		}
 	}
-	fmt.Printf("Starting to wait (task '%s')\n", t.Command)
+	Debug.Printf("Starting to wait (task '%s')\n", t.Command)
 	wg.Wait()
-	fmt.Printf("Finished waiting (task '%s')\n", t.Command)
-	// fmt.Println("Exiting task:  ", t.Command)
+	Debug.Printf("Finished waiting (task '%s')\n", t.Command)
+	Debug.Println("Exiting task:  ", t.Command)
 }
 
 func (t *ShellTask) closeOutChans() {
@@ -156,7 +158,7 @@ func (t *ShellTask) receiveInputs() bool {
 			inPortsClosed = true
 			continue
 		}
-		// fmt.Println("Receiving file:", infile.GetPath())
+		Debug.Println("Receiving file:", infile.GetPath())
 		t.InPaths[iname] = infile.GetPath()
 	}
 	return inPortsClosed
@@ -171,7 +173,7 @@ func (t *ShellTask) receiveParams() bool {
 			paramPortsClosed = true
 			continue
 		}
-		// fmt.Println("Receiving param:", pname, "with value", pval)
+		Debug.Println("Receiving param:", pname, "with value", pval)
 		t.Params[pname] = pval
 	}
 	return paramPortsClosed
@@ -183,7 +185,7 @@ func (t *ShellTask) sendOutputs(outPaths map[string]string, mx *sync.Mutex) {
 	for oname, ochan := range t.OutPorts {
 		outName := outPaths[oname]
 		ft := NewFileTarget(outName)
-		// fmt.Println("Sending file:  ", ft.GetPath())
+		Debug.Println("Sending file:  ", ft.GetPath())
 		ochan <- ft
 	}
 	mx.Unlock()
@@ -202,16 +204,15 @@ func (t *ShellTask) anyFileExists(outPaths map[string]string) (anyFileExists boo
 	for _, opath := range outPaths {
 		if _, err := os.Stat(opath); err == nil {
 			anyFileExists = true
-			fmt.Println("Output file exists already:", opath)
+			Info.Println("Output file exists already:", opath)
 		}
 	}
 	return
 }
 
 func (t *ShellTask) executeCommand(cmd string) {
-	fmt.Println("Executing cmd: ", cmd)
+	Info.Println("Executing cmd: ", cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
-	// fmt.Println("Command output: ", string(cmdOut))
 	Check(err)
 }
 

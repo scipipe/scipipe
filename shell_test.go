@@ -9,6 +9,8 @@ import (
 )
 
 func TestShellHasInOutPorts(t *t.T) {
+	InitLogError()
+
 	tt := Sh("echo {i:in1} {o:out1}")
 	tt.OutPathFuncs["out1"] = func() string {
 		return fmt.Sprint(tt.InPaths["in1"], ".bar")
@@ -26,6 +28,8 @@ func TestShellHasInOutPorts(t *t.T) {
 }
 
 func TestShellCloseOutPortOnInPortClose(t *t.T) {
+	InitLogError()
+
 	fooTask := Sh("echo foo > {o:out1}")
 	fooTask.OutPathFuncs["out1"] = func() string {
 		return "foo.txt"
@@ -55,6 +59,8 @@ func TestShellCloseOutPortOnInPortClose(t *t.T) {
 }
 
 func TestReplacePlaceholdersInCmd(t *t.T) {
+	InitLogError()
+
 	rawCmd := "echo {i:in1} > {o:out1}"
 	tt := Sh(rawCmd)
 	tt.OutPathFuncs["out1"] = func() string {
@@ -85,6 +91,8 @@ func TestReplacePlaceholdersInCmd(t *t.T) {
 }
 
 func TestParameterCommand(t *t.T) {
+	InitLogError()
+
 	cmb := NewCombinatoricsTask()
 
 	// An abc file printer
@@ -119,6 +127,8 @@ func TestParameterCommand(t *t.T) {
 }
 
 func TestTaskWithoutInputsOutputs(t *t.T) {
+	InitLogError()
+
 	f := "/tmp/hej.txt"
 	tsk := Sh("echo hej > " + f)
 	tsk.Run()
@@ -128,6 +138,8 @@ func TestTaskWithoutInputsOutputs(t *t.T) {
 }
 
 func TestDontOverWriteExistingOutputs(t *t.T) {
+	InitLogError()
+
 	f := "/tmp/hej.txt"
 
 	// Assert file does not exist before running
@@ -180,7 +192,7 @@ func cleanFiles(fileNames ...string) {
 	for _, fileName := range fileNames {
 		if _, err := os.Stat(fileName); err == nil {
 			os.Remove(fileName)
-			fmt.Println("Successfully removed file", fileName)
+			Info.Println("Successfully removed file", fileName)
 		}
 	}
 }
