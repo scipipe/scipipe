@@ -7,6 +7,7 @@ import (
 	str "strings"
 	// "time"
 	"errors"
+	"os"
 	"sync"
 )
 
@@ -103,22 +104,27 @@ func (t *ShellTask) Run() {
 			break
 		}
 
-		// Really needed?
-		outPaths := copyMapStrStr(t.createOutPaths())
-
 		// Format
 		cmd := t.formatCommand(t.Command)
 
-		if t.Spawn {
-			wg.Add(1)
-			go func() {
+		// Create copy of outPaths, for thread-safety
+		outPaths := copyMapStrStr(t.createOutPaths())
+
+		if t.anyFileExists(outPaths) {
+			fmt.Printf("One or more outputs exist, so skipping task: '%s'\n", cmd)
+		} else {
+			//fmt.Printf("No outputs exists, so starting task: '%s'\n", cmd)
+			if t.Spawn {
+				wg.Add(1)
+				go func() {
+					t.executeCommand(cmd)
+					t.sendOutputs(outPaths, mx)
+					wg.Done()
+				}()
+			} else {
 				t.executeCommand(cmd)
 				t.sendOutputs(outPaths, mx)
-				wg.Done()
-			}()
-		} else {
-			t.executeCommand(cmd)
-			t.sendOutputs(outPaths, mx)
+			}
 		}
 
 		// If there are no inports, we know we should exit the loop
@@ -189,6 +195,17 @@ func (t *ShellTask) createOutPaths() (outPaths map[string]string) {
 		outPaths[oname] = ofun()
 	}
 	return outPaths
+}
+
+func (t *ShellTask) anyFileExists(outPaths map[string]string) (anyFileExists bool) {
+	anyFileExists = false
+	for _, opath := range outPaths {
+		if _, err := os.Stat(opath); err == nil {
+			anyFileExists = true
+			fmt.Println("Output file exists already:", opath)
+		}
+	}
+	return
 }
 
 func (t *ShellTask) executeCommand(cmd string) {
