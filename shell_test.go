@@ -199,6 +199,36 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	cleanFiles(f)
 }
 
+func TestShellExpand(t *t.T) {
+	initTestLogs()
+
+	cmdPat := "echo {p:txt} > {i:in}; cat {i:in} > {o:out}"
+	expectedCmd := "echo hej > in.txt; cat in.txt > out.txt"
+
+	params := make(map[string]string)
+	params["txt"] = "hej"
+	ipaths := make(map[string]string)
+	ipaths["in"] = "in.txt"
+	opaths := make(map[string]string)
+	opaths["out"] = "out.txt"
+
+	cmd := expandCommandParamsAndPaths(cmdPat, params, ipaths, opaths)
+	assert.EqualValues(t, expectedCmd, cmd, "Command not properly expanded!")
+
+	st := ShExp(cmdPat, ipaths, opaths, params)
+
+	// Assert that no ports are created, since all place holders
+	// are replaced by the provided maps.
+	assert.EqualValues(t, 0, len(st.InPorts), "Inports created where it should not!")
+	assert.EqualValues(t, 0, len(st.OutPorts), "OutPorts created where it should not!")
+	assert.EqualValues(t, 0, len(st.ParamPorts), "ParamPorts created where it should not!")
+
+	st.Run()
+	assert.True(t, NewFileTarget("out.txt").Exists())
+
+	cleanFiles("in.txt", "out.txt")
+}
+
 // Helper functions
 
 func cleanFiles(fileNames ...string) {

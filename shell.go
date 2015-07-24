@@ -38,6 +38,10 @@ func NewShellTask(command string) *ShellTask {
 }
 
 func Sh(cmd string) *ShellTask {
+	return Shell(cmd)
+}
+
+func Shell(cmd string) *ShellTask {
 	if !LogExists {
 		InitLogError()
 	}
@@ -46,10 +50,52 @@ func Sh(cmd string) *ShellTask {
 	return t
 }
 
-func ShParams(cmd string, params map[string]string) *ShellTask {
-	t := NewShellTask(cmd)
-	t.initPortsFromCmdPattern(cmd, params)
+func ShExp(cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *ShellTask {
+	return ShellExpand(cmd, inPaths, outPaths, params)
+}
+
+func ShellExpand(cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *ShellTask {
+	cmdExp := expandCommandParamsAndPaths(cmd, params, inPaths, outPaths)
+	t := NewShellTask(cmdExp)
+	t.initPortsFromCmdPattern(cmdExp, params)
 	return t
+}
+
+func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths map[string]string, outPaths map[string]string) (cmdExp string) {
+	r := getPlaceHolderRegex()
+	ms := r.FindAllStringSubmatch(cmd, -1)
+	Debug.Println("Params:", params)
+	Debug.Println("inPaths:", inPaths)
+	Debug.Println("outPaths:", outPaths)
+	cmdExp = cmd
+	for _, m := range ms {
+		whole := m[0]
+		typ := m[1]
+		name := m[2]
+		var newstr string
+		if typ == "p" {
+			if params != nil && params[name] != "" {
+				Debug.Println("Found param:", params[name])
+				newstr = params[name]
+			}
+		} else if typ == "i" {
+			if inPaths != nil && inPaths[name] != "" {
+				Debug.Println("Found inPath:", inPaths[name])
+				newstr = inPaths[name]
+			}
+		} else if typ == "o" {
+			if outPaths != nil && outPaths[name] != "" {
+				Debug.Println("Found outPath:", outPaths[name])
+				newstr = outPaths[name]
+			}
+		}
+		Debug.Println("Replacing:", whole, "->", newstr)
+		cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+	}
+	if cmd != cmdExp {
+		Debug.Printf("Expanded command '%s' into '%s'\n", cmd, cmdExp)
+	}
+	return
 }
 
 func (t *ShellTask) initPortsFromCmdPattern(cmd string, params map[string]string) {
