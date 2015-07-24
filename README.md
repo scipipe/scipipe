@@ -1,24 +1,58 @@
 # SciPipe
 
-A [Go(lang)](http://golang.org) Library for writing Scientific Workflows (so far in pure Go)
+An experimental library for writing Scientific (Batch) Workflows in vanilla [Go(lang)](http://golang.org).
 
-This library is an experiment in building a scientific workflow engine in pure Go,
+This is an experiment in building a scientific workflow engine in pure Go,
 based on an idea for a flow-based like pattern in pure Go, as presented by the author in
 [this blog post on Gopher Academy](http://blog.gopheracademy.com/composable-pipelines-pattern).
 
 From flow-based programming, It uses the principles of separate network (workflow dependency graph)
-definition, named in- and out-ports and bounded buffers (already available in Go) to make
-writing workflows as easy as possible.
+definition, named in- and out-ports, sub-networks/sub-workflows, and bounded buffers (already available 
+in Go's channels) to make writing workflows as easy as possible.
 
-In addition to that, it adds convenience methods (see `sp.Sh()` below) for creating ad hoc tasks
-on the fly, using a shell command, with inputs and outputs defined in-line in the shell command,
-with a syntax of `{i:INPORT_NAME}` for inports, and `{o:OUTPORT_NAME}` for outports.o
+In addition to that, it adds convenience factory methods (see `sp.Sh()` below) for creating ad hoc tasks
+on the fly based on a shell command pattern, where  inputs, outputs and parameters are defined in-line 
+in the shell command with a syntax of `{i:INPORT_NAME}` for inports, and `{o:OUTPORT_NAME}` for outports
+and `{p:PARAM_NAME}` for parameters.
 
-Example: Creating two example tasks:
+## Example: Creating two example tasks:
+
+Let's look at a toy example workflow. First the full version:
 
 ```go
-fooWriter := sp.Sh("echo 'foo' > {o:outfile}")
-fooToBarReplacer := sp.Sh("cat {i:foofile} | sed 's/foo/bar/g' > {o:barfile}")
+// Initialize tasks
+fw := sp.Sh("echo 'foo' > {o:outfile}")
+f2b := sp.Sh("cat {i:foofile} | sed 's/foo/bar/g' > {o:barfile}")
+
+// Add output file path formatters
+fw.OutPathFuncs["outfile"] = func() string {
+	// Just statically create a file named foo.txt
+	return "foo.txt"
+}
+f2b.OutPathFuncs["barfile"] = func() string {
+	// Here, we instead re-use the file name of the task we depend
+	// on (which we get on the 'foofile' inport), and just
+	// pad '.bar' at the end:
+	return f2b.GetInPath("foofile") + ".bar"
+}
+
+// Connect network
+f2b.InPorts["foofile"] = fw.OutPorts["outfile"]
+
+// Add to a pipeline and run
+pl := sp.NewPipeline()
+pl.AddTasks(fw, f2b)
+pl.Run()
+```
+
+Now, let's go through the code above in more detail, part by part:
+
+### Initializing tasks
+
+```go
+fw := sp.Sh("echo 'foo' > {o:outfile}")
+f2b := sp.Sh("cat {i:foofile} | sed 's/foo/bar/g' > {o:barfile}")
+
 ```
 
 For these inports and outports, channels for sending and receiving FileTargets are automatically
@@ -34,8 +68,10 @@ respective channels to the corresponding places in the hashmap.
 Example: Connecting the two tasks creating above:
 
 ```go
-fooToBarReplacer.InPorts["foofile"] = fooWriter.OutPorts["outfile"]
+f2b.InPorts["foofile"] = fw.OutPorts["outfile"]
 ```
+
+### Formatting output file paths
 
 The only thing remaining after this, is to provide some way for the program to figure out a
 suitable file name for each of the files propagating through this little "network" of tasks.
@@ -44,96 +80,47 @@ the names of the outports of the tasks. So, to define the output filenames of th
 above, we would add:
 
 ```go
-fooWriter.OutPathFuncs["outfile"] = func() string {
+fw.OutPathFuncs["outfile"] = func() string {
 	// Just statically create a file named foo.txt
 	return "foo.txt"
 }
-fooToBarReplacer.OutPathFuncs["barfile"] = func() string {
+f2b.OutPathFuncs["barfile"] = func() string {
 	// Here, we instead re-use the file name of the task we depend
 	// on (which we get on the 'foofile' inport), and just
 	// pad '.bar' at the end:
-	return fooToBarReplacer.GetInPath("foofile") + ".bar"
+	return f2b.GetInPath("foofile") + ".bar"
 }
 ```
 
-So with this, we have done everything needed to set up a file-based batch workflow system:
+### Running the pipeline
 
-- Specified task dependencies by wiring outputs of the upstream tasks to inports in downstream tasks.
-- For each outport, provided a function that will compute a suitable file name for the new file.
-
-## Real-world code example
-
-For a complete, more real-world example, see the code here below, which shows how you can write a simple
-bioinformatics (sequence alignment) workflow already today, using this library,
-implementing a few steps of an [NGS bioinformatics tutorial](uppnex.se/twiki/do/view/Courses/NgsIntro1502/ResequencingAnalysis)
-held at [SciLifeLab](http://www.scilifelab.se) in Uppsala in February 2015:
+So, the final part probably explains itself, but the pipeline component is a very simple one
+that will start each component except the last one in a separate go-routine, while the last
+task will be run in the main go-routine, so as to block until the pipeline has finished.
 
 ```go
-package main
-
-import (
-    "fmt"
-    sp "github.com/samuell/scipipe"
-    re "regexp"
-)
-
-const (
-    REF      = "human_17_v37.fasta"
-    BASENAME = ".ILLUMINA.low_coverage.17q_"
-)
-
-var (
-    INDIVIDUALS = [2]string{"NA06984", "NA07000"}
-    SAMPLES     = [2]string{"1", "2"}
-)
-
-func main() {
-    // Initialize existing files
-    fastq1 := sp.NewFileTarget(fmt.Sprintf("%s%s1.fq", INDIVIDUALS[0], BASENAME))
-    fastq2 := sp.NewFileTarget(fmt.Sprintf("%s%s2.fq", INDIVIDUALS[1], BASENAME))
-
-    // Step 2 in [1]
-    align := sp.Sh("bwa aln " + REF + " {i:fastq} > {o:sai}")
-    align.OutPathFuncs["sai"] = func() string {
-        return align.GetInPath("fastq") + ".sai"
-    }
-
-    // Step 3 in [1]
-    merge := sp.Sh("bwa sampe " + REF + " {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged}")
-    merge.OutPathFuncs["merged"] = func() string {
-        ptrn, err := re.Compile("NA[0-9]+")
-        sp.Check(err)
-        ind1 := ptrn.FindString(merge.GetInPath("sai1"))
-        ind2 := ptrn.FindString(merge.GetInPath("sai2"))
-        return ind1 + "." + ind2 + ".merged.sam"
-    }
-
-    // Wire the dataflow network / dependency graph
-    merge.InPorts["sai1"] = align.OutPorts["sai"]
-    merge.InPorts["sai2"] = align.OutPorts["sai"]
-
-    // For some of the inputs, we just send file targets "manually"
-    // (where they don't come from a previous task)
-
-    // In this specific case we send two inputs on the same port,
-    // basically meaning that the align task will run twice,
-    // producing two outputs:
-    align.InPorts["fastq"] <- fastq1
-    align.InPorts["fastq"] <- fastq2
-
-    // Set up tasks for execution
-    go align.Run()
-    go merge.Run()
-
-    // Run pipeline by asking for the final output
-    <-merge.OutPorts["merged"]
-}
+pl := sp.NewPipeline()
+pl.AddTasks(fw, f2b)
+pl.Run()
 ```
 
-### Acknowledgements
+
+### Summary
+
+So with this, we have done everything needed to set up a file-based batch workflow system.
+
+In summary, what we did, was to:
+
+- Specify task dependencies by wiring outputs of the upstream tasks to inports in downstream tasks.
+- For each outport, provide a function that will compute a suitable file name for the new file.
+
+For more examples, see the [examples folder](https://github.com/samuell/scipipe/tree/master/examples).
+
+## Acknowledgements
 
 - This library is heavily influenced/inspired by (and might make use of on in the future),
   the [GoFlow](https://github.com/trustmaster/goflow) library by [Vladimir Sibirov](https://github.com/trustmaster/goflow).
 - It is also heavily influenced by the [Flow-based programming](http://www.jpaulmorrison.com/fbp) by [John Paul Morrison](http://www.jpaulmorrison.com/fbp).
 - This work is financed by faculty grants and other financing for Jarl Wikberg's [Pharmaceutical Bioinformatics group](http://www.farmbio.uu.se/forskning/researchgroups/pb/) of Dept. of
   Pharmaceutical Biosciences at Uppsala University. Main supervisor for the project is [Ola Spjuth](http://www.farmbio.uu.se/research/researchgroups/pb/olaspjuth).
+- Big thanks to [Egon Elbre](http://twitter.com/egonelbre) for very helpful input on the design of the internals of the pipeline, and tasks, which simplified the implementation a lot.
