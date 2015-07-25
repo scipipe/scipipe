@@ -243,10 +243,7 @@ func TestSendsOrderedOutputs(t *t.T) {
 	fq := NewFileQueue(fnames...)
 
 	fc := Sh("echo {i:in} > {o:out}")
-	fc.Spawn = true
-
 	sl := Sh("cat {i:in} > {o:out}")
-	sl.Spawn = true
 
 	fc.OutPathFuncs["out"] = func() string { return fc.GetInPath("in") }
 	sl.OutPathFuncs["out"] = func() string { return sl.GetInPath("in") + ".copy.txt" }
