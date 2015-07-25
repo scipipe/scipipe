@@ -43,7 +43,7 @@ func Sh(cmd string) *ShellTask {
 
 func Shell(cmd string) *ShellTask {
 	if !LogExists {
-		InitLogError()
+		InitLogAudit()
 	}
 	t := NewShellTask(cmd)
 	t.initPortsFromCmdPattern(cmd, nil)
@@ -162,8 +162,7 @@ func (t *ShellTask) Run() {
 		if t.anyFileExists(outTargets) {
 			Warn.Printf("Skipping task, one or more outputs already exist: '%s'\n", cmd)
 		} else {
-			Debug.Printf("No outputs exists, so starting task: '%s'\n", cmd)
-
+			Audit.Printf("Starting task: '%s'\n", cmd)
 			if t.Spawn {
 				wg.Add(1)
 				beforeSendCh := make(chan int)
@@ -184,12 +183,13 @@ func (t *ShellTask) Run() {
 				t.atomizeTargets(outTargets, mx)
 				t.sendOutputs(outTargets, mx)
 			}
+			Audit.Printf("Finished task: '%s'\n", cmd)
 		}
 
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
 		if len(t.InPorts) == 0 && len(t.ParamPorts) == 0 {
-			Debug.Println("Closing after send: No inports or param ports")
+			Debug.Printf("Closing after send: No inports or param ports (task '%s')", cmd)
 			break
 		}
 	}

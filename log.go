@@ -11,6 +11,7 @@ var (
 	Trace     *log.Logger
 	Debug     *log.Logger
 	Info      *log.Logger
+	Audit     *log.Logger
 	Warn      *log.Logger
 	Error     *log.Logger
 	LogExists bool
@@ -20,6 +21,7 @@ func InitLog(
 	traceHandle io.Writer,
 	debugHandle io.Writer,
 	infoHandle io.Writer,
+	auditHandle io.Writer,
 	warningHandle io.Writer,
 	errorHandle io.Writer) {
 
@@ -35,6 +37,10 @@ func InitLog(
 		"INFO:    ",
 		log.Ldate|log.Ltime)
 
+	Audit = log.New(auditHandle,
+		"AUDIT:   ",
+		log.Ldate|log.Ltime)
+
 	Warn = log.New(warningHandle,
 		"WARNING: ",
 		log.Ldate|log.Ltime)
@@ -47,17 +53,56 @@ func InitLog(
 }
 
 func InitLogDebug() {
-	InitLog(ioutil.Discard, os.Stdout, os.Stdout, os.Stdout, os.Stderr)
+	InitLog(
+		ioutil.Discard,
+		os.Stdout,
+		os.Stdout,
+		os.Stdout,
+		os.Stdout,
+		os.Stderr,
+	)
 }
 
 func InitLogInfo() {
-	InitLog(ioutil.Discard, ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
+	InitLog(
+		ioutil.Discard,
+		ioutil.Discard,
+		os.Stdout,
+		os.Stdout,
+		os.Stdout,
+		os.Stderr,
+	)
+}
+
+func InitLogAudit() {
+	InitLog(
+		ioutil.Discard,
+		ioutil.Discard,
+		ioutil.Discard,
+		os.Stdout,
+		os.Stdout,
+		os.Stderr,
+	)
 }
 
 func InitLogWarn() {
-	InitLog(ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stdout, os.Stderr)
+	InitLog(
+		ioutil.Discard,
+		ioutil.Discard,
+		ioutil.Discard,
+		ioutil.Discard,
+		os.Stdout,
+		os.Stderr,
+	)
 }
 
 func InitLogError() {
-	InitLog(ioutil.Discard, ioutil.Discard, ioutil.Discard, ioutil.Discard, os.Stderr)
+	InitLog(
+		ioutil.Discard,
+		ioutil.Discard,
+		ioutil.Discard,
+		ioutil.Discard,
+		ioutil.Discard,
+		os.Stderr,
+	)
 }

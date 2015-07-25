@@ -87,3 +87,20 @@ func (proc *FileQueue) Run() {
 		proc.Out <- NewFileTarget(fp)
 	}
 }
+
+// ======= Sink =======
+
+type Sink struct {
+	task
+	In chan *FileTarget
+}
+
+func NewSink() (s *Sink) {
+	return &Sink{}
+}
+
+func (proc *Sink) Run() {
+	for ft := range proc.In {
+		Debug.Println("Received file in sink: ", ft.GetPath())
+	}
+}

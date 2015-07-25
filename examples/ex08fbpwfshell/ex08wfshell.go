@@ -14,7 +14,7 @@ const (
 
 func main() {
 	runtime.GOMAXPROCS(4)
-	sci.InitLogWarn()
+	sci.InitLogAudit()
 
 	wf := NewExampleWorkflow()
 
