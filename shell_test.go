@@ -19,10 +19,13 @@ func TestShellHasInOutPorts(t *t.T) {
 	tt.OutPathFuncs["out1"] = func() string {
 		return fmt.Sprint(tt.InPaths["in1"], ".bar")
 	}
-
 	tt.InPorts["in1"] = make(chan *FileTarget, BUFSIZE)
-	go func() { tt.InPorts["in1"] <- NewFileTarget("foo.txt") }()
+
 	go tt.Run()
+	go func() {
+		defer close(tt.InPorts["in1"])
+		tt.InPorts["in1"] <- NewFileTarget("foo.txt")
+	}()
 	<-tt.OutPorts["out1"]
 
 	assert.NotNil(t, tt.InPorts["in1"], "InPorts are nil!")
