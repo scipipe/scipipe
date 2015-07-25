@@ -162,6 +162,16 @@ In summary, what we did, was to:
 
 For more examples, see the [examples folder](https://github.com/samuell/scipipe/tree/master/examples).
 
+## Related tools
+
+Find below a few tools that are more or less similar to SciPipe that are worth worth checking out before
+deciding on what tool fits you best (in approximate order of similarity to SciPipe):
+
+- [NextFlow](http://nextflow.io)
+- [Luigi](https://github.com/spotify/luigi)/[SciLuigi](https://github.com/samuell/sciluigi)
+- [BPipe](https://code.google.com/p/bpipe/)
+- [SnakeMake](https://bitbucket.org/johanneskoester/snakemake)
+
 ## Acknowledgements
 
 - This library is heavily influenced/inspired by (and might make use of on in the future),
