@@ -28,25 +28,25 @@ import (
 
 func main() {
 	// Initialize tasks
-	fw := sp.Sh("echo 'foo' > {o:outfile}")
-	f2b := sp.Sh("cat {i:foofile} | sed 's/foo/bar/g' > {o:barfile}")
+	fw := sp.Sh("echo 'foo' > {o:out}")
+	f2b := sp.Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	snk := sp.NewSink() // Will just receive file targets, doing nothing
 
 	// Add output file path formatters
-	fw.OutPathFuncs["outfile"] = func() string {
-		// Just statically create a file named foo.txt
+	fw.OutPathFuncs["out"] = func() string {
+		// Just a static one in this case (not using incoming file paths)
 		return "foo.txt"
 	}
-	f2b.OutPathFuncs["barfile"] = func() string {
+	f2b.OutPathFuncs["bar"] = func() string {
 		// Here, we instead re-use the file name of the task we depend
-		// on (which we get on the 'foofile' inport), and just
+		// on (which we get on the 'foo' inport), and just
 		// pad '.bar' at the end:
-		return f2b.GetInPath("foofile") + ".bar"
+		return f2b.GetInPath("foo") + ".bar"
 	}
-	snk := sp.NewSink()
 
 	// Connect network
-	f2b.InPorts["foofile"] = fw.OutPorts["outfile"]
-	snk.In = f2b.OutPorts["barfile"]
+	f2b.InPorts["foo"] = fw.OutPorts["out"]
+	snk.In = f2b.OutPorts["bar"]
 
 	// Add to a pipeline and run
 	pl := sp.NewPipeline()
@@ -58,11 +58,11 @@ func main() {
 Now, let's put this code example in a file `test.go` in a separate directory, and run it:
 
 ```bash
-[samuell test]$ go run test.go
-AUDIT:   2015/07/25 16:38:38 Starting task: 'echo 'foo' > foo.txt.tmp'
-AUDIT:   2015/07/25 16:38:38 Finished task: 'echo 'foo' > foo.txt.tmp'
-AUDIT:   2015/07/25 16:38:38 Starting task: 'cat foo.txt | sed 's/foo/bar/g' > foo.txt.bar.tmp'
-AUDIT:   2015/07/25 16:38:38 Finished task: 'cat foo.txt | sed 's/foo/bar/g' > foo.txt.bar.tmp'
+[samuell test]$ go run test.go 
+AUDIT:   2015/07/25 16:45:26 Starting task: 'echo 'foo' > foo.txt.tmp'
+AUDIT:   2015/07/25 16:45:26 Finished task: 'echo 'foo' > foo.txt.tmp'
+AUDIT:   2015/07/25 16:45:26 Starting task: 'sed 's/foo/bar/g' foo.txt > foo.txt.bar.tmp'
+AUDIT:   2015/07/25 16:45:26 Finished task: 'sed 's/foo/bar/g' foo.txt > foo.txt.bar.tmp'
 ```
 
 Now, let's go through the code above in more detail, part by part:
@@ -70,9 +70,9 @@ Now, let's go through the code above in more detail, part by part:
 ### Initializing tasks
 
 ```go
-fw := sp.Sh("echo 'foo' > {o:outfile}")
-f2b := sp.Sh("cat {i:foofile} | sed 's/foo/bar/g' > {o:barfile}")
-
+fw := sp.Sh("echo 'foo' > {o:out}")
+f2b := sp.Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
+snk := sp.NewSink() // Will just receive file targets, doing nothing
 ```
 
 For these inports and outports, channels for sending and receiving FileTargets are automatically
@@ -83,13 +83,14 @@ so that the channel can be retrieved from the hashmap using the in/outport name.
 ### Connecting tasks into a network
 
 Connecting outports of one task to the inport of another task is then done by assigning the
-respective channels to the corresponding places in the hashmap.
-
-Example: Connecting the two tasks creating above:
+respective channels to the corresponding places in the hashmap:
 
 ```go
-f2b.InPorts["foofile"] = fw.OutPorts["outfile"]
+f2b.InPorts["foo"] = fw.OutPorts["out"]
+snk.In = f2b.OutPorts["bar"]
 ```
+
+(Note that the sink has just one inport, as a static struct field).
 
 ### Formatting output file paths
 
@@ -100,15 +101,15 @@ the names of the outports of the tasks. So, to define the output filenames of th
 above, we would add:
 
 ```go
-fw.OutPathFuncs["outfile"] = func() string {
+fw.OutPathFuncs["out"] = func() string {
 	// Just statically create a file named foo.txt
 	return "foo.txt"
 }
-f2b.OutPathFuncs["barfile"] = func() string {
+f2b.OutPathFuncs["bar"] = func() string {
 	// Here, we instead re-use the file name of the task we depend
-	// on (which we get on the 'foofile' inport), and just
+	// on (which we get on the 'foo' inport), and just
 	// pad '.bar' at the end:
-	return f2b.GetInPath("foofile") + ".bar"
+	return f2b.GetInPath("foo") + ".bar"
 }
 ```
 
@@ -120,7 +121,7 @@ task will be run in the main go-routine, so as to block until the pipeline has f
 
 ```go
 pl := sp.NewPipeline()
-pl.AddTasks(fw, f2b)
+pl.AddTasks(fw, f2b, snk)
 pl.Run()
 ```
 
