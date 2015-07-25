@@ -158,11 +158,12 @@ func (t *ShellTask) Run() {
 		outTargets := t.createOutTargets()
 		// Format
 		cmd := t.formatCommand(t.Command, outTargets)
+		cmdForDisplay := str.Replace(cmd, ".tmp", "", -1)
 
 		if t.anyFileExists(outTargets) {
 			Warn.Printf("Skipping task, one or more outputs already exist: '%s'\n", cmd)
 		} else {
-			Audit.Printf("Starting task: '%s'\n", cmd)
+			Audit.Printf("Starting task: %s\n", cmdForDisplay)
 			if t.Spawn {
 				wg.Add(1)
 				beforeSendCh := make(chan int)
@@ -183,7 +184,7 @@ func (t *ShellTask) Run() {
 				t.atomizeTargets(outTargets, mx)
 				t.sendOutputs(outTargets, mx)
 			}
-			Audit.Printf("Finished task: '%s'\n", cmd)
+			Audit.Printf("Finished task: %s\n", cmdForDisplay)
 		}
 
 		// If there are no inports, we know we should exit the loop

@@ -59,10 +59,10 @@ Now, let's put this code example in a file `test.go` in a separate directory, an
 
 ```bash
 [samuell test]$ go run test.go 
-AUDIT: 2015/07/25 16:45:26 Starting task: 'echo 'foo' > foo.txt.tmp'
-AUDIT: 2015/07/25 16:45:26 Finished task: 'echo 'foo' > foo.txt.tmp'
-AUDIT: 2015/07/25 16:45:26 Starting task: 'sed 's/foo/bar/g' foo.txt > foo.txt.bar.tmp'
-AUDIT: 2015/07/25 16:45:26 Finished task: 'sed 's/foo/bar/g' foo.txt > foo.txt.bar.tmp'
+AUDIT: 2015/07/25 17:08:48 Starting task: echo 'foo' > foo.txt
+AUDIT: 2015/07/25 17:08:48 Finished task: echo 'foo' > foo.txt
+AUDIT: 2015/07/25 17:08:48 Starting task: sed 's/foo/bar/g' foo.txt > foo.txt.bar
+AUDIT: 2015/07/25 17:08:48 Finished task: sed 's/foo/bar/g' foo.txt > foo.txt.bar
 ```
 
 Now, let's go through the code above in more detail, part by part:
