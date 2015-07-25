@@ -4,6 +4,36 @@ An experimental library for writing Scientific (Batch) Workflows in vanilla [Go(
 based on an idea for a flow-based like pattern in pure Go, as presented in
 [this Gopher Academy blog post](http://blog.gopheracademy.com/composable-pipelines-pattern).
 
+## Benefits
+
+Some benefits of SciPipe, that are not always available in other systems available:
+
+- Inherently parallel and concurrent (Uses multiple CPU:s efficiently)
+- Easy-to-grasp behaviour (data flowing through a network)
+- Parallel: Spawns multiple tasks from the same process, for each input file
+- Concurrent: Each process runs in an own light-weight thread, and is not blocked by
+  operations in other processes except for when waiting for inputs from an upstream process.
+- Inherently simple implementaiton. Uses Go's concurrency primitives (go-routines and channels)
+  to create an "implicit" scheduler, which means very little additional infrastructure.
+- Efficient: Workflows are compiled into static compiled code, that runs fast.
+- Portable: Workflows can either be distributed as go files, and be run with the `go run` command
+  whereever a go compiled is installed. But workflows can also be compiled into stand-alone binaries,
+  that will work on basically any unix-like system, including mobile (ARM) devices ([work in progress](http://dave.cheney.net/unofficial-arm-tarballs).
+- Flexible: You can combine processes that wrap command-line programs and scripts, with processes
+  that are coded directly in Golang.
+- Debuggable(!): Since everything in SciPipe is plain Go, you can easily use the [gdb debugger](http://golang.org/doc/gdb) (preferrably
+  with the [cgdb interface](https://www.youtube.com/watch?v=OKLR6rrsBmI) for easier use) to step through your program at any detail, as well as all
+  the other excellent debugging tooling for Go. (See eg [delve](https://github.com/derekparker/delve) and [godebug](https://github.com/mailgun/godebug)).
+  In addition, you can easily turn on very detailed debug output by turning on debug-level logging with `scipipe.InitLogDebug()` in your `main()` method.
+
+## Known limitations
+
+- There is not yet a really comprehensive audit log generation. It is being worked on currently.
+- There is as of yet no streaming support, but we have ideas and plans for how to implement that shortly.
+- There is not yet support for the [Common Workflow Language](http://common-workflow-language.github.io), but that is also something that we plan to support in the future.
+
+## Connection to flow-based programming
+
 From Flow-based programming, SciPipe uses the ideas of separate network (workflow dependency graph)
 definition, named in- and out-ports, sub-networks/sub-workflows and bounded buffers (already available
 in Go's channels) to make writing workflows as easy as possible.
@@ -141,5 +171,6 @@ For more examples, see the [examples folder](https://github.com/samuell/scipipe/
   the [GoFlow](https://github.com/trustmaster/goflow) library by [Vladimir Sibirov](https://github.com/trustmaster/goflow).
 - It is also heavily influenced by the [Flow-based programming](http://www.jpaulmorrison.com/fbp) by [John Paul Morrison](http://www.jpaulmorrison.com/fbp).
 - This work is financed by faculty grants and other financing for Jarl Wikberg's [Pharmaceutical Bioinformatics group](http://www.farmbio.uu.se/forskning/researchgroups/pb/) of Dept. of
-  Pharmaceutical Biosciences at Uppsala University. Main supervisor for the project is [Ola Spjuth](http://www.farmbio.uu.se/research/researchgroups/pb/olaspjuth).
+  Pharmaceutical Biosciences at Uppsala University, and to a smaller part also by [Swedish Research Council](http://vr.se) through the Swedish [Bioinformatics Infastructure for Life Sciences in Sweden](http://bils.se).
+- Supervisor for the project is [Ola Spjuth](http://www.farmbio.uu.se/research/researchgroups/pb/olaspjuth).
 - Big thanks to [Egon Elbre](http://twitter.com/egonelbre) for very helpful input on the design of the internals of the pipeline, and processes, which simplified the implementation a lot.
