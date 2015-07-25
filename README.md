@@ -50,17 +50,17 @@ Let's look at a toy-example workflow. First the full version:
 package main
 
 import (
-	sci "github.com/samuell/scipipe"
+	sp "github.com/samuell/scipipe"
 )
 
 func main() {
 	// Initialize processes
-	fwt := sci.Shell("echo 'foo' > {o:out}")
-	f2b := sci.Shell("sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	snk := sci.NewSink() // Will just receive file targets, doing nothing
+	fwt := sp.Shell("echo 'foo' > {o:foo}")
+	f2b := sp.Shell("sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	snk := sp.NewSink() // Will just receive file targets, doing nothing
 
 	// Add output file path formatters
-	fwt.OutPathFuncs["out"] = func() string {
+	fwt.OutPathFuncs["foo"] = func() string {
 		// Just a static one in this case (not using incoming file paths)
 		return "foo.txt"
 	}
@@ -72,11 +72,11 @@ func main() {
 	}
 
 	// Connect network
-	f2b.InPorts["foo"] = fwt.OutPorts["out"]
+	f2b.InPorts["foo"] = fwt.OutPorts["foo"]
 	snk.In = f2b.OutPorts["bar"]
 
 	// Add to a pipeline and run
-	pl := sci.NewPipeline()
+	pl := sp.NewPipeline()
 	pl.AddProcs(fwt, f2b, snk)
 	pl.Run()
 }
