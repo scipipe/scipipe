@@ -37,25 +37,25 @@ func TestShellHasInOutPorts(t *t.T) {
 func TestShellCloseOutPortOnInPortClose(t *t.T) {
 	initTestLogs()
 
-	fooTask := Sh("echo foo > {o:out1}")
-	fooTask.OutPathFuncs["out1"] = func() string {
+	foo := Sh("echo foo > {o:out1}")
+	foo.OutPathFuncs["out1"] = func() string {
 		return "foo.txt"
 	}
 
-	barReplacer := Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	barReplacer.OutPathFuncs["bar"] = func() string {
-		return barReplacer.GetInPath("foo") + ".bar"
+	f2b := Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	f2b.OutPathFuncs["bar"] = func() string {
+		return f2b.GetInPath("foo") + ".bar"
 	}
 
-	barReplacer.InPorts["foo"] = fooTask.OutPorts["out1"]
+	f2b.InPorts["foo"] = foo.OutPorts["out1"]
 
-	go fooTask.Run()
-	go barReplacer.Run()
-	<-barReplacer.OutPorts["bar"]
+	go foo.Run()
+	go f2b.Run()
+	<-f2b.OutPorts["bar"]
 
 	// Assert no more content coming on channels
-	assert.Nil(t, <-fooTask.OutPorts["out1"])
-	assert.Nil(t, <-barReplacer.OutPorts["bar"])
+	assert.Nil(t, <-foo.OutPorts["out1"])
+	assert.Nil(t, <-f2b.OutPorts["bar"])
 
 	_, fooErr := os.Stat("foo.txt")
 	assert.Nil(t, fooErr)
