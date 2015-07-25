@@ -277,7 +277,7 @@ func (t *ShellTask) anyFileExists(targets map[string]*FileTarget) (anyFileExists
 		otmpPath := tgt.GetTempPath()
 		if _, err := os.Stat(opath); err == nil {
 			anyFileExists = true
-			Info.Println("Output file exists already:", opath)
+			Debug.Println("Output file exists already:", opath)
 		}
 		if _, err := os.Stat(otmpPath); err == nil {
 			anyFileExists = true

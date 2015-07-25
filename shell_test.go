@@ -9,7 +9,7 @@ import (
 )
 
 func initTestLogs() {
-	InitLogError()
+	InitLogWarn()
 }
 
 func TestShellHasInOutPorts(t *t.T) {
@@ -152,7 +152,7 @@ func TestTaskWithoutInputsOutputs(t *t.T) {
 }
 
 func TestDontOverWriteExistingOutputs(t *t.T) {
-	initTestLogs()
+	InitLogError()
 	Debug.Println("Starting test TestDontOverWriteExistingOutputs")
 
 	f := "/tmp/hej.txt"
@@ -233,7 +233,7 @@ func TestShellExpand(t *t.T) {
 }
 
 func TestSendsOrderedOutputs(t *t.T) {
-	InitLogWarn()
+	initTestLogs()
 
 	fnames := []string{}
 	for i := 1; i <= 10; i++ {
