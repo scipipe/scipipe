@@ -10,7 +10,7 @@ From flow-based programming, It uses the principles of separate network (workflo
 definition, named in- and out-ports, sub-networks/sub-workflows, and bounded buffers (already available
 in Go's channels) to make writing workflows as easy as possible.
 
-In addition to that, it adds convenience factory methods (see `sp.Sh()` below) for creating ad hoc tasks
+In addition to that, it adds convenience factory methods (see `sci.Sh()` below) for creating ad hoc tasks
 on the fly based on a shell command pattern, where  inputs, outputs and parameters are defined in-line
 in the shell command with a syntax of `{i:INPORT_NAME}` for inports, and `{o:OUTPORT_NAME}` for outports
 and `{p:PARAM_NAME}` for parameters.
@@ -23,14 +23,14 @@ Let's look at a toy example workflow. First the full version:
 package main
 
 import (
-	sp "github.com/samuell/scipipe"
+	sci "github.com/samuell/scipipe"
 )
 
 func main() {
 	// Initialize tasks
-	fw := sp.Sh("echo 'foo' > {o:out}")
-	f2b := sp.Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	snk := sp.NewSink() // Will just receive file targets, doing nothing
+	fw := sci.Sh("echo 'foo' > {o:out}")
+	f2b := sci.Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	snk := sci.NewSink() // Will just receive file targets, doing nothing
 
 	// Add output file path formatters
 	fw.OutPathFuncs["out"] = func() string {
@@ -49,7 +49,7 @@ func main() {
 	snk.In = f2b.OutPorts["bar"]
 
 	// Add to a pipeline and run
-	pl := sp.NewPipeline()
+	pl := sci.NewPipeline()
 	pl.AddTasks(fw, f2b, snk)
 	pl.Run()
 }
@@ -70,9 +70,9 @@ Now, let's go through the code above in more detail, part by part:
 ### Initializing tasks
 
 ```go
-fw := sp.Sh("echo 'foo' > {o:out}")
-f2b := sp.Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
-snk := sp.NewSink() // Will just receive file targets, doing nothing
+fw := sci.Sh("echo 'foo' > {o:out}")
+f2b := sci.Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
+snk := sci.NewSink() // Will just receive file targets, doing nothing
 ```
 
 For these inports and outports, channels for sending and receiving FileTargets are automatically
@@ -120,7 +120,7 @@ that will start each component except the last one in a separate go-routine, whi
 task will be run in the main go-routine, so as to block until the pipeline has finished.
 
 ```go
-pl := sp.NewPipeline()
+pl := sci.NewPipeline()
 pl.AddTasks(fw, f2b, snk)
 pl.Run()
 ```
