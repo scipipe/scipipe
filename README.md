@@ -1,23 +1,21 @@
 # SciPipe
 
-An experimental library for writing Scientific (Batch) Workflows in vanilla [Go(lang)](http://golang.org).
+An experimental library for writing Scientific (Batch) Workflows in vanilla [Go(lang)](http://golang.org),
+based on an idea for a flow-based like pattern in pure Go, as presented in
+[this Gopher Academy blog post](http://blog.gopheracademy.com/composable-pipelines-pattern).
 
-This is an experiment in building a scientific workflow engine in pure Go,
-based on an idea for a flow-based like pattern in pure Go, as presented by the author in
-[this blog post on Gopher Academy](http://blog.gopheracademy.com/composable-pipelines-pattern).
-
-From flow-based programming, It uses the principles of separate network (workflow dependency graph)
-definition, named in- and out-ports, sub-networks/sub-workflows, and bounded buffers (already available
+From Flow-based programming, SciPipe uses the ideas of separate network (workflow dependency graph)
+definition, named in- and out-ports, sub-networks/sub-workflows and bounded buffers (already available
 in Go's channels) to make writing workflows as easy as possible.
 
-In addition to that, it adds convenience factory methods (see `sci.Sh()` below) for creating ad hoc tasks
+In addition to that it adds convenience factory methods such as `sci.Sh()` which creates ad hoc tasks
 on the fly based on a shell command pattern, where  inputs, outputs and parameters are defined in-line
 in the shell command with a syntax of `{i:INPORT_NAME}` for inports, and `{o:OUTPORT_NAME}` for outports
 and `{p:PARAM_NAME}` for parameters.
 
 ## Example: Creating two example tasks:
 
-Let's look at a toy example workflow. First the full version:
+Let's look at a toy-example workflow. First the full version:
 
 ```go
 package main
@@ -55,7 +53,7 @@ func main() {
 }
 ```
 
-Now, let's put this code example in a file `test.go` in a separate directory, and run it:
+And to see what it does, let's put the code in a file `test.go` and run it:
 
 ```bash
 [samuell test]$ go run test.go 
