@@ -232,13 +232,57 @@ func TestShellExpand(t *t.T) {
 	cleanFiles("in.txt", "out.txt")
 }
 
+func TestSendsOrderedOutputs(t *t.T) {
+	InitLogWarn()
+
+	fnames := []string{}
+	for i := 1; i <= 10; i++ {
+		fnames = append(fnames, fmt.Sprintf("/tmp/f%d.txt", i))
+	}
+
+	fq := NewFileQueue(fnames...)
+
+	fc := Sh("sleep 1; echo {i:in} > {o:out}")
+	fc.Spawn = true
+
+	sl := Sh("sleep 1; cat {i:in} > {o:out}")
+	sl.Spawn = true
+
+	fc.OutPathFuncs["out"] = func() string { return fc.GetInPath("in") }
+	sl.OutPathFuncs["out"] = func() string { return sl.GetInPath("in") + ".copy.txt" }
+
+	go fq.Run()
+	go fc.Run()
+	go sl.Run()
+
+	fc.InPorts["in"] = fq.Out
+	sl.InPorts["in"] = fc.OutPorts["out"]
+
+	assert.NotEmpty(t, sl.OutPorts)
+
+	var expFname string
+	i := 1
+	for ft := range sl.OutPorts["out"] {
+		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
+		assert.EqualValues(t, expFname, ft.GetPath())
+		i++
+	}
+	expFnames := []string{}
+	for i := 1; i <= 10; i++ {
+		expFnames = append(expFnames, fmt.Sprintf("/tmp/f%d.txt.copy.txt", i))
+	}
+	cleanFiles(fnames...)
+	cleanFiles(expFnames...)
+}
+
 // Helper functions
 
 func cleanFiles(fileNames ...string) {
+	Debug.Println("Starting to remove files:", fileNames)
 	for _, fileName := range fileNames {
 		if _, err := os.Stat(fileName); err == nil {
 			os.Remove(fileName)
-			Info.Println("Successfully removed file", fileName)
+			Debug.Println("Successfully removed file", fileName)
 		}
 	}
 }

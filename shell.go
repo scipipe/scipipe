@@ -135,6 +135,7 @@ func (t *ShellTask) Run() {
 
 	wg := new(sync.WaitGroup)
 	mx := new(sync.Mutex)
+	sendWaitQueue := []map[string]chan int{}
 	// Main loop
 	for {
 		inPortsClosed := t.receiveInputs()
@@ -165,15 +166,22 @@ func (t *ShellTask) Run() {
 
 			if t.Spawn {
 				wg.Add(1)
+				beforeSendCh := make(chan int)
+				afterSendCh := make(chan int)
+				sendWaitQueue = append(sendWaitQueue, map[string](chan int){"before": beforeSendCh, "after": afterSendCh})
 				go func() {
 					t.executeCommand(cmd)
-					t.atomizeTargets(outTargets)
+					t.atomizeTargets(outTargets, mx)
+					beforeSendCh <- 1
 					t.sendOutputs(outTargets, mx)
+					afterSendCh <- 1
+					close(beforeSendCh)
+					close(afterSendCh)
 					wg.Done()
 				}()
 			} else {
 				t.executeCommand(cmd)
-				t.atomizeTargets(outTargets)
+				t.atomizeTargets(outTargets, mx)
 				t.sendOutputs(outTargets, mx)
 			}
 		}
@@ -184,6 +192,14 @@ func (t *ShellTask) Run() {
 			Debug.Println("Closing after send: No inports or param ports")
 			break
 		}
+	}
+	Debug.Printf("Starting to wait for ordered sends (task '%s')\n", t.Command)
+	for i, sendChs := range sendWaitQueue {
+		Debug.Printf("sendWaitQueue %d: Waiting to start sending ...\n", i)
+		<-sendChs["before"]
+		Debug.Printf("sendWaitQueue %d: Now starting to send ...\n", i)
+		<-sendChs["after"]
+		Debug.Printf("sendWaitQueue %d: Now has sent!\n", i)
 	}
 	Debug.Printf("Starting to wait (task '%s')\n", t.Command)
 	wg.Wait()
@@ -277,11 +293,13 @@ func (t *ShellTask) executeCommand(cmd string) {
 	Check(err)
 }
 
-func (t *ShellTask) atomizeTargets(targets map[string]*FileTarget) {
+func (t *ShellTask) atomizeTargets(targets map[string]*FileTarget, mx *sync.Mutex) {
+	mx.Lock()
 	for _, tgt := range targets {
 		Debug.Printf("Atomizing file: %s -> %s", tgt.GetTempPath(), tgt.GetPath())
 		tgt.Atomize()
 	}
+	mx.Unlock()
 }
 
 func (t *ShellTask) formatCommand(cmd string, outTargets map[string]*FileTarget) string {

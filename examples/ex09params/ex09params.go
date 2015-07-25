@@ -7,14 +7,14 @@ import (
 )
 
 func main() {
-	sci.InitLogWarn()
+	sci.InitLogDebug()
 
 	runtime.GOMAXPROCS(4)
 	cmb := NewCombinatoricsTask()
 
 	// An abc file printer
 	abc := sci.Sh("echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
-	abc.Spawn = false
+	abc.Spawn = true
 	abc.OutPathFuncs["out"] = func() string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
