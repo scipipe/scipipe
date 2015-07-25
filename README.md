@@ -7,11 +7,11 @@ based on an idea for a flow-based like pattern in pure Go, as presented by the a
 [this blog post on Gopher Academy](http://blog.gopheracademy.com/composable-pipelines-pattern).
 
 From flow-based programming, It uses the principles of separate network (workflow dependency graph)
-definition, named in- and out-ports, sub-networks/sub-workflows, and bounded buffers (already available 
+definition, named in- and out-ports, sub-networks/sub-workflows, and bounded buffers (already available
 in Go's channels) to make writing workflows as easy as possible.
 
 In addition to that, it adds convenience factory methods (see `sp.Sh()` below) for creating ad hoc tasks
-on the fly based on a shell command pattern, where  inputs, outputs and parameters are defined in-line 
+on the fly based on a shell command pattern, where  inputs, outputs and parameters are defined in-line
 in the shell command with a syntax of `{i:INPORT_NAME}` for inports, and `{o:OUTPORT_NAME}` for outports
 and `{p:PARAM_NAME}` for parameters.
 
@@ -20,29 +20,49 @@ and `{p:PARAM_NAME}` for parameters.
 Let's look at a toy example workflow. First the full version:
 
 ```go
-// Initialize tasks
-fw := sp.Sh("echo 'foo' > {o:outfile}")
-f2b := sp.Sh("cat {i:foofile} | sed 's/foo/bar/g' > {o:barfile}")
+package main
 
-// Add output file path formatters
-fw.OutPathFuncs["outfile"] = func() string {
-	// Just statically create a file named foo.txt
-	return "foo.txt"
+import (
+	sp "github.com/samuell/scipipe"
+)
+
+func main() {
+	// Initialize tasks
+	fw := sp.Sh("echo 'foo' > {o:outfile}")
+	f2b := sp.Sh("cat {i:foofile} | sed 's/foo/bar/g' > {o:barfile}")
+
+	// Add output file path formatters
+	fw.OutPathFuncs["outfile"] = func() string {
+		// Just statically create a file named foo.txt
+		return "foo.txt"
+	}
+	f2b.OutPathFuncs["barfile"] = func() string {
+		// Here, we instead re-use the file name of the task we depend
+		// on (which we get on the 'foofile' inport), and just
+		// pad '.bar' at the end:
+		return f2b.GetInPath("foofile") + ".bar"
+	}
+	snk := sp.NewSink()
+
+	// Connect network
+	f2b.InPorts["foofile"] = fw.OutPorts["outfile"]
+	snk.In = f2b.OutPorts["barfile"]
+
+	// Add to a pipeline and run
+	pl := sp.NewPipeline()
+	pl.AddTasks(fw, f2b, snk)
+	pl.Run()
 }
-f2b.OutPathFuncs["barfile"] = func() string {
-	// Here, we instead re-use the file name of the task we depend
-	// on (which we get on the 'foofile' inport), and just
-	// pad '.bar' at the end:
-	return f2b.GetInPath("foofile") + ".bar"
-}
+```
 
-// Connect network
-f2b.InPorts["foofile"] = fw.OutPorts["outfile"]
+Now, let's put this code example in a file `test.go` in a separate directory, and run it:
 
-// Add to a pipeline and run
-pl := sp.NewPipeline()
-pl.AddTasks(fw, f2b)
-pl.Run()
+```bash
+[samuell test]$ go run test.go
+AUDIT:   2015/07/25 16:38:38 Starting task: 'echo 'foo' > foo.txt.tmp'
+AUDIT:   2015/07/25 16:38:38 Finished task: 'echo 'foo' > foo.txt.tmp'
+AUDIT:   2015/07/25 16:38:38 Starting task: 'cat foo.txt | sed 's/foo/bar/g' > foo.txt.bar.tmp'
+AUDIT:   2015/07/25 16:38:38 Finished task: 'cat foo.txt | sed 's/foo/bar/g' > foo.txt.bar.tmp'
 ```
 
 Now, let's go through the code above in more detail, part by part:
