@@ -8,21 +8,21 @@ based on an idea for a flow-based like pattern in pure Go, as presented in
 
 Some benefits of SciPipe, that are not always available in other systems available:
 
-- *Easy-to-grasp behaviour:* Data flowing through a network.
-- *Parallel:* Apart from the inherent pipeline parallelism, SciPipe processes also spawn multiple parallel tasks when the same process has multiple inputs.
-- *Concurrent:* Each process runs in an own light-weight thread, and is not blocked by
+- **Easy-to-grasp behaviour:** Data flowing through a network.
+- **Parallel:** Apart from the inherent pipeline parallelism, SciPipe processes also spawn multiple parallel tasks when the same process has multiple inputs.
+- **Concurrent:** Each process runs in an own light-weight thread, and is not blocked by
   operations in other processes, except when waiting for inputs from upstream processes.
-- *Inherently simple:* Uses Go's concurrency primitives (go-routines and channels)
+- **Inherently simple:** Uses Go's concurrency primitives (go-routines and channels)
   to create an "implicit" scheduler, which means very little additional infrastructure code.
   This means that the code is easy to modify and extend.
-- *Flexible:* Processes that wrap command-line programs and scripts can be combined with
+- **Flexible:** Processes that wrap command-line programs and scripts can be combined with
   processes coded directly in Golang.
-- *Debuggable(!):* Since everything in SciPipe is plain Go, you can easily use the [gdb debugger](http://golang.org/doc/gdb) (preferrably
+- **Debuggable(!):** Since everything in SciPipe is plain Go, you can easily use the [gdb debugger](http://golang.org/doc/gdb) (preferrably
   with the [cgdb interface](https://www.youtube.com/watch?v=OKLR6rrsBmI) for easier use) to step through your program at any detail, as well as all
   the other excellent debugging tooling for Go. (See eg [delve](https://github.com/derekparker/delve) and [godebug](https://github.com/mailgun/godebug)).
   In addition, you can easily turn on very detailed debug output by turning on debug-level logging with `scipipe.InitLogDebug()` in your `main()` method.
-- *Efficient:* Workflows are compiled into static compiled code, that runs fast.
-- *Portable:* Workflows can be distributed as go code to be run with the `go run` command
+- **Efficient:** Workflows are compiled into static compiled code, that runs fast.
+- **Portable:** Workflows can be distributed as go code to be run with the `go run` command
   or compiled into stand-alone binaries for basically any unix-like operating system.
 
 ## Known limitations
