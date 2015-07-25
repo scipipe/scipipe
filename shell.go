@@ -163,7 +163,7 @@ func (p *ShellProcess) Run() {
 		if p.anyFileExists(outTargets) {
 			Warn.Printf("Skipping process, one or more outputs already exist: '%s'\n", cmd)
 		} else {
-			Audit.Printf("Starting process: %s\n", cmdForDisplay)
+			Audit.Printf("Starting shell task: %s\n", cmdForDisplay)
 			if p.Spawn {
 				wg.Add(1)
 				beforeSendCh := make(chan int)
@@ -184,7 +184,7 @@ func (p *ShellProcess) Run() {
 				p.atomizeTargets(outTargets, mx)
 				p.sendOutputs(outTargets, mx)
 			}
-			Audit.Printf("Finished process: %s\n", cmdForDisplay)
+			Audit.Printf("Finished shell task: %s\n", cmdForDisplay)
 		}
 
 		// If there are no inports, we know we should exit the loop
