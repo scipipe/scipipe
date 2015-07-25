@@ -13,7 +13,7 @@ on the fly based on a shell command pattern, where  inputs, outputs and paramete
 in the shell command with a syntax of `{i:INPORT_NAME}` for inports, and `{o:OUTPORT_NAME}` for outports
 and `{p:PARAM_NAME}` for parameters.
 
-## Example: Creating two example tasks:
+## An example workflow
 
 Let's look at a toy-example workflow. First the full version:
 
@@ -26,12 +26,12 @@ import (
 
 func main() {
 	// Initialize tasks
-	fw := sci.Sh("echo 'foo' > {o:out}")
+	fwt := sci.Sh("echo 'foo' > {o:out}")
 	f2b := sci.Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	snk := sci.NewSink() // Will just receive file targets, doing nothing
 
 	// Add output file path formatters
-	fw.OutPathFuncs["out"] = func() string {
+	fwt.OutPathFuncs["out"] = func() string {
 		// Just a static one in this case (not using incoming file paths)
 		return "foo.txt"
 	}
@@ -43,12 +43,12 @@ func main() {
 	}
 
 	// Connect network
-	f2b.InPorts["foo"] = fw.OutPorts["out"]
+	f2b.InPorts["foo"] = fwt.OutPorts["out"]
 	snk.In = f2b.OutPorts["bar"]
 
 	// Add to a pipeline and run
 	pl := sci.NewPipeline()
-	pl.AddTasks(fw, f2b, snk)
+	pl.AddTasks(fwt, f2b, snk)
 	pl.Run()
 }
 ```
@@ -68,7 +68,7 @@ Now, let's go through the code above in more detail, part by part:
 ### Initializing tasks
 
 ```go
-fw := sci.Sh("echo 'foo' > {o:out}")
+fwt := sci.Sh("echo 'foo' > {o:out}")
 f2b := sci.Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
 snk := sci.NewSink() // Will just receive file targets, doing nothing
 ```
@@ -84,7 +84,7 @@ Connecting outports of one task to the inport of another task is then done by as
 respective channels to the corresponding places in the hashmap:
 
 ```go
-f2b.InPorts["foo"] = fw.OutPorts["out"]
+f2b.InPorts["foo"] = fwt.OutPorts["out"]
 snk.In = f2b.OutPorts["bar"]
 ```
 
@@ -99,7 +99,7 @@ the names of the outports of the tasks. So, to define the output filenames of th
 above, we would add:
 
 ```go
-fw.OutPathFuncs["out"] = func() string {
+fwt.OutPathFuncs["out"] = func() string {
 	// Just statically create a file named foo.txt
 	return "foo.txt"
 }
@@ -119,7 +119,7 @@ task will be run in the main go-routine, so as to block until the pipeline has f
 
 ```go
 pl := sci.NewPipeline()
-pl.AddTasks(fw, f2b, snk)
+pl.AddTasks(fwt, f2b, snk)
 pl.Run()
 ```
 
