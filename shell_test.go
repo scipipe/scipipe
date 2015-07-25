@@ -242,10 +242,10 @@ func TestSendsOrderedOutputs(t *t.T) {
 
 	fq := NewFileQueue(fnames...)
 
-	fc := Sh("sleep 1; echo {i:in} > {o:out}")
+	fc := Sh("echo {i:in} > {o:out}")
 	fc.Spawn = true
 
-	sl := Sh("sleep 1; cat {i:in} > {o:out}")
+	sl := Sh("cat {i:in} > {o:out}")
 	sl.Spawn = true
 
 	fc.OutPathFuncs["out"] = func() string { return fc.GetInPath("in") }
