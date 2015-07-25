@@ -8,7 +8,7 @@ From Flow-based programming, SciPipe uses the ideas of separate network (workflo
 definition, named in- and out-ports, sub-networks/sub-workflows and bounded buffers (already available
 in Go's channels) to make writing workflows as easy as possible.
 
-In addition to that it adds convenience factory methods such as `sci.Shell()` which creates ad hoc tasks
+In addition to that it adds convenience factory methods such as `sci.Shell()` which creates ad hoc processes
 on the fly based on a shell command pattern, where  inputs, outputs and parameters are defined in-line
 in the shell command with a syntax of `{i:INPORT_NAME}` for inports, and `{o:OUTPORT_NAME}` for outports
 and `{p:PARAM_NAME}` for parameters.
@@ -25,7 +25,7 @@ import (
 )
 
 func main() {
-	// Initialize tasks
+	// Initialize processes
 	fwt := sci.Shell("echo 'foo' > {o:out}")
 	f2b := sci.Shell("sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	snk := sci.NewSink() // Will just receive file targets, doing nothing
@@ -36,7 +36,7 @@ func main() {
 		return "foo.txt"
 	}
 	f2b.OutPathFuncs["bar"] = func() string {
-		// Here, we instead re-use the file name of the task we depend
+		// Here, we instead re-use the file name of the process we depend
 		// on (which we get on the 'foo' inport), and just
 		// pad '.bar' at the end:
 		return f2b.GetInPath("foo") + ".bar"
@@ -48,7 +48,7 @@ func main() {
 
 	// Add to a pipeline and run
 	pl := sci.NewPipeline()
-	pl.AddTasks(fwt, f2b, snk)
+	pl.AddProcs(fwt, f2b, snk)
 	pl.Run()
 }
 ```
@@ -57,15 +57,15 @@ And to see what it does, let's put the code in a file `test.go` and run it:
 
 ```bash
 [samuell test]$ go run test.go 
-AUDIT: 2015/07/25 17:08:48 Starting task: echo 'foo' > foo.txt
-AUDIT: 2015/07/25 17:08:48 Finished task: echo 'foo' > foo.txt
-AUDIT: 2015/07/25 17:08:48 Starting task: sed 's/foo/bar/g' foo.txt > foo.txt.bar
-AUDIT: 2015/07/25 17:08:48 Finished task: sed 's/foo/bar/g' foo.txt > foo.txt.bar
+AUDIT: 2015/07/25 17:08:48 Starting process: echo 'foo' > foo.txt
+AUDIT: 2015/07/25 17:08:48 Finished process: echo 'foo' > foo.txt
+AUDIT: 2015/07/25 17:08:48 Starting process: sed 's/foo/bar/g' foo.txt > foo.txt.bar
+AUDIT: 2015/07/25 17:08:48 Finished process: sed 's/foo/bar/g' foo.txt > foo.txt.bar
 ```
 
 Now, let's go through the code above in more detail, part by part:
 
-### Initializing tasks
+### Initializing processes
 
 ```go
 fwt := sci.Shell("echo 'foo' > {o:out}")
@@ -74,13 +74,13 @@ snk := sci.NewSink() // Will just receive file targets, doing nothing
 ```
 
 For these inports and outports, channels for sending and receiving FileTargets are automatically
-created and put in a hashmap added as a struct field of the task, named `InPorts` and `OutPorts` repectively,
+created and put in a hashmap added as a struct field of the process, named `InPorts` and `OutPorts` repectively,
 Eash channel is added to the hashmap with its inport/outport name as key in the hashmap,
 so that the channel can be retrieved from the hashmap using the in/outport name.
 
-### Connecting tasks into a network
+### Connecting processes into a network
 
-Connecting outports of one task to the inport of another task is then done by assigning the
+Connecting outports of one process to the inport of another process is then done by assigning the
 respective channels to the corresponding places in the hashmap:
 
 ```go
@@ -93,9 +93,9 @@ snk.In = f2b.OutPorts["bar"]
 ### Formatting output file paths
 
 The only thing remaining after this, is to provide some way for the program to figure out a
-suitable file name for each of the files propagating through this little "network" of tasks.
+suitable file name for each of the files propagating through this little "network" of processes.
 This is done by adding a closure (function) to another special hashmap, again keyed by
-the names of the outports of the tasks. So, to define the output filenames of the two tasks
+the names of the outports of the processes. So, to define the output filenames of the two processes
 above, we would add:
 
 ```go
@@ -104,7 +104,7 @@ fwt.OutPathFuncs["out"] = func() string {
 	return "foo.txt"
 }
 f2b.OutPathFuncs["bar"] = func() string {
-	// Here, we instead re-use the file name of the task we depend
+	// Here, we instead re-use the file name of the process we depend
 	// on (which we get on the 'foo' inport), and just
 	// pad '.bar' at the end:
 	return f2b.GetInPath("foo") + ".bar"
@@ -115,11 +115,11 @@ f2b.OutPathFuncs["bar"] = func() string {
 
 So, the final part probably explains itself, but the pipeline component is a very simple one
 that will start each component except the last one in a separate go-routine, while the last
-task will be run in the main go-routine, so as to block until the pipeline has finished.
+process will be run in the main go-routine, so as to block until the pipeline has finished.
 
 ```go
 pl := sci.NewPipeline()
-pl.AddTasks(fwt, f2b, snk)
+pl.AddProcs(fwt, f2b, snk)
 pl.Run()
 ```
 
@@ -130,7 +130,7 @@ So with this, we have done everything needed to set up a file-based batch workfl
 
 In summary, what we did, was to:
 
-- Specify task dependencies by wiring outputs of the upstream tasks to inports in downstream tasks.
+- Specify process dependencies by wiring outputs of the upstream processes to inports in downstream processes.
 - For each outport, provide a function that will compute a suitable file name for the new file.
 
 For more examples, see the [examples folder](https://github.com/samuell/scipipe/tree/master/examples).
@@ -142,4 +142,4 @@ For more examples, see the [examples folder](https://github.com/samuell/scipipe/
 - It is also heavily influenced by the [Flow-based programming](http://www.jpaulmorrison.com/fbp) by [John Paul Morrison](http://www.jpaulmorrison.com/fbp).
 - This work is financed by faculty grants and other financing for Jarl Wikberg's [Pharmaceutical Bioinformatics group](http://www.farmbio.uu.se/forskning/researchgroups/pb/) of Dept. of
   Pharmaceutical Biosciences at Uppsala University. Main supervisor for the project is [Ola Spjuth](http://www.farmbio.uu.se/research/researchgroups/pb/olaspjuth).
-- Big thanks to [Egon Elbre](http://twitter.com/egonelbre) for very helpful input on the design of the internals of the pipeline, and tasks, which simplified the implementation a lot.
+- Big thanks to [Egon Elbre](http://twitter.com/egonelbre) for very helpful input on the design of the internals of the pipeline, and processes, which simplified the implementation a lot.

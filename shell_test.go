@@ -106,7 +106,7 @@ func TestReplacePlaceholdersInCmd(t *t.T) {
 func TestParameterCommand(t *t.T) {
 	initTestLogs()
 
-	cmb := NewCombinatoricsTask()
+	cmb := NewCombinatoricsProcess()
 
 	// An abc file printer
 	abc := Sh("echo {p:a} {p:b} {p:c} > {o:out}")
@@ -119,7 +119,7 @@ func TestParameterCommand(t *t.T) {
 		)
 	}
 
-	// A printer task
+	// A printer process
 	prt := Sh("cat {i:in} >> /tmp/log.txt; rm {i:in}")
 
 	// Connection info
@@ -129,7 +129,7 @@ func TestParameterCommand(t *t.T) {
 	prt.InPorts["in"] = abc.OutPorts["out"]
 
 	pl := NewPipeline()
-	pl.AddTasks(cmb, abc, prt)
+	pl.AddProcesses(cmb, abc, prt)
 	pl.Run()
 
 	// Run tests
@@ -139,9 +139,9 @@ func TestParameterCommand(t *t.T) {
 	cleanFiles("/tmp/log.txt")
 }
 
-func TestTaskWithoutInputsOutputs(t *t.T) {
+func TestProcessWithoutInputsOutputs(t *t.T) {
 	initTestLogs()
-	Debug.Println("Starting test TestTaskWithoutInputsOutputs")
+	Debug.Println("Starting test TestProcessWithoutInputsOutputs")
 
 	f := "/tmp/hej.txt"
 	tsk := Sh("echo hej > " + f)
@@ -167,7 +167,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	prt := Sh("echo {i:in} Done!")
 	prt.InPorts["in"] = tsk.OutPorts["hej"]
 	pl := NewPipeline()
-	pl.AddTasks(tsk, prt)
+	pl.AddProcs(tsk, prt)
 	pl.Run()
 
 	// Assert file DO exist after running
@@ -186,7 +186,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	tsk.OutPathFuncs["hej"] = func() string { return f }
 	prt.InPorts["in"] = tsk.OutPorts["hej"]
 	pl = NewPipeline()
-	pl.AddTasks(tsk, prt)
+	pl.AddProcs(tsk, prt)
 	pl.Run()
 
 	// Assert exists
@@ -284,24 +284,24 @@ func cleanFiles(fileNames ...string) {
 	}
 }
 
-// Helper tasks
+// Helper processes
 
-type CombinatoricsTask struct {
-	BaseTask
+type CombinatoricsProcess struct {
+	BaseProcess
 	A chan string
 	B chan string
 	C chan string
 }
 
-func NewCombinatoricsTask() *CombinatoricsTask {
-	return &CombinatoricsTask{
+func NewCombinatoricsProcess() *CombinatoricsProcess {
+	return &CombinatoricsProcess{
 		A: make(chan string, BUFSIZE),
 		B: make(chan string, BUFSIZE),
 		C: make(chan string, BUFSIZE),
 	}
 }
 
-func (proc *CombinatoricsTask) Run() {
+func (proc *CombinatoricsProcess) Run() {
 	defer close(proc.A)
 	defer close(proc.B)
 	defer close(proc.C)

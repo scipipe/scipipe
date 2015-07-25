@@ -8,7 +8,7 @@ import (
 )
 
 type fileWriter struct {
-	task
+	process
 	FilePath chan string
 	In       chan []byte
 }
@@ -23,7 +23,7 @@ func NewFileWriterFromPath(pl *Pipeline, path string) *fileWriter {
 	t := &fileWriter{
 		FilePath: make(chan string),
 	}
-	pl.AddTask(t)
+	pl.AddProcess(t)
 	go func() {
 		t.FilePath <- path
 	}()

@@ -5,29 +5,29 @@ import (
 	t "testing"
 )
 
-func testAddTasks(t *t.T) {
-	task1 := NewBogusTask()
-	task2 := NewBogusTask()
+func testAddProcesses(t *t.T) {
+	proc1 := NewBogusProcess()
+	proc2 := NewBogusProcess()
 	pipeline := NewPipeline()
-	pipeline.AddTasks(task1, task2)
+	pipeline.AddProcesses(proc1, proc2)
 
-	assert.NotNil(t, pipeline.tasks[0])
-	assert.NotNil(t, pipeline.tasks[1])
+	assert.NotNil(t, pipeline.processes[0])
+	assert.NotNil(t, pipeline.processes[1])
 
-	assert.EqualValues(t, len(pipeline.tasks), 2)
+	assert.EqualValues(t, len(pipeline.processes), 2)
 
-	assert.IsType(t, NewBogusTask(), pipeline.tasks[0])
-	assert.IsType(t, NewBogusTask(), pipeline.tasks[1])
+	assert.IsType(t, NewBogusProcess(), pipeline.processes[0])
+	assert.IsType(t, NewBogusProcess(), pipeline.processes[1])
 
 	pipeline.Run()
 }
 
-type BogusTask struct {
-	task
+type BogusProcess struct {
+	process
 }
 
-func NewBogusTask() *BogusTask {
-	return &BogusTask{}
+func NewBogusProcess() *BogusProcess {
+	return &BogusProcess{}
 }
 
-func (t *BogusTask) Run() {}
+func (t *BogusProcess) Run() {}

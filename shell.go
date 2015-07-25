@@ -10,8 +10,8 @@ import (
 	"sync"
 )
 
-type ShellTask struct {
-	task
+type ShellProcess struct {
+	process
 	_OutOnly     bool
 	InPorts      map[string]chan *FileTarget
 	InPaths      map[string]string
@@ -24,8 +24,8 @@ type ShellTask struct {
 	Spawn        bool
 }
 
-func NewShellTask(command string) *ShellTask {
-	return &ShellTask{
+func NewShellProcess(command string) *ShellProcess {
+	return &ShellProcess{
 		Command:      command,
 		InPorts:      make(map[string]chan *FileTarget),
 		InPaths:      make(map[string]string),
@@ -37,28 +37,28 @@ func NewShellTask(command string) *ShellTask {
 	}
 }
 
-func Sh(cmd string) *ShellTask {
+func Sh(cmd string) *ShellProcess {
 	return Shell(cmd)
 }
 
-func Shell(cmd string) *ShellTask {
+func Shell(cmd string) *ShellProcess {
 	if !LogExists {
 		InitLogAudit()
 	}
-	t := NewShellTask(cmd)
-	t.initPortsFromCmdPattern(cmd, nil)
-	return t
+	p := NewShellProcess(cmd)
+	p.initPortsFromCmdPattern(cmd, nil)
+	return p
 }
 
-func ShExp(cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *ShellTask {
+func ShExp(cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *ShellProcess {
 	return ShellExpand(cmd, inPaths, outPaths, params)
 }
 
-func ShellExpand(cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *ShellTask {
+func ShellExpand(cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *ShellProcess {
 	cmdExp := expandCommandParamsAndPaths(cmd, params, inPaths, outPaths)
-	t := NewShellTask(cmdExp)
-	t.initPortsFromCmdPattern(cmdExp, params)
-	return t
+	p := NewShellProcess(cmdExp)
+	p.initPortsFromCmdPattern(cmdExp, params)
+	return p
 }
 
 func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths map[string]string, outPaths map[string]string) (cmdExp string) {
@@ -98,7 +98,7 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 	return
 }
 
-func (t *ShellTask) initPortsFromCmdPattern(cmd string, params map[string]string) {
+func (p *ShellProcess) initPortsFromCmdPattern(cmd string, params map[string]string) {
 	// Find in/out port names and Params and set up in struct fields
 	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
@@ -109,43 +109,43 @@ func (t *ShellTask) initPortsFromCmdPattern(cmd string, params map[string]string
 		typ := m[1]
 		name := m[2]
 		if typ == "o" {
-			t.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
+			p.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
 		} else if typ == "p" {
 			if params == nil {
-				t.ParamPorts[name] = make(chan string, BUFSIZE)
+				p.ParamPorts[name] = make(chan string, BUFSIZE)
 			} else {
-				t.Params[name] = params[name]
+				p.Params[name] = params[name]
 			}
 		}
 
 		// else if typ == "i" {
 		// Set up a channel on the inports, even though this is
-		// often replaced by another tasks output port channel.
+		// often replaced by another processes output port channel.
 		// It might be nice to have it init'ed with a channel
 		// anyways, for use cases when we want to send FileTargets
 		// on the inport manually.
-		// t.InPorts[name] = make(chan *FileTarget, BUFSIZE)
+		// p.InPorts[name] = make(chan *FileTarget, BUFSIZE)
 		// }
 	}
 }
 
-func (t *ShellTask) Run() {
-	Debug.Println("Entering task:", t.Command)
-	defer t.closeOutChans()
+func (p *ShellProcess) Run() {
+	Debug.Println("Entering process:", p.Command)
+	defer p.closeOutChans()
 
 	wg := new(sync.WaitGroup)
 	mx := new(sync.Mutex)
 	sendWaitQueue := []map[string]chan int{}
 	// Main loop
 	for {
-		inPortsClosed := t.receiveInputs()
-		paramPortsClosed := t.receiveParams()
+		inPortsClosed := p.receiveInputs()
+		paramPortsClosed := p.receiveParams()
 
-		if len(t.InPorts) == 0 && paramPortsClosed {
+		if len(p.InPorts) == 0 && paramPortsClosed {
 			Debug.Println("Closing loop: No inports, and param ports closed")
 			break
 		}
-		if len(t.ParamPorts) == 0 && inPortsClosed {
+		if len(p.ParamPorts) == 0 && inPortsClosed {
 			Debug.Println("Closing loop: No param ports, and inports closed")
 			break
 		}
@@ -155,46 +155,46 @@ func (t *ShellTask) Run() {
 		}
 
 		// This is important that it is created anew here, for thread-safety
-		outTargets := t.createOutTargets()
+		outTargets := p.createOutTargets()
 		// Format
-		cmd := t.formatCommand(t.Command, outTargets)
+		cmd := p.formatCommand(p.Command, outTargets)
 		cmdForDisplay := str.Replace(cmd, ".tmp", "", -1)
 
-		if t.anyFileExists(outTargets) {
-			Warn.Printf("Skipping task, one or more outputs already exist: '%s'\n", cmd)
+		if p.anyFileExists(outTargets) {
+			Warn.Printf("Skipping process, one or more outputs already exist: '%s'\n", cmd)
 		} else {
-			Audit.Printf("Starting task: %s\n", cmdForDisplay)
-			if t.Spawn {
+			Audit.Printf("Starting process: %s\n", cmdForDisplay)
+			if p.Spawn {
 				wg.Add(1)
 				beforeSendCh := make(chan int)
 				afterSendCh := make(chan int)
 				sendWaitQueue = append(sendWaitQueue, map[string](chan int){"before": beforeSendCh, "after": afterSendCh})
 				go func() {
-					t.executeCommand(cmd)
-					t.atomizeTargets(outTargets, mx)
+					p.executeCommand(cmd)
+					p.atomizeTargets(outTargets, mx)
 					beforeSendCh <- 1
-					t.sendOutputs(outTargets, mx)
+					p.sendOutputs(outTargets, mx)
 					afterSendCh <- 1
 					close(beforeSendCh)
 					close(afterSendCh)
 					wg.Done()
 				}()
 			} else {
-				t.executeCommand(cmd)
-				t.atomizeTargets(outTargets, mx)
-				t.sendOutputs(outTargets, mx)
+				p.executeCommand(cmd)
+				p.atomizeTargets(outTargets, mx)
+				p.sendOutputs(outTargets, mx)
 			}
-			Audit.Printf("Finished task: %s\n", cmdForDisplay)
+			Audit.Printf("Finished process: %s\n", cmdForDisplay)
 		}
 
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
-		if len(t.InPorts) == 0 && len(t.ParamPorts) == 0 {
-			Debug.Printf("Closing after send: No inports or param ports (task '%s')", cmd)
+		if len(p.InPorts) == 0 && len(p.ParamPorts) == 0 {
+			Debug.Printf("Closing after send: No inports or param ports (process '%s')", cmd)
 			break
 		}
 	}
-	Debug.Printf("Starting to wait for ordered sends (task '%s')\n", t.Command)
+	Debug.Printf("Starting to wait for ordered sends (process '%s')\n", p.Command)
 	for i, sendChs := range sendWaitQueue {
 		Debug.Printf("sendWaitQueue %d: Waiting to start sending ...\n", i)
 		<-sendChs["before"]
@@ -202,76 +202,76 @@ func (t *ShellTask) Run() {
 		<-sendChs["after"]
 		Debug.Printf("sendWaitQueue %d: Now has sent!\n", i)
 	}
-	Debug.Printf("Starting to wait (task '%s')\n", t.Command)
+	Debug.Printf("Starting to wait (process '%s')\n", p.Command)
 	wg.Wait()
-	Debug.Printf("Finished waiting (task '%s')\n", t.Command)
-	Debug.Println("Exiting task:", t.Command)
+	Debug.Printf("Finished waiting (process '%s')\n", p.Command)
+	Debug.Println("Exiting process:", p.Command)
 }
 
-func (t *ShellTask) closeOutChans() {
+func (p *ShellProcess) closeOutChans() {
 	// Close output channels
-	for _, ochan := range t.OutPorts {
+	for _, ochan := range p.OutPorts {
 		close(ochan)
 	}
 }
 
-func (t *ShellTask) receiveInputs() bool {
+func (p *ShellProcess) receiveInputs() bool {
 	inPortsClosed := false
 	// Read input targets on in-ports and set up path mappings
-	for iname, ichan := range t.InPorts {
+	for iname, ichan := range p.InPorts {
 		infile, open := <-ichan
 		if !open {
 			inPortsClosed = true
 			continue
 		}
 		Debug.Println("Receiving file:", infile.GetPath())
-		t.InPaths[iname] = infile.GetPath()
+		p.InPaths[iname] = infile.GetPath()
 	}
 	return inPortsClosed
 }
 
-func (t *ShellTask) receiveParams() bool {
+func (p *ShellProcess) receiveParams() bool {
 	paramPortsClosed := false
 	// Read input targets on in-ports and set up path mappings
-	for pname, pchan := range t.ParamPorts {
+	for pname, pchan := range p.ParamPorts {
 		pval, open := <-pchan
 		if !open {
 			paramPortsClosed = true
 			continue
 		}
 		Debug.Println("Receiving param:", pname, "with value", pval)
-		t.Params[pname] = pval
+		p.Params[pname] = pval
 	}
 	return paramPortsClosed
 }
 
-func (t *ShellTask) sendOutputs(outTargets map[string]*FileTarget, mx *sync.Mutex) {
+func (p *ShellProcess) sendOutputs(outTargets map[string]*FileTarget, mx *sync.Mutex) {
 	// Send output targets on out ports
 	mx.Lock()
-	for oname, ochan := range t.OutPorts {
+	for oname, ochan := range p.OutPorts {
 		Debug.Println("Sending file:", outTargets[oname].GetPath())
 		ochan <- outTargets[oname]
 	}
 	mx.Unlock()
 }
 
-func (t *ShellTask) createOutPaths() (outPaths map[string]string) {
+func (p *ShellProcess) createOutPaths() (outPaths map[string]string) {
 	outPaths = make(map[string]string)
-	for oname, ofun := range t.OutPathFuncs {
+	for oname, ofun := range p.OutPathFuncs {
 		outPaths[oname] = ofun()
 	}
 	return outPaths
 }
 
-func (t *ShellTask) createOutTargets() (outTargets map[string]*FileTarget) {
+func (p *ShellProcess) createOutTargets() (outTargets map[string]*FileTarget) {
 	outTargets = make(map[string]*FileTarget)
-	for oname, opath := range t.createOutPaths() {
+	for oname, opath := range p.createOutPaths() {
 		outTargets[oname] = NewFileTarget(opath)
 	}
 	return
 }
 
-func (t *ShellTask) anyFileExists(targets map[string]*FileTarget) (anyFileExists bool) {
+func (p *ShellProcess) anyFileExists(targets map[string]*FileTarget) (anyFileExists bool) {
 	anyFileExists = false
 	for _, tgt := range targets {
 		opath := tgt.GetPath()
@@ -288,13 +288,13 @@ func (t *ShellTask) anyFileExists(targets map[string]*FileTarget) (anyFileExists
 	return
 }
 
-func (t *ShellTask) executeCommand(cmd string) {
+func (p *ShellProcess) executeCommand(cmd string) {
 	Info.Println("Executing cmd:", cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
 	Check(err)
 }
 
-func (t *ShellTask) atomizeTargets(targets map[string]*FileTarget, mx *sync.Mutex) {
+func (p *ShellProcess) atomizeTargets(targets map[string]*FileTarget, mx *sync.Mutex) {
 	mx.Lock()
 	for _, tgt := range targets {
 		Debug.Printf("Atomizing file: %s -> %s", tgt.GetTempPath(), tgt.GetPath())
@@ -303,7 +303,7 @@ func (t *ShellTask) atomizeTargets(targets map[string]*FileTarget, mx *sync.Mute
 	mx.Unlock()
 }
 
-func (t *ShellTask) formatCommand(cmd string, outTargets map[string]*FileTarget) string {
+func (p *ShellProcess) formatCommand(cmd string, outTargets map[string]*FileTarget) string {
 	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
@@ -313,45 +313,45 @@ func (t *ShellTask) formatCommand(cmd string, outTargets map[string]*FileTarget)
 		var newstr string
 		if typ == "o" {
 			if outTargets[name] == nil {
-				msg := fmt.Sprint("Missing outpath for outport '", name, "' of shell task '", t.Command, "'")
+				msg := fmt.Sprint("Missing outpath for outport '", name, "' of shell process '", p.Command, "'")
 				Check(errors.New(msg))
 			} else {
 				newstr = outTargets[name].GetTempPath() // Means important to Atomize afterwards!
 			}
 		} else if typ == "i" {
-			if t.InPaths[name] == "" {
-				msg := fmt.Sprint("Missing inpath for inport '", name, "' of shell task '", t.Command, "'")
+			if p.InPaths[name] == "" {
+				msg := fmt.Sprint("Missing inpath for inport '", name, "' of shell process '", p.Command, "'")
 				Check(errors.New(msg))
 			} else {
-				newstr = t.InPaths[name]
+				newstr = p.InPaths[name]
 			}
 		} else if typ == "p" {
-			if t.Params[name] == "" {
-				msg := fmt.Sprint("Missing param value param '", name, "' of shell task '", t.Command, "'")
+			if p.Params[name] == "" {
+				msg := fmt.Sprint("Missing param value param '", name, "' of shell process '", p.Command, "'")
 				Check(errors.New(msg))
 			} else {
-				newstr = t.Params[name]
+				newstr = p.Params[name]
 			}
 		}
 		if newstr == "" {
-			msg := fmt.Sprint("Replace failed for port ", name, " in task '", t.Command, "'")
+			msg := fmt.Sprint("Replace failed for port ", name, " in process '", p.Command, "'")
 			Check(errors.New(msg))
 		}
 		cmd = str.Replace(cmd, whole, newstr, -1)
 	}
 	// Add prepend string to the command
-	if t.Prepend != "" {
-		cmd = fmt.Sprintf("%s %s", t.Prepend, cmd)
+	if p.Prepend != "" {
+		cmd = fmt.Sprintf("%s %s", p.Prepend, cmd)
 	}
 	return cmd
 }
 
-func (t *ShellTask) GetInPath(inPort string) string {
+func (p *ShellProcess) GetInPath(inPort string) string {
 	var inPath string
-	if t.InPaths[inPort] != "" {
-		inPath = t.InPaths[inPort]
+	if p.InPaths[inPort] != "" {
+		inPath = p.InPaths[inPort]
 	} else {
-		msg := fmt.Sprint("t.GetInPath(): Missing inpath for inport '", inPort, "' of shell task '", t.Command, "'")
+		msg := fmt.Sprint("p.GetInPath(): Missing inpath for inport '", inPort, "' of shell process '", p.Command, "'")
 		Check(errors.New(msg))
 	}
 	return inPath

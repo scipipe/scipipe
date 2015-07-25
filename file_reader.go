@@ -7,7 +7,7 @@ import (
 )
 
 type fileReader struct {
-	task
+	process
 	FilePath chan string
 	Out      chan []byte
 }

@@ -60,7 +60,7 @@ func (ft *FileTarget) Exists() bool {
 // ======= FileQueue =======
 
 type FileQueue struct {
-	task
+	process
 	Out       chan *FileTarget
 	FilePaths []string
 }
@@ -91,7 +91,7 @@ func (proc *FileQueue) Run() {
 // ======= Sink =======
 
 type Sink struct {
-	task
+	process
 	In chan *FileTarget
 }
 
