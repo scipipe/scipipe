@@ -8,23 +8,22 @@ based on an idea for a flow-based like pattern in pure Go, as presented in
 
 Some benefits of SciPipe, that are not always available in other systems available:
 
-- Inherently parallel and concurrent (Uses multiple CPU:s efficiently)
-- Easy-to-grasp behaviour (data flowing through a network)
-- Parallel: Spawns multiple tasks from the same process, for each input file
-- Concurrent: Each process runs in an own light-weight thread, and is not blocked by
-  operations in other processes except for when waiting for inputs from an upstream process.
-- Inherently simple implementaiton. Uses Go's concurrency primitives (go-routines and channels)
-  to create an "implicit" scheduler, which means very little additional infrastructure.
-- Efficient: Workflows are compiled into static compiled code, that runs fast.
-- Portable: Workflows can either be distributed as go files, and be run with the `go run` command
-  whereever a go compiled is installed. But workflows can also be compiled into stand-alone binaries,
-  that will work on basically any unix-like system, including mobile (ARM) devices ([work in progress](http://dave.cheney.net/unofficial-arm-tarballs).
-- Flexible: You can combine processes that wrap command-line programs and scripts, with processes
-  that are coded directly in Golang.
-- Debuggable(!): Since everything in SciPipe is plain Go, you can easily use the [gdb debugger](http://golang.org/doc/gdb) (preferrably
+- *Easy-to-grasp behaviour:* Data flowing through a network.
+- *Parallel:* Apart from the inherent pipeline parallelism, SciPipe processes also spawn multiple parallel tasks when the same process has multiple inputs.
+- *Concurrent:* Each process runs in an own light-weight thread, and is not blocked by
+  operations in other processes, except when waiting for inputs from upstream processes.
+- *Inherently simple:* Uses Go's concurrency primitives (go-routines and channels)
+  to create an "implicit" scheduler, which means very little additional infrastructure code.
+  This means that the code is easy to modify and extend.
+- *Flexible:* Processes that wrap command-line programs and scripts can be combined with
+  processes coded directly in Golang.
+- *Debuggable(!):* Since everything in SciPipe is plain Go, you can easily use the [gdb debugger](http://golang.org/doc/gdb) (preferrably
   with the [cgdb interface](https://www.youtube.com/watch?v=OKLR6rrsBmI) for easier use) to step through your program at any detail, as well as all
   the other excellent debugging tooling for Go. (See eg [delve](https://github.com/derekparker/delve) and [godebug](https://github.com/mailgun/godebug)).
   In addition, you can easily turn on very detailed debug output by turning on debug-level logging with `scipipe.InitLogDebug()` in your `main()` method.
+- *Efficient:* Workflows are compiled into static compiled code, that runs fast.
+- *Portable:* Workflows can be distributed as go code to be run with the `go run` command
+  or compiled into stand-alone binaries for basically any unix-like operating system.
 
 ## Known limitations
 
@@ -86,7 +85,7 @@ func main() {
 And to see what it does, let's put the code in a file `test.go` and run it:
 
 ```bash
-[samuell test]$ go run test.go 
+[samuell test]$ go run test.go
 AUDIT: 2015/07/25 17:08:48 Starting process: echo 'foo' > foo.txt
 AUDIT: 2015/07/25 17:08:48 Finished process: echo 'foo' > foo.txt
 AUDIT: 2015/07/25 17:08:48 Starting process: sed 's/foo/bar/g' foo.txt > foo.txt.bar
@@ -152,8 +151,6 @@ pl := sci.NewPipeline()
 pl.AddProcs(fwt, f2b, snk)
 pl.Run()
 ```
-
-
 ### Summary
 
 So with this, we have done everything needed to set up a file-based batch workflow system.
