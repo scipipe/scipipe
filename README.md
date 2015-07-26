@@ -17,10 +17,14 @@ Some benefits of SciPipe, that are not always available in other systems availab
   This means that the code is easy to modify and extend.
 - **Flexible:** Processes that wrap command-line programs and scripts can be combined with
   processes coded directly in Golang.
-- **Debuggable(!):** Since everything in SciPipe is plain Go, you can easily use the [gdb debugger](http://golang.org/doc/gdb) (preferrably
+- **Custom file naming:** SciPipe gives you full control over how file names are produced,
+  making it easy to understand and find your way among the output files of your computations.
+- **Highly Debuggable(!):** Since everything in SciPipe is plain Go(lang), you can easily use the [gdb debugger](http://golang.org/doc/gdb) (preferrably
   with the [cgdb interface](https://www.youtube.com/watch?v=OKLR6rrsBmI) for easier use) to step through your program at any detail, as well as all
-  the other excellent debugging tooling for Go. (See eg [delve](https://github.com/derekparker/delve) and [godebug](https://github.com/mailgun/godebug)).
-  In addition, you can easily turn on very detailed debug output by turning on debug-level logging with `scipipe.InitLogDebug()` in your `main()` method.
+  the other excellent debugging tooling for Go (See eg [delve](https://github.com/derekparker/delve) and [godebug](https://github.com/mailgun/godebug)),
+  or just use `println()` statements at any place in your code. In addition, you can easily
+  turn on very detailed debug output from SciPipe's execution itself, by just turning on debug-level
+  logging with `scipipe.InitLogDebug()` in your `main()` method.
 - **Efficient:** Workflows are compiled into static compiled code, that runs fast.
 - **Portable:** Workflows can be distributed as go code to be run with the `go run` command
   or compiled into stand-alone binaries for basically any unix-like operating system.
