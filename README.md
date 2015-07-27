@@ -4,6 +4,10 @@ An experimental library for writing Scientific (Batch) Workflows in vanilla [Go(
 based on an idea for a flow-based like pattern in pure Go, as presented in
 [this Gopher Academy blog post](http://blog.gopheracademy.com/composable-pipelines-pattern).
 
+See a short demo about how it might look, working with SciPipe in the terminal:
+
+![SciPipe Demo](http://i.imgur.com/pPPAJCx.gifv)
+
 ## Benefits
 
 Some benefits of SciPipe, that are not always available in other systems available:
