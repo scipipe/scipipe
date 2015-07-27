@@ -6,7 +6,7 @@ based on an idea for a flow-based like pattern in pure Go, as presented in
 
 See a short demo about how it might look, working with SciPipe in the terminal:
 
-![SciPipe Demo](http://i.imgur.com/xAtqcOH.gif)
+![SciPipe Demo](http://i.imgur.com/Egzo1VO.gif)
 
 ## Benefits
 
