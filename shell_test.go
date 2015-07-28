@@ -272,6 +272,13 @@ func TestSendsOrderedOutputs(t *t.T) {
 	cleanFiles(expFnames...)
 }
 
+// Test that streaming works
+//func TestStreaming(t *t.T) {
+//	initTestLogs()
+//
+//	ls := ShellPipable("ls -l # {o:filelist}")
+//}
+
 // Helper functions
 
 func cleanFiles(fileNames ...string) {
