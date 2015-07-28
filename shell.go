@@ -346,6 +346,12 @@ func (p *ShellProcess) formatCommand(cmd string, outTargets map[string]*FileTarg
 	return cmd
 }
 
+func getPlaceHolderRegex() *re.Regexp {
+	r, err := re.Compile("{(o|i|p):([^{}:]+)}")
+	Check(err)
+	return r
+}
+
 func (p *ShellProcess) GetInPath(inPort string) string {
 	var inPath string
 	if p.InPaths[inPort] != "" {
@@ -357,8 +363,13 @@ func (p *ShellProcess) GetInPath(inPort string) string {
 	return inPath
 }
 
-func getPlaceHolderRegex() *re.Regexp {
-	r, err := re.Compile("{(o|i|p):([^{}:]+)}")
-	Check(err)
-	return r
+// Convenience method to create an (output) path formatter returning a static string
+func (p *ShellProcess) SetPathGenString(outPort string, path string) {
+	p.OutPathFuncs[outPort] = func() string { return path }
+}
+
+// Convenience method to create an (output) path formatter that extends the path of
+// and input FileTarget
+func (p *ShellProcess) SetPathGenExtendFromInput(outPort string, inPort string, extension string) {
+	p.OutPathFuncs[outPort] = func() string { return p.GetInPath(inPort) + extension }
 }
