@@ -68,9 +68,15 @@ func ShellPipable(cmd string, streamOutputs bool) {
 func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths map[string]string, outPaths map[string]string) (cmdExp string) {
 	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
-	Debug.Println("Params:", params)
-	Debug.Println("inPaths:", inPaths)
-	Debug.Println("outPaths:", outPaths)
+	if params != nil {
+		Debug.Println("Params:", params)
+	}
+	if inPaths != nil {
+		Debug.Println("inPaths:", inPaths)
+	}
+	if outPaths != nil {
+		Debug.Println("outPaths:", outPaths)
+	}
 	cmdExp = cmd
 	for _, m := range ms {
 		whole := m[0]
