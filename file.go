@@ -1,6 +1,7 @@
 package scipipe
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"time"
@@ -9,12 +10,17 @@ import (
 // ======= FileTarget ========
 
 type FileTarget struct {
-	path string
+	path   string
+	buffer *bytes.Buffer
+	stream bool
 }
 
 func NewFileTarget(path string) *FileTarget {
 	ft := new(FileTarget)
 	ft.path = path
+	//Don't init buffer if not needed?
+	//buf := make([]byte, 0, 128)
+	//ft.buffer = bytes.NewBuffer(buf)
 	return ft
 }
 
