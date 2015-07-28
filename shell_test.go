@@ -232,6 +232,8 @@ func TestShellExpand(t *t.T) {
 	cleanFiles("in.txt", "out.txt")
 }
 
+// Make sure that outputs are returned in order, even though they are
+// spawned to work in parallel.
 func TestSendsOrderedOutputs(t *t.T) {
 	initTestLogs()
 

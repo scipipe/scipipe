@@ -368,12 +368,24 @@ func (p *ShellProcess) GetInPath(inPort string) string {
 }
 
 // Convenience method to create an (output) path formatter returning a static string
-func (p *ShellProcess) SetPathGenString(outPort string, path string) {
-	p.OutPathFuncs[outPort] = func() string { return path }
+func (p *ShellProcess) OutPathGenString(outPort string, path string) {
+	p.OutPathFuncs[outPort] = func() string {
+		return path
+	}
 }
 
 // Convenience method to create an (output) path formatter that extends the path of
 // and input FileTarget
-func (p *ShellProcess) SetPathGenExtendFromInput(outPort string, inPort string, extension string) {
-	p.OutPathFuncs[outPort] = func() string { return p.GetInPath(inPort) + extension }
+func (p *ShellProcess) OutPathGenExtend(outPort string, inPort string, extension string) {
+	p.OutPathFuncs[outPort] = func() string {
+		return p.GetInPath(inPort) + extension
+	}
+}
+
+// Convenience method to create an (output) path formatter that uses an input's path
+// but replaces parts of it.
+func (p *ShellProcess) OutPathGenReplace(outPort string, inPort string, old string, new string) {
+	p.OutPathFuncs[outPort] = func() string {
+		return str.Replace(p.GetInPath(inPort), old, new, -1)
+	}
 }
