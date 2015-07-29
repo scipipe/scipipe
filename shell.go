@@ -228,7 +228,7 @@ func (p *ShellProcess) Run() {
 					Debug.Printf("[%s] Will execute command\n", cmdForDisplay)
 					p.executeCommand(cmd)
 					p.atomizeTargets(outTargets, mxAtomize)
-					p.cleanUpFifos(outTargets, mxCleanUpFifos)
+					p.cleanUpFifos(mxCleanUpFifos)
 					beforeSendCh <- 1
 					p.sendOutputs(outTargets, mxSend)
 					afterSendCh <- 1
@@ -245,7 +245,7 @@ func (p *ShellProcess) Run() {
 				p.sendFifoTargets(outTargets, mxSendFifo)
 				p.executeCommand(cmd)
 				p.atomizeTargets(outTargets, mxAtomize)
-				p.cleanUpFifos(outTargets, mxCleanUpFifos)
+				p.cleanUpFifos(mxCleanUpFifos)
 				p.sendOutputs(outTargets, mxSend)
 				Info.Printf("[%s] Finished execution of non-spawned shell task\n", cmdForDisplay)
 			}
@@ -421,14 +421,14 @@ func (p *ShellProcess) atomizeTargets(targets map[string]*FileTarget, mx *sync.M
 	mx.Unlock()
 }
 
-func (p *ShellProcess) cleanUpFifos(outTargets map[string]*FileTarget, mx *sync.Mutex) {
+func (p *ShellProcess) cleanUpFifos(mx *sync.Mutex) {
 	mx.Lock()
-	for _, tgt := range outTargets {
+	for _, tgt := range p.InTargets {
 		if tgt.doStream {
-			Debug.Printf("[%s] Cleaning up FIFO: %s\n", p.Command, tgt.GetFifoPath())
+			Debug.Printf("[%s] Cleaning up FIFO for input target: %s\n", p.Command, tgt.GetFifoPath())
 			tgt.RemoveFifo()
 		} else {
-			Debug.Printf("[%s] Target is normal, so not removing any FIFO\n", tgt.GetPath())
+			Debug.Printf("[%s] input target is not FIFO, so not removing any FIFO\n", tgt.GetPath())
 		}
 	}
 	mx.Unlock()

@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"time"
+	"sync"
 )
 
 // ======= FileTarget ========
@@ -14,11 +14,13 @@ type FileTarget struct {
 	path     string
 	buffer   *bytes.Buffer
 	doStream bool
+	lock     *sync.Mutex
 }
 
 func NewFileTarget(path string) *FileTarget {
 	ft := new(FileTarget)
 	ft.path = path
+	ft.lock = new(sync.Mutex)
 	//Don't init buffer if not needed?
 	//buf := make([]byte, 0, 128)
 	//ft.buffer = bytes.NewBuffer(buf)
@@ -56,27 +58,35 @@ func (ft *FileTarget) Write(dat []byte) {
 }
 
 func (ft *FileTarget) Atomize() {
-	time.Sleep(0 * time.Millisecond) // TODO: Remove in production. Just for demo purposes!
+	ft.lock.Lock()
 	err := os.Rename(ft.GetTempPath(), ft.path)
 	Check(err)
+	ft.lock.Unlock()
 }
 
 func (ft *FileTarget) CreateFifo() {
-	_, err := exec.Command("bash", "-c", "mkfifo "+ft.GetFifoPath()+";sleep 0.1").Output()
+	ft.lock.Lock()
+	_, err := exec.Command("bash", "-c", "mkfifo "+ft.GetFifoPath()).Output()
 	Check(err)
+	ft.lock.Unlock()
 }
 
 func (ft *FileTarget) RemoveFifo() {
-	output, err := exec.Command("bash", "-c", "rm "+ft.GetFifoPath()+";sleep 0.1").Output()
-	Debug.Println("Remove FIFO output: ", output)
+	ft.lock.Lock()
+	output, err := exec.Command("bash", "-c", "rm "+ft.GetFifoPath()).Output()
 	Check(err)
+	Debug.Println("Removed FIFO output: ", output)
+	ft.lock.Unlock()
 }
 
 func (ft *FileTarget) Exists() bool {
+	exists := false
+	ft.lock.Lock()
 	if _, err := os.Stat(ft.GetPath()); err == nil {
-		return true
+		exists = true
 	}
-	return false
+	ft.lock.Unlock()
+	return exists
 }
 
 // ======= FileQueue =======
