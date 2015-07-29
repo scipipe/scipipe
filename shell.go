@@ -84,23 +84,33 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 		name := m[2]
 		var newstr string
 		if typ == "p" {
-			if params != nil && params[name] != "" {
-				Debug.Println("Found param:", params[name])
-				newstr = params[name]
+			if params != nil {
+				if val, ok := params[name]; ok {
+					Debug.Println("Found param:", val)
+					newstr = val
+					Debug.Println("Replacing:", whole, "->", newstr)
+					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+				}
 			}
 		} else if typ == "i" {
-			if inPaths != nil && inPaths[name] != "" {
-				Debug.Println("Found inPath:", inPaths[name])
-				newstr = inPaths[name]
+			if inPaths != nil {
+				if val, ok := inPaths[name]; ok {
+					Debug.Println("Found inPath:", val)
+					newstr = val
+					Debug.Println("Replacing:", whole, "->", newstr)
+					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+				}
 			}
 		} else if typ == "o" {
-			if outPaths != nil && outPaths[name] != "" {
-				Debug.Println("Found outPath:", outPaths[name])
-				newstr = outPaths[name]
+			if outPaths != nil {
+				if val, ok := outPaths[name]; ok {
+					Debug.Println("Found outPath:", val)
+					newstr = val
+					Debug.Println("Replacing:", whole, "->", newstr)
+					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+				}
 			}
 		}
-		Debug.Println("Replacing:", whole, "->", newstr)
-		cmdExp = str.Replace(cmdExp, whole, newstr, -1)
 	}
 	if cmd != cmdExp {
 		Debug.Printf("Expanded command '%s' into '%s'\n", cmd, cmdExp)
