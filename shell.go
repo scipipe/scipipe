@@ -171,8 +171,14 @@ func (p *ShellProcess) Run() {
 		// ----------------------------------------------------
 		// Loop closing conditions
 		// ----------------------------------------------------
-		if len(p.InPorts) == 0 && len(p.ParamPorts) == 0 {
-			Debug.Printf("[%s] Closing loop after send: No inports or param ports\n", p.Command)
+		lenNonStreamingInports := 0
+		for pname, _ := range p.InPorts {
+			if !p.InTargets[pname].doStream {
+				lenNonStreamingInports++
+			}
+		}
+		if lenNonStreamingInports == 0 && paramPortsClosed {
+			Debug.Printf("[%s] Closing loop after send: No non-streaming inports, and param ports closed\n", p.Command)
 			break
 		}
 		if len(p.InPorts) == 0 && paramPortsClosed {
@@ -258,18 +264,12 @@ func (p *ShellProcess) Run() {
 
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
-		lenNonStreamingInports := 0
-		for pname, _ := range p.InPorts {
-			if !p.InTargets[pname].doStream {
-				lenNonStreamingInports++
-			}
-		}
 		if lenNonStreamingInports == 0 && len(p.ParamPorts) == 0 {
 			Debug.Printf("[%s] Closing loop after send: No non-streaming inports, and no param ports\n", p.Command)
 			break
 		}
-		if lenNonStreamingInports == 0 && paramPortsClosed {
-			Debug.Printf("[%s] Closing loop after send: No non-streaming inports, and param ports closed\n", p.Command)
+		if len(p.InPorts) == 0 && len(p.ParamPorts) == 0 {
+			Debug.Printf("[%s] Closing loop after send: No inports or param ports\n", p.Command)
 			break
 		}
 	}
