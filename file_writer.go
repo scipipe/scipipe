@@ -19,11 +19,10 @@ func NewFileWriter() *fileWriter {
 	}
 }
 
-func NewFileWriterFromPath(pl *Pipeline, path string) *fileWriter {
+func NewFileWriterFromPath(path string) *fileWriter {
 	t := &fileWriter{
 		FilePath: make(chan string),
 	}
-	pl.AddProcess(t)
 	go func() {
 		t.FilePath <- path
 	}()
