@@ -62,12 +62,13 @@ func (ft *FileTarget) Atomize() {
 }
 
 func (ft *FileTarget) CreateFifo() {
-	_, err := exec.Command("mkfifo", ft.GetFifoPath()).Output()
+	_, err := exec.Command("bash", "-c", "mkfifo "+ft.GetFifoPath()+";sleep 0.1").Output()
 	Check(err)
 }
 
 func (ft *FileTarget) RemoveFifo() {
-	_, err := exec.Command("rm", ft.GetFifoPath()).Output()
+	output, err := exec.Command("bash", "-c", "rm "+ft.GetFifoPath()+";sleep 0.1").Output()
+	Debug.Println("Remove FIFO output: ", output)
 	Check(err)
 }
 

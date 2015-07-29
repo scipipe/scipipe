@@ -13,7 +13,6 @@ import (
 type ShellProcess struct {
 	process
 	InPorts          map[string]chan *FileTarget
-	InPortsDoStream  map[string]bool
 	InTargets        map[string]*FileTarget
 	OutPorts         map[string]chan *FileTarget
 	OutPortsDoStream map[string]bool
@@ -29,7 +28,6 @@ func NewShellProcess(command string) *ShellProcess {
 	return &ShellProcess{
 		Command:          command,
 		InPorts:          make(map[string]chan *FileTarget),
-		InPortsDoStream:  make(map[string]bool),
 		InTargets:        make(map[string]*FileTarget),
 		OutPorts:         make(map[string]chan *FileTarget),
 		OutPortsDoStream: make(map[string]bool),
@@ -46,7 +44,7 @@ func Sh(cmd string) *ShellProcess {
 
 func Shell(cmd string) *ShellProcess {
 	if !LogExists {
-		InitLogAudit()
+		InitLogInfo()
 	}
 	p := NewShellProcess(cmd)
 	p.initPortsFromCmdPattern(cmd, nil)
@@ -95,7 +93,7 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
 				}
 			}
-		} else if typ == "i" || typ == "is" {
+		} else if typ == "i" {
 			if inPaths != nil {
 				if val, ok := inPaths[name]; ok {
 					Debug.Println("Found inPath:", val)
@@ -136,16 +134,13 @@ func (p *ShellProcess) initPortsFromCmdPattern(cmd string, params map[string]str
 			if typ == "os" {
 				p.OutPortsDoStream[name] = true
 			}
-		} else if typ == "i" || typ == "is" {
+		} else if typ == "i" {
 			// Set up a channel on the inports, even though this is
 			// often replaced by another processes output port channel.
 			// It might be nice to have it init'ed with a channel
 			// anyways, for use cases when we want to send FileTargets
 			// on the inport manually.
 			p.InPorts[name] = make(chan *FileTarget, BUFSIZE)
-			if typ == "is" {
-				p.InPortsDoStream[name] = true
-			}
 		} else if typ == "p" {
 			if params == nil {
 				p.ParamPorts[name] = make(chan string, BUFSIZE)
@@ -164,40 +159,47 @@ func (p *ShellProcess) Run() {
 	mxCreateFifo := new(sync.Mutex)
 	mxSendFifo := new(sync.Mutex)
 	mxAtomize := new(sync.Mutex)
+	mxCleanUpFifos := new(sync.Mutex)
 	mxSend := new(sync.Mutex)
 	sendWaitQueue := []map[string]chan int{}
 	// Main loop
 	for {
-		Debug.Printf("Looping again (%s)\n", p.Command)
+		Debug.Printf("[%s] Looping again\n", p.Command)
 		inPortsClosed := p.receiveInputs()
 		paramPortsClosed := p.receiveParams()
 
+		// ----------------------------------------------------
+		// Loop closing conditions
+		// ----------------------------------------------------
 		if len(p.InPorts) == 0 && paramPortsClosed {
-			Debug.Println("Closing loop: No inports, and param ports closed")
+			Debug.Println("Closing loop: No inports, and param ports closed", p.Command)
 			break
 		}
 		if len(p.ParamPorts) == 0 && inPortsClosed {
-			Debug.Println("Closing loop: No param ports, and inports closed")
+			Debug.Println("Closing loop: No param ports, and inports closed", p.Command)
 			break
 		}
 		if inPortsClosed && paramPortsClosed {
-			Debug.Println("Closing loop: Both inports and param ports closed")
+			Debug.Println("Closing loop: Both inports and param ports closed", p.Command)
 			break
 		}
-		Debug.Printf("Not closing (%s)\n", p.Command)
+		// ----------------------------------------------------
+		// END: Loop closing conditions
+		// ----------------------------------------------------
 
 		// This is important that it is created anew here, for thread-safety
 		outTargets := p.createOutTargets()
 		// Format
 		cmd := p.formatCommand(p.Command, outTargets)
-		cmdForDisplay := str.Replace(cmd, ".tmp", "", -1)
+		Debug.Printf("Formatted command: %s -> %s\n", p.Command, cmd)
+		cmdForDisplay := getCmdForDisplay(cmd)
 
 		if p.anyFileExists(outTargets) {
-			Warn.Printf("Skipping process, one or more outputs already exist: '%s'\n", cmd)
+			Warn.Printf("[%s] Skipping process, one or more outputs already exist\n", cmd)
 		} else {
-			Audit.Printf("Starting shell task: %s\n", cmdForDisplay)
+			Info.Printf("[%s] Starting shell task\n", cmdForDisplay)
 			if p.Spawn {
-				Debug.Println("Task is spawned: ", cmdForDisplay)
+				Debug.Printf("[%s] Task is spawned\n", cmdForDisplay)
 				wg.Add(1)
 				beforeFifoSendCh := make(chan int)
 				afterFifoSendCh := make(chan int)
@@ -210,52 +212,82 @@ func (p *ShellProcess) Run() {
 					"after":      afterSendCh,
 				})
 				go func() {
+					Info.Printf("[%s] Starting execution of spawned shell task\n", cmdForDisplay)
+					Debug.Printf("[%s] Creating fifos\n", cmdForDisplay)
 					p.createFifos(outTargets, mxCreateFifo)
+					Debug.Printf("[%s] Created fifos\n", cmdForDisplay)
 					beforeFifoSendCh <- 1
+					Debug.Printf("[%s] Sending fifos\n", cmdForDisplay)
 					p.sendFifoTargets(outTargets, mxSendFifo)
+					Debug.Printf("[%s] Sent fifos\n", cmdForDisplay)
 					afterFifoSendCh <- 1
-					Debug.Println("Will execute command: ", cmd)
+					Debug.Printf("[%s] Closing fifo channels\n", cmdForDisplay)
+					close(beforeFifoSendCh)
+					close(afterFifoSendCh)
+					Debug.Printf("[%s] Closed fifo channels\n", cmdForDisplay)
+					Debug.Printf("[%s] Will execute command\n", cmdForDisplay)
 					p.executeCommand(cmd)
 					p.atomizeTargets(outTargets, mxAtomize)
+					p.cleanUpFifos(outTargets, mxCleanUpFifos)
 					beforeSendCh <- 1
 					p.sendOutputs(outTargets, mxSend)
 					afterSendCh <- 1
+					Debug.Printf("[%s] Closed output channels\n", cmdForDisplay)
 					close(beforeSendCh)
 					close(afterSendCh)
+					Debug.Printf("[%s] Closed outputchannels\n", cmdForDisplay)
+					Info.Printf("[%s] Finished execution of spawned shell task\n", cmdForDisplay)
 					wg.Done()
 				}()
 			} else {
+				Info.Printf("[%s] Starting execution of non-spawned shell task\n", cmdForDisplay)
 				p.createFifos(outTargets, mxCreateFifo)
 				p.sendFifoTargets(outTargets, mxSendFifo)
 				p.executeCommand(cmd)
 				p.atomizeTargets(outTargets, mxAtomize)
+				p.cleanUpFifos(outTargets, mxCleanUpFifos)
 				p.sendOutputs(outTargets, mxSend)
+				Info.Printf("[%s] Finished execution of non-spawned shell task\n", cmdForDisplay)
 			}
-			Audit.Printf("Finished shell task: %s\n", cmdForDisplay)
+			Info.Printf("[%s] Finished spawning or execution of shell task\n", cmdForDisplay)
 		}
 
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
 		if len(p.InPorts) == 0 && len(p.ParamPorts) == 0 {
-			Debug.Printf("Closing loop after send: No inports or param ports (%s)", cmd)
+			Debug.Printf("[%s] Closing loop after send: No inports or param ports\n", cmd)
+			break
+		}
+		lenNonStreamingInports := 0
+		for pname, _ := range p.InPorts {
+			if !p.InTargets[pname].doStream {
+				lenNonStreamingInports++
+			}
+		}
+		if lenNonStreamingInports == 0 && len(p.ParamPorts) == 0 {
+			Debug.Printf("[%s] Closing loop after send: No non-streaming inports, and no param ports\n", p.Command)
+			break
+		}
+		if lenNonStreamingInports == 0 && paramPortsClosed {
+			Debug.Printf("[%s] Closing loop after send: No non-streaming inports, and param ports closed\n", p.Command)
 			break
 		}
 	}
-	Debug.Printf("Starting to wait for ordered sends (process '%s')\n", p.Command)
+	Debug.Printf("[%s] sendWaitQueue: Starting to wait for ordered sends\n", p.Command)
 	for i, sendChs := range sendWaitQueue {
-		Debug.Printf("sendWaitQueue %d: Waiting to start sending ...\n (%s)", i, p.Command)
+		Debug.Printf("[%s] sendWaitQueue %d: Waiting to start sending ...\n", i, p.Command)
 		<-sendChs["beforefifo"]
-		Debug.Printf("sendWaitQueue %d: Now starting to send fifos ...\n (%s)", i, p.Command)
+		Debug.Printf("[%s] sendWaitQueue %d: Now starting to send fifos ...\n", i, p.Command)
 		<-sendChs["afterfifo"]
-		Debug.Printf("sendWaitQueue %d: Now has sent fifos!\n (%s)", i, p.Command)
+		Debug.Printf("[%s] sendWaitQueue %d: Now has sent fifos!\n", i, p.Command)
 		<-sendChs["before"]
-		Debug.Printf("sendWaitQueue %d: Now starting to send ...\n (%s)", i, p.Command)
+		Debug.Printf("[%s] sendWaitQueue %d: Now starting to send ...\n", i, p.Command)
 		<-sendChs["after"]
-		Debug.Printf("sendWaitQueue %d: Now has sent!\n (%s)", i, p.Command)
+		Debug.Printf("[%s] sendWaitQueue %d: Now has sent!\n", i, p.Command)
 	}
-	Debug.Printf("Starting to wait (process '%s')\n", p.Command)
+	Debug.Printf("[%s] Starting to wait for WaitGroup\n", p.Command)
 	wg.Wait()
-	Debug.Printf("Finished waiting (process '%s')\n", p.Command)
+	Debug.Printf("[%s] Finished waiting\n", p.Command)
 	Debug.Println("Exiting process:", p.Command)
 }
 
@@ -298,16 +330,12 @@ func (p *ShellProcess) receiveParams() bool {
 
 func (p *ShellProcess) sendFifoTargets(outTargets map[string]*FileTarget, mx *sync.Mutex) {
 	// Send output targets on out ports
-	println("************************** HERE 1")
 	mx.Lock()
-	println("************************** HERE 2")
 	for oname, ochan := range p.OutPorts {
 		Debug.Println("Sending FIFO target:", outTargets[oname].GetPath())
 		ochan <- outTargets[oname]
 	}
-	println("************************** HERE 3")
 	mx.Unlock()
-	println("************************** HERE 4")
 }
 
 func (p *ShellProcess) sendOutputs(outTargets map[string]*FileTarget, mx *sync.Mutex) {
@@ -370,10 +398,12 @@ func (p *ShellProcess) createFifos(outTargets map[string]*FileTarget, mx *sync.M
 			tgt.CreateFifo()
 		}
 	}
+	mx.Unlock()
 }
 
 func (p *ShellProcess) executeCommand(cmd string) {
-	Info.Println("Executing cmd:", cmd)
+	cmdForDisplay := getCmdForDisplay(cmd)
+	Info.Printf("[%s] Executing command: %s\n", cmdForDisplay, cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
 	Check(err)
 }
@@ -386,6 +416,19 @@ func (p *ShellProcess) atomizeTargets(targets map[string]*FileTarget, mx *sync.M
 			tgt.Atomize()
 		} else {
 			Debug.Printf("Target is streaming, so not atomizing: %s", tgt.GetPath())
+		}
+	}
+	mx.Unlock()
+}
+
+func (p *ShellProcess) cleanUpFifos(outTargets map[string]*FileTarget, mx *sync.Mutex) {
+	mx.Lock()
+	for _, tgt := range outTargets {
+		if tgt.doStream {
+			Debug.Printf("[%s] Cleaning up FIFO: %s\n", p.Command, tgt.GetFifoPath())
+			tgt.RemoveFifo()
+		} else {
+			Debug.Printf("[%s] Target is normal, so not removing any FIFO\n", tgt.GetPath())
 		}
 	}
 	mx.Unlock()
@@ -410,15 +453,17 @@ func (p *ShellProcess) formatCommand(cmd string, outTargets map[string]*FileTarg
 					newstr = outTargets[name].GetFifoPath()
 				}
 			}
-		} else if typ == "i" || typ == "is" {
+		} else if typ == "i" {
 			if p.GetInPath(name) == "" {
 				msg := fmt.Sprint("Missing inpath for inport '", name, "' of shell process '", p.Command, "'")
 				Check(errors.New(msg))
 			} else {
 				if typ == "i" {
-					newstr = p.GetInPath(name)
-				} else if typ == "is" {
-					newstr = p.InTargets[name].GetFifoPath()
+					if p.InTargets[name].doStream {
+						newstr = p.InTargets[name].GetFifoPath()
+					} else {
+						newstr = p.GetInPath(name)
+					}
 				}
 			}
 		} else if typ == "p" {
@@ -480,4 +525,8 @@ func (p *ShellProcess) OutPathGenReplace(outPort string, inPort string, old stri
 	p.OutPathFuncs[outPort] = func() string {
 		return str.Replace(p.GetInPath(inPort), old, new, -1)
 	}
+}
+
+func getCmdForDisplay(cmd string) string {
+	return str.Replace(str.Replace(cmd, ".tmp", "", -1), ".fifo", "", -1)
 }
