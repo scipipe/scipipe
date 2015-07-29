@@ -6,13 +6,13 @@ import (
 )
 
 func main() {
+	sci.InitLogAudit()
 	// Init
 	fls := NewFileSender()
 
 	params := map[string]string{"a": "a1", "b": "b1", "c": "c1"}
 
-	abc := sci.ShParams("echo {p:a} {p:b} {p:c} > {i:in} # {o:out}", params)
-	abc.Spawn = false // Means things will be processed in order
+	abc := sci.ShExp("echo {p:a} {p:b} {p:c} > {o:out} # {i:in}", nil, nil, params)
 	abc.OutPathFuncs["out"] = func() string {
 		return abc.GetInPath("in")
 	}
@@ -25,7 +25,7 @@ func main() {
 
 	// Pipe it up
 	pl := sci.NewPipeline()
-	pl.AddTasks(fls, abc, prt)
+	pl.AddProcs(fls, abc, prt)
 
 	// Run
 	pl.Run()
@@ -36,7 +36,7 @@ func main() {
 // --------------------------------
 
 type FileSender struct {
-	sci.BaseTask
+	sci.BaseProcess
 	Out chan *sci.FileTarget
 }
 

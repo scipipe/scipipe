@@ -71,9 +71,15 @@ func ShellPipable(cmd string, streamOutputs bool) {
 func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths map[string]string, outPaths map[string]string) (cmdExp string) {
 	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
-	Debug.Println("Params:", params)
-	Debug.Println("inPaths:", inPaths)
-	Debug.Println("outPaths:", outPaths)
+	if params != nil {
+		Debug.Println("Params:", params)
+	}
+	if inPaths != nil {
+		Debug.Println("inPaths:", inPaths)
+	}
+	if outPaths != nil {
+		Debug.Println("outPaths:", outPaths)
+	}
 	cmdExp = cmd
 	for _, m := range ms {
 		whole := m[0]
@@ -81,23 +87,33 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 		name := m[2]
 		var newstr string
 		if typ == "p" {
-			if params != nil && params[name] != "" {
-				Debug.Println("Found param:", params[name])
-				newstr = params[name]
+			if params != nil {
+				if val, ok := params[name]; ok {
+					Debug.Println("Found param:", val)
+					newstr = val
+					Debug.Println("Replacing:", whole, "->", newstr)
+					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+				}
 			}
-		} else if typ == "i" {
-			if inPaths != nil && inPaths[name] != "" {
-				Debug.Println("Found inPath:", inPaths[name])
-				newstr = inPaths[name]
+		} else if typ == "i" || typ == "is" {
+			if inPaths != nil {
+				if val, ok := inPaths[name]; ok {
+					Debug.Println("Found inPath:", val)
+					newstr = val
+					Debug.Println("Replacing:", whole, "->", newstr)
+					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+				}
 			}
-		} else if typ == "o" {
-			if outPaths != nil && outPaths[name] != "" {
-				Debug.Println("Found outPath:", outPaths[name])
-				newstr = outPaths[name]
+		} else if typ == "o" || typ == "os" {
+			if outPaths != nil {
+				if val, ok := outPaths[name]; ok {
+					Debug.Println("Found outPath:", val)
+					newstr = val
+					Debug.Println("Replacing:", whole, "->", newstr)
+					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+				}
 			}
 		}
-		Debug.Println("Replacing:", whole, "->", newstr)
-		cmdExp = str.Replace(cmdExp, whole, newstr, -1)
 	}
 	if cmd != cmdExp {
 		Debug.Printf("Expanded command '%s' into '%s'\n", cmd, cmdExp)
@@ -115,8 +131,21 @@ func (p *ShellProcess) initPortsFromCmdPattern(cmd string, params map[string]str
 		}
 		typ := m[1]
 		name := m[2]
-		if typ == "o" {
+		if typ == "o" || typ == "os" {
 			p.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
+			if typ == "os" {
+				p.OutPortsDoStream[name] = true
+			}
+		} else if typ == "i" || typ == "is" {
+			// Set up a channel on the inports, even though this is
+			// often replaced by another processes output port channel.
+			// It might be nice to have it init'ed with a channel
+			// anyways, for use cases when we want to send FileTargets
+			// on the inport manually.
+			p.InPorts[name] = make(chan *FileTarget, BUFSIZE)
+			if typ == "is" {
+				p.InPortsDoStream[name] = true
+			}
 		} else if typ == "p" {
 			if params == nil {
 				p.ParamPorts[name] = make(chan string, BUFSIZE)
@@ -124,15 +153,6 @@ func (p *ShellProcess) initPortsFromCmdPattern(cmd string, params map[string]str
 				p.Params[name] = params[name]
 			}
 		}
-
-		// else if typ == "i" {
-		// Set up a channel on the inports, even though this is
-		// often replaced by another processes output port channel.
-		// It might be nice to have it init'ed with a channel
-		// anyways, for use cases when we want to send FileTargets
-		// on the inport manually.
-		// p.InPorts[name] = make(chan *FileTarget, BUFSIZE)
-		// }
 	}
 }
 
@@ -379,7 +399,7 @@ func (p *ShellProcess) formatCommand(cmd string, outTargets map[string]*FileTarg
 		typ := m[1]
 		name := m[2]
 		var newstr string
-		if typ == "o" {
+		if typ == "o" || typ == "os" {
 			if outTargets[name] == nil {
 				msg := fmt.Sprint("Missing outpath for outport '", name, "' of shell process '", p.Command, "'")
 				Check(errors.New(msg))
@@ -423,7 +443,7 @@ func (p *ShellProcess) formatCommand(cmd string, outTargets map[string]*FileTarg
 }
 
 func getPlaceHolderRegex() *re.Regexp {
-	r, err := re.Compile("{(o|i|p):([^{}:]+)}")
+	r, err := re.Compile("{(o|os|i|is|p):([^{}:]+)}")
 	Check(err)
 	return r
 }

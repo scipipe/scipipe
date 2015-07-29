@@ -1,5 +1,8 @@
 # SciPipe
 
+[![Build Status](https://travis-ci.org/samuell/scipipe.svg?branch=master)](https://travis-ci.org/samuell/scipipe)
+[![GratiPay amount](http://img.shields.io/gratipay/samuell.svg)](https://gratipay.com/samuell)
+
 An experimental library for writing Scientific (Batch) Workflows in vanilla [Go(lang)](http://golang.org),
 based on an idea for a flow-based like pattern in pure Go, as presented in
 [this Gopher Academy blog post](http://blog.gopheracademy.com/composable-pipelines-pattern).

@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	sci.InitLogDebug()
+	sci.InitLogAudit()
 
 	runtime.GOMAXPROCS(4)
 	cmb := NewCombinatoricsTask()
@@ -35,12 +35,12 @@ func main() {
 	prt.InPorts["in"] = abc.OutPorts["out"]
 
 	pl := sci.NewPipeline()
-	pl.AddTasks(cmb, abc, prt)
+	pl.AddProcs(cmb, abc, prt)
 	pl.Run()
 }
 
 type CombinatoricsTask struct {
-	sci.BaseTask
+	sci.BaseProcess
 	A chan string
 	B chan string
 	C chan string

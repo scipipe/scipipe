@@ -50,7 +50,7 @@ func main() {
 	sci.Info.Println("Finished program")
 }
 
-// ======= Workflow task =======
+// ======= Workflow proc =======
 
 type ExampleWorkflow struct {
 	In           chan *sci.FileTarget
@@ -70,7 +70,7 @@ func (wf *ExampleWorkflow) Run() {
 	repl.GReplaceWith = wf.GReplaceWith
 	repl.TReplaceWith = wf.TReplaceWith
 
-	pl.AddTask(repl)
+	pl.AddProc(repl)
 	pl.Run()
 }
 
@@ -84,7 +84,7 @@ func NewExampleWorkflow() *ExampleWorkflow {
 	}
 }
 
-// ====== Tasks =======
+// ====== Proc =======
 
 type ReplaceLetters struct {
 	In           chan *sci.FileTarget
