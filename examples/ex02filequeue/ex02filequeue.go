@@ -16,7 +16,7 @@ func main() {
 	sn.In = fw.OutPorts["out"]
 
 	pl := sci.NewPipeline()
-	pl.AddTasks(fq, fw, sn)
+	pl.AddProcs(fq, fw, sn)
 
 	pl.Run()
 }

@@ -6,8 +6,7 @@ import (
 )
 
 func main() {
-	pl := sci.NewPipeline()
-	foo2bar := NewBarReplacer(pl)
+	foo2bar := NewBarReplacer()
 
 	go func() {
 		defer close(foo2bar.InFoo)
@@ -30,12 +29,11 @@ type BarReplacer struct {
 	OutBar chan *sci.FileTarget
 }
 
-func NewBarReplacer(pl *sci.Pipeline) *BarReplacer {
+func NewBarReplacer() *BarReplacer {
 	t := &BarReplacer{
 		InFoo:  make(chan *sci.FileTarget, sci.BUFSIZE),
 		OutBar: make(chan *sci.FileTarget, sci.BUFSIZE),
 	}
-	pl.AddTask(t)
 	return t
 }
 

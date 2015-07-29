@@ -19,16 +19,14 @@ func main() {
 	fmt.Println("Starting ", numThreads, " threads ...")
 	runtime.GOMAXPROCS(numThreads)
 
-	pl := sp.NewPipeline()
-
 	// Init processes
-	hisay := NewHiSayer(pl)
-	split := NewStringSplitter(pl)
-	lower := NewLowerCaser(pl)
-	upper := NewUpperCaser(pl)
-	zippr := NewZipper(pl)
-	s2byt := sp.NewStrToByte(pl)
-	filew := sp.NewFileWriterFromPath(pl, "out2.txt")
+	hisay := NewHiSayer()
+	split := NewStringSplitter()
+	lower := NewLowerCaser()
+	upper := NewUpperCaser()
+	zippr := NewZipper()
+	s2byt := sp.NewStrToByte()
+	filew := sp.NewFileWriterFromPath("out2.txt")
 	// prntr := NewPrinter(pl)
 
 	// Network definition *** This is where to look! ***
@@ -40,6 +38,9 @@ func main() {
 	s2byt.In = zippr.Out
 	filew.In = s2byt.Out
 
+	// Create and run pipeline
+	pl := sp.NewPipeline()
+	pl.AddProcs(hisay, split, lower, upper, zippr, s2byt, filew)
 	pl.Run()
 }
 
@@ -49,9 +50,8 @@ type hiSayer struct {
 	Out chan string
 }
 
-func NewHiSayer(pl *sp.Pipeline) *hiSayer {
+func NewHiSayer() *hiSayer {
 	t := &hiSayer{Out: make(chan string, BUFSIZE)}
-	pl.AddTask(t)
 	return t
 }
 
@@ -70,12 +70,11 @@ type stringSplitter struct {
 	OutRight chan string
 }
 
-func NewStringSplitter(pl *sp.Pipeline) *stringSplitter {
+func NewStringSplitter() *stringSplitter {
 	t := &stringSplitter{
 		OutLeft:  make(chan string, BUFSIZE),
 		OutRight: make(chan string, BUFSIZE),
 	}
-	pl.AddTask(t)
 	return t
 }
 
@@ -96,9 +95,8 @@ type lowerCaser struct {
 	Out chan string
 }
 
-func NewLowerCaser(pl *sp.Pipeline) *lowerCaser {
+func NewLowerCaser() *lowerCaser {
 	t := &lowerCaser{Out: make(chan string, BUFSIZE)}
-	pl.AddTask(t)
 	return t
 }
 
@@ -116,9 +114,8 @@ type upperCaser struct {
 	Out chan string
 }
 
-func NewUpperCaser(pl *sp.Pipeline) *upperCaser {
+func NewUpperCaser() *upperCaser {
 	t := &upperCaser{Out: make(chan string, BUFSIZE)}
-	pl.AddTask(t)
 	return t
 }
 
@@ -137,9 +134,8 @@ type zipper struct {
 	Out chan string
 }
 
-func NewZipper(pl *sp.Pipeline) *zipper {
+func NewZipper() *zipper {
 	t := &zipper{Out: make(chan string, BUFSIZE)}
-	pl.AddTask(t)
 	return t
 }
 
@@ -161,9 +157,8 @@ type printer struct {
 	In chan string
 }
 
-func NewPrinter(pl *sp.Pipeline) *printer {
+func NewPrinter() *printer {
 	t := &printer{}
-	pl.AddTask(t)
 	return t
 }
 
@@ -173,8 +168,8 @@ func (proc *printer) Run() {
 	}
 }
 
-// ======= task interface =======
+// ======= process interface =======
 
-type task interface {
+type process interface {
 	Run()
 }
