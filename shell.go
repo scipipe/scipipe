@@ -12,28 +12,31 @@ import (
 
 type ShellProcess struct {
 	process
-	_OutOnly     bool
-	InPorts      map[string]chan *FileTarget
-	InPaths      map[string]string
-	OutPorts     map[string]chan *FileTarget
-	OutPathFuncs map[string]func() string
-	ParamPorts   map[string]chan string
-	Params       map[string]string
-	Prepend      string
-	Command      string
-	Spawn        bool
+	InPorts          map[string]chan *FileTarget
+	InPortsDoStream  map[string]bool
+	InTargets        map[string]*FileTarget
+	OutPorts         map[string]chan *FileTarget
+	OutPortsDoStream map[string]bool
+	OutPathFuncs     map[string]func() string
+	ParamPorts       map[string]chan string
+	Params           map[string]string
+	Prepend          string
+	Command          string
+	Spawn            bool
 }
 
 func NewShellProcess(command string) *ShellProcess {
 	return &ShellProcess{
-		Command:      command,
-		InPorts:      make(map[string]chan *FileTarget),
-		InPaths:      make(map[string]string),
-		OutPorts:     make(map[string]chan *FileTarget),
-		OutPathFuncs: make(map[string]func() string),
-		ParamPorts:   make(map[string]chan string),
-		Params:       make(map[string]string),
-		Spawn:        true,
+		Command:          command,
+		InPorts:          make(map[string]chan *FileTarget),
+		InPortsDoStream:  make(map[string]bool),
+		InTargets:        make(map[string]*FileTarget),
+		OutPorts:         make(map[string]chan *FileTarget),
+		OutPortsDoStream: make(map[string]bool),
+		OutPathFuncs:     make(map[string]func() string),
+		ParamPorts:       make(map[string]chan string),
+		Params:           make(map[string]string),
+		Spawn:            true,
 	}
 }
 
@@ -138,10 +141,14 @@ func (p *ShellProcess) Run() {
 	defer p.closeOutChans()
 
 	wg := new(sync.WaitGroup)
-	mx := new(sync.Mutex)
+	mxCreateFifo := new(sync.Mutex)
+	mxSendFifo := new(sync.Mutex)
+	mxAtomize := new(sync.Mutex)
+	mxSend := new(sync.Mutex)
 	sendWaitQueue := []map[string]chan int{}
 	// Main loop
 	for {
+		Debug.Printf("Looping again (%s)\n", p.Command)
 		inPortsClosed := p.receiveInputs()
 		paramPortsClosed := p.receiveParams()
 
@@ -157,6 +164,7 @@ func (p *ShellProcess) Run() {
 			Debug.Println("Closing loop: Both inports and param ports closed")
 			break
 		}
+		Debug.Printf("Not closing (%s)\n", p.Command)
 
 		// This is important that it is created anew here, for thread-safety
 		outTargets := p.createOutTargets()
@@ -169,24 +177,39 @@ func (p *ShellProcess) Run() {
 		} else {
 			Audit.Printf("Starting shell task: %s\n", cmdForDisplay)
 			if p.Spawn {
+				Debug.Println("Task is spawned: ", cmdForDisplay)
 				wg.Add(1)
+				beforeFifoSendCh := make(chan int)
+				afterFifoSendCh := make(chan int)
 				beforeSendCh := make(chan int)
 				afterSendCh := make(chan int)
-				sendWaitQueue = append(sendWaitQueue, map[string](chan int){"before": beforeSendCh, "after": afterSendCh})
+				sendWaitQueue = append(sendWaitQueue, map[string](chan int){
+					"beforefifo": beforeFifoSendCh,
+					"afterfifo":  afterFifoSendCh,
+					"before":     beforeSendCh,
+					"after":      afterSendCh,
+				})
 				go func() {
+					p.createFifos(outTargets, mxCreateFifo)
+					beforeFifoSendCh <- 1
+					p.sendFifoTargets(outTargets, mxSendFifo)
+					afterFifoSendCh <- 1
+					Debug.Println("Will execute command: ", cmd)
 					p.executeCommand(cmd)
-					p.atomizeTargets(outTargets, mx)
+					p.atomizeTargets(outTargets, mxAtomize)
 					beforeSendCh <- 1
-					p.sendOutputs(outTargets, mx)
+					p.sendOutputs(outTargets, mxSend)
 					afterSendCh <- 1
 					close(beforeSendCh)
 					close(afterSendCh)
 					wg.Done()
 				}()
 			} else {
+				p.createFifos(outTargets, mxCreateFifo)
+				p.sendFifoTargets(outTargets, mxSendFifo)
 				p.executeCommand(cmd)
-				p.atomizeTargets(outTargets, mx)
-				p.sendOutputs(outTargets, mx)
+				p.atomizeTargets(outTargets, mxAtomize)
+				p.sendOutputs(outTargets, mxSend)
 			}
 			Audit.Printf("Finished shell task: %s\n", cmdForDisplay)
 		}
@@ -194,17 +217,21 @@ func (p *ShellProcess) Run() {
 		// If there are no inports, we know we should exit the loop
 		// directly after executing the command, and sending the outputs
 		if len(p.InPorts) == 0 && len(p.ParamPorts) == 0 {
-			Debug.Printf("Closing after send: No inports or param ports (process '%s')", cmd)
+			Debug.Printf("Closing loop after send: No inports or param ports (%s)", cmd)
 			break
 		}
 	}
 	Debug.Printf("Starting to wait for ordered sends (process '%s')\n", p.Command)
 	for i, sendChs := range sendWaitQueue {
-		Debug.Printf("sendWaitQueue %d: Waiting to start sending ...\n", i)
+		Debug.Printf("sendWaitQueue %d: Waiting to start sending ...\n (%s)", i, p.Command)
+		<-sendChs["beforefifo"]
+		Debug.Printf("sendWaitQueue %d: Now starting to send fifos ...\n (%s)", i, p.Command)
+		<-sendChs["afterfifo"]
+		Debug.Printf("sendWaitQueue %d: Now has sent fifos!\n (%s)", i, p.Command)
 		<-sendChs["before"]
-		Debug.Printf("sendWaitQueue %d: Now starting to send ...\n", i)
+		Debug.Printf("sendWaitQueue %d: Now starting to send ...\n (%s)", i, p.Command)
 		<-sendChs["after"]
-		Debug.Printf("sendWaitQueue %d: Now has sent!\n", i)
+		Debug.Printf("sendWaitQueue %d: Now has sent!\n (%s)", i, p.Command)
 	}
 	Debug.Printf("Starting to wait (process '%s')\n", p.Command)
 	wg.Wait()
@@ -223,13 +250,13 @@ func (p *ShellProcess) receiveInputs() bool {
 	inPortsClosed := false
 	// Read input targets on in-ports and set up path mappings
 	for iname, ichan := range p.InPorts {
-		infile, open := <-ichan
+		inTarget, open := <-ichan
 		if !open {
 			inPortsClosed = true
 			continue
 		}
-		Debug.Println("Receiving file:", infile.GetPath())
-		p.InPaths[iname] = infile.GetPath()
+		Debug.Println("Receiving target:", inTarget.GetPath())
+		p.InTargets[iname] = inTarget
 	}
 	return inPortsClosed
 }
@@ -247,6 +274,20 @@ func (p *ShellProcess) receiveParams() bool {
 		p.Params[pname] = pval
 	}
 	return paramPortsClosed
+}
+
+func (p *ShellProcess) sendFifoTargets(outTargets map[string]*FileTarget, mx *sync.Mutex) {
+	// Send output targets on out ports
+	println("************************** HERE 1")
+	mx.Lock()
+	println("************************** HERE 2")
+	for oname, ochan := range p.OutPorts {
+		Debug.Println("Sending FIFO target:", outTargets[oname].GetPath())
+		ochan <- outTargets[oname]
+	}
+	println("************************** HERE 3")
+	mx.Unlock()
+	println("************************** HERE 4")
 }
 
 func (p *ShellProcess) sendOutputs(outTargets map[string]*FileTarget, mx *sync.Mutex) {
@@ -271,6 +312,10 @@ func (p *ShellProcess) createOutTargets() (outTargets map[string]*FileTarget) {
 	outTargets = make(map[string]*FileTarget)
 	for oname, opath := range p.createOutPaths() {
 		outTargets[oname] = NewFileTarget(opath)
+		// Set streaming mode on target (so can get picked up by downstream process)
+		if p.OutPortsDoStream[oname] {
+			outTargets[oname].doStream = true
+		}
 	}
 	return
 }
@@ -280,6 +325,7 @@ func (p *ShellProcess) anyFileExists(targets map[string]*FileTarget) (anyFileExi
 	for _, tgt := range targets {
 		opath := tgt.GetPath()
 		otmpPath := tgt.GetTempPath()
+		ofifoPath := tgt.GetFifoPath()
 		if _, err := os.Stat(opath); err == nil {
 			anyFileExists = true
 			Debug.Println("Output file exists already:", opath)
@@ -288,8 +334,22 @@ func (p *ShellProcess) anyFileExists(targets map[string]*FileTarget) (anyFileExi
 			anyFileExists = true
 			Warn.Println("Temporary Output file already exists:", otmpPath, ". Check your workflow for correctness!")
 		}
+		if _, err := os.Stat(ofifoPath); err == nil {
+			anyFileExists = true
+			Warn.Println("FIFO Output file already exists:", otmpPath, ". Check your workflow for correctness!")
+		}
 	}
 	return
+}
+
+func (p *ShellProcess) createFifos(outTargets map[string]*FileTarget, mx *sync.Mutex) {
+	mx.Lock()
+	for _, tgt := range outTargets {
+		if tgt.doStream {
+			Debug.Println("Creating FIFO:", tgt.GetFifoPath())
+			tgt.CreateFifo()
+		}
+	}
 }
 
 func (p *ShellProcess) executeCommand(cmd string) {
@@ -301,8 +361,12 @@ func (p *ShellProcess) executeCommand(cmd string) {
 func (p *ShellProcess) atomizeTargets(targets map[string]*FileTarget, mx *sync.Mutex) {
 	mx.Lock()
 	for _, tgt := range targets {
-		Debug.Printf("Atomizing file: %s -> %s", tgt.GetTempPath(), tgt.GetPath())
-		tgt.Atomize()
+		if !tgt.doStream {
+			Debug.Printf("Atomizing file: %s -> %s", tgt.GetTempPath(), tgt.GetPath())
+			tgt.Atomize()
+		} else {
+			Debug.Printf("Target is streaming, so not atomizing: %s", tgt.GetPath())
+		}
 	}
 	mx.Unlock()
 }
@@ -320,14 +384,22 @@ func (p *ShellProcess) formatCommand(cmd string, outTargets map[string]*FileTarg
 				msg := fmt.Sprint("Missing outpath for outport '", name, "' of shell process '", p.Command, "'")
 				Check(errors.New(msg))
 			} else {
-				newstr = outTargets[name].GetTempPath() // Means important to Atomize afterwards!
+				if typ == "o" {
+					newstr = outTargets[name].GetTempPath() // Means important to Atomize afterwards!
+				} else if typ == "os" {
+					newstr = outTargets[name].GetFifoPath()
+				}
 			}
-		} else if typ == "i" {
-			if p.InPaths[name] == "" {
+		} else if typ == "i" || typ == "is" {
+			if p.GetInPath(name) == "" {
 				msg := fmt.Sprint("Missing inpath for inport '", name, "' of shell process '", p.Command, "'")
 				Check(errors.New(msg))
 			} else {
-				newstr = p.InPaths[name]
+				if typ == "i" {
+					newstr = p.GetInPath(name)
+				} else if typ == "is" {
+					newstr = p.InTargets[name].GetFifoPath()
+				}
 			}
 		} else if typ == "p" {
 			if p.Params[name] == "" {
@@ -358,8 +430,8 @@ func getPlaceHolderRegex() *re.Regexp {
 
 func (p *ShellProcess) GetInPath(inPort string) string {
 	var inPath string
-	if p.InPaths[inPort] != "" {
-		inPath = p.InPaths[inPort]
+	if p.InTargets[inPort] != nil {
+		inPath = p.InTargets[inPort].GetPath()
 	} else {
 		msg := fmt.Sprint("p.GetInPath(): Missing inpath for inport '", inPort, "' of shell process '", p.Command, "'")
 		Check(errors.New(msg))

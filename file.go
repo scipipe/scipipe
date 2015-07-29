@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"time"
 )
 
 // ======= FileTarget ========
 
 type FileTarget struct {
-	path   string
-	buffer *bytes.Buffer
-	stream bool
+	path     string
+	buffer   *bytes.Buffer
+	doStream bool
 }
 
 func NewFileTarget(path string) *FileTarget {
@@ -30,6 +31,10 @@ func (ft *FileTarget) GetPath() string {
 
 func (ft *FileTarget) GetTempPath() string {
 	return ft.path + ".tmp"
+}
+
+func (ft *FileTarget) GetFifoPath() string {
+	return ft.path + ".fifo"
 }
 
 func (ft *FileTarget) Open() *os.File {
@@ -53,6 +58,16 @@ func (ft *FileTarget) Write(dat []byte) {
 func (ft *FileTarget) Atomize() {
 	time.Sleep(0 * time.Millisecond) // TODO: Remove in production. Just for demo purposes!
 	err := os.Rename(ft.GetTempPath(), ft.path)
+	Check(err)
+}
+
+func (ft *FileTarget) CreateFifo() {
+	_, err := exec.Command("mkfifo", ft.GetFifoPath()).Output()
+	Check(err)
+}
+
+func (ft *FileTarget) RemoveFifo() {
+	_, err := exec.Command("rm", ft.GetFifoPath()).Output()
 	Check(err)
 }
 
