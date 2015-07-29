@@ -12,28 +12,31 @@ import (
 
 type ShellProcess struct {
 	process
-	_OutOnly     bool
-	InPorts      map[string]chan *FileTarget
-	InPaths      map[string]string
-	OutPorts     map[string]chan *FileTarget
-	OutPathFuncs map[string]func() string
-	ParamPorts   map[string]chan string
-	Params       map[string]string
-	Prepend      string
-	Command      string
-	Spawn        bool
+	InPorts          map[string]chan *FileTarget
+	InPortsDoStream  map[string]bool
+	InPaths          map[string]string
+	OutPorts         map[string]chan *FileTarget
+	OutPortsDoStream map[string]bool
+	OutPathFuncs     map[string]func() string
+	ParamPorts       map[string]chan string
+	Params           map[string]string
+	Prepend          string
+	Command          string
+	Spawn            bool
 }
 
 func NewShellProcess(command string) *ShellProcess {
 	return &ShellProcess{
-		Command:      command,
-		InPorts:      make(map[string]chan *FileTarget),
-		InPaths:      make(map[string]string),
-		OutPorts:     make(map[string]chan *FileTarget),
-		OutPathFuncs: make(map[string]func() string),
-		ParamPorts:   make(map[string]chan string),
-		Params:       make(map[string]string),
-		Spawn:        true,
+		Command:          command,
+		InPorts:          make(map[string]chan *FileTarget),
+		InPortsDoStream:  make(map[string]bool),
+		InPaths:          make(map[string]string),
+		OutPorts:         make(map[string]chan *FileTarget),
+		OutPortsDoStream: make(map[string]bool),
+		OutPathFuncs:     make(map[string]func() string),
+		ParamPorts:       make(map[string]chan string),
+		Params:           make(map[string]string),
+		Spawn:            true,
 	}
 }
 
@@ -92,7 +95,7 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
 				}
 			}
-		} else if typ == "i" {
+		} else if typ == "i" || typ == "is" {
 			if inPaths != nil {
 				if val, ok := inPaths[name]; ok {
 					Debug.Println("Found inPath:", val)
@@ -101,7 +104,7 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
 				}
 			}
-		} else if typ == "o" {
+		} else if typ == "o" || typ == "os" {
 			if outPaths != nil {
 				if val, ok := outPaths[name]; ok {
 					Debug.Println("Found outPath:", val)
@@ -128,8 +131,21 @@ func (p *ShellProcess) initPortsFromCmdPattern(cmd string, params map[string]str
 		}
 		typ := m[1]
 		name := m[2]
-		if typ == "o" {
+		if typ == "o" || typ == "os" {
 			p.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
+			if typ == "os" {
+				p.OutPortsDoStream[name] = true
+			}
+		} else if typ == "i" || typ == "is" {
+			// Set up a channel on the inports, even though this is
+			// often replaced by another processes output port channel.
+			// It might be nice to have it init'ed with a channel
+			// anyways, for use cases when we want to send FileTargets
+			// on the inport manually.
+			p.InPorts[name] = make(chan *FileTarget, BUFSIZE)
+			if typ == "is" {
+				p.InPortsDoStream[name] = true
+			}
 		} else if typ == "p" {
 			if params == nil {
 				p.ParamPorts[name] = make(chan string, BUFSIZE)
@@ -137,15 +153,6 @@ func (p *ShellProcess) initPortsFromCmdPattern(cmd string, params map[string]str
 				p.Params[name] = params[name]
 			}
 		}
-
-		// else if typ == "i" {
-		// Set up a channel on the inports, even though this is
-		// often replaced by another processes output port channel.
-		// It might be nice to have it init'ed with a channel
-		// anyways, for use cases when we want to send FileTargets
-		// on the inport manually.
-		// p.InPorts[name] = make(chan *FileTarget, BUFSIZE)
-		// }
 	}
 }
 
@@ -331,14 +338,14 @@ func (p *ShellProcess) formatCommand(cmd string, outTargets map[string]*FileTarg
 		typ := m[1]
 		name := m[2]
 		var newstr string
-		if typ == "o" {
+		if typ == "o" || typ == "os" {
 			if outTargets[name] == nil {
 				msg := fmt.Sprint("Missing outpath for outport '", name, "' of shell process '", p.Command, "'")
 				Check(errors.New(msg))
 			} else {
 				newstr = outTargets[name].GetTempPath() // Means important to Atomize afterwards!
 			}
-		} else if typ == "i" {
+		} else if typ == "i" || typ == "is" {
 			if p.InPaths[name] == "" {
 				msg := fmt.Sprint("Missing inpath for inport '", name, "' of shell process '", p.Command, "'")
 				Check(errors.New(msg))
@@ -367,7 +374,7 @@ func (p *ShellProcess) formatCommand(cmd string, outTargets map[string]*FileTarg
 }
 
 func getPlaceHolderRegex() *re.Regexp {
-	r, err := re.Compile("{(o|i|p):([^{}:]+)}")
+	r, err := re.Compile("{(o|os|i|is|p):([^{}:]+)}")
 	Check(err)
 	return r
 }
