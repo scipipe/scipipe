@@ -17,7 +17,7 @@ func TestShellHasInOutPorts(t *t.T) {
 
 	tt := Sh("echo {i:in1} > {o:out1}")
 	tt.OutPathFuncs["out1"] = func() string {
-		return fmt.Sprint(tt.InPaths["in1"], ".bar")
+		return fmt.Sprint(tt.GetInPath("in1"), ".bar")
 	}
 	tt.InPorts["in1"] = make(chan *FileTarget, BUFSIZE)
 
@@ -39,7 +39,7 @@ func TestShellCloseOutPortOnInPortClose(t *t.T) {
 
 	foo := Sh("echo foo > {o:out1}")
 	foo.OutPathFuncs["out1"] = func() string {
-		return "foo.txt"
+		return "/tmp/foo.txt"
 	}
 
 	f2b := Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
@@ -50,19 +50,19 @@ func TestShellCloseOutPortOnInPortClose(t *t.T) {
 	f2b.InPorts["foo"] = foo.OutPorts["out1"]
 
 	go foo.Run()
-	go f2b.Run()
-	<-f2b.OutPorts["bar"]
+	f2b.Run()
+	//<-f2b.OutPorts["bar"]
 
 	// Assert no more content coming on channels
 	assert.Nil(t, <-foo.OutPorts["out1"])
 	assert.Nil(t, <-f2b.OutPorts["bar"])
 
-	_, fooErr := os.Stat("foo.txt")
+	_, fooErr := os.Stat("/tmp/foo.txt")
 	assert.Nil(t, fooErr)
-	_, barErr := os.Stat("foo.txt.bar")
+	_, barErr := os.Stat("/tmp/foo.txt.bar")
 	assert.Nil(t, barErr)
 
-	cleanFiles("foo.txt", "foo.txt.bar")
+	cleanFiles("/tmp/foo.txt", "/tmp/foo.txt.bar")
 }
 
 func TestReplacePlaceholdersInCmd(t *t.T) {
@@ -71,7 +71,7 @@ func TestReplacePlaceholdersInCmd(t *t.T) {
 	rawCmd := "echo {i:in1} > {o:out1}"
 	tt := Sh(rawCmd)
 	tt.OutPathFuncs["out1"] = func() string {
-		return fmt.Sprint(tt.InPaths["in1"], ".bar")
+		return fmt.Sprint(tt.GetInPath("in1"), ".bar")
 	}
 
 	tt.InPorts["in1"] = make(chan *FileTarget, BUFSIZE)
@@ -90,7 +90,7 @@ func TestReplacePlaceholdersInCmd(t *t.T) {
 	assert.Equal(t, true, inPortsClosed)
 
 	// Assert InPath is correct
-	assert.Equal(t, "foo.txt", tt.InPaths["in1"], "foo.txt")
+	assert.Equal(t, "foo.txt", tt.GetInPath("in1"), "foo.txt")
 
 	// Assert placeholders are correctly replaced in command
 	outTargets := tt.createOutTargets()
