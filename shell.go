@@ -13,12 +13,10 @@ import (
 type ShellProcess struct {
 	process
 	InPorts          map[string]chan *FileTarget
-	InTargets        map[string]*FileTarget
 	OutPorts         map[string]chan *FileTarget
 	OutPortsDoStream map[string]bool
-	OutPathFuncs     map[string]func() string
+	OutPathFuncs     map[string]func(map[string]*FileTarget) string
 	ParamPorts       map[string]chan string
-	Params           map[string]string
 	Prepend          string
 	Command          string
 	Spawn            bool
@@ -28,12 +26,10 @@ func NewShellProcess(command string) *ShellProcess {
 	return &ShellProcess{
 		Command:          command,
 		InPorts:          make(map[string]chan *FileTarget),
-		InTargets:        make(map[string]*FileTarget),
 		OutPorts:         make(map[string]chan *FileTarget),
 		OutPortsDoStream: make(map[string]bool),
-		OutPathFuncs:     make(map[string]func() string),
+		OutPathFuncs:     make(map[string]func(map[string]*FileTarget) string),
 		ParamPorts:       make(map[string]chan string),
-		Params:           make(map[string]string),
 		Spawn:            true,
 	}
 }
@@ -144,8 +140,6 @@ func (p *ShellProcess) initPortsFromCmdPattern(cmd string, params map[string]str
 		} else if typ == "p" {
 			if params == nil {
 				p.ParamPorts[name] = make(chan string, BUFSIZE)
-			} else {
-				p.Params[name] = params[name]
 			}
 		}
 	}
@@ -165,15 +159,15 @@ func (p *ShellProcess) Run() {
 	// Main loop
 	for {
 		Debug.Printf("[%s] Looping again\n", p.Command)
-		inPortsClosed := p.receiveInputs()
-		paramPortsClosed := p.receiveParams()
+		inTargets, inPortsClosed := p.receiveInputs()
+		params, paramPortsClosed := p.receiveParams()
 
 		// ----------------------------------------------------
 		// Loop closing conditions
 		// ----------------------------------------------------
 		lenNonStreamingInports := 0
 		for pname, _ := range p.InPorts {
-			if !p.InTargets[pname].doStream {
+			if !inTargets[pname].doStream {
 				lenNonStreamingInports++
 			}
 		}
@@ -198,9 +192,9 @@ func (p *ShellProcess) Run() {
 		// ----------------------------------------------------
 
 		// This is important that it is created anew here, for thread-safety
-		outTargets := p.createOutTargets()
+		outTargets := p.createOutTargets(inTargets)
 		// Format
-		cmd := p.formatCommand(p.Command, outTargets)
+		cmd := p.formatCommand(p.Command, inTargets, outTargets, params)
 		Debug.Printf("Formatted command: %s -> %s\n", p.Command, cmd)
 		cmdForDisplay := getCmdForDisplay(cmd)
 
@@ -238,7 +232,7 @@ func (p *ShellProcess) Run() {
 					Debug.Printf("[%s] Will execute command\n", cmdForDisplay)
 					p.executeCommand(cmd)
 					p.atomizeTargets(outTargets, mxAtomize)
-					p.cleanUpFifos(mxCleanUpFifos)
+					p.cleanUpFifos(inTargets, mxCleanUpFifos)
 					beforeSendCh <- 1
 					p.sendOutputs(outTargets, mxSend)
 					afterSendCh <- 1
@@ -255,7 +249,7 @@ func (p *ShellProcess) Run() {
 				p.sendFifoTargets(outTargets, mxSendFifo)
 				p.executeCommand(cmd)
 				p.atomizeTargets(outTargets, mxAtomize)
-				p.cleanUpFifos(mxCleanUpFifos)
+				p.cleanUpFifos(inTargets, mxCleanUpFifos)
 				p.sendOutputs(outTargets, mxSend)
 				Info.Printf("[%s] Finished execution of non-spawned shell task\n", cmdForDisplay)
 			}
@@ -298,8 +292,9 @@ func (p *ShellProcess) closeOutChans() {
 	}
 }
 
-func (p *ShellProcess) receiveInputs() bool {
-	inPortsClosed := false
+func (p *ShellProcess) receiveInputs() (inTargets map[string]*FileTarget, inPortsClosed bool) {
+	inPortsClosed = false
+	inTargets = make(map[string]*FileTarget)
 	// Read input targets on in-ports and set up path mappings
 	for iname, ichan := range p.InPorts {
 		inTarget, open := <-ichan
@@ -308,13 +303,14 @@ func (p *ShellProcess) receiveInputs() bool {
 			continue
 		}
 		Debug.Println("Receiving target:", inTarget.GetPath())
-		p.InTargets[iname] = inTarget
+		inTargets[iname] = inTarget
 	}
-	return inPortsClosed
+	return
 }
 
-func (p *ShellProcess) receiveParams() bool {
-	paramPortsClosed := false
+func (p *ShellProcess) receiveParams() (params map[string]string, paramPortsClosed bool) {
+	paramPortsClosed = false
+	params = make(map[string]string)
 	// Read input targets on in-ports and set up path mappings
 	for pname, pchan := range p.ParamPorts {
 		pval, open := <-pchan
@@ -323,9 +319,9 @@ func (p *ShellProcess) receiveParams() bool {
 			continue
 		}
 		Debug.Println("Receiving param:", pname, "with value", pval)
-		p.Params[pname] = pval
+		params[pname] = pval
 	}
-	return paramPortsClosed
+	return
 }
 
 func (p *ShellProcess) sendFifoTargets(outTargets map[string]*FileTarget, mx *sync.Mutex) {
@@ -348,17 +344,17 @@ func (p *ShellProcess) sendOutputs(outTargets map[string]*FileTarget, mx *sync.M
 	mx.Unlock()
 }
 
-func (p *ShellProcess) createOutPaths() (outPaths map[string]string) {
+func (p *ShellProcess) createOutPaths(inTargets map[string]*FileTarget) (outPaths map[string]string) {
 	outPaths = make(map[string]string)
 	for oname, ofun := range p.OutPathFuncs {
-		outPaths[oname] = ofun()
+		outPaths[oname] = ofun(inTargets)
 	}
 	return outPaths
 }
 
-func (p *ShellProcess) createOutTargets() (outTargets map[string]*FileTarget) {
+func (p *ShellProcess) createOutTargets(inTargets map[string]*FileTarget) (outTargets map[string]*FileTarget) {
 	outTargets = make(map[string]*FileTarget)
-	for oname, opath := range p.createOutPaths() {
+	for oname, opath := range p.createOutPaths(inTargets) {
 		outTargets[oname] = NewFileTarget(opath)
 		// Set streaming mode on target (so can get picked up by downstream process)
 		if p.OutPortsDoStream[oname] {
@@ -421,9 +417,9 @@ func (p *ShellProcess) atomizeTargets(targets map[string]*FileTarget, mx *sync.M
 	mx.Unlock()
 }
 
-func (p *ShellProcess) cleanUpFifos(mx *sync.Mutex) {
+func (p *ShellProcess) cleanUpFifos(inTargets map[string]*FileTarget, mx *sync.Mutex) {
 	mx.Lock()
-	for _, tgt := range p.InTargets {
+	for _, tgt := range inTargets {
 		if tgt.doStream {
 			Debug.Printf("[%s] Cleaning up FIFO for input target: %s\n", p.Command, tgt.GetFifoPath())
 			tgt.RemoveFifo()
@@ -434,7 +430,7 @@ func (p *ShellProcess) cleanUpFifos(mx *sync.Mutex) {
 	mx.Unlock()
 }
 
-func (p *ShellProcess) formatCommand(cmd string, outTargets map[string]*FileTarget) string {
+func (p *ShellProcess) formatCommand(cmd string, inTargets map[string]*FileTarget, outTargets map[string]*FileTarget, params map[string]string) string {
 	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
@@ -454,24 +450,24 @@ func (p *ShellProcess) formatCommand(cmd string, outTargets map[string]*FileTarg
 				}
 			}
 		} else if typ == "i" {
-			if p.GetInPath(name) == "" {
+			if inTargets[name].GetPath() == "" {
 				msg := fmt.Sprint("Missing inpath for inport '", name, "' of shell process '", p.Command, "'")
 				Check(errors.New(msg))
 			} else {
 				if typ == "i" {
-					if p.InTargets[name].doStream {
-						newstr = p.InTargets[name].GetFifoPath()
+					if inTargets[name].doStream {
+						newstr = inTargets[name].GetFifoPath()
 					} else {
-						newstr = p.GetInPath(name)
+						newstr = inTargets[name].GetPath()
 					}
 				}
 			}
 		} else if typ == "p" {
-			if p.Params[name] == "" {
+			if params[name] == "" {
 				msg := fmt.Sprint("Missing param value param '", name, "' of shell process '", p.Command, "'")
 				Check(errors.New(msg))
 			} else {
-				newstr = p.Params[name]
+				newstr = params[name]
 			}
 		}
 		if newstr == "" {
@@ -493,10 +489,10 @@ func getPlaceHolderRegex() *re.Regexp {
 	return r
 }
 
-func (p *ShellProcess) GetInPath(inPort string) string {
+func (p *ShellProcess) GetInPath(inPort string, inTargets map[string]*FileTarget) string {
 	var inPath string
-	if p.InTargets[inPort] != nil {
-		inPath = p.InTargets[inPort].GetPath()
+	if inTargets[inPort] != nil {
+		inPath = inTargets[inPort].GetPath()
 	} else {
 		msg := fmt.Sprint("p.GetInPath(): Missing inpath for inport '", inPort, "' of shell process '", p.Command, "'")
 		Check(errors.New(msg))
@@ -506,7 +502,7 @@ func (p *ShellProcess) GetInPath(inPort string) string {
 
 // Convenience method to create an (output) path formatter returning a static string
 func (p *ShellProcess) OutPathGenString(outPort string, path string) {
-	p.OutPathFuncs[outPort] = func() string {
+	p.OutPathFuncs[outPort] = func(inTargets map[string]*FileTarget) string {
 		return path
 	}
 }
@@ -514,16 +510,16 @@ func (p *ShellProcess) OutPathGenString(outPort string, path string) {
 // Convenience method to create an (output) path formatter that extends the path of
 // and input FileTarget
 func (p *ShellProcess) OutPathGenExtend(outPort string, inPort string, extension string) {
-	p.OutPathFuncs[outPort] = func() string {
-		return p.GetInPath(inPort) + extension
+	p.OutPathFuncs[outPort] = func(inTargets map[string]*FileTarget) string {
+		return inTargets[inPort].GetPath() + extension
 	}
 }
 
 // Convenience method to create an (output) path formatter that uses an input's path
 // but replaces parts of it.
 func (p *ShellProcess) OutPathGenReplace(outPort string, inPort string, old string, new string) {
-	p.OutPathFuncs[outPort] = func() string {
-		return str.Replace(p.GetInPath(inPort), old, new, -1)
+	p.OutPathFuncs[outPort] = func(inTargets map[string]*FileTarget) string {
+		return str.Replace(inTargets[inPort].GetPath(), old, new, -1)
 	}
 }
 
