@@ -57,6 +57,7 @@ func (p *ShellProcess) Run() {
 
 		t.createFifos()
 
+		Debug.Println("[%s] Now sending fifos for task\n", t.Command, "...")
 		// Sending FIFOs for the task
 		for oname, otgt := range t.OutTargets {
 			if otgt.doStream {
@@ -65,6 +66,7 @@ func (p *ShellProcess) Run() {
 			}
 		}
 
+		Debug.Println("[%s] Now starting to run task\n", t.Command, "...")
 		// Run the task
 		go t.Run()
 	}
@@ -370,9 +372,9 @@ func (t *ShellTask) fifosInOutTargetsMissing() (fifosInOutTargetsMissing bool) {
 }
 
 func (t *ShellTask) createFifos() {
+	Debug.Printf("[%s] Now creating fifos for task\n", t.Command)
 	for _, otgt := range t.OutTargets {
 		if otgt.doStream {
-			Debug.Println("Creating FIFO:", otgt.GetFifoPath())
 			otgt.CreateFifo()
 		}
 	}
