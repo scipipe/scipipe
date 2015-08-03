@@ -43,98 +43,6 @@ func TestBasicRun(t *t.T) {
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
 }
 
-// func TestShellHasInOutPorts(t *t.T) {
-// 	initTestLogs()
-//
-// 	tt := Sh("echo {i:in1} > {o:out1}")
-// 	tt.OutPathFuncs["out1"] = func(task *ShellTask) string {
-// 		return fmt.Sprint(task.GetInPath("in1"), ".bar")
-// 	}
-// 	tt.InPorts["in1"] = make(chan *FileTarget, BUFSIZE)
-//
-// 	go tt.Run()
-// 	go func() {
-// 		defer close(tt.InPorts["in1"])
-// 		tt.InPorts["in1"] <- NewFileTarget("foo.txt")
-// 	}()
-// 	<-tt.OutPorts["out1"]
-//
-// 	assert.NotNil(t, tt.InPorts["in1"], "InPorts are nil!")
-// 	assert.NotNil(t, tt.OutPorts["out1"], "OutPorts are nil!")
-//
-// 	cleanFiles("foo.txt", "foo.txt.bar")
-// }
-//
-// func TestShellCloseOutPortOnInPortClose(t *t.T) {
-// 	initTestLogs()
-//
-// 	foo := Sh("echo foo > {o:out1}")
-// 	foo.OutPathFuncs["out1"] = func(task *ShellTask) string {
-// 		return "/tmp/foo.txt"
-// 	}
-//
-// 	f2b := Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
-// 	f2b.OutPathFuncs["bar"] = func(task *ShellTask) string {
-// 		return task.GetInPath("foo") + ".bar"
-// 	}
-//
-// 	f2b.InPorts["foo"] = foo.OutPorts["out1"]
-//
-// 	go foo.Run()
-// 	f2b.Run()
-// 	//<-f2b.OutPorts["bar"]
-//
-// 	// Assert no more content coming on channels
-// 	assert.Nil(t, <-foo.OutPorts["out1"])
-// 	assert.Nil(t, <-f2b.OutPorts["bar"])
-//
-// 	_, fooErr := os.Stat("/tmp/foo.txt")
-// 	assert.Nil(t, fooErr)
-// 	_, barErr := os.Stat("/tmp/foo.txt.bar")
-// 	assert.Nil(t, barErr)
-//
-// 	cleanFiles("/tmp/foo.txt", "/tmp/foo.txt.bar")
-// }
-//
-// // func TestReplacePlaceholdersInCmd(t *t.T) {
-// // 	initTestLogs()
-// //
-// // 	rawCmd := "echo {i:in1} > {o:out1}"
-// // 	tt := Sh(rawCmd)
-// // 	tt.OutPathFuncs["out1"] = func(task *ShellTask) string {
-// // 		return fmt.Sprint(t.GetInPath("in1"), ".bar")
-// // 	}
-// //
-// // 	tt.InPorts["in1"] = make(chan *FileTarget, BUFSIZE)
-// // 	ift := NewFileTarget("foo.txt")
-// // 	go func() {
-// // 		defer close(tt.InPorts["in1"])
-// // 		tt.InPorts["in1"] <- ift
-// // 	}()
-// //
-// // 	// Assert inport is still open after first read
-// // 	_, inPortsOpen := tt.receiveInputs()
-// // 	assert.Equal(t, true, inPortsOpen)
-// //
-// // 	// Assert inport is closed after second read
-// // 	_, inPortsOpen = tt.receiveInputs()
-// // 	assert.Equal(t, false, inPortsOpen)
-// //
-// // 	// Assert InPath is correct
-// // 	//assert.Equal(t, "foo.txt", tt.GetInPath("in1"), "foo.txt")
-// //
-// // 	// Assert placeholders are correctly replaced in command
-// // 	outTargets := tt.createOutTargets()
-// // 	cmd := tt.formatCommand(rawCmd, outTargets)
-// // 	assert.EqualValues(t, "echo foo.txt > foo.txt.bar.tmp", cmd, "Command not properly formatted!")
-// //
-// // 	// Test prepend
-// // 	tt.Prepend = "dash"
-// // 	cmd = tt.formatCommand(rawCmd, outTargets)
-// // 	assert.EqualValues(t, "dash echo foo.txt > foo.txt.bar.tmp", cmd, "Prepend not working!")
-// // }
-//
-
 func TestParameterCommand(t *t.T) {
 	initTestLogs()
 
@@ -171,18 +79,17 @@ func TestParameterCommand(t *t.T) {
 	cleanFiles("/tmp/log.txt")
 }
 
-//
-// func TestProcessWithoutInputsOutputs(t *t.T) {
-// 	initTestLogs()
-// 	Debug.Println("Starting test TestProcessWithoutInputsOutputs")
-//
-// 	f := "/tmp/hej.txt"
-// 	tsk := Sh("echo hej > " + f)
-// 	tsk.Run()
-// 	_, err := os.Stat(f)
-// 	assert.Nil(t, err)
-// 	cleanFiles(f)
-// }
+func TestProcessWithoutInputsOutputs(t *t.T) {
+	initTestLogs()
+	Debug.Println("Starting test TestProcessWithoutInputsOutputs")
+
+	f := "/tmp/hej.txt"
+	tsk := Sh("echo hej > " + f)
+	tsk.Run()
+	_, err := os.Stat(f)
+	assert.Nil(t, err)
+	cleanFiles(f)
+}
 
 func TestDontOverWriteExistingOutputs(t *t.T) {
 	InitLogError()
@@ -234,36 +141,6 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 
 	cleanFiles(f)
 }
-
-// func TestShellExpand(t *t.T) {
-// 	initTestLogs()
-//
-// 	cmdPat := "echo {p:txt} > {i:in}; cat {i:in} > {o:out}"
-// 	expectedCmd := "echo hej > in.txt; cat in.txt > out.txt"
-//
-// 	params := make(map[string]string)
-// 	params["txt"] = "hej"
-// 	ipaths := make(map[string]string)
-// 	ipaths["in"] = "in.txt"
-// 	opaths := make(map[string]string)
-// 	opaths["out"] = "out.txt"
-//
-// 	// cmd := expandCommandParamsAndPaths(cmdPat, params, ipaths, opaths)
-// 	// assert.EqualValues(t, expectedCmd, cmd, "Command not properly expanded!")
-//
-// 	// st := ShExp(cmdPat, ipaths, opaths, params)
-//
-// 	// Assert that no ports are created, since all place holders
-// 	// are replaced by the provided maps.
-// 	// assert.EqualValues(t, 0, len(st.InPorts), "Inports created where it should not!")
-// 	// assert.EqualValues(t, 0, len(st.OutPorts), "OutPorts created where it should not!")
-// 	// assert.EqualValues(t, 0, len(st.ParamPorts), "ParamPorts created where it should not!")
-//
-// 	// st.Run()
-// 	assert.True(t, NewFileTarget("out.txt").Exists())
-//
-// 	cleanFiles("in.txt", "out.txt")
-// }
 
 // Make sure that outputs are returned in order, even though they are
 // spawned to work in parallel.
