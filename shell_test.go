@@ -1,7 +1,7 @@
 package scipipe
 
 import (
-	//"fmt"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	//"os"
 	t "testing"
@@ -134,41 +134,43 @@ func TestBasicRun(t *t.T) {
 // // 	assert.EqualValues(t, "dash echo foo.txt > foo.txt.bar.tmp", cmd, "Prepend not working!")
 // // }
 //
-// // func TestParameterCommand(t *t.T) {
-// // 	initTestLogs()
-// //
-// // 	cmb := NewCombinatoricsProcess()
-// //
-// // 	// An abc file printer
-// // 	abc := Sh("echo {p:a} {p:b} {p:c} > {o:out}")
-// // 	abc.OutPathFuncs["out"] = func(task *ShellTask) string {
-// // 		return fmt.Sprintf(
-// // 			"%s_%s_%s.txt",
-// // 			abc.Params["a"],
-// // 			abc.Params["b"],
-// // 			abc.Params["c"],
-// // 		)
-// // 	}
-// //
-// // 	// A printer process
-// // 	prt := Sh("cat {i:in} >> /tmp/log.txt; rm {i:in}")
-// //
-// // 	// Connection info
-// // 	abc.ParamPorts["a"] = cmb.A
-// // 	abc.ParamPorts["b"] = cmb.B
-// // 	abc.ParamPorts["c"] = cmb.C
-// // 	prt.InPorts["in"] = abc.OutPorts["out"]
-// //
-// // 	pl := NewPipeline()
-// // 	pl.AddProcesses(cmb, abc, prt)
-// // 	pl.Run()
-// //
-// // 	// Run tests
-// // 	_, err := os.Stat("/tmp/log.txt")
-// // 	assert.Nil(t, err)
-// //
-// // 	cleanFiles("/tmp/log.txt")
-// // }
+
+func TestParameterCommand(t *t.T) {
+	initTestLogs()
+
+	cmb := NewCombinatoricsProcess()
+
+	// An abc file printer
+	abc := Sh("echo {p:a} {p:b} {p:c} > {o:out}")
+	abc.OutPathFuncs["out"] = func(task *ShellTask) string {
+		return fmt.Sprintf(
+			"%s_%s_%s.txt",
+			task.Params["a"],
+			task.Params["b"],
+			task.Params["c"],
+		)
+	}
+
+	// A printer process
+	prt := Sh("cat {i:in} >> /tmp/log.txt; rm {i:in}")
+
+	// Connection info
+	abc.ParamPorts["a"] = cmb.A
+	abc.ParamPorts["b"] = cmb.B
+	abc.ParamPorts["c"] = cmb.C
+	prt.InPorts["in"] = abc.OutPorts["out"]
+
+	pl := NewPipeline()
+	pl.AddProcesses(cmb, abc, prt)
+	pl.Run()
+
+	// Run tests
+	_, err := os.Stat("/tmp/log.txt")
+	assert.Nil(t, err)
+
+	cleanFiles("/tmp/log.txt")
+}
+
 //
 // func TestProcessWithoutInputsOutputs(t *t.T) {
 // 	initTestLogs()
@@ -262,48 +264,49 @@ func TestBasicRun(t *t.T) {
 // //
 // // 	cleanFiles("in.txt", "out.txt")
 // // }
-//
-// // Make sure that outputs are returned in order, even though they are
-// // spawned to work in parallel.
-// func TestSendsOrderedOutputs(t *t.T) {
-// 	initTestLogs()
-//
-// 	fnames := []string{}
-// 	for i := 1; i <= 10; i++ {
-// 		fnames = append(fnames, fmt.Sprintf("/tmp/f%d.txt", i))
-// 	}
-//
-// 	fq := NewFileQueue(fnames...)
-//
-// 	fc := Sh("echo {i:in} > {o:out}")
-// 	sl := Sh("cat {i:in} > {o:out}")
-//
-// 	fc.OutPathFuncs["out"] = func(task *ShellTask) string { return task.GetInPath("in") }
-// 	sl.OutPathFuncs["out"] = func(task *ShellTask) string { return task.GetInPath("in") + ".copy.txt" }
-//
-// 	go fq.Run()
-// 	go fc.Run()
-// 	go sl.Run()
-//
-// 	fc.InPorts["in"] = fq.Out
-// 	sl.InPorts["in"] = fc.OutPorts["out"]
-//
-// 	assert.NotEmpty(t, sl.OutPorts)
-//
-// 	var expFname string
-// 	i := 1
-// 	for ft := range sl.OutPorts["out"] {
-// 		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
-// 		assert.EqualValues(t, expFname, ft.GetPath())
-// 		i++
-// 	}
-// 	expFnames := []string{}
-// 	for i := 1; i <= 10; i++ {
-// 		expFnames = append(expFnames, fmt.Sprintf("/tmp/f%d.txt.copy.txt", i))
-// 	}
-// 	cleanFiles(fnames...)
-// 	cleanFiles(expFnames...)
-// }
+
+// Make sure that outputs are returned in order, even though they are
+// spawned to work in parallel.
+func TestSendsOrderedOutputs(t *t.T) {
+	initTestLogs()
+
+	fnames := []string{}
+	for i := 1; i <= 10; i++ {
+		fnames = append(fnames, fmt.Sprintf("/tmp/f%d.txt", i))
+	}
+
+	fq := NewFileQueue(fnames...)
+
+	fc := Sh("echo {i:in} > {o:out}")
+	sl := Sh("cat {i:in} > {o:out}")
+
+	fc.OutPathFuncs["out"] = func(task *ShellTask) string { return task.GetInPath("in") }
+	sl.OutPathFuncs["out"] = func(task *ShellTask) string { return task.GetInPath("in") + ".copy.txt" }
+
+	go fq.Run()
+	go fc.Run()
+	go sl.Run()
+
+	fc.InPorts["in"] = fq.Out
+	sl.InPorts["in"] = fc.OutPorts["out"]
+
+	assert.NotEmpty(t, sl.OutPorts)
+
+	var expFname string
+	i := 1
+	for ft := range sl.OutPorts["out"] {
+		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
+		assert.EqualValues(t, expFname, ft.GetPath())
+		i++
+	}
+	expFnames := []string{}
+	for i := 1; i <= 10; i++ {
+		expFnames = append(expFnames, fmt.Sprintf("/tmp/f%d.txt.copy.txt", i))
+	}
+	cleanFiles(fnames...)
+	cleanFiles(expFnames...)
+}
+
 //
 // // Test that streaming works
 // // func TestStreaming(t *t.T) {
@@ -326,39 +329,38 @@ func TestBasicRun(t *t.T) {
 // // }
 //
 
-//
-// // Helper processes
-//
-// type CombinatoricsProcess struct {
-// 	BaseProcess
-// 	A chan string
-// 	B chan string
-// 	C chan string
-// }
-//
-// func NewCombinatoricsProcess() *CombinatoricsProcess {
-// 	return &CombinatoricsProcess{
-// 		A: make(chan string, BUFSIZE),
-// 		B: make(chan string, BUFSIZE),
-// 		C: make(chan string, BUFSIZE),
-// 	}
-// }
-//
-// func (proc *CombinatoricsProcess) Run() {
-// 	defer close(proc.A)
-// 	defer close(proc.B)
-// 	defer close(proc.C)
-//
-// 	for _, a := range SS("a1", "a2", "a3") {
-// 		for _, b := range SS("b1", "b2", "b3") {
-// 			for _, c := range SS("c1", "c2", "c3") {
-// 				proc.A <- a
-// 				proc.B <- b
-// 				proc.C <- c
-// 			}
-// 		}
-// 	}
-// }
+// Helper processes
+
+type CombinatoricsProcess struct {
+	BaseProcess
+	A chan string
+	B chan string
+	C chan string
+}
+
+func NewCombinatoricsProcess() *CombinatoricsProcess {
+	return &CombinatoricsProcess{
+		A: make(chan string, BUFSIZE),
+		B: make(chan string, BUFSIZE),
+		C: make(chan string, BUFSIZE),
+	}
+}
+
+func (proc *CombinatoricsProcess) Run() {
+	defer close(proc.A)
+	defer close(proc.B)
+	defer close(proc.C)
+
+	for _, a := range SS("a1", "a2", "a3") {
+		for _, b := range SS("b1", "b2", "b3") {
+			for _, c := range SS("c1", "c2", "c3") {
+				proc.A <- a
+				proc.B <- b
+				proc.C <- c
+			}
+		}
+	}
+}
 
 // Helper functions
 func cleanFiles(fileNames ...string) {
