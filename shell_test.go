@@ -185,24 +185,26 @@ func TestSendsOrderedOutputs(t *t.T) {
 }
 
 // Test that streaming works
-// func TestStreaming(t *t.T) {
-// 	initTestLogs()
-//
-// 	// Init processes
-// 	ls := Shell("ls -l / > {os:filelist}")
-// 	ls.OutPathGenString("filelist", "filelist.txt")
-// 	sn := NewSink()
-//
-// 	// Connect
-// 	sn.In = ls.OutPorts["filelist"]
-//
-// 	// Run
-// 	go ls.Run()
-// 	sn.Run()
-//
-// 	// Clean up
-// 	cleanFiles("filelist.txt")
-// }
+func TestStreaming(t *t.T) {
+	initTestLogs()
+
+	// Init processes
+	ls := Shell("ls -l / > {os:lsl}")
+	ls.OutPathFuncs["lsl"] = func(task *ShellTask) string {
+		return "/tmp/lsl.txt"
+	}
+	sn := NewSink()
+
+	// Connect
+	sn.In = ls.OutPorts["lsl"]
+
+	// Run
+	go ls.Run()
+	sn.Run()
+
+	// Clean up
+	cleanFiles("/tmp/lsl.txt")
+}
 
 // Helper processes
 
