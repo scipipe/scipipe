@@ -58,10 +58,6 @@ func ShellExpand(cmd string, inPaths map[string]string, outPaths map[string]stri
 	return p
 }
 
-func ShellPipable(cmd string, streamOutputs bool) {
-	// TODO: Do stuff here
-}
-
 func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths map[string]string, outPaths map[string]string) (cmdExp string) {
 	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
