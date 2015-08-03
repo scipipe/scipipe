@@ -70,8 +70,14 @@ func (ft *FileTarget) CreateFifo() {
 	ft.lock.Lock()
 	cmd := "mkfifo " + ft.GetFifoPath()
 	Debug.Println("Now creating FIFO with command:", cmd)
-	_, err := exec.Command("bash", "-c", cmd).Output()
-	Check(err)
+
+	if _, err := os.Stat(ft.GetFifoPath()); err == nil {
+		Warn.Println("FIFO already exists, so cannot be created:", ft.GetFifoPath())
+	} else {
+		_, err := exec.Command("bash", "-c", cmd).Output()
+		Check(err)
+	}
+
 	ft.lock.Unlock()
 }
 
