@@ -149,16 +149,6 @@ func (p *ShellProcess) receiveInputs() (inTargets map[string]*FileTarget, inPort
 	return
 }
 
-// func (p *ShellProcess) createOutTargets() (outTargets map[string]*FileTarget) {
-// 	// Create out targets
-// 	outTargets = make(map[string]*FileTarget)
-// 	for oname, _ := range p.OutPorts {
-// 		pathfun := p.OutPathFuncs[oname]
-// 		outTargets[oname] = NewFileTarget(pathfun(t))
-// 	}
-// 	return
-// }
-
 func (p *ShellProcess) receiveParams() (params map[string]string, paramPortsOpen bool) {
 	paramPortsOpen = true
 	params = make(map[string]string)
