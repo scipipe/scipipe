@@ -11,25 +11,25 @@ import (
 
 type ShellProcess struct {
 	process
-	InPorts        map[string]chan *FileTarget
-	OutPorts       map[string]chan *FileTarget
-	OutPortsFifo   map[string]bool
-	OutPathFuncs   map[string]func(*ShellTask) string
-	ParamPorts     map[string]chan string
-	Prepend        string
-	CommandPattern string
-	Spawn          bool
+	InPorts          map[string]chan *FileTarget
+	OutPorts         map[string]chan *FileTarget
+	OutPortsDoStream map[string]bool
+	OutPathFuncs     map[string]func(*ShellTask) string
+	ParamPorts       map[string]chan string
+	Prepend          string
+	CommandPattern   string
+	Spawn            bool
 }
 
 func NewShellProcess(command string) *ShellProcess {
 	return &ShellProcess{
-		CommandPattern: command,
-		InPorts:        make(map[string]chan *FileTarget),
-		OutPorts:       make(map[string]chan *FileTarget),
-		OutPortsFifo:   make(map[string]bool),
-		OutPathFuncs:   make(map[string]func(*ShellTask) string),
-		ParamPorts:     make(map[string]chan string),
-		Spawn:          true,
+		CommandPattern:   command,
+		InPorts:          make(map[string]chan *FileTarget),
+		OutPorts:         make(map[string]chan *FileTarget),
+		OutPortsDoStream: make(map[string]bool),
+		OutPathFuncs:     make(map[string]func(*ShellTask) string),
+		ParamPorts:       make(map[string]chan string),
+		Spawn:            true,
 	}
 }
 
@@ -52,9 +52,18 @@ func (p *ShellProcess) Run() {
 	tasks := []*ShellTask{}
 	Debug.Printf("[%s] Starting to loop over tasks\n", p.CommandPattern)
 	for t := range p.createTasks() {
-		Debug.Println("Now processing task", t.Command, "...")
 		tasks = append(tasks, t)
-		// Send fifos here
+		Debug.Println("Now processing task", t.Command, "...")
+
+		// Sending FIFOs for the task
+		for oname, otgt := range t.OutTargets {
+			if otgt.doStream {
+				Debug.Printf("[%s] Sending FIFO target on outport %s ...\n", p.CommandPattern, oname)
+				p.OutPorts[oname] <- otgt
+			}
+		}
+
+		// Run the task
 		go t.Run()
 	}
 
@@ -64,8 +73,10 @@ func (p *ShellProcess) Run() {
 		<-t.Done
 		Debug.Printf("[%s] Receiving Done from task: %s\n", p.CommandPattern, t.Command)
 		for oname, otgt := range t.OutTargets {
-			Debug.Printf("[%s] Sent on outport %s ...\n", p.CommandPattern, oname)
-			p.OutPorts[oname] <- otgt
+			if !otgt.doStream {
+				Debug.Printf("[%s] Sending target on outport %s ...\n", p.CommandPattern, oname)
+				p.OutPorts[oname] <- otgt
+			}
 		}
 	}
 }
@@ -83,7 +94,7 @@ func (p *ShellProcess) initPortsFromCmdPattern(cmd string, params map[string]str
 		if typ == "o" || typ == "os" {
 			p.OutPorts[name] = make(chan *FileTarget, BUFSIZE)
 			if typ == "os" {
-				p.OutPortsFifo[name] = true
+				p.OutPortsDoStream[name] = true
 			}
 		} else if typ == "i" {
 			// Set up a channel on the inports, even though this is
@@ -121,7 +132,7 @@ func (p *ShellProcess) createTasks() (ch chan *ShellTask) {
 				Debug.Printf("[%s] Breaking: No params, and inPorts closed", p.CommandPattern)
 				break
 			}
-			t := NewShellTask(p.CommandPattern, inTargets, p.OutPathFuncs, params, p.Prepend)
+			t := NewShellTask(p.CommandPattern, inTargets, p.OutPathFuncs, p.OutPortsDoStream, params, p.Prepend)
 			ch <- t
 			if len(p.InPorts) == 0 && len(p.ParamPorts) == 0 {
 				Debug.Printf("[%s] Breaking: No inports nor params", p.CommandPattern)
@@ -188,7 +199,7 @@ type ShellTask struct {
 	Done       chan int
 }
 
-func NewShellTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs map[string]func(*ShellTask) string, params map[string]string, prepend string) *ShellTask {
+func NewShellTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs map[string]func(*ShellTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string) *ShellTask {
 	t := &ShellTask{
 		InTargets:  inTargets,
 		OutTargets: make(map[string]*FileTarget),
@@ -201,8 +212,12 @@ func NewShellTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs 
 	outTargets := make(map[string]*FileTarget)
 	for oname, ofun := range outPathFuncs {
 		opath := ofun(t)
+		otgt := NewFileTarget(opath)
+		if outPortsDoStream[oname] {
+			otgt.doStream = true
+		}
 		Debug.Printf("[%s] Creating outTarget with path %s ...", cmdPat, opath)
-		outTargets[oname] = NewFileTarget(opath)
+		outTargets[oname] = otgt
 	}
 	t.OutTargets = outTargets
 	t.Command = formatCommand(cmdPat, inTargets, outTargets, params, prepend)
@@ -215,6 +230,7 @@ func (t *ShellTask) Run() {
 	if !t.anyOutputExists() {
 		t.executeCommand(t.Command)
 		t.atomizeTargets()
+		t.cleanUpFifos()
 	}
 	Debug.Printf("[%s] Starting to send Done in t.Run() ...)\n", t.Command)
 	t.Done <- 1
@@ -303,6 +319,17 @@ func (t *ShellTask) atomizeTargets() {
 			Debug.Printf("Done atomizing file: %s -> %s", tgt.GetTempPath(), tgt.GetPath())
 		} else {
 			Debug.Printf("Target is streaming, so not atomizing: %s", tgt.GetPath())
+		}
+	}
+}
+
+func (t *ShellTask) cleanUpFifos() {
+	for _, tgt := range t.OutTargets {
+		if tgt.doStream {
+			Debug.Printf("[%s] Cleaning up FIFO for input target: %s\n", t.Command, tgt.GetFifoPath())
+			tgt.RemoveFifo()
+		} else {
+			Debug.Printf("[%s] input target is not FIFO, so not removing any FIFO: %s\n", t.Command, tgt.GetPath())
 		}
 	}
 }
