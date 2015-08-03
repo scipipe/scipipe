@@ -15,12 +15,12 @@ func main() {
 	// An abc file printer
 	abc := sci.Sh("echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
 	abc.Spawn = true
-	abc.OutPathFuncs["out"] = func() string {
+	abc.OutPathFuncs["out"] = func(t *sci.ShellTask) string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
-			abc.Params["a"],
-			abc.Params["b"],
-			abc.Params["c"],
+			t.Params["a"],
+			t.Params["b"],
+			t.Params["c"],
 		)
 	}
 
