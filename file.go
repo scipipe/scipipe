@@ -68,7 +68,9 @@ func (ft *FileTarget) Atomize() {
 
 func (ft *FileTarget) CreateFifo() {
 	ft.lock.Lock()
-	_, err := exec.Command("bash", "-c", "mkfifo "+ft.GetFifoPath()).Output()
+	cmd := "mkfifo " + ft.GetFifoPath()
+	Debug.Println("Now creating FIFO with command:", cmd)
+	_, err := exec.Command("bash", "-c", cmd).Output()
 	Check(err)
 	ft.lock.Unlock()
 }
