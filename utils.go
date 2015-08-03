@@ -2,7 +2,7 @@ package scipipe
 
 import (
 	// "github.com/go-errors/errors"
-	"os"
+	//"os"
 	"os/exec"
 )
 
@@ -14,8 +14,7 @@ func ExecCmd(cmd string) {
 
 func Check(err error) {
 	if err != nil {
-		Error.Println(err.Error())
-		os.Exit(1)
+		panic(err)
 	}
 }
 

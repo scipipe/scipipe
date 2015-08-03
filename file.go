@@ -58,10 +58,12 @@ func (ft *FileTarget) Write(dat []byte) {
 }
 
 func (ft *FileTarget) Atomize() {
+	Debug.Println("FileTarget: Atomizing", ft.GetTempPath(), "->", ft.GetPath())
 	ft.lock.Lock()
 	err := os.Rename(ft.GetTempPath(), ft.path)
 	Check(err)
 	ft.lock.Unlock()
+	Debug.Println("FileTarget: Done atomizing", ft.GetTempPath(), "->", ft.GetPath())
 }
 
 func (ft *FileTarget) CreateFifo() {

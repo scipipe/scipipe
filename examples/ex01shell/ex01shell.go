@@ -6,24 +6,24 @@ import (
 )
 
 func main() {
-	sci.InitLogDebug()
+	sci.InitLogInfo()
 
 	h := sci.Sh("echo foo > {o:foo}")
-	h.OutPathFuncs["foo"] = func() string {
+	h.OutPathFuncs["foo"] = func(t *sci.ShellTask) string {
 		return "foo.txt"
 	}
 
 	f2b := sci.Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	f2b.OutPathFuncs["bar"] = func() string {
-		return fmt.Sprint(f2b.GetInPath("foo"), ".bar")
+	f2b.OutPathFuncs["bar"] = func(t *sci.ShellTask) string {
+		return fmt.Sprint(t.GetInPath("foo"), ".bar")
 	}
 
-	p := sci.Sh("cat {i:inf}")
+	sn := sci.NewSink()
 
 	f2b.InPorts["foo"] = h.OutPorts["foo"]
-	p.InPorts["inf"] = f2b.OutPorts["bar"]
+	sn.In = f2b.OutPorts["bar"]
 
-	go h.Run()
-	go f2b.Run()
-	p.Run()
+	pl := sci.NewPipeline()
+	pl.AddProcs(h, f2b, sn)
+	pl.Run()
 }
