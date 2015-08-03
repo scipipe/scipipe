@@ -3,6 +3,7 @@ package scipipe
 import (
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	re "regexp"
 	str "strings"
@@ -56,6 +57,7 @@ func (p *ShellProcess) Run() {
 		// Send fifos here
 		go t.Run()
 	}
+
 	// Wait for finish, and send out targets in arrival order
 	for _, t := range tasks {
 		Debug.Printf("[%s] Waiting for Done from task: %s\n", p.CommandPattern, t.Command)
@@ -220,8 +222,10 @@ func NewShellTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs 
 
 func (t *ShellTask) Run() {
 	defer close(t.Done) // TODO: Is this needed?
-	t.executeCommand(t.Command)
-	t.atomizeTargets()
+	if !t.anyOutputExists() {
+		t.executeCommand(t.Command)
+		t.atomizeTargets()
+	}
 	Debug.Printf("[%s] Starting to send Done in t.Run() ...)\n", t.Command)
 	t.Done <- 1
 	Debug.Printf("[%s] Done sending Done, in t.Run()\n", t.Command)
@@ -311,4 +315,26 @@ func (t *ShellTask) atomizeTargets() {
 			Debug.Printf("Target is streaming, so not atomizing: %s", tgt.GetPath())
 		}
 	}
+}
+
+func (t *ShellTask) anyOutputExists() (anyFileExists bool) {
+	anyFileExists = false
+	for _, tgt := range t.OutTargets {
+		opath := tgt.GetPath()
+		otmpPath := tgt.GetTempPath()
+		ofifoPath := tgt.GetFifoPath()
+		if _, err := os.Stat(opath); err == nil {
+			Warn.Printf("[%s] Output file already exists: %s. Check your workflow for correctness!\n", t.Command, opath)
+			anyFileExists = true
+		}
+		if _, err := os.Stat(otmpPath); err == nil {
+			Warn.Printf("[%s] Temporary Output file already exists: %s. Check your workflow for correctness!\n", t.Command, otmpPath)
+			anyFileExists = true
+		}
+		if _, err := os.Stat(ofifoPath); err == nil {
+			Warn.Printf("[%s] FIFO Output file already exists: %s. Check your workflow for correctness!\n", t.Command, ofifoPath)
+			anyFileExists = true
+		}
+	}
+	return
 }
