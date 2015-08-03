@@ -55,6 +55,8 @@ func (p *ShellProcess) Run() {
 		tasks = append(tasks, t)
 		Debug.Println("Now processing task", t.Command, "...")
 
+		t.createFifos()
+
 		// Sending FIFOs for the task
 		for oname, otgt := range t.OutTargets {
 			if otgt.doStream {
@@ -227,7 +229,7 @@ func NewShellTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs 
 
 func (t *ShellTask) Run() {
 	defer close(t.Done) // TODO: Is this needed?
-	if !t.anyOutputExists() {
+	if !t.anyOutputExists() && !t.fifosInOutTargetsMissing() {
 		t.executeCommand(t.Command)
 		t.atomizeTargets()
 		t.cleanUpFifos()
@@ -339,19 +341,39 @@ func (t *ShellTask) anyOutputExists() (anyFileExists bool) {
 	for _, tgt := range t.OutTargets {
 		opath := tgt.GetPath()
 		otmpPath := tgt.GetTempPath()
-		ofifoPath := tgt.GetFifoPath()
-		if _, err := os.Stat(opath); err == nil {
-			Warn.Printf("[%s] Output file already exists: %s. Check your workflow for correctness!\n", t.Command, opath)
-			anyFileExists = true
-		}
-		if _, err := os.Stat(otmpPath); err == nil {
-			Warn.Printf("[%s] Temporary Output file already exists: %s. Check your workflow for correctness!\n", t.Command, otmpPath)
-			anyFileExists = true
-		}
-		if _, err := os.Stat(ofifoPath); err == nil {
-			Warn.Printf("[%s] FIFO Output file already exists: %s. Check your workflow for correctness!\n", t.Command, ofifoPath)
-			anyFileExists = true
+		if !tgt.doStream {
+			if _, err := os.Stat(opath); err == nil {
+				Warn.Printf("[%s] Output file already exists: %s. Check your workflow for correctness!\n", t.Command, opath)
+				anyFileExists = true
+			}
+			if _, err := os.Stat(otmpPath); err == nil {
+				Warn.Printf("[%s] Temporary Output file already exists: %s. Check your workflow for correctness!\n", t.Command, otmpPath)
+				anyFileExists = true
+			}
 		}
 	}
 	return
+}
+
+func (t *ShellTask) fifosInOutTargetsMissing() (fifosInOutTargetsMissing bool) {
+	fifosInOutTargetsMissing = false
+	for _, tgt := range t.OutTargets {
+		if tgt.doStream {
+			ofifoPath := tgt.GetFifoPath()
+			if _, err := os.Stat(ofifoPath); err != nil {
+				Warn.Printf("[%s] FIFO Output file missing, for streaming output: %s. Check your workflow for correctness!\n", t.Command, ofifoPath)
+				fifosInOutTargetsMissing = true
+			}
+		}
+	}
+	return
+}
+
+func (t *ShellTask) createFifos() {
+	for _, otgt := range t.OutTargets {
+		if otgt.doStream {
+			Debug.Println("Creating FIFO:", otgt.GetFifoPath())
+			otgt.CreateFifo()
+		}
+	}
 }
