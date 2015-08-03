@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	//"os"
-	t "testing"
-	//"time"
 	"os"
+	t "testing"
+	"time"
 )
 
 func initTestLogs() {
@@ -183,87 +183,87 @@ func TestParameterCommand(t *t.T) {
 // 	assert.Nil(t, err)
 // 	cleanFiles(f)
 // }
+
+func TestDontOverWriteExistingOutputs(t *t.T) {
+	InitLogError()
+	Debug.Println("Starting test TestDontOverWriteExistingOutputs")
+
+	f := "/tmp/hej.txt"
+
+	// Assert file does not exist before running
+	_, e1 := os.Stat(f)
+	assert.NotNil(t, e1)
+
+	// Run pipeline a first time
+	tsk := Sh("echo hej > {o:hej}")
+	tsk.OutPathFuncs["hej"] = func(task *ShellTask) string { return f }
+	prt := Sh("echo {i:in} Done!")
+	prt.InPorts["in"] = tsk.OutPorts["hej"]
+	pl := NewPipeline()
+	pl.AddProcs(tsk, prt)
+	pl.Run()
+
+	// Assert file DO exist after running
+	fiBef, e2 := os.Stat(f)
+	assert.Nil(t, e2)
+
+	// Get modified time before
+	mtBef := fiBef.ModTime()
+
+	// Make sure some time has passed before the second write
+	time.Sleep(1 * time.Millisecond)
+
+	Debug.Println("Try running the same workflow again ...")
+	// Run again with different output
+	tsk = Sh("echo hej > {o:hej}")
+	tsk.OutPathFuncs["hej"] = func(task *ShellTask) string { return f }
+	prt.InPorts["in"] = tsk.OutPorts["hej"]
+	pl = NewPipeline()
+	pl.AddProcs(tsk, prt)
+	pl.Run()
+
+	// Assert exists
+	fiAft, e3 := os.Stat(f)
+	assert.Nil(t, e3)
+
+	// Get modified time AFTER second run
+	mtAft := fiAft.ModTime()
+
+	// Assert file is not modified!
+	assert.EqualValues(t, mtBef, mtAft)
+
+	cleanFiles(f)
+}
+
+// func TestShellExpand(t *t.T) {
+// 	initTestLogs()
 //
-// func TestDontOverWriteExistingOutputs(t *t.T) {
-// 	InitLogError()
-// 	Debug.Println("Starting test TestDontOverWriteExistingOutputs")
+// 	cmdPat := "echo {p:txt} > {i:in}; cat {i:in} > {o:out}"
+// 	expectedCmd := "echo hej > in.txt; cat in.txt > out.txt"
 //
-// 	f := "/tmp/hej.txt"
+// 	params := make(map[string]string)
+// 	params["txt"] = "hej"
+// 	ipaths := make(map[string]string)
+// 	ipaths["in"] = "in.txt"
+// 	opaths := make(map[string]string)
+// 	opaths["out"] = "out.txt"
 //
-// 	// Assert file does not exist before running
-// 	_, e1 := os.Stat(f)
-// 	assert.NotNil(t, e1)
+// 	// cmd := expandCommandParamsAndPaths(cmdPat, params, ipaths, opaths)
+// 	// assert.EqualValues(t, expectedCmd, cmd, "Command not properly expanded!")
 //
-// 	// Run pipeline a first time
-// 	tsk := Sh("echo hej > {o:hej}")
-// 	tsk.OutPathFuncs["hej"] = func(task *ShellTask) string { return f }
-// 	prt := Sh("echo {i:in} Done!")
-// 	prt.InPorts["in"] = tsk.OutPorts["hej"]
-// 	pl := NewPipeline()
-// 	pl.AddProcs(tsk, prt)
-// 	pl.Run()
+// 	// st := ShExp(cmdPat, ipaths, opaths, params)
 //
-// 	// Assert file DO exist after running
-// 	fiBef, e2 := os.Stat(f)
-// 	assert.Nil(t, e2)
+// 	// Assert that no ports are created, since all place holders
+// 	// are replaced by the provided maps.
+// 	// assert.EqualValues(t, 0, len(st.InPorts), "Inports created where it should not!")
+// 	// assert.EqualValues(t, 0, len(st.OutPorts), "OutPorts created where it should not!")
+// 	// assert.EqualValues(t, 0, len(st.ParamPorts), "ParamPorts created where it should not!")
 //
-// 	// Get modified time before
-// 	mtBef := fiBef.ModTime()
+// 	// st.Run()
+// 	assert.True(t, NewFileTarget("out.txt").Exists())
 //
-// 	// Make sure some time has passed before the second write
-// 	time.Sleep(1 * time.Millisecond)
-//
-// 	Debug.Println("Try running the same workflow again ...")
-// 	// Run again with different output
-// 	tsk = Sh("echo hej > {o:hej}")
-// 	tsk.OutPathFuncs["hej"] = func(task *ShellTask) string { return f }
-// 	prt.InPorts["in"] = tsk.OutPorts["hej"]
-// 	pl = NewPipeline()
-// 	pl.AddProcs(tsk, prt)
-// 	pl.Run()
-//
-// 	// Assert exists
-// 	fiAft, e3 := os.Stat(f)
-// 	assert.Nil(t, e3)
-//
-// 	// Get modified time AFTER second run
-// 	mtAft := fiAft.ModTime()
-//
-// 	// Assert file is not modified!
-// 	assert.EqualValues(t, mtBef, mtAft)
-//
-// 	cleanFiles(f)
+// 	cleanFiles("in.txt", "out.txt")
 // }
-//
-// // func TestShellExpand(t *t.T) {
-// // 	initTestLogs()
-// //
-// // 	cmdPat := "echo {p:txt} > {i:in}; cat {i:in} > {o:out}"
-// // 	expectedCmd := "echo hej > in.txt; cat in.txt > out.txt"
-// //
-// // 	params := make(map[string]string)
-// // 	params["txt"] = "hej"
-// // 	ipaths := make(map[string]string)
-// // 	ipaths["in"] = "in.txt"
-// // 	opaths := make(map[string]string)
-// // 	opaths["out"] = "out.txt"
-// //
-// // 	// cmd := expandCommandParamsAndPaths(cmdPat, params, ipaths, opaths)
-// // 	// assert.EqualValues(t, expectedCmd, cmd, "Command not properly expanded!")
-// //
-// // 	// st := ShExp(cmdPat, ipaths, opaths, params)
-// //
-// // 	// Assert that no ports are created, since all place holders
-// // 	// are replaced by the provided maps.
-// // 	// assert.EqualValues(t, 0, len(st.InPorts), "Inports created where it should not!")
-// // 	// assert.EqualValues(t, 0, len(st.OutPorts), "OutPorts created where it should not!")
-// // 	// assert.EqualValues(t, 0, len(st.ParamPorts), "ParamPorts created where it should not!")
-// //
-// // 	// st.Run()
-// // 	assert.True(t, NewFileTarget("out.txt").Exists())
-// //
-// // 	cleanFiles("in.txt", "out.txt")
-// // }
 
 // Make sure that outputs are returned in order, even though they are
 // spawned to work in parallel.
@@ -307,27 +307,25 @@ func TestSendsOrderedOutputs(t *t.T) {
 	cleanFiles(expFnames...)
 }
 
+// Test that streaming works
+// func TestStreaming(t *t.T) {
+// 	initTestLogs()
 //
-// // Test that streaming works
-// // func TestStreaming(t *t.T) {
-// // 	initTestLogs()
-// //
-// // 	// Init processes
-// // 	ls := Shell("ls -l / > {os:filelist}")
-// // 	ls.OutPathGenString("filelist", "filelist.txt")
-// // 	sn := NewSink()
-// //
-// // 	// Connect
-// // 	sn.In = ls.OutPorts["filelist"]
-// //
-// // 	// Run
-// // 	go ls.Run()
-// // 	sn.Run()
-// //
-// // 	// Clean up
-// // 	cleanFiles("filelist.txt")
-// // }
+// 	// Init processes
+// 	ls := Shell("ls -l / > {os:filelist}")
+// 	ls.OutPathGenString("filelist", "filelist.txt")
+// 	sn := NewSink()
 //
+// 	// Connect
+// 	sn.In = ls.OutPorts["filelist"]
+//
+// 	// Run
+// 	go ls.Run()
+// 	sn.Run()
+//
+// 	// Clean up
+// 	cleanFiles("filelist.txt")
+// }
 
 // Helper processes
 
