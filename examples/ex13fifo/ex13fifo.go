@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	sci.InitLogDebug()
+	sci.InitLogWarn()
 
 	fmt.Println("Starting program!")
 	ls := sci.Shell("ls -l / > {os:lsl}")
