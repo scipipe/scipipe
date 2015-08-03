@@ -87,7 +87,7 @@ func TestProcessWithoutInputsOutputs(t *t.T) {
 	tsk := Sh("echo hej > " + f)
 	tsk.Run()
 	_, err := os.Stat(f)
-	assert.Nil(t, err)
+	assert.Nil(t, err, fmt.Sprintf("File is missing: %s", f))
 	cleanFiles(f)
 }
 
@@ -186,24 +186,41 @@ func TestSendsOrderedOutputs(t *t.T) {
 
 // Test that streaming works
 func TestStreaming(t *t.T) {
-	initTestLogs()
+	InitLogWarn()
 
 	// Init processes
 	ls := Shell("ls -l / > {os:lsl}")
 	ls.OutPathFuncs["lsl"] = func(task *ShellTask) string {
 		return "/tmp/lsl.txt"
 	}
-	sn := NewSink()
+	grp := Shell("grep etc {i:in} > {o:grepped}")
+	grp.OutPathFuncs["grepped"] = func(task *ShellTask) string {
+		return task.GetInPath("in") + ".grepped.txt"
+	}
+	snk := NewSink()
 
 	// Connect
-	sn.In = ls.OutPorts["lsl"]
+	grp.InPorts["in"] = ls.OutPorts["lsl"]
+	snk.In = grp.OutPorts["grepped"]
 
 	// Run
-	go ls.Run()
-	sn.Run()
+	pl := NewPipeline()
+	pl.AddProcs(ls, grp, snk)
+	pl.Run()
+
+	// Assert no fifo file is left behind
+	_, err1 := os.Stat("/tmp/lsl.txt.fifo")
+	assert.NotNil(t, err1, "FIFO file exists, which should not!")
+
+	// Assert otuput file exists
+	_, err2 := os.Stat("/tmp/lsl.txt.grepped.txt")
+	assert.Nil(t, err2, "File missing!")
 
 	// Clean up
-	cleanFiles("/tmp/lsl.txt")
+	cleanFiles("/tmp/lsl.txt", "/tmp/lsl.txt.grepped.txt")
+	// cleanFiles("/tmp/lsl.txt.tmp")             // FIXME: Remove
+	// cleanFiles("/tmp/lsl.txt.grepped.txt.tmp") // FIXME: Remove
+	// cleanFiles("/tmp/lsl.txt.fifo")            // FIXME: Remove
 }
 
 // Helper processes
