@@ -187,6 +187,29 @@ func (p *ShellProcess) closeOutPorts() {
 	}
 }
 
+// Convenience method to create an (output) path formatter returning a static string
+func (p *ShellProcess) OutPathGenString(outPort string, path string) {
+	p.OutPathFuncs[outPort] = func(t *ShellTask) string {
+		return path
+	}
+}
+
+// Convenience method to create an (output) path formatter that extends the path of
+// and input FileTarget
+func (p *ShellProcess) OutPathGenExtend(outPort string, inPort string, extension string) {
+	p.OutPathFuncs[outPort] = func(t *ShellTask) string {
+		return t.InTargets[inPort].GetPath() + extension
+	}
+}
+
+// Convenience method to create an (output) path formatter that uses an input's path
+// but replaces parts of it.
+func (p *ShellProcess) OutPathGenReplace(outPort string, inPort string, old string, new string) {
+	p.OutPathFuncs[outPort] = func(t *ShellTask) string {
+		return str.Replace(t.InTargets[inPort].GetPath(), old, new, -1)
+	}
+}
+
 func getPlaceHolderRegex() *re.Regexp {
 	r, err := re.Compile("{(o|os|i|is|p):([^{}:]+)}")
 	Check(err)
