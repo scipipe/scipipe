@@ -22,6 +22,7 @@ Some benefits of SciPipe, that are not always available in other systems availab
 - **Inherently simple:** Uses Go's concurrency primitives (go-routines and channels)
   to create an "implicit" scheduler, which means very little additional infrastructure code.
   This means that the code is easy to modify and extend.
+- Resource efficient: You can choose to stream selected outputs via Unix FIFO files, to avoid temporary storage.
 - **Flexible:** Processes that wrap command-line programs and scripts can be combined with
   processes coded directly in Golang.
 - **Custom file naming:** SciPipe gives you full control over how file names are produced,
@@ -39,7 +40,6 @@ Some benefits of SciPipe, that are not always available in other systems availab
 ## Known limitations
 
 - There is not yet a really comprehensive audit log generation. It is being worked on currently.
-- There is as of yet no streaming support, but we have ideas and plans for how to implement that shortly.
 - There is not yet support for the [Common Workflow Language](http://common-workflow-language.github.io), but that is also something that we plan to support in the future.
 
 ## Connection to flow-based programming
@@ -71,15 +71,15 @@ func main() {
 	snk := sp.NewSink() // Will just receive file targets, doing nothing
 
 	// Add output file path formatters
-	fwt.OutPathFuncs["foo"] = func() string {
+	fwt.OutPathFuncs["foo"] = func(t *sp.ShellTask) string {
 		// Just a static one in this case (not using incoming file paths)
 		return "foo.txt"
 	}
-	f2b.OutPathFuncs["bar"] = func() string {
+	f2b.OutPathFuncs["bar"] = func(t *sp.ShellTask) string {
 		// Here, we instead re-use the file name of the process we depend
 		// on (which we get on the 'foo' inport), and just
 		// pad '.bar' at the end:
-		return f2b.GetInPath("foo") + ".bar"
+		return t.GetInPath("foo") + ".bar"
 	}
 
 	// Connect network
@@ -139,11 +139,11 @@ the names of the outports of the processes. So, to define the output filenames o
 above, we would add:
 
 ```go
-fwt.OutPathFuncs["out"] = func() string {
+fwt.OutPathFuncs["out"] = func(t *sp.ShellTask) string {
 	// Just statically create a file named foo.txt
 	return "foo.txt"
 }
-f2b.OutPathFuncs["bar"] = func() string {
+f2b.OutPathFuncs["bar"] = func(t *sp.ShellTask) string {
 	// Here, we instead re-use the file name of the process we depend
 	// on (which we get on the 'foo' inport), and just
 	// pad '.bar' at the end:
