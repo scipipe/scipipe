@@ -13,8 +13,8 @@ func main() {
 	params := map[string]string{"a": "a1", "b": "b1", "c": "c1"}
 
 	abc := sci.ShExp("echo {p:a} {p:b} {p:c} > {o:out} # {i:in}", nil, nil, params)
-	abc.OutPathFuncs["out"] = func() string {
-		return abc.GetInPath("in")
+	abc.OutPathFuncs["out"] = func(t *sci.ShellTask) string {
+		return t.GetInPath("in")
 	}
 
 	prt := sci.Sh("echo {i:in} >> log.txt")

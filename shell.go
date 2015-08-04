@@ -46,6 +46,70 @@ func Sh(cmd string) *ShellProcess {
 	return Shell(cmd)
 }
 
+func ShellExpand(cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *ShellProcess {
+	cmdExp := expandCommandParamsAndPaths(cmd, params, inPaths, outPaths)
+	p := NewShellProcess(cmdExp)
+	p.initPortsFromCmdPattern(cmdExp, params)
+	return p
+}
+
+func ShExp(cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *ShellProcess {
+	return ShellExpand(cmd, inPaths, outPaths, params)
+}
+
+func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths map[string]string, outPaths map[string]string) (cmdExp string) {
+	r := getPlaceHolderRegex()
+	ms := r.FindAllStringSubmatch(cmd, -1)
+	if params != nil {
+		Debug.Println("Params:", params)
+	}
+	if inPaths != nil {
+		Debug.Println("inPaths:", inPaths)
+	}
+	if outPaths != nil {
+		Debug.Println("outPaths:", outPaths)
+	}
+	cmdExp = cmd
+	for _, m := range ms {
+		whole := m[0]
+		typ := m[1]
+		name := m[2]
+		var newstr string
+		if typ == "p" {
+			if params != nil {
+				if val, ok := params[name]; ok {
+					Debug.Println("Found param:", val)
+					newstr = val
+					Debug.Println("Replacing:", whole, "->", newstr)
+					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+				}
+			}
+		} else if typ == "i" {
+			if inPaths != nil {
+				if val, ok := inPaths[name]; ok {
+					Debug.Println("Found inPath:", val)
+					newstr = val
+					Debug.Println("Replacing:", whole, "->", newstr)
+					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+				}
+			}
+		} else if typ == "o" || typ == "os" {
+			if outPaths != nil {
+				if val, ok := outPaths[name]; ok {
+					Debug.Println("Found outPath:", val)
+					newstr = val
+					Debug.Println("Replacing:", whole, "->", newstr)
+					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+				}
+			}
+		}
+	}
+	if cmd != cmdExp {
+		Debug.Printf("Expanded command '%s' into '%s'\n", cmd, cmdExp)
+	}
+	return
+}
+
 func (p *ShellProcess) Run() {
 	defer p.closeOutPorts()
 
