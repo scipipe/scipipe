@@ -22,7 +22,7 @@ Some benefits of SciPipe, that are not always available in other systems availab
 - **Inherently simple:** Uses Go's concurrency primitives (go-routines and channels)
   to create an "implicit" scheduler, which means very little additional infrastructure code.
   This means that the code is easy to modify and extend.
-- Resource efficient: You can choose to stream selected outputs via Unix FIFO files, to avoid temporary storage.
+- **Resource efficient:** You can choose to stream selected outputs via Unix FIFO files, to avoid temporary storage.
 - **Flexible:** Processes that wrap command-line programs and scripts can be combined with
   processes coded directly in Golang.
 - **Custom file naming:** SciPipe gives you full control over how file names are produced,
