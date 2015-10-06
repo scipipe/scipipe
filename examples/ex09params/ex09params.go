@@ -15,7 +15,7 @@ func main() {
 	// An abc file printer
 	abc := sci.Sh("echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
 	abc.Spawn = true
-	abc.OutPathFuncs["out"] = func(t *sci.ShellTask) string {
+	abc.PathGen["out"] = func(t *sci.ShellTask) string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
 			t.Params["a"],

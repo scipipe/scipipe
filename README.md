@@ -71,11 +71,11 @@ func main() {
 	snk := sp.NewSink() // Will just receive file targets, doing nothing
 
 	// Add output file path formatters
-	fwt.OutPathFuncs["foo"] = func(t *sp.ShellTask) string {
+	fwt.PathGen["foo"] = func(t *sp.ShellTask) string {
 		// Just a static one in this case (not using incoming file paths)
 		return "foo.txt"
 	}
-	f2b.OutPathFuncs["bar"] = func(t *sp.ShellTask) string {
+	f2b.PathGen["bar"] = func(t *sp.ShellTask) string {
 		// Here, we instead re-use the file name of the process we depend
 		// on (which we get on the 'foo' inport), and just
 		// pad '.bar' at the end:
@@ -139,11 +139,11 @@ the names of the outports of the processes. So, to define the output filenames o
 above, we would add:
 
 ```go
-fwt.OutPathFuncs["out"] = func(t *sp.ShellTask) string {
+fwt.PathGen["out"] = func(t *sp.ShellTask) string {
 	// Just statically create a file named foo.txt
 	return "foo.txt"
 }
-f2b.OutPathFuncs["bar"] = func(t *sp.ShellTask) string {
+f2b.PathGen["bar"] = func(t *sp.ShellTask) string {
 	// Here, we instead re-use the file name of the process we depend
 	// on (which we get on the 'foo' inport), and just
 	// pad '.bar' at the end:
