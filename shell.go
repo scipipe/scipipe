@@ -16,7 +16,7 @@ type ShellProcess struct {
 	OutPortsDoStream map[string]bool
 	PathGen          map[string]func(*ShellTask) string
 	ParamPorts       map[string]chan string
-	RunHook          func(*ShellTask)
+	CustomExecute    func(*ShellTask)
 	Prepend          string
 	CommandPattern   string
 	Spawn            bool
@@ -133,7 +133,7 @@ func (p *ShellProcess) Run() {
 
 		Debug.Println("[%s] Now starting to run task\n", t.Command, "...")
 		// Run the task
-		go t.Run()
+		go t.Execute()
 	}
 
 	// Wait for finish, and send out targets in arrival order
@@ -202,8 +202,8 @@ func (p *ShellProcess) createTasks() (ch chan *ShellTask) {
 				break
 			}
 			t := NewShellTask(p.CommandPattern, inTargets, p.PathGen, p.OutPortsDoStream, params, p.Prepend)
-			if p.RunHook != nil {
-				t.RunHook = p.RunHook
+			if p.CustomExecute != nil {
+				t.CustomExecute = p.CustomExecute
 			}
 			ch <- t
 			if len(p.InPorts) == 0 && len(p.ParamPorts) == 0 {
@@ -287,12 +287,12 @@ func getPlaceHolderRegex() *re.Regexp {
 // ------- ShellTask -------
 
 type ShellTask struct {
-	InTargets  map[string]*FileTarget
-	OutTargets map[string]*FileTarget
-	Params     map[string]string
-	Command    string
-	RunHook    func(*ShellTask)
-	Done       chan int
+	InTargets     map[string]*FileTarget
+	OutTargets    map[string]*FileTarget
+	Params        map[string]string
+	Command       string
+	CustomExecute func(*ShellTask)
+	Done          chan int
 }
 
 func NewShellTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs map[string]func(*ShellTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string) *ShellTask {
@@ -321,20 +321,20 @@ func NewShellTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs 
 	return t
 }
 
-func (t *ShellTask) Run() {
+func (t *ShellTask) Execute() {
 	defer close(t.Done) // TODO: Is this needed?
 	if !t.anyOutputExists() && !t.fifosInOutTargetsMissing() {
-		if t.RunHook != nil {
-			t.RunHook(t)
+		if t.CustomExecute != nil {
+			t.CustomExecute(t)
 		} else {
 			t.executeCommand(t.Command)
 			t.atomizeTargets()
 		}
 		t.cleanUpFifos()
 	}
-	Debug.Printf("[%s] Starting to send Done in t.Run() ...)\n", t.Command)
+	Debug.Printf("[%s] Starting to send Done in t.Execute() ...)\n", t.Command)
 	t.Done <- 1
-	Debug.Printf("[%s] Done sending Done, in t.Run()\n", t.Command)
+	Debug.Printf("[%s] Done sending Done, in t.Execute()\n", t.Command)
 }
 
 func (t *ShellTask) executeCommand(cmd string) {
