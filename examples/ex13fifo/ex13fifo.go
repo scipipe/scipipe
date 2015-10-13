@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	sci.InitLogWarn()
+	sci.InitLogDebug()
 
 	fmt.Println("Starting program!")
 

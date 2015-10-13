@@ -122,7 +122,7 @@ func (p *ShellProcess) Run() {
 
 		t.createFifos()
 
-		Debug.Println("[%s] Now sending fifos for task\n", t.Command, "...")
+		Debug.Printf("[%s] Now sending fifos for task ...\n", t.Command)
 		// Sending FIFOs for the task
 		for oname, otgt := range t.OutTargets {
 			if otgt.doStream {
@@ -131,7 +131,7 @@ func (p *ShellProcess) Run() {
 			}
 		}
 
-		Debug.Println("[%s] Now starting to run task\n", t.Command, "...")
+		Debug.Printf("[%s] Now starting to run task ...\n", t.Command)
 		// Run the task
 		go t.Execute()
 	}
