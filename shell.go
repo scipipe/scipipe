@@ -16,6 +16,7 @@ type ShellProcess struct {
 	OutPortsDoStream map[string]bool
 	PathGen          map[string]func(*ShellTask) string
 	ParamPorts       map[string]chan string
+	RunHook          func(*ShellTask)
 	Prepend          string
 	CommandPattern   string
 	Spawn            bool
@@ -201,6 +202,9 @@ func (p *ShellProcess) createTasks() (ch chan *ShellTask) {
 				break
 			}
 			t := NewShellTask(p.CommandPattern, inTargets, p.PathGen, p.OutPortsDoStream, params, p.Prepend)
+			if p.RunHook != nil {
+				t.RunHook = p.RunHook
+			}
 			ch <- t
 			if len(p.InPorts) == 0 && len(p.ParamPorts) == 0 {
 				Debug.Printf("[%s] Breaking: No inports nor params", p.CommandPattern)
@@ -287,6 +291,7 @@ type ShellTask struct {
 	OutTargets map[string]*FileTarget
 	Params     map[string]string
 	Command    string
+	RunHook    func(*ShellTask)
 	Done       chan int
 }
 
@@ -319,8 +324,12 @@ func NewShellTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs 
 func (t *ShellTask) Run() {
 	defer close(t.Done) // TODO: Is this needed?
 	if !t.anyOutputExists() && !t.fifosInOutTargetsMissing() {
-		t.executeCommand(t.Command)
-		t.atomizeTargets()
+		if t.RunHook != nil {
+			t.RunHook(t)
+		} else {
+			t.executeCommand(t.Command)
+			t.atomizeTargets()
+		}
 		t.cleanUpFifos()
 	}
 	Debug.Printf("[%s] Starting to send Done in t.Run() ...)\n", t.Command)
