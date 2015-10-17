@@ -12,7 +12,7 @@ func main() {
 	foo.PathGen["foo"] = func(t *sci.ShellTask) string {
 		return "foo.txt"
 	}
-	foo.RunHook = func(t *sci.ShellTask) {
+	foo.CustomExecute = func(t *sci.ShellTask) {
 		outf := t.OutTargets["foo"]
 		outf.Write([]byte("foo"))
 	}
@@ -21,7 +21,7 @@ func main() {
 	f2b.PathGen["bar"] = func(t *sci.ShellTask) string {
 		return t.InTargets["foo"].GetPath() + ".bar"
 	}
-	f2b.RunHook = func(t *sci.ShellTask) {
+	f2b.CustomExecute = func(t *sci.ShellTask) {
 		text := t.InTargets["foo"].Read()
 		newText := str.Replace(string(text), "foo", "bar", 1)
 		t.OutTargets["bar"].Write([]byte(newText))
