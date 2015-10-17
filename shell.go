@@ -14,7 +14,7 @@ type ShellProcess struct {
 	InPorts          map[string]chan *FileTarget
 	OutPorts         map[string]chan *FileTarget
 	OutPortsDoStream map[string]bool
-	PathGen          map[string]func(*ShellTask) string
+	PathFormatters   map[string]func(*ShellTask) string
 	ParamPorts       map[string]chan string
 	CustomExecute    func(*ShellTask)
 	Prepend          string
@@ -28,7 +28,7 @@ func NewShellProcess(command string) *ShellProcess {
 		InPorts:          make(map[string]chan *FileTarget),
 		OutPorts:         make(map[string]chan *FileTarget),
 		OutPortsDoStream: make(map[string]bool),
-		PathGen:          make(map[string]func(*ShellTask) string),
+		PathFormatters:   make(map[string]func(*ShellTask) string),
 		ParamPorts:       make(map[string]chan string),
 		Spawn:            true,
 	}
@@ -201,7 +201,7 @@ func (p *ShellProcess) createTasks() (ch chan *ShellTask) {
 				Debug.Printf("[%s] Breaking: No params, and inPorts closed", p.CommandPattern)
 				break
 			}
-			t := NewShellTask(p.CommandPattern, inTargets, p.PathGen, p.OutPortsDoStream, params, p.Prepend)
+			t := NewShellTask(p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend)
 			if p.CustomExecute != nil {
 				t.CustomExecute = p.CustomExecute
 			}
@@ -256,24 +256,24 @@ func (p *ShellProcess) closeOutPorts() {
 }
 
 // Convenience method to create an (output) path formatter returning a static string
-func (p *ShellProcess) SetPathGenString(outPort string, path string) {
-	p.PathGen[outPort] = func(t *ShellTask) string {
+func (p *ShellProcess) SetPathFormatterString(outPort string, path string) {
+	p.PathFormatters[outPort] = func(t *ShellTask) string {
 		return path
 	}
 }
 
 // Convenience method to create an (output) path formatter that extends the path of
 // and input FileTarget
-func (p *ShellProcess) SetPathGenExtend(outPort string, inPort string, extension string) {
-	p.PathGen[outPort] = func(t *ShellTask) string {
+func (p *ShellProcess) SetPathFormatterExtend(outPort string, inPort string, extension string) {
+	p.PathFormatters[outPort] = func(t *ShellTask) string {
 		return t.InTargets[inPort].GetPath() + extension
 	}
 }
 
 // Convenience method to create an (output) path formatter that uses an input's path
 // but replaces parts of it.
-func (p *ShellProcess) SetPathGenReplace(outPort string, inPort string, old string, new string) {
-	p.PathGen[outPort] = func(t *ShellTask) string {
+func (p *ShellProcess) SetPathFormatterReplace(outPort string, inPort string, old string, new string) {
+	p.PathFormatters[outPort] = func(t *ShellTask) string {
 		return str.Replace(t.InTargets[inPort].GetPath(), old, new, -1)
 	}
 }

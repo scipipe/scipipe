@@ -12,19 +12,19 @@ func main() {
 
 	// ls processes
 	ls := sci.Shell("ls -l / > {os:lsl}")
-	ls.PathGen["lsl"] = func(tsk *sci.ShellTask) string {
+	ls.PathFormatters["lsl"] = func(tsk *sci.ShellTask) string {
 		return "lsl.txt"
 	}
 
 	// grep process
 	grp := sci.Shell("grep etc {i:in} > {o:grep}")
-	grp.PathGen["grep"] = func(tsk *sci.ShellTask) string {
+	grp.PathFormatters["grep"] = func(tsk *sci.ShellTask) string {
 		return tsk.GetInPath("in") + ".grepped.txt"
 	}
 
 	// cat process
 	ct := sci.Shell("cat {i:in} > {o:out}")
-	ct.PathGen["out"] = func(tsk *sci.ShellTask) string {
+	ct.PathFormatters["out"] = func(tsk *sci.ShellTask) string {
 		return tsk.GetInPath("in") + ".out.txt"
 	}
 

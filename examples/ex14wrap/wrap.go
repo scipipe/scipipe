@@ -24,7 +24,7 @@ type Fooer struct {
 
 func NewFooer() *Fooer {
 	innerFoo := sci.Shell("echo foo > {o:foo}")
-	innerFoo.SetPathGenString("foo", "foo.txt")
+	innerFoo.SetPathFormatterString("foo", "foo.txt")
 	return &Fooer{
 		InnerProc: innerFoo,
 		OutFoo:    innerFoo.OutPorts["foo"],

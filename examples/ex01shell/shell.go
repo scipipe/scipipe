@@ -9,12 +9,12 @@ func main() {
 	sci.InitLogInfo()
 
 	h := sci.Sh("echo foo > {o:foo}")
-	h.PathGen["foo"] = func(t *sci.ShellTask) string {
+	h.PathFormatters["foo"] = func(t *sci.ShellTask) string {
 		return "foo.txt"
 	}
 
 	f2b := sci.Sh("sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	f2b.PathGen["bar"] = func(t *sci.ShellTask) string {
+	f2b.PathFormatters["bar"] = func(t *sci.ShellTask) string {
 		return fmt.Sprint(t.GetInPath("foo"), ".bar")
 	}
 
