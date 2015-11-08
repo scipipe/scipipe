@@ -8,8 +8,10 @@ import (
 
 func ExecCmd(cmd string) {
 	Info.Println("Executing command: ", cmd)
-	_, err := exec.Command("bash", "-lc", cmd).Output()
-	Check(err)
+	combOutput, err := exec.Command("bash", "-lc", cmd).CombinedOutput()
+	if err != nil {
+		Error.Println("Could not execute command `" + cmd + "`: " + string(combOutput))
+	}
 }
 
 func Check(err error) {
