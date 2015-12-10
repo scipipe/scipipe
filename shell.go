@@ -48,9 +48,9 @@ func Sh(cmd string) *ShellProcess {
 }
 
 func ShellExpand(cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *ShellProcess {
-	cmdExp := expandCommandParamsAndPaths(cmd, params, inPaths, outPaths)
-	p := NewShellProcess(cmdExp)
-	p.initPortsFromCmdPattern(cmdExp, params)
+	cmdExpr := expandCommandParamsAndPaths(cmd, params, inPaths, outPaths)
+	p := NewShellProcess(cmdExpr)
+	p.initPortsFromCmdPattern(cmdExpr, params)
 	return p
 }
 
@@ -58,7 +58,7 @@ func ShExp(cmd string, inPaths map[string]string, outPaths map[string]string, pa
 	return ShellExpand(cmd, inPaths, outPaths, params)
 }
 
-func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths map[string]string, outPaths map[string]string) (cmdExp string) {
+func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths map[string]string, outPaths map[string]string) (cmdExpr string) {
 	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	if params != nil {
@@ -70,43 +70,43 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 	if outPaths != nil {
 		Debug.Println("outPaths:", outPaths)
 	}
-	cmdExp = cmd
+	cmdExpr = cmd
 	for _, m := range ms {
-		whole := m[0]
+		placeHolderStr := m[0]
 		typ := m[1]
 		name := m[2]
-		var newstr string
+		var filePath string
 		if typ == "p" {
 			if params != nil {
 				if val, ok := params[name]; ok {
 					Debug.Println("Found param:", val)
-					newstr = val
-					Debug.Println("Replacing:", whole, "->", newstr)
-					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+					filePath = val
+					Debug.Println("Replacing:", placeHolderStr, "->", filePath)
+					cmdExpr = str.Replace(cmdExpr, placeHolderStr, filePath, -1)
 				}
 			}
 		} else if typ == "i" {
 			if inPaths != nil {
 				if val, ok := inPaths[name]; ok {
 					Debug.Println("Found inPath:", val)
-					newstr = val
-					Debug.Println("Replacing:", whole, "->", newstr)
-					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+					filePath = val
+					Debug.Println("Replacing:", placeHolderStr, "->", filePath)
+					cmdExpr = str.Replace(cmdExpr, placeHolderStr, filePath, -1)
 				}
 			}
 		} else if typ == "o" || typ == "os" {
 			if outPaths != nil {
 				if val, ok := outPaths[name]; ok {
 					Debug.Println("Found outPath:", val)
-					newstr = val
-					Debug.Println("Replacing:", whole, "->", newstr)
-					cmdExp = str.Replace(cmdExp, whole, newstr, -1)
+					filePath = val
+					Debug.Println("Replacing:", placeHolderStr, "->", filePath)
+					cmdExpr = str.Replace(cmdExpr, placeHolderStr, filePath, -1)
 				}
 			}
 		}
 	}
-	if cmd != cmdExp {
-		Debug.Printf("Expanded command '%s' into '%s'\n", cmd, cmdExp)
+	if cmd != cmdExpr {
+		Debug.Printf("Expanded command '%s' into '%s'\n", cmd, cmdExpr)
 	}
 	return
 }
@@ -371,19 +371,19 @@ func formatCommand(cmd string, inTargets map[string]*FileTarget, outTargets map[
 	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
-		whole := m[0]
+		placeHolderStr := m[0]
 		typ := m[1]
 		name := m[2]
-		var newstr string
+		var filePath string
 		if typ == "o" || typ == "os" {
 			if outTargets[name] == nil {
 				msg := fmt.Sprint("Missing outpath for outport '", name, "' for command '", cmd, "'")
 				Check(errors.New(msg))
 			} else {
 				if typ == "o" {
-					newstr = outTargets[name].GetTempPath() // Means important to Atomize afterwards!
+					filePath = outTargets[name].GetTempPath() // Means important to Atomize afterwards!
 				} else if typ == "os" {
-					newstr = outTargets[name].GetFifoPath()
+					filePath = outTargets[name].GetFifoPath()
 				}
 			}
 		} else if typ == "i" {
@@ -407,14 +407,14 @@ func formatCommand(cmd string, inTargets map[string]*FileTarget, outTargets map[
 				msg := fmt.Sprint("Missing param value param '", name, "' for command '", cmd, "'")
 				Check(errors.New(msg))
 			} else {
-				newstr = params[name]
+				filePath = params[name]
 			}
 		}
-		if newstr == "" {
-			msg := fmt.Sprint("Replace failed for port ", name, " forcommand '", cmd, "'")
+		if filePath == "" {
+			msg := fmt.Sprint("Replace failed for port ", name, " for command '", cmd, "'")
 			Check(errors.New(msg))
 		}
-		cmd = str.Replace(cmd, whole, newstr, -1)
+		cmd = str.Replace(cmd, placeHolderStr, filePath, -1)
 	}
 	// Add prepend string to the command
 	if prepend != "" {
