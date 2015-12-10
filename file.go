@@ -72,7 +72,7 @@ func (ft *FileTarget) CreateFifo() {
 	Debug.Println("Now creating FIFO with command:", cmd)
 
 	if _, err := os.Stat(ft.GetFifoPath()); err == nil {
-		Warn.Println("FIFO already exists, so cannot be created:", ft.GetFifoPath())
+		Warn.Println("FIFO already exists, so not creating a new one:", ft.GetFifoPath())
 	} else {
 		_, err := exec.Command("bash", "-c", cmd).Output()
 		Check(err)
