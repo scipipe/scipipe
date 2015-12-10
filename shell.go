@@ -341,8 +341,8 @@ func (t *ShellTask) Execute() {
 			t.CustomExecute(t)
 		} else {
 			t.executeCommand(t.Command)
-			t.atomizeTargets()
 		}
+		t.atomizeTargets()
 	}
 	Debug.Printf("[ShellTask: %s] Starting to send Done in t.Execute() ...)\n", t.Command)
 	t.Done <- 1
