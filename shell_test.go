@@ -208,9 +208,9 @@ func TestStreaming(t *t.T) {
 	pl.AddProcs(ls, grp, snk)
 	pl.Run()
 
-	// Assert no fifo file is left behind
+	// Assert that a file exists
 	_, err1 := os.Stat("/tmp/lsl.txt.fifo")
-	assert.NotNil(t, err1, "FIFO file exists, which should not!")
+	assert.Nil(t, err1, "FIFO file does not exist, which it should!")
 
 	// Assert otuput file exists
 	_, err2 := os.Stat("/tmp/lsl.txt.grepped.txt")
@@ -220,7 +220,7 @@ func TestStreaming(t *t.T) {
 	cleanFiles("/tmp/lsl.txt", "/tmp/lsl.txt.grepped.txt")
 	// cleanFiles("/tmp/lsl.txt.tmp")             // FIXME: Remove
 	// cleanFiles("/tmp/lsl.txt.grepped.txt.tmp") // FIXME: Remove
-	// cleanFiles("/tmp/lsl.txt.fifo")            // FIXME: Remove
+	cleanFiles("/tmp/lsl.txt.fifo")
 }
 
 // Helper processes
