@@ -119,8 +119,12 @@ func (p *ShellProcess) Run() {
 	for t := range p.createTasks() {
 		tasks = append(tasks, t)
 
-		t.createFifos()
 		Debug.Printf("[ShellProcess: %s] Now processing task %s ...", p.CommandPattern, t.Command)
+
+		anyPreviousFifosExists := t.anyFifosExist()
+		if !anyPreviousFifosExists {
+			t.createFifos()
+		}
 
 		Debug.Printf("[ShellProcess: %s] Now sending fifos for task [%s] ...\n", p.CommandPattern, t.Command)
 		// Sending FIFOs for the task
@@ -131,8 +135,17 @@ func (p *ShellProcess) Run() {
 			}
 		}
 
-		// Run the task
-		go t.Execute()
+		if !anyPreviousFifosExists {
+			Debug.Printf("[ShellProcess: %s] firing off task in go-routine: [%s] ...\n", p.CommandPattern, t.Command)
+			// Run the task
+			go t.Execute()
+			Debug.Printf("[ShellProcess: %s] Done firing off task in go-routine: [%s] ...\n", p.CommandPattern, t.Command)
+		} else {
+			go func() {
+				defer close(t.Done)
+				t.Done <- 1
+			}()
+		}
 	}
 
 	Debug.Printf("[ShellProcess: %s] Starting to loop over %d tasks to send out targets ...\n", p.CommandPattern, len(tasks))
@@ -330,7 +343,6 @@ func (t *ShellTask) Execute() {
 			t.executeCommand(t.Command)
 			t.atomizeTargets()
 		}
-		t.cleanUpFifos()
 	}
 	Debug.Printf("[ShellTask: %s] Starting to send Done in t.Execute() ...)\n", t.Command)
 	t.Done <- 1
@@ -447,6 +459,20 @@ func (t *ShellTask) anyOutputExists() (anyFileExists bool) {
 			if _, err := os.Stat(otmpPath); err == nil {
 				Warn.Printf("[ShellTask: %s] Temporary Output file already exists: %s. Check your workflow for correctness!\n", t.Command, otmpPath)
 				anyFileExists = true
+			}
+		}
+	}
+	return
+}
+
+func (t *ShellTask) anyFifosExist() (anyFifosExist bool) {
+	anyFifosExist = false
+	for _, tgt := range t.OutTargets {
+		ofifoPath := tgt.GetFifoPath()
+		if tgt.doStream {
+			if _, err := os.Stat(ofifoPath); err == nil {
+				Warn.Printf("[ShellTask: %s] Output FIFO already exists: %s. Check your workflow for correctness!\n", t.Command, ofifoPath)
+				anyFifosExist = true
 			}
 		}
 	}
