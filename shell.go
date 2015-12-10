@@ -111,12 +111,21 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 	return
 }
 
+// The Run method of ShellProcess takes care of instantiating tasks for all
+// sets of inputs and parameters that it receives, except when there is no
+// input or parameter at all, when it will run once, and then terminate.
+// Note that the actual execution of shell commands are done inside
+// ShellTask, not ShellProcess.
 func (p *ShellProcess) Run() {
 	defer p.closeOutPorts()
 
 	tasks := []*ShellTask{}
 	Debug.Printf("[ShellProcess: %s] Starting to create and schedule tasks\n", p.CommandPattern)
 	for t := range p.createTasks() {
+		// Collect created tasks, for the second round
+		// where tasks are waited for to finish, before
+		// sending their outputs.
+		Debug.Printf("[ShellProcess: %s] Instantiated task [%s] ...", p.CommandPattern, t.Command)
 		tasks = append(tasks, t)
 
 		Debug.Printf("[ShellProcess: %s] Now processing task %s ...", p.CommandPattern, t.Command)
@@ -141,6 +150,8 @@ func (p *ShellProcess) Run() {
 			go t.Execute()
 			Debug.Printf("[ShellProcess: %s] Done firing off task in go-routine: [%s] ...\n", p.CommandPattern, t.Command)
 		} else {
+			// Since t.Execute() is not run, that normally sends the Done signal, we
+			// have to send it manually here:
 			go func() {
 				defer close(t.Done)
 				t.Done <- 1
@@ -149,28 +160,37 @@ func (p *ShellProcess) Run() {
 	}
 
 	Debug.Printf("[ShellProcess: %s] Starting to loop over %d tasks to send out targets ...\n", p.CommandPattern, len(tasks))
-	// Wait for finish, and send out targets in arrival order
 	for _, t := range tasks {
-		Debug.Printf("[ShellProcess: %s] Waiting for Done from task: %s\n", p.CommandPattern, t.Command)
+		Debug.Printf("[ShellProcess: %s] Waiting for Done from task: [%s]\n", p.CommandPattern, t.Command)
 		<-t.Done
-		Debug.Printf("[ShellProcess: %s] Receiving Done from task: %s\n", p.CommandPattern, t.Command)
+		Debug.Printf("[ShellProcess: %s] Received Done from task: [%s]\n", p.CommandPattern, t.Command)
 		for oname, otgt := range t.OutTargets {
 			if !otgt.doStream {
 				Debug.Printf("[ShellProcess: %s] Sending target on outport %s, for task [%s] ...\n", p.CommandPattern, oname, t.Command)
 				p.OutPorts[oname] <- otgt
+				Debug.Printf("[ShellProcess: %s] Done sending target on outport %s, for task [%s] ...\n", p.CommandPattern, oname, t.Command)
 			}
 		}
 	}
 }
 
+// Set up in- and out-ports based on the shell command pattern used to create the
+// ShellProcess. Ports are set up in this way:
+// `{i:PORTNAME}` specifies an in-port
+// `{o:PORTNAME}` specifies an out-port
+// `{os:PORTNAME}` specifies an out-port that streams via a FIFO file
+// `{p:PORTNAME}` a "parameter-port", which means a port where parameters can be "streamed"
 func (p *ShellProcess) initPortsFromCmdPattern(cmd string, params map[string]string) {
+
 	// Find in/out port names and Params and set up in struct fields
 	r := getPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
+
 	for _, m := range ms {
 		if len(m) < 3 {
 			Check(errors.New("Too few matches"))
 		}
+
 		typ := m[1]
 		name := m[2]
 		if typ == "o" || typ == "os" {
@@ -291,6 +311,8 @@ func (p *ShellProcess) SetPathFormatterReplace(outPort string, inPort string, ol
 	}
 }
 
+// Return the regular expression used to parse the place-holder syntax for in-, out- and
+// parameter ports, that can be used to instantiate a ShellProcess.
 func getPlaceHolderRegex() *re.Regexp {
 	r, err := re.Compile("{(o|os|i|is|p):([^{}:]+)}")
 	Check(err)
@@ -376,6 +398,7 @@ func formatCommand(cmd string, inTargets map[string]*FileTarget, outTargets map[
 		name := m[2]
 		var filePath string
 		if typ == "o" || typ == "os" {
+			// Out-ports
 			if outTargets[name] == nil {
 				msg := fmt.Sprint("Missing outpath for outport '", name, "' for command '", cmd, "'")
 				Check(errors.New(msg))
@@ -387,6 +410,7 @@ func formatCommand(cmd string, inTargets map[string]*FileTarget, outTargets map[
 				}
 			}
 		} else if typ == "i" {
+			// In-ports
 			if inTargets[name] == nil {
 				msg := fmt.Sprint("Missing intarget for inport '", name, "' for command '", cmd, "'")
 				Check(errors.New(msg))
@@ -423,6 +447,7 @@ func formatCommand(cmd string, inTargets map[string]*FileTarget, outTargets map[
 	return cmd
 }
 
+// Rename temporary output files to their proper file names
 func (t *ShellTask) atomizeTargets() {
 	for _, tgt := range t.OutTargets {
 		if !tgt.doStream {
@@ -435,6 +460,8 @@ func (t *ShellTask) atomizeTargets() {
 	}
 }
 
+// Clean up any remaining FIFOs
+// TODO: this is actually not really used anymore ...
 func (t *ShellTask) cleanUpFifos() {
 	for _, tgt := range t.OutTargets {
 		if tgt.doStream {
@@ -446,6 +473,7 @@ func (t *ShellTask) cleanUpFifos() {
 	}
 }
 
+// Check if any output file target, or temporary file targets, exist
 func (t *ShellTask) anyOutputExists() (anyFileExists bool) {
 	anyFileExists = false
 	for _, tgt := range t.OutTargets {
@@ -465,6 +493,7 @@ func (t *ShellTask) anyOutputExists() (anyFileExists bool) {
 	return
 }
 
+// Check if any FIFO files for this tasks exist, for out-ports specified to support streaming
 func (t *ShellTask) anyFifosExist() (anyFifosExist bool) {
 	anyFifosExist = false
 	for _, tgt := range t.OutTargets {
@@ -479,6 +508,7 @@ func (t *ShellTask) anyFifosExist() (anyFifosExist bool) {
 	return
 }
 
+// Make sure that FIFOs that are supposed to exist, really exists
 func (t *ShellTask) fifosInOutTargetsMissing() (fifosInOutTargetsMissing bool) {
 	fifosInOutTargetsMissing = false
 	for _, tgt := range t.OutTargets {
@@ -493,6 +523,7 @@ func (t *ShellTask) fifosInOutTargetsMissing() (fifosInOutTargetsMissing bool) {
 	return
 }
 
+// Create FIFO files for all out-ports that are specified to support streaming
 func (t *ShellTask) createFifos() {
 	Debug.Printf("[ShellTask: %s] Now creating fifos for task\n", t.Command)
 	for _, otgt := range t.OutTargets {
