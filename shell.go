@@ -128,27 +128,25 @@ func (p *ShellProcess) Run() {
 		Debug.Printf("[ShellProcess: %s] Instantiated task [%s] ...", p.CommandPattern, t.Command)
 		tasks = append(tasks, t)
 
-		Debug.Printf("[ShellProcess: %s] Now processing task %s ...", p.CommandPattern, t.Command)
-
 		anyPreviousFifosExists := t.anyFifosExist()
 		if !anyPreviousFifosExists {
+			Debug.Printf("[ShellProcess: %s] No FIFOs existed, so creating, for task [%s] ...", p.CommandPattern, t.Command)
 			t.createFifos()
 		}
 
-		Debug.Printf("[ShellProcess: %s] Now sending fifos for task [%s] ...\n", p.CommandPattern, t.Command)
 		// Sending FIFOs for the task
 		for oname, otgt := range t.OutTargets {
 			if otgt.doStream {
-				Debug.Printf("[ShellProcess: %s] Sending FIFO target on outport %s for task [%s] ...\n", p.CommandPattern, oname, t.Command)
+				Debug.Printf("[ShellProcess: %s] Sending FIFO target on outport '%s' for task [%s] ...\n", p.CommandPattern, oname, t.Command)
 				p.OutPorts[oname] <- otgt
 			}
 		}
 
 		if !anyPreviousFifosExists {
-			Debug.Printf("[ShellProcess: %s] firing off task in go-routine: [%s] ...\n", p.CommandPattern, t.Command)
+			Debug.Printf("[ShellProcess: %s] Go-Executing task in separate go-routine: [%s] ...\n", p.CommandPattern, t.Command)
 			// Run the task
 			go t.Execute()
-			Debug.Printf("[ShellProcess: %s] Done firing off task in go-routine: [%s] ...\n", p.CommandPattern, t.Command)
+			Debug.Printf("[ShellProcess: %s] Done go-executing task in go-routine: [%s] ...\n", p.CommandPattern, t.Command)
 		} else {
 			// Since t.Execute() is not run, that normally sends the Done signal, we
 			// have to send it manually here:
