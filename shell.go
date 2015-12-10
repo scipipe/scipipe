@@ -416,12 +416,10 @@ func formatCommand(cmd string, inTargets map[string]*FileTarget, outTargets map[
 				msg := fmt.Sprint("Missing inpath for inport '", name, "' for command '", cmd, "'")
 				Check(errors.New(msg))
 			} else {
-				if typ == "i" {
-					if inTargets[name].doStream {
-						newstr = inTargets[name].GetFifoPath()
-					} else {
-						newstr = inTargets[name].GetPath()
-					}
+				if inTargets[name].doStream {
+					filePath = inTargets[name].GetFifoPath()
+				} else {
+					filePath = inTargets[name].GetPath()
 				}
 			}
 		} else if typ == "p" {
