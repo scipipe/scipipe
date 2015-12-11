@@ -4,6 +4,7 @@ import (
 	// "github.com/go-errors/errors"
 	//"os"
 	"os/exec"
+	re "regexp"
 )
 
 func ExecCmd(cmd string) {
@@ -35,4 +36,12 @@ func copyMapStrStr(m map[string]string) (nm map[string]string) {
 		nm[k] = v
 	}
 	return nm
+}
+
+// Return the regular expression used to parse the place-holder syntax for in-, out- and
+// parameter ports, that can be used to instantiate a ShellProcess.
+func getShellCommandPlaceHolderRegex() *re.Regexp {
+	r, err := re.Compile("{(o|os|i|is|p):([^{}:]+)}")
+	Check(err)
+	return r
 }
