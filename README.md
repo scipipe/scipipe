@@ -5,7 +5,7 @@
 
 An experimental library for writing Scientific (Batch) Workflows in vanilla [Go(lang)](http://golang.org),
 based on an idea for a flow-based like pattern in pure Go, as presented in
-[this Gopher Academy blog post](http://blog.gopheracademy.com/composable-pipelines-pattern).
+[this](http://blog.gopheracademy.com/composable-pipelines-pattern) and [this](https://blog.gopheracademy.com/advent-2015/composable-pipelines-improvements/) Gopher Academy blog posts.
 
 See a short demo about how it might look, working with SciPipe in the terminal:
 
