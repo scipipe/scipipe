@@ -12,7 +12,7 @@ var (
 	Debug     *log.Logger
 	Info      *log.Logger
 	Audit     *log.Logger
-	Warn      *log.Logger
+	Warning   *log.Logger
 	Error     *log.Logger
 	LogExists bool
 )
@@ -41,7 +41,7 @@ func InitLog(
 		"AUDIT: ",
 		log.Ldate|log.Ltime)
 
-	Warn = log.New(warningHandle,
+	Warning = log.New(warningHandle,
 		"WARNING: ",
 		log.Ldate|log.Ltime)
 
@@ -85,7 +85,8 @@ func InitLogAudit() {
 	)
 }
 
-func InitLogWarn() {
+// Initiate logging with level=WARNING
+func InitLogWarning() {
 	InitLog(
 		ioutil.Discard,
 		ioutil.Discard,

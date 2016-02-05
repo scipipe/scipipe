@@ -10,7 +10,7 @@ import (
 )
 
 func initTestLogs() {
-	InitLogWarn()
+	InitLogWarning()
 }
 
 func TestBasicRun(t *t.T) {
@@ -186,7 +186,7 @@ func TestSendsOrderedOutputs(t *t.T) {
 
 // Test that streaming works
 func TestStreaming(t *t.T) {
-	InitLogWarn()
+	InitLogWarning()
 
 	// Init processes
 	ls := Shell("ls -l / > {os:lsl}")

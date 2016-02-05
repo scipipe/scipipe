@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	sp.InitLogWarn()
+	sp.InitLogWarning()
 
 	p := sp.Sh("ls -l > {o:out}")
 	p.PathFormatters["out"] = func(p *sp.ShellTask) string {
