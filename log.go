@@ -17,6 +17,7 @@ var (
 	LogExists bool
 )
 
+// Initiate logging
 func InitLog(
 	traceHandle io.Writer,
 	debugHandle io.Writer,
@@ -37,6 +38,8 @@ func InitLog(
 		"INFO: ",
 		log.Ldate|log.Ltime)
 
+	// This level is the one suggested to use when running scientific workflows, to retain audit
+	// information
 	Audit = log.New(auditHandle,
 		"AUDIT: ",
 		log.Ldate|log.Ltime)
@@ -52,6 +55,7 @@ func InitLog(
 	LogExists = true
 }
 
+// Initiate logging with level=DEBUG
 func InitLogDebug() {
 	InitLog(
 		ioutil.Discard,
@@ -63,6 +67,7 @@ func InitLogDebug() {
 	)
 }
 
+// Initiate logging with level=INFO
 func InitLogInfo() {
 	InitLog(
 		ioutil.Discard,
@@ -74,6 +79,7 @@ func InitLogInfo() {
 	)
 }
 
+// Initiate logging with level=AUDIT
 func InitLogAudit() {
 	InitLog(
 		ioutil.Discard,
@@ -97,6 +103,7 @@ func InitLogWarning() {
 	)
 }
 
+// Initiate logging with level=ERROR
 func InitLogError() {
 	InitLog(
 		ioutil.Discard,

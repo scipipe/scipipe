@@ -6,20 +6,24 @@ import (
 	"os"
 )
 
-type fileReader struct {
+// FileReader takes a file path on its FilePath in-port, and returns the file
+// content as []byte on its out-port Out
+type FileReader struct {
 	process
 	FilePath chan string
 	Out      chan []byte
 }
 
-func NewFileReader() *fileReader {
-	return &fileReader{
+// Instantiate a new FileReader
+func NewFileReader() *FileReader {
+	return &FileReader{
 		FilePath: make(chan string),
 		Out:      make(chan []byte, BUFSIZE),
 	}
 }
 
-func (proc *fileReader) Run() {
+// Run the FileReader
+func (proc *FileReader) Run() {
 	defer close(proc.Out)
 
 	file, err := os.Open(<-proc.FilePath)

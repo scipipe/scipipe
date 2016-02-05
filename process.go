@@ -1,5 +1,6 @@
 package scipipe
 
+// Base interface for all processes
 type process interface {
 	Run()
 }

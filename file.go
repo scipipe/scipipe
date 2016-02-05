@@ -10,6 +10,8 @@ import (
 
 // ======= FileTarget ========
 
+// FileTarget contains information and helper methods for a physical file on a
+// normal disk.
 type FileTarget struct {
 	path     string
 	buffer   *bytes.Buffer
@@ -17,6 +19,7 @@ type FileTarget struct {
 	lock     *sync.Mutex
 }
 
+// Create new FileTarget "object"
 func NewFileTarget(path string) *FileTarget {
 	ft := new(FileTarget)
 	ft.path = path
@@ -27,36 +30,43 @@ func NewFileTarget(path string) *FileTarget {
 	return ft
 }
 
+// Get the (final) path of the physical file
 func (ft *FileTarget) GetPath() string {
 	return ft.path
 }
 
+// Get the temporary path of the physical file
 func (ft *FileTarget) GetTempPath() string {
 	return ft.path + ".tmp"
 }
 
+// Get the path to use when a FIFO file is used instead of a normal file
 func (ft *FileTarget) GetFifoPath() string {
 	return ft.path + ".fifo"
 }
 
+// Open the file and return a file handle (*os.File)
 func (ft *FileTarget) Open() *os.File {
 	f, err := os.Open(ft.GetPath())
 	Check(err)
 	return f
 }
 
+// Read the whole content of the file and return as a byte array ([]byte)
 func (ft *FileTarget) Read() []byte {
 	dat, err := ioutil.ReadFile(ft.GetPath())
 	Check(err)
 	return dat
 }
 
+// Write a byte array ([]byte) to the file (first to its temp path, and then atomize)
 func (ft *FileTarget) Write(dat []byte) {
 	err := ioutil.WriteFile(ft.GetTempPath(), dat, 0644)
 	ft.Atomize()
 	Check(err)
 }
 
+// Change from the temporary file name to the final file name
 func (ft *FileTarget) Atomize() {
 	Debug.Println("FileTarget: Atomizing", ft.GetTempPath(), "->", ft.GetPath())
 	ft.lock.Lock()
@@ -66,6 +76,7 @@ func (ft *FileTarget) Atomize() {
 	Debug.Println("FileTarget: Done atomizing", ft.GetTempPath(), "->", ft.GetPath())
 }
 
+// Create FIFO file for the FileTarget
 func (ft *FileTarget) CreateFifo() {
 	ft.lock.Lock()
 	cmd := "mkfifo " + ft.GetFifoPath()
@@ -81,7 +92,9 @@ func (ft *FileTarget) CreateFifo() {
 	ft.lock.Unlock()
 }
 
+// Remove the FIFO file, if it exists
 func (ft *FileTarget) RemoveFifo() {
+	// FIXME: Shouldn't we check first whether the fifo exists?
 	ft.lock.Lock()
 	output, err := exec.Command("bash", "-c", "rm "+ft.GetFifoPath()).Output()
 	Check(err)
@@ -89,6 +102,7 @@ func (ft *FileTarget) RemoveFifo() {
 	ft.lock.Unlock()
 }
 
+// Check if the file exists (at its final file name)
 func (ft *FileTarget) Exists() bool {
 	exists := false
 	ft.lock.Lock()
@@ -101,6 +115,8 @@ func (ft *FileTarget) Exists() bool {
 
 // ======= FileQueue =======
 
+// FileQueue is initialized by a set of strings with file paths, and from that
+// will return instantiated FileTargets on its Out-port, when run.
 type FileQueue struct {
 	process
 	Out       chan *FileTarget
@@ -111,11 +127,8 @@ func FQ(fps ...string) (fq *FileQueue) {
 	return NewFileQueue(fps...)
 }
 
-func NewFileQueue(fps ...string) (fq *FileQueue) {
-	filePaths := []string{}
-	for _, fp := range fps {
-		filePaths = append(filePaths, fp)
-	}
+// Initialize a new FileQueue component from a list of file paths
+func NewFileQueue(filePaths ...string) (fq *FileQueue) {
 	fq = &FileQueue{
 		Out:       make(chan *FileTarget, BUFSIZE),
 		FilePaths: filePaths,
@@ -123,6 +136,7 @@ func NewFileQueue(fps ...string) (fq *FileQueue) {
 	return
 }
 
+// Execute the FileQueue, returning instantiated FileTargets
 func (proc *FileQueue) Run() {
 	defer close(proc.Out)
 	for _, fp := range proc.FilePaths {
@@ -132,15 +146,19 @@ func (proc *FileQueue) Run() {
 
 // ======= Sink =======
 
+// Sink is a simple component that just receives FileTargets on its In-port
+// without doing anything with them
 type Sink struct {
 	process
 	In chan *FileTarget
 }
 
+// Instantiate a Sink component
 func NewSink() (s *Sink) {
 	return &Sink{}
 }
 
+// Execute the Sink component
 func (proc *Sink) Run() {
 	for ft := range proc.In {
 		Debug.Println("Received file in sink: ", ft.GetPath())

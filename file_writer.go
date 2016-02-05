@@ -7,20 +7,22 @@ import (
 	"os"
 )
 
-type fileWriter struct {
+// FileWriter takes a file path on its FilePath in-port, file contents on its In in-port
+// and write the file contents to a file with the specified path.
+type FileWriter struct {
 	process
-	FilePath chan string
 	In       chan []byte
+	FilePath chan string
 }
 
-func NewFileWriter() *fileWriter {
-	return &fileWriter{
+func NewFileWriter() *FileWriter {
+	return &FileWriter{
 		FilePath: make(chan string),
 	}
 }
 
-func NewFileWriterFromPath(path string) *fileWriter {
-	t := &fileWriter{
+func NewFileWriterFromPath(path string) *FileWriter {
+	t := &FileWriter{
 		FilePath: make(chan string),
 	}
 	go func() {
@@ -29,7 +31,7 @@ func NewFileWriterFromPath(path string) *fileWriter {
 	return t
 }
 
-func (proc *fileWriter) Run() {
+func (proc *FileWriter) Run() {
 	f, err := os.Create(<-proc.FilePath)
 	if err != nil {
 		log.Fatal(err)
