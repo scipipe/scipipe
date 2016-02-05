@@ -36,7 +36,7 @@ func TestRunProcessesInPipeline(t *t.T) {
 }
 
 type BogusProcess struct {
-	BaseProcess
+	Process
 	WasRun bool
 }
 

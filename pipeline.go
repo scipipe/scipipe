@@ -6,7 +6,7 @@ import (
 )
 
 type Pipeline struct {
-	processes []process
+	processes []Process
 }
 
 func NewPipeline() *Pipeline {
@@ -14,20 +14,20 @@ func NewPipeline() *Pipeline {
 }
 
 // Short-hand method
-func (pl *Pipeline) AddProc(proc process) {
+func (pl *Pipeline) AddProc(proc Process) {
 	pl.AddProcess(proc)
 }
-func (pl *Pipeline) AddProcess(proc process) {
+func (pl *Pipeline) AddProcess(proc Process) {
 	pl.processes = append(pl.processes, proc)
 }
 
 // Short-hand method
-func (pl *Pipeline) AddProcs(procs ...process) {
+func (pl *Pipeline) AddProcs(procs ...Process) {
 	for _, proc := range procs {
 		pl.AddProcess(proc)
 	}
 }
-func (pl *Pipeline) AddProcesses(procs ...process) {
+func (pl *Pipeline) AddProcesses(procs ...Process) {
 	for _, proc := range procs {
 		pl.AddProcess(proc)
 	}

@@ -226,7 +226,7 @@ func TestStreaming(t *t.T) {
 // Helper processes
 
 type CombinatoricsProcess struct {
-	BaseProcess
+	Process
 	A chan string
 	B chan string
 	C chan string

@@ -40,7 +40,7 @@ func main() {
 }
 
 type CombinatoricsTask struct {
-	sci.BaseProcess
+	sci.Process
 	A chan string
 	B chan string
 	C chan string

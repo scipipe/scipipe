@@ -9,7 +9,7 @@ import (
 // FileReader takes a file path on its FilePath in-port, and returns the file
 // content as []byte on its out-port Out
 type FileReader struct {
-	process
+	Process
 	FilePath chan string
 	Out      chan []byte
 }

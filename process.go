@@ -1,14 +1,6 @@
 package scipipe
 
 // Base interface for all processes
-type process interface {
+type Process interface {
 	Run()
-}
-
-type BaseProcess struct {
-	process
-}
-
-func NewBaseProcess() *BaseProcess {
-	return &BaseProcess{}
 }

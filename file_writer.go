@@ -10,7 +10,7 @@ import (
 // FileWriter takes a file path on its FilePath in-port, file contents on its In in-port
 // and write the file contents to a file with the specified path.
 type FileWriter struct {
-	process
+	Process
 	In       chan []byte
 	FilePath chan string
 }

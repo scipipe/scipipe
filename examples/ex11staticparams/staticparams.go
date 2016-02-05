@@ -36,7 +36,7 @@ func main() {
 // --------------------------------
 
 type FileSender struct {
-	sci.BaseProcess
+	sci.Process
 	Out chan *sci.FileTarget
 }
 

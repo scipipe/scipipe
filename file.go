@@ -118,7 +118,7 @@ func (ft *FileTarget) Exists() bool {
 // FileQueue is initialized by a set of strings with file paths, and from that
 // will return instantiated FileTargets on its Out-port, when run.
 type FileQueue struct {
-	process
+	Process
 	Out       chan *FileTarget
 	FilePaths []string
 }
@@ -149,7 +149,7 @@ func (proc *FileQueue) Run() {
 // Sink is a simple component that just receives FileTargets on its In-port
 // without doing anything with them
 type Sink struct {
-	process
+	Process
 	In chan *FileTarget
 }
 

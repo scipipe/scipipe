@@ -2,7 +2,7 @@ package scipipe
 
 // SciPipe component that converts packets of string type to byte
 type strToByte struct {
-	process
+	Process
 	In  chan string
 	Out chan []byte
 }

@@ -8,7 +8,7 @@ import (
 // ================== ShellProcess ==================
 
 type ShellProcess struct {
-	process
+	Process
 	InPorts          map[string]chan *FileTarget
 	OutPorts         map[string]chan *FileTarget
 	OutPortsDoStream map[string]bool
