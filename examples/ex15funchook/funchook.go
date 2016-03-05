@@ -1,8 +1,9 @@
 package main
 
 import (
+	"bytes"
+
 	sci "github.com/samuell/scipipe"
-   "bytes"
 )
 
 func main() {
@@ -36,10 +37,10 @@ func NewFooer() *Fooer {
 		InnerProc: innerFoo,
 		OutFoo:    innerFoo.OutPorts["foo"],
 	}
-    fooer.InnerProc.CustomExecute = func(task *sci.ShellTask) {
-        task.OutTargets["foo"].WriteTempFile([]byte("foo\n"))
-    }
-    return fooer
+	fooer.InnerProc.CustomExecute = func(task *sci.ShellTask) {
+		task.OutTargets["foo"].WriteTempFile([]byte("foo\n"))
+	}
+	return fooer
 }
 
 func (p *Fooer) Run() {
@@ -63,10 +64,10 @@ func NewFoo2Barer() *Foo2Barer {
 		InFoo:     innerFoo2Bar.InPorts["foo"],
 		OutBar:    innerFoo2Bar.OutPorts["bar"],
 	}
-    foo2bar.InnerProc.CustomExecute = func(task *sci.ShellTask) {
-        task.OutTargets["bar"].WriteTempFile(bytes.Replace(task.InTargets["foo"].Read(), []byte("foo"), []byte("bar"), 1))
-    }
-    return foo2bar
+	foo2bar.InnerProc.CustomExecute = func(task *sci.ShellTask) {
+		task.OutTargets["bar"].WriteTempFile(bytes.Replace(task.InTargets["foo"].Read(), []byte("foo"), []byte("bar"), 1))
+	}
+	return foo2bar
 }
 
 func (p *Foo2Barer) Run() {
