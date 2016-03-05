@@ -2,36 +2,75 @@ package main
 
 import (
 	sci "github.com/samuell/scipipe"
-	str "strings"
+   "bytes"
 )
 
 func main() {
-	sci.InitLogDebug()
+	foo := NewFooer()
+	f2b := NewFoo2Barer()
+	snk := sci.NewSink()
 
-	foo := sci.Shell("{o:foo}")
-	foo.PathFormatters["foo"] = func(t *sci.ShellTask) string {
-		return "foo.txt"
-	}
-	foo.CustomExecute = func(t *sci.ShellTask) {
-		outf := t.OutTargets["foo"]
-		outf.Write([]byte("foo"))
-	}
+	f2b.InFoo = foo.OutFoo
+	snk.In = f2b.OutBar
 
-	f2b := sci.Shell("{i:foo}{o:bar}")
-	f2b.PathFormatters["bar"] = func(t *sci.ShellTask) string {
-		return t.InTargets["foo"].GetPath() + ".bar"
-	}
-	f2b.CustomExecute = func(t *sci.ShellTask) {
-		text := t.InTargets["foo"].Read()
-		newText := str.Replace(string(text), "foo", "bar", 1)
-		t.OutTargets["bar"].Write([]byte(newText))
-	}
+	pl := sci.NewPipeline()
+	pl.AddProcs(foo, f2b, snk)
+	pl.Run()
+}
 
-	// Connect stuff
-	f2b.InPorts["foo"] = foo.OutPorts["foo"]
+// ------------------------------------------------------------------------
+// Components
+// ------------------------------------------------------------------------
 
-	// Run Pipeline
-	pln := sci.NewPipeline()
-	pln.AddProcs(foo, f2b)
-	pln.Run()
+// Fooer
+
+type Fooer struct {
+	InnerProc *sci.ShellProcess
+	OutFoo    chan *sci.FileTarget
+}
+
+func NewFooer() *Fooer {
+	innerFoo := sci.Shell("{o:foo}")
+	innerFoo.SetPathFormatterString("foo", "foo.txt")
+	fooer := &Fooer{
+		InnerProc: innerFoo,
+		OutFoo:    innerFoo.OutPorts["foo"],
+	}
+    fooer.InnerProc.CustomExecute = func(task *sci.ShellTask) {
+        task.OutTargets["foo"].WriteTempFile([]byte("foo\n"))
+    }
+    return fooer
+}
+
+func (p *Fooer) Run() {
+	p.InnerProc.OutPorts["foo"] = p.OutFoo
+	p.InnerProc.Run()
+}
+
+// Foo2Barer
+
+type Foo2Barer struct {
+	InnerProc *sci.ShellProcess
+	InFoo     chan *sci.FileTarget
+	OutBar    chan *sci.FileTarget
+}
+
+func NewFoo2Barer() *Foo2Barer {
+	innerFoo2Bar := sci.Shell("{i:foo}{o:bar}")
+	innerFoo2Bar.SetPathFormatterExtend("bar", "foo", ".bar.txt")
+	foo2bar := &Foo2Barer{
+		InnerProc: innerFoo2Bar,
+		InFoo:     innerFoo2Bar.InPorts["foo"],
+		OutBar:    innerFoo2Bar.OutPorts["bar"],
+	}
+    foo2bar.InnerProc.CustomExecute = func(task *sci.ShellTask) {
+        task.OutTargets["bar"].WriteTempFile(bytes.Replace(task.InTargets["foo"].Read(), []byte("foo"), []byte("bar"), 1))
+    }
+    return foo2bar
+}
+
+func (p *Foo2Barer) Run() {
+	p.InnerProc.InPorts["foo"] = p.InFoo
+	p.InnerProc.OutPorts["bar"] = p.OutBar
+	p.InnerProc.Run()
 }
