@@ -31,12 +31,17 @@ type Fooer struct {
 }
 
 func NewFooer() *Fooer {
+	// Initiate task from a "shell like" pattern, though here we
+	// just specify the out-port foo
 	innerFoo := sci.Shell("{o:foo}")
+	// Set the output formatter to a static string
 	innerFoo.SetPathFormatterString("foo", "foo.txt")
+	// Connect the ports of the outer task to the inner, generic one
 	fooer := &Fooer{
 		InnerProc: innerFoo,
 		OutFoo:    innerFoo.OutPorts["foo"],
 	}
+	// Create the custom execute function, with pure Go code
 	fooer.InnerProc.CustomExecute = func(task *sci.ShellTask) {
 		task.OutTargets["foo"].WriteTempFile([]byte("foo\n"))
 	}
@@ -44,7 +49,10 @@ func NewFooer() *Fooer {
 }
 
 func (p *Fooer) Run() {
+	// Connect inner ports to outer ones again, in order to update
+	// connectivity after the workflow wiring has taken place.
 	p.InnerProc.OutPorts["foo"] = p.OutFoo
+	// Run the inner process
 	p.InnerProc.Run()
 }
 
@@ -57,13 +65,18 @@ type Foo2Barer struct {
 }
 
 func NewFoo2Barer() *Foo2Barer {
+	// Initiate task from a "shell like" pattern, though here we
+	// just specify the in-port foo and the out-port bar
 	innerFoo2Bar := sci.Shell("{i:foo}{o:bar}")
+	// Set the output formatter to extend the path on the "bar"" in-port
 	innerFoo2Bar.SetPathFormatterExtend("bar", "foo", ".bar.txt")
+	// Connect the ports of the outer task to the inner, generic one
 	foo2bar := &Foo2Barer{
 		InnerProc: innerFoo2Bar,
 		InFoo:     innerFoo2Bar.InPorts["foo"],
 		OutBar:    innerFoo2Bar.OutPorts["bar"],
 	}
+	// Create the custom execute function, with pure Go code
 	foo2bar.InnerProc.CustomExecute = func(task *sci.ShellTask) {
 		task.OutTargets["bar"].WriteTempFile(bytes.Replace(task.InTargets["foo"].Read(), []byte("foo"), []byte("bar"), 1))
 	}
@@ -71,7 +84,10 @@ func NewFoo2Barer() *Foo2Barer {
 }
 
 func (p *Foo2Barer) Run() {
+	// Connect inner ports to outer ones again, in order to update
+	// connectivity after the workflow wiring has taken place.
 	p.InnerProc.InPorts["foo"] = p.InFoo
 	p.InnerProc.OutPorts["bar"] = p.OutBar
+	// Run the inner process
 	p.InnerProc.Run()
 }
