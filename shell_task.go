@@ -55,6 +55,7 @@ func (t *ShellTask) Execute() {
 	defer close(t.Done)
 	if !t.anyOutputExists() && !t.fifosInOutTargetsMissing() {
 		if t.CustomExecute != nil {
+			Info.Printf("[Task: %s] Executing task.\n", t.Command)
 			t.CustomExecute(t)
 		} else {
 			t.executeCommand(t.Command)
@@ -76,11 +77,11 @@ func (t *ShellTask) anyOutputExists() (anyFileExists bool) {
 		otmpPath := tgt.GetTempPath()
 		if !tgt.doStream {
 			if _, err := os.Stat(opath); err == nil {
-				Warning.Printf("[ShellTask: %s] Output file already exists: %s. Check your workflow for correctness!\n", t.Command, opath)
+				Warning.Printf("[ShellTask: %s] Output file already exists: %s, so skipping...\n", t.Command, opath)
 				anyFileExists = true
 			}
 			if _, err := os.Stat(otmpPath); err == nil {
-				Warning.Printf("[ShellTask: %s] Temporary Output file already exists: %s. Check your workflow for correctness!\n", t.Command, otmpPath)
+				Warning.Printf("[ShellTask: %s] Temporary Output file already exists: %s, so skipping...\n", t.Command, otmpPath)
 				anyFileExists = true
 			}
 		}
