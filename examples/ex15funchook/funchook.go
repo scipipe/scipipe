@@ -7,6 +7,8 @@ import (
 )
 
 func main() {
+	sci.InitLogInfo()
+
 	foo := NewFooer()
 	f2b := NewFoo2Barer()
 	snk := sci.NewSink()
@@ -36,14 +38,14 @@ func NewFooer() *Fooer {
 	innerFoo := sci.Shell("{o:foo}")
 	// Set the output formatter to a static string
 	innerFoo.SetPathFormatterString("foo", "foo.txt")
+	// Create the custom execute function, with pure Go code
+	innerFoo.CustomExecute = func(task *sci.ShellTask) {
+		task.OutTargets["foo"].WriteTempFile([]byte("foo\n"))
+	}
 	// Connect the ports of the outer task to the inner, generic one
 	fooer := &Fooer{
 		InnerProc: innerFoo,
 		OutFoo:    innerFoo.OutPorts["foo"],
-	}
-	// Create the custom execute function, with pure Go code
-	fooer.InnerProc.CustomExecute = func(task *sci.ShellTask) {
-		task.OutTargets["foo"].WriteTempFile([]byte("foo\n"))
 	}
 	return fooer
 }
