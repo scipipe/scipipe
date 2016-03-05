@@ -60,9 +60,8 @@ func (ft *FileTarget) Read() []byte {
 }
 
 // Write a byte array ([]byte) to the file (first to its temp path, and then atomize)
-func (ft *FileTarget) Write(dat []byte) {
+func (ft *FileTarget) WriteTempFile(dat []byte) {
 	err := ioutil.WriteFile(ft.GetTempPath(), dat, 0644)
-	ft.Atomize()
 	Check(err)
 }
 
