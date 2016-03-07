@@ -273,7 +273,7 @@ func (p *SciProcess) receiveInputs() (inTargets map[string]*FileTarget, inPortsO
 func (p *SciProcess) receiveParams() (params map[string]string, paramPortsOpen bool) {
 	paramPortsOpen = true
 	params = make(map[string]string)
-// Read input targets on in-ports and set up path mappings
+	// Read input targets on in-ports and set up path mappings
 	for pname, pchan := range p.ParamPorts {
 		pval, open := <-pchan
 		if !open {
