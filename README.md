@@ -66,8 +66,8 @@ import (
 
 func main() {
 	// Initialize processes
-	fwt := sp.Shell("echo 'foo' > {o:foo}")
-	f2b := sp.Shell("sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	fwt := sp.Shell("fooer", "echo 'foo' > {o:foo}")
+	f2b := sp.Shell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	snk := sp.NewSink() // Will just receive file targets, doing nothing
 
 	// Add output file path formatters
@@ -108,8 +108,8 @@ Now, let's go through the code above in more detail, part by part:
 ### Initializing processes
 
 ```go
-fwt := sci.Shell("echo 'foo' > {o:out}")
-f2b := sci.Shell("sed 's/foo/bar/g' {i:foo} > {o:bar}")
+fwt := sci.Shell("foowriter", "echo 'foo' > {o:out}")
+f2b := sci.Shell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 snk := sci.NewSink() // Will just receive file targets, doing nothing
 ```
 

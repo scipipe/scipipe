@@ -7,8 +7,8 @@ import (
 func main() {
 	sci.InitLogAudit()
 
-	fq := sci.FQ("hej1.txt", "hej2.txt", "hej3.txt")
-	fw := sci.Sh("echo {i:in} > {o:out}")
+	fq := sci.FQ("filequeue", "hej1.txt", "hej2.txt", "hej3.txt")
+	fw := sci.Sh("filewriter", "echo {i:in} > {o:out}")
 	fw.PathFormatters["out"] = func(t *sci.SciTask) string { return t.GetInPath("in") }
 	sn := sci.NewSink()
 

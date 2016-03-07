@@ -16,19 +16,21 @@ type Process interface {
 
 type SciProcess struct {
 	Process
+	Name             string
+	CommandPattern   string
+	Prepend          string
+	Spawn            bool
 	InPorts          map[string]chan *FileTarget
 	OutPorts         map[string]chan *FileTarget
 	OutPortsDoStream map[string]bool
 	PathFormatters   map[string]func(*SciTask) string
 	ParamPorts       map[string]chan string
 	CustomExecute    func(*SciTask)
-	Prepend          string
-	CommandPattern   string
-	Spawn            bool
 }
 
-func NewSciProcess(command string) *SciProcess {
+func NewSciProcess(name string, command string) *SciProcess {
 	return &SciProcess{
+		Name:             name,
 		CommandPattern:   command,
 		InPorts:          make(map[string]chan *FileTarget),
 		OutPorts:         make(map[string]chan *FileTarget),
@@ -41,28 +43,28 @@ func NewSciProcess(command string) *SciProcess {
 
 // ----------- Short-hand init methods ------------
 
-func Sh(cmd string) *SciProcess {
-	return Shell(cmd)
+func Sh(name string, cmd string) *SciProcess {
+	return Shell(name, cmd)
 }
 
-func ShExp(cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *SciProcess {
-	return ShellExpand(cmd, inPaths, outPaths, params)
+func ShExp(name string, cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *SciProcess {
+	return ShellExpand(name, cmd, inPaths, outPaths, params)
 }
 
 // ----------- Main API init methods ------------
 
-func Shell(cmd string) *SciProcess {
+func Shell(name string, cmd string) *SciProcess {
 	if !LogExists {
 		InitLogInfo()
 	}
-	p := NewSciProcess(cmd)
+	p := NewSciProcess(name, cmd)
 	p.initPortsFromCmdPattern(cmd, nil)
 	return p
 }
 
-func ShellExpand(cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *SciProcess {
+func ShellExpand(name string, cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *SciProcess {
 	cmdExpr := expandCommandParamsAndPaths(cmd, params, inPaths, outPaths)
-	p := NewSciProcess(cmdExpr)
+	p := NewSciProcess(name, cmdExpr)
 	p.initPortsFromCmdPattern(cmdExpr, params)
 	return p
 }
@@ -305,7 +307,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 				Debug.Printf("[SciProcess.createTasks: %s] Breaking: No params, and inPorts closed", p.CommandPattern)
 				break
 			}
-			t := NewSciTask(p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend)
+			t := NewSciTask(p.Name, p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend)
 			if p.CustomExecute != nil {
 				t.CustomExecute = p.CustomExecute
 			}

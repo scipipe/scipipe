@@ -11,16 +11,18 @@ import (
 // ================== SciTask ==================
 
 type SciTask struct {
+	Name          string
+	Command       string
+	CustomExecute func(*SciTask)
 	InTargets     map[string]*FileTarget
 	OutTargets    map[string]*FileTarget
 	Params        map[string]string
-	Command       string
-	CustomExecute func(*SciTask)
 	Done          chan int
 }
 
-func NewSciTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string) *SciTask {
+func NewSciTask(name string, cmdPat string, inTargets map[string]*FileTarget, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string) *SciTask {
 	t := &SciTask{
+		Name:       name,
 		InTargets:  inTargets,
 		OutTargets: make(map[string]*FileTarget),
 		Params:     params,

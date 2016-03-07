@@ -11,19 +11,19 @@ func main() {
 	fmt.Println("Starting program!")
 
 	// ls processes
-	ls := sci.Shell("ls -l / > {os:lsl}")
+	ls := sci.Shell("ls", "ls -l / > {os:lsl}")
 	ls.PathFormatters["lsl"] = func(tsk *sci.SciTask) string {
 		return "lsl.txt"
 	}
 
 	// grep process
-	grp := sci.Shell("grep etc {i:in} > {o:grep}")
+	grp := sci.Shell("grp", "grep etc {i:in} > {o:grep}")
 	grp.PathFormatters["grep"] = func(tsk *sci.SciTask) string {
 		return tsk.GetInPath("in") + ".grepped.txt"
 	}
 
 	// cat process
-	ct := sci.Shell("cat {i:in} > {o:out}")
+	ct := sci.Shell("cat", "cat {i:in} > {o:out}")
 	ct.PathFormatters["out"] = func(tsk *sci.SciTask) string {
 		return tsk.GetInPath("in") + ".out.txt"
 	}
