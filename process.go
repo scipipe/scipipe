@@ -199,33 +199,33 @@ func (p *SciProcess) Run() {
 	defer p.closeOutPorts()
 
 	tasks := []*SciTask{}
-	Debug.Printf("[Process: %s] Starting to create and schedule tasks\n", p.Name)
+	Debug.Printf("Process %s: Starting to create and schedule tasks\n", p.Name)
 	for t := range p.createTasks() {
 		// Collect created tasks, for the second round
 		// where tasks are waited for to finish, before
 		// sending their outputs.
-		Debug.Printf("[Process: %s] Instantiated task [%s] ...", p.Name, t.Command)
+		Debug.Printf("Process %s: Instantiated task [%s] ...", p.Name, t.Command)
 		tasks = append(tasks, t)
 
 		anyPreviousFifosExists := t.anyFifosExist()
 		if !anyPreviousFifosExists {
-			Debug.Printf("[Process: %s] No FIFOs existed, so creating, for task [%s] ...", p.Name, t.Command)
+			Debug.Printf("Process %s: No FIFOs existed, so creating, for task [%s] ...", p.Name, t.Command)
 			t.createFifos()
 		}
 
 		// Sending FIFOs for the task
 		for oname, otgt := range t.OutTargets {
 			if otgt.doStream {
-				Debug.Printf("[Process: %s] Sending FIFO target on outport '%s' for task [%s] ...\n", p.Name, oname, t.Command)
+				Debug.Printf("Process %s: Sending FIFO target on outport '%s' for task [%s] ...\n", p.Name, oname, t.Command)
 				p.OutPorts[oname] <- otgt
 			}
 		}
 
 		if !anyPreviousFifosExists {
-			Debug.Printf("[Process: %s] Go-Executing task in separate go-routine: [%s] ...\n", p.Name, t.Command)
+			Debug.Printf("Process %s: Go-Executing task in separate go-routine: [%s] ...\n", p.Name, t.Command)
 			// Run the task
 			go t.Execute()
-			Debug.Printf("[Process: %s] Done go-executing task in go-routine: [%s] ...\n", p.Name, t.Command)
+			Debug.Printf("Process %s: Done go-executing task in go-routine: [%s] ...\n", p.Name, t.Command)
 		} else {
 			// Since t.Execute() is not run, that normally sends the Done signal, we
 			// have to send it manually here:
@@ -236,16 +236,16 @@ func (p *SciProcess) Run() {
 		}
 	}
 
-	Debug.Printf("[Process: %s] Starting to loop over %d tasks to send out targets ...\n", p.Name, len(tasks))
+	Debug.Printf("Process %s: Starting to loop over %d tasks to send out targets ...\n", p.Name, len(tasks))
 	for _, t := range tasks {
-		Debug.Printf("[Process: %s] Waiting for Done from task: [%s]\n", p.Name, t.Command)
+		Debug.Printf("Process %s: Waiting for Done from task: [%s]\n", p.Name, t.Command)
 		<-t.Done
-		Debug.Printf("[Process: %s] Received Done from task: [%s]\n", p.Name, t.Command)
+		Debug.Printf("Process %s: Received Done from task: [%s]\n", p.Name, t.Command)
 		for oname, otgt := range t.OutTargets {
 			if !otgt.doStream {
-				Debug.Printf("[Process: %s] Sending target on outport %s, for task [%s] ...\n", p.Name, oname, t.Command)
+				Debug.Printf("Process %s: Sending target on outport %s, for task [%s] ...\n", p.Name, oname, t.Command)
 				p.OutPorts[oname] <- otgt
-				Debug.Printf("[Process: %s] Done sending target on outport %s, for task [%s] ...\n", p.Name, oname, t.Command)
+				Debug.Printf("Process %s: Done sending target on outport %s, for task [%s] ...\n", p.Name, oname, t.Command)
 			}
 		}
 	}
@@ -258,13 +258,13 @@ func (p *SciProcess) receiveInputs() (inTargets map[string]*FileTarget, inPortsO
 	inTargets = make(map[string]*FileTarget)
 	// Read input targets on in-ports and set up path mappings
 	for iname, ichan := range p.InPorts {
-		Debug.Printf("[Process: %s] Receieving on inPort %s ...", p.Name, iname)
+		Debug.Printf("Process %s: Receieving on inPort %s ...", p.Name, iname)
 		inTarget, open := <-ichan
 		if !open {
 			inPortsOpen = false
 			continue
 		}
-		Debug.Printf("[Process: %s] Got inTarget %s ...", p.Name, inTarget.GetPath())
+		Debug.Printf("Process %s: Got inTarget %s ...", p.Name, inTarget.GetPath())
 		inTargets[iname] = inTarget
 	}
 	return
@@ -292,19 +292,19 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 		defer close(ch)
 		for {
 			inTargets, inPortsOpen := p.receiveInputs()
-			Debug.Printf("[Process.createTasks: %s] Got inTargets: %s", p.Name, inTargets)
+			Debug.Printf("Process.createTasks:%s Got inTargets: %s", p.Name, inTargets)
 			params, paramPortsOpen := p.receiveParams()
-			Debug.Printf("[Process.createTasks: %s] Got params: %s", p.Name, params)
+			Debug.Printf("Process.createTasks:%s Got params: %s", p.Name, params)
 			if !inPortsOpen && !paramPortsOpen {
-				Debug.Printf("[Process.createTasks: %s] Breaking: Both inPorts and paramPorts closed", p.Name)
+				Debug.Printf("Process.createTasks:%s Breaking: Both inPorts and paramPorts closed", p.Name)
 				break
 			}
 			if len(p.InPorts) == 0 && !paramPortsOpen {
-				Debug.Printf("[Process.createTasks: %s] Breaking: No inports, and params closed", p.Name)
+				Debug.Printf("Process.createTasks:%s Breaking: No inports, and params closed", p.Name)
 				break
 			}
 			if len(p.ParamPorts) == 0 && !inPortsOpen {
-				Debug.Printf("[Process.createTasks: %s] Breaking: No params, and inPorts closed", p.Name)
+				Debug.Printf("Process.createTasks:%s Breaking: No params, and inPorts closed", p.Name)
 				break
 			}
 			t := NewSciTask(p.Name, p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend)
@@ -313,7 +313,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 			}
 			ch <- t
 			if len(p.InPorts) == 0 && len(p.ParamPorts) == 0 {
-				Debug.Printf("[Process.createTasks: %s] Breaking: No inports nor params", p.Name)
+				Debug.Printf("Process.createTasks:%s Breaking: No inports nor params", p.Name)
 				break
 			}
 		}
@@ -323,7 +323,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 
 func (p *SciProcess) closeOutPorts() {
 	for oname, oport := range p.OutPorts {
-		Debug.Printf("[Process: %s] Closing port %s ...\n", p.Name, oname)
+		Debug.Printf("Process %s: Closing port %s ...\n", p.Name, oname)
 		close(oport)
 	}
 }

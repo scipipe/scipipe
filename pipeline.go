@@ -41,12 +41,12 @@ func (pl *Pipeline) PrintProcesses() {
 
 func (pl *Pipeline) Run() {
 	for i, proc := range pl.processes {
-		Debug.Printf("[Pipeline]: Looping over process %d: %v ...\n", i, proc)
+		Debug.Printf("Pipeline: Looping over process %d: %v ...\n", i, proc)
 		if i < len(pl.processes)-1 {
-			Debug.Printf("[Pipeline]: Starting process %d in new go-routine: %v\n", i, proc)
+			Debug.Printf("Pipeline: Starting process %d in new go-routine: %v\n", i, proc)
 			go proc.Run()
 		} else {
-			Debug.Printf("[Pipeline]: Starting process %d: in main go-routine: %v\n", i, proc)
+			Debug.Printf("Pipeline: Starting process %d: in main go-routine: %v\n", i, proc)
 			proc.Run()
 		}
 	}
