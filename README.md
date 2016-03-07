@@ -3,17 +3,13 @@
 [![Build Status](https://travis-ci.org/samuell/scipipe.svg?branch=master)](https://travis-ci.org/samuell/scipipe)
 [![GratiPay amount](http://img.shields.io/gratipay/samuell.svg)](https://gratipay.com/samuell)
 
-An experimental library for writing Scientific (Batch) Workflows in vanilla [Go(lang)](http://golang.org),
-based on an idea for a flow-based like pattern in pure Go, as presented in
+An experimental library for writing Scientific Workflows in vanilla [Go(lang)](http://golang.org).
+The architecture of SciPipe is based on an flow-based like pattern in pure Go as presented in
 [this](http://blog.gopheracademy.com/composable-pipelines-pattern) and [this](https://blog.gopheracademy.com/advent-2015/composable-pipelines-improvements/) Gopher Academy blog posts.
-
-See a short demo about how it might look, working with SciPipe in the terminal:
-
-![SciPipe Demo](http://i.imgur.com/yApmuVB.gif)
 
 ## Benefits
 
-Some benefits of SciPipe, that are not always available in other systems available:
+Some benefits of SciPipe that are not always available in other scientific workflow systems:
 
 - **Easy-to-grasp behaviour:** Data flowing through a network.
 - **Parallel:** Apart from the inherent pipeline parallelism, SciPipe processes also spawn multiple parallel tasks when the same process has multiple inputs.
