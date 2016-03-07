@@ -18,14 +18,14 @@ func TestBasicRun(t *t.T) {
 
 	t1 := Shell("echo foo > {o:foo}")
 	assert.IsType(t, t1.OutPorts["foo"], make(chan *FileTarget))
-	t1.PathFormatters["foo"] = func(t *ShellTask) string {
+	t1.PathFormatters["foo"] = func(t *SciTask) string {
 		return "foo.txt"
 	}
 
 	t2 := Shell("sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	assert.IsType(t, t2.InPorts["foo"], make(chan *FileTarget))
 	assert.IsType(t, t2.OutPorts["bar"], make(chan *FileTarget))
-	t2.PathFormatters["bar"] = func(t *ShellTask) string {
+	t2.PathFormatters["bar"] = func(t *SciTask) string {
 		return t.GetInPath("foo") + ".bar.txt"
 	}
 	snk := NewSink()
@@ -50,7 +50,7 @@ func TestParameterCommand(t *t.T) {
 
 	// An abc file printer
 	abc := Sh("echo {p:a} {p:b} {p:c} > {o:out}")
-	abc.PathFormatters["out"] = func(task *ShellTask) string {
+	abc.PathFormatters["out"] = func(task *SciTask) string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
 			task.Params["a"],
@@ -103,7 +103,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 
 	// Run pipeline a first time
 	tsk := Sh("echo hej > {o:hej}")
-	tsk.PathFormatters["hej"] = func(task *ShellTask) string { return f }
+	tsk.PathFormatters["hej"] = func(task *SciTask) string { return f }
 	prt := Sh("echo {i:in} Done!")
 	prt.InPorts["in"] = tsk.OutPorts["hej"]
 	pl := NewPipeline()
@@ -123,7 +123,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	Debug.Println("Try running the same workflow again ...")
 	// Run again with different output
 	tsk = Sh("echo hej > {o:hej}")
-	tsk.PathFormatters["hej"] = func(task *ShellTask) string { return f }
+	tsk.PathFormatters["hej"] = func(task *SciTask) string { return f }
 	prt.InPorts["in"] = tsk.OutPorts["hej"]
 	pl = NewPipeline()
 	pl.AddProcs(tsk, prt)
@@ -157,8 +157,8 @@ func TestSendsOrderedOutputs(t *t.T) {
 	fc := Sh("echo {i:in} > {o:out}")
 	sl := Sh("cat {i:in} > {o:out}")
 
-	fc.PathFormatters["out"] = func(task *ShellTask) string { return task.GetInPath("in") }
-	sl.PathFormatters["out"] = func(task *ShellTask) string { return task.GetInPath("in") + ".copy.txt" }
+	fc.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") }
+	sl.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") + ".copy.txt" }
 
 	go fq.Run()
 	go fc.Run()
@@ -190,11 +190,11 @@ func TestStreaming(t *t.T) {
 
 	// Init processes
 	ls := Shell("ls -l / > {os:lsl}")
-	ls.PathFormatters["lsl"] = func(task *ShellTask) string {
+	ls.PathFormatters["lsl"] = func(task *SciTask) string {
 		return "/tmp/lsl.txt"
 	}
 	grp := Shell("grep etc {i:in} > {o:grepped}")
-	grp.PathFormatters["grepped"] = func(task *ShellTask) string {
+	grp.PathFormatters["grepped"] = func(task *SciTask) string {
 		return task.GetInPath("in") + ".grepped.txt"
 	}
 	snk := NewSink()

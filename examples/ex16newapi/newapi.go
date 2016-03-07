@@ -29,13 +29,13 @@ type FooToBarReplacer struct {
 }
 
 func NewFooToBarReplacer() interface{} {
-	execFunc := func(task *sci.ShellTask) {
+	execFunc := func(task *sci.SciTask) {
 		indata := task.InTargets["foo"].Read()
 		indataReplaced := bytes.Replace(indata, []byte("foo"), []byte("bar"), -1)
 		task.OutTargets["bar"].WriteTempFile(indataReplaced)
 	}
-	pathFuncs := map[string]func(*sci.ShellTask) string{
-		"bar": func(t *sci.ShellTask) string { return t.InTargets["foo"].GetPath() + ".bar.txt" },
+	pathFuncs := map[string]func(*sci.SciTask) string{
+		"bar": func(t *sci.SciTask) string { return t.InTargets["foo"].GetPath() + ".bar.txt" },
 	}
 	return NewProcessFromStruct(&FooToBarReplacer{}, execFunc, pathFuncs)
 }
@@ -44,7 +44,7 @@ func NewFooToBarReplacer() interface{} {
 //  New helper methods
 // -------------------------------------------
 
-func NewProcessFromStruct(procStruct interface{}, execFunc func(*sci.ShellTask), pathFuncs map[string]func(*sci.ShellTask) string) interface{} {
+func NewProcessFromStruct(procStruct interface{}, execFunc func(*sci.SciTask), pathFuncs map[string]func(*sci.SciTask) string) interface{} {
 	// Get in-ports of struct
 	inPorts := map[string]chan *sci.FileTarget{}
 	outPorts := map[string]chan *sci.FileTarget{}

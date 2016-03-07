@@ -27,7 +27,7 @@ func main() {
 // Fooer
 
 type Fooer struct {
-	InnerProcess *sci.ShellProcess
+	InnerProcess *sci.SciProcess
 	OutFoo       chan *sci.FileTarget
 }
 
@@ -38,7 +38,7 @@ func NewFooer() *Fooer {
 	// Set the output formatter to a static string
 	innerFoo.SetPathFormatterString("foo", "foo.txt")
 	// Create the custom execute function, with pure Go code
-	innerFoo.CustomExecute = func(task *sci.ShellTask) {
+	innerFoo.CustomExecute = func(task *sci.SciTask) {
 		task.OutTargets["foo"].WriteTempFile([]byte("foo\n"))
 	}
 	// Connect the ports of the outer task to the inner, generic one
@@ -60,7 +60,7 @@ func (p *Fooer) Run() {
 // Foo2Barer
 
 type Foo2Barer struct {
-	InnerProcess *sci.ShellProcess
+	InnerProcess *sci.SciProcess
 	InFoo        chan *sci.FileTarget
 	OutBar       chan *sci.FileTarget
 }
@@ -78,7 +78,7 @@ func NewFoo2Barer() *Foo2Barer {
 		OutBar:       InnerProcess.OutPorts["bar"],
 	}
 	// Create the custom execute function, with pure Go code
-	foo2bar.InnerProcess.CustomExecute = func(task *sci.ShellTask) {
+	foo2bar.InnerProcess.CustomExecute = func(task *sci.SciTask) {
 		task.OutTargets["bar"].WriteTempFile(bytes.Replace(task.InTargets["foo"].Read(), []byte("foo"), []byte("bar"), 1))
 	}
 	return foo2bar

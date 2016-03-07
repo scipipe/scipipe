@@ -13,7 +13,7 @@ func main() {
 	params := map[string]string{"a": "a1", "b": "b1", "c": "c1"}
 
 	abc := sci.ShExp("echo {p:a} {p:b} {p:c} > {o:out} # {i:in}", nil, nil, params)
-	abc.PathFormatters["out"] = func(t *sci.ShellTask) string {
+	abc.PathFormatters["out"] = func(t *sci.SciTask) string {
 		return t.GetInPath("in")
 	}
 

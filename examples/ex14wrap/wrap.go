@@ -26,7 +26,7 @@ func main() {
 // Fooer
 
 type Fooer struct {
-	InnerProc *sci.ShellProcess
+	InnerProc *sci.SciProcess
 	OutFoo    chan *sci.FileTarget
 }
 
@@ -47,7 +47,7 @@ func (p *Fooer) Run() {
 // Foo2Barer
 
 type Foo2Barer struct {
-	InnerProc *sci.ShellProcess
+	InnerProc *sci.SciProcess
 	InFoo     chan *sci.FileTarget
 	OutBar    chan *sci.FileTarget
 }

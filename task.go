@@ -8,19 +8,19 @@ import (
 	str "strings"
 )
 
-// ================== ShellTask ==================
+// ================== SciTask ==================
 
-type ShellTask struct {
+type SciTask struct {
 	InTargets     map[string]*FileTarget
 	OutTargets    map[string]*FileTarget
 	Params        map[string]string
 	Command       string
-	CustomExecute func(*ShellTask)
+	CustomExecute func(*SciTask)
 	Done          chan int
 }
 
-func NewShellTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs map[string]func(*ShellTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string) *ShellTask {
-	t := &ShellTask{
+func NewSciTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string) *SciTask {
+	t := &SciTask{
 		InTargets:  inTargets,
 		OutTargets: make(map[string]*FileTarget),
 		Params:     params,
@@ -28,7 +28,7 @@ func NewShellTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs 
 		Done:       make(chan int),
 	}
 	// Create out targets
-	Debug.Printf("[ShellTask: %s] Creating outTargets now ...", cmdPat)
+	Debug.Printf("[SciTask: %s] Creating outTargets now ...", cmdPat)
 	outTargets := make(map[string]*FileTarget)
 	for oname, ofun := range outPathFuncs {
 		opath := ofun(t)
@@ -36,22 +36,22 @@ func NewShellTask(cmdPat string, inTargets map[string]*FileTarget, outPathFuncs 
 		if outPortsDoStream[oname] {
 			otgt.doStream = true
 		}
-		Debug.Printf("[ShellTask: %s] Creating outTarget with path %s ...", cmdPat, opath)
+		Debug.Printf("[SciTask: %s] Creating outTarget with path %s ...", cmdPat, opath)
 		outTargets[oname] = otgt
 	}
 	t.OutTargets = outTargets
 	t.Command = formatCommand(cmdPat, inTargets, outTargets, params, prepend)
-	Debug.Printf("[ShellTask: %s] Created formatted command: %s", cmdPat, t.Command)
+	Debug.Printf("[SciTask: %s] Created formatted command: %s", cmdPat, t.Command)
 	return t
 }
 
-// --------------- ShellTask API methods ----------------
+// --------------- SciTask API methods ----------------
 
-func (t *ShellTask) GetInPath(inPort string) string {
+func (t *SciTask) GetInPath(inPort string) string {
 	return t.InTargets[inPort].GetPath()
 }
 
-func (t *ShellTask) Execute() {
+func (t *SciTask) Execute() {
 	defer close(t.Done)
 	if !t.anyOutputExists() && !t.fifosInOutTargetsMissing() {
 		if t.CustomExecute != nil {
@@ -62,26 +62,26 @@ func (t *ShellTask) Execute() {
 		}
 		t.atomizeTargets()
 	}
-	Debug.Printf("[ShellTask: %s] Starting to send Done in t.Execute() ...)\n", t.Command)
+	Debug.Printf("[SciTask: %s] Starting to send Done in t.Execute() ...)\n", t.Command)
 	t.Done <- 1
-	Debug.Printf("[ShellTask: %s] Done sending Done, in t.Execute()\n", t.Command)
+	Debug.Printf("[SciTask: %s] Done sending Done, in t.Execute()\n", t.Command)
 }
 
-// --------------- ShellTask Helper methods ----------------
+// --------------- SciTask Helper methods ----------------
 
 // Check if any output file target, or temporary file targets, exist
-func (t *ShellTask) anyOutputExists() (anyFileExists bool) {
+func (t *SciTask) anyOutputExists() (anyFileExists bool) {
 	anyFileExists = false
 	for _, tgt := range t.OutTargets {
 		opath := tgt.GetPath()
 		otmpPath := tgt.GetTempPath()
 		if !tgt.doStream {
 			if _, err := os.Stat(opath); err == nil {
-				Warning.Printf("[ShellTask: %s] Output file already exists: %s, so skipping...\n", t.Command, opath)
+				Warning.Printf("[SciTask: %s] Output file already exists: %s, so skipping...\n", t.Command, opath)
 				anyFileExists = true
 			}
 			if _, err := os.Stat(otmpPath); err == nil {
-				Warning.Printf("[ShellTask: %s] Temporary Output file already exists: %s, so skipping...\n", t.Command, otmpPath)
+				Warning.Printf("[SciTask: %s] Temporary Output file already exists: %s, so skipping...\n", t.Command, otmpPath)
 				anyFileExists = true
 			}
 		}
@@ -90,13 +90,13 @@ func (t *ShellTask) anyOutputExists() (anyFileExists bool) {
 }
 
 // Check if any FIFO files for this tasks exist, for out-ports specified to support streaming
-func (t *ShellTask) anyFifosExist() (anyFifosExist bool) {
+func (t *SciTask) anyFifosExist() (anyFifosExist bool) {
 	anyFifosExist = false
 	for _, tgt := range t.OutTargets {
 		ofifoPath := tgt.GetFifoPath()
 		if tgt.doStream {
 			if _, err := os.Stat(ofifoPath); err == nil {
-				Warning.Printf("[ShellTask: %s] Output FIFO already exists: %s. Check your workflow for correctness!\n", t.Command, ofifoPath)
+				Warning.Printf("[SciTask: %s] Output FIFO already exists: %s. Check your workflow for correctness!\n", t.Command, ofifoPath)
 				anyFifosExist = true
 			}
 		}
@@ -105,13 +105,13 @@ func (t *ShellTask) anyFifosExist() (anyFifosExist bool) {
 }
 
 // Make sure that FIFOs that are supposed to exist, really exists
-func (t *ShellTask) fifosInOutTargetsMissing() (fifosInOutTargetsMissing bool) {
+func (t *SciTask) fifosInOutTargetsMissing() (fifosInOutTargetsMissing bool) {
 	fifosInOutTargetsMissing = false
 	for _, tgt := range t.OutTargets {
 		if tgt.doStream {
 			ofifoPath := tgt.GetFifoPath()
 			if _, err := os.Stat(ofifoPath); err != nil {
-				Warning.Printf("[ShellTask: %s] FIFO Output file missing, for streaming output: %s. Check your workflow for correctness!\n", t.Command, ofifoPath)
+				Warning.Printf("[SciTask: %s] FIFO Output file missing, for streaming output: %s. Check your workflow for correctness!\n", t.Command, ofifoPath)
 				fifosInOutTargetsMissing = true
 			}
 		}
@@ -119,15 +119,15 @@ func (t *ShellTask) fifosInOutTargetsMissing() (fifosInOutTargetsMissing bool) {
 	return
 }
 
-func (t *ShellTask) executeCommand(cmd string) {
-	Info.Printf("[ShellTask: %s] Executing command: %s \n", t.Command, cmd)
+func (t *SciTask) executeCommand(cmd string) {
+	Info.Printf("[SciTask: %s] Executing command: %s \n", t.Command, cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
 	Check(err)
 }
 
 // Create FIFO files for all out-ports that are specified to support streaming
-func (t *ShellTask) createFifos() {
-	Debug.Printf("[ShellTask: %s] Now creating fifos for task\n", t.Command)
+func (t *SciTask) createFifos() {
+	Debug.Printf("[SciTask: %s] Now creating fifos for task\n", t.Command)
 	for _, otgt := range t.OutTargets {
 		if otgt.doStream {
 			otgt.CreateFifo()
@@ -136,7 +136,7 @@ func (t *ShellTask) createFifos() {
 }
 
 // Rename temporary output files to their proper file names
-func (t *ShellTask) atomizeTargets() {
+func (t *SciTask) atomizeTargets() {
 	for _, tgt := range t.OutTargets {
 		if !tgt.doStream {
 			Debug.Printf("Atomizing file: %s -> %s", tgt.GetTempPath(), tgt.GetPath())
@@ -150,13 +150,13 @@ func (t *ShellTask) atomizeTargets() {
 
 // Clean up any remaining FIFOs
 // TODO: this is actually not really used anymore ...
-func (t *ShellTask) cleanUpFifos() {
+func (t *SciTask) cleanUpFifos() {
 	for _, tgt := range t.OutTargets {
 		if tgt.doStream {
-			Debug.Printf("[ShellTask: %s] Cleaning up FIFO for output target: %s\n", t.Command, tgt.GetFifoPath())
+			Debug.Printf("[SciTask: %s] Cleaning up FIFO for output target: %s\n", t.Command, tgt.GetFifoPath())
 			tgt.RemoveFifo()
 		} else {
-			Debug.Printf("[ShellTask: %s] output target is not FIFO, so not removing any FIFO: %s\n", t.Command, tgt.GetPath())
+			Debug.Printf("[SciTask: %s] output target is not FIFO, so not removing any FIFO: %s\n", t.Command, tgt.GetPath())
 		}
 	}
 }

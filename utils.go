@@ -39,7 +39,7 @@ func copyMapStrStr(m map[string]string) (nm map[string]string) {
 }
 
 // Return the regular expression used to parse the place-holder syntax for in-, out- and
-// parameter ports, that can be used to instantiate a ShellProcess.
+// parameter ports, that can be used to instantiate a SciProcess.
 func getShellCommandPlaceHolderRegex() *re.Regexp {
 	r, err := re.Compile("{(o|os|i|is|p):([^{}:]+)}")
 	Check(err)
