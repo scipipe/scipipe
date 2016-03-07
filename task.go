@@ -57,7 +57,7 @@ func (t *SciTask) Execute() {
 	defer close(t.Done)
 	if !t.anyOutputExists() && !t.fifosInOutTargetsMissing() {
 		if t.CustomExecute != nil {
-			Info.Printf("Task:%-16s Executing task.\n", t.Command)
+			Info.Printf("Task:%-12s Executing task.\n", t.Command)
 			t.CustomExecute(t)
 		} else {
 			t.executeCommand(t.Command)
@@ -83,7 +83,7 @@ func (t *SciTask) anyOutputExists() (anyFileExists bool) {
 				anyFileExists = true
 			}
 			if _, err := os.Stat(otmpPath); err == nil {
-				Warning.Printf("Task:%-16s Temporary Output file already exists: %s, so skipping... [%s]\n", t.Name, otmpPath, t.Command)
+				Warning.Printf("Task:%-12s Temporary Output file already exists: %s. Check your workflow for correctness! [%s]\n", t.Name, otmpPath, t.Command)
 				anyFileExists = true
 			}
 		}
@@ -98,7 +98,7 @@ func (t *SciTask) anyFifosExist() (anyFifosExist bool) {
 		ofifoPath := tgt.GetFifoPath()
 		if tgt.doStream {
 			if _, err := os.Stat(ofifoPath); err == nil {
-				Warning.Printf("Task:%-16s Output FIFO already exists: %s. Check your workflow for correctness! [%s]\n", t.Name, ofifoPath, t.Command)
+				Warning.Printf("Task:%-12s Output FIFO already exists: %s. Check your workflow for correctness! [%s]\n", t.Name, ofifoPath, t.Command)
 				anyFifosExist = true
 			}
 		}
@@ -113,7 +113,7 @@ func (t *SciTask) fifosInOutTargetsMissing() (fifosInOutTargetsMissing bool) {
 		if tgt.doStream {
 			ofifoPath := tgt.GetFifoPath()
 			if _, err := os.Stat(ofifoPath); err != nil {
-				Warning.Printf("Task:%-16s FIFO Output file missing, for streaming output: %s. Check your workflow for correctness! [%s]\n", t.Name, t.Command, ofifoPath)
+				Warning.Printf("Task:%-12s FIFO Output file missing, for streaming output: %s. Check your workflow for correctness! [%s]\n", t.Name, t.Command, ofifoPath)
 				fifosInOutTargetsMissing = true
 			}
 		}
