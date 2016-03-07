@@ -79,7 +79,7 @@ func (t *SciTask) anyOutputExists() (anyFileExists bool) {
 		otmpPath := tgt.GetTempPath()
 		if !tgt.doStream {
 			if _, err := os.Stat(opath); err == nil {
-				Warning.Printf("Task:%-16s Output file already exists: %s, so skipping... [%s]\n", t.Name, opath, t.Command)
+				Audit.Printf("Task:%-12s Output file already exists: %s, so skipping... [%s]\n", t.Name, opath, t.Command)
 				anyFileExists = true
 			}
 			if _, err := os.Stat(otmpPath); err == nil {
@@ -122,7 +122,7 @@ func (t *SciTask) fifosInOutTargetsMissing() (fifosInOutTargetsMissing bool) {
 }
 
 func (t *SciTask) executeCommand(cmd string) {
-	Info.Printf("Task:%-16s Executing command: %s\n", t.Name, cmd)
+	Audit.Printf("Task:%-12s Executing command: %s\n", t.Name, cmd)
 	_, err := exec.Command("bash", "-c", cmd).Output()
 	Check(err)
 }
