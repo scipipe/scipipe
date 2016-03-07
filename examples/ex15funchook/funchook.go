@@ -68,20 +68,20 @@ type Foo2Barer struct {
 func NewFoo2Barer() *Foo2Barer {
 	// Initiate task from a "shell like" pattern, though here we
 	// just specify the in-port foo and the out-port bar
-	InnerProcess := sci.Shell("{i:foo}{o:bar}")
+	innerProc := sci.Shell("{i:foo}{o:bar}")
 	// Set the output formatter to extend the path on the "bar"" in-port
-	InnerProcess.SetPathFormatterExtend("bar", "foo", ".bar.txt")
-	// Connect the ports of the outer task to the inner, generic one
-	foo2bar := &Foo2Barer{
-		InnerProcess: InnerProcess,
-		InFoo:        InnerProcess.InPorts["foo"],
-		OutBar:       InnerProcess.OutPorts["bar"],
-	}
+	innerProc.SetPathFormatterExtend("bar", "foo", ".bar.txt")
 	// Create the custom execute function, with pure Go code
-	foo2bar.InnerProcess.CustomExecute = func(task *sci.SciTask) {
+	innerProc.CustomExecute = func(task *sci.SciTask) {
 		task.OutTargets["bar"].WriteTempFile(bytes.Replace(task.InTargets["foo"].Read(), []byte("foo"), []byte("bar"), 1))
 	}
-	return foo2bar
+
+	// Connect the ports of the outer task to the inner, generic one
+	return &Foo2Barer{
+		InnerProcess: innerProc,
+		InFoo:        innerProc.InPorts["foo"],
+		OutBar:       innerProc.OutPorts["bar"],
+	}
 }
 
 func (p *Foo2Barer) Run() {
