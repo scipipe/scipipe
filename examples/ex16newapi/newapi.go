@@ -28,10 +28,6 @@ type FooToBarReplacer struct {
 	OutBar       chan *sci.FileTarget
 }
 
-func (p *FooToBarReplacer) Run() {
-	// ...
-}
-
 func NewFooToBarReplacer() interface{} {
 	execFunc := func(task *sci.ShellTask) {
 		indata := task.InTargets["foo"].Read()
