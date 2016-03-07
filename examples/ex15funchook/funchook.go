@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-
 	sci "github.com/samuell/scipipe"
 )
 
@@ -28,8 +27,8 @@ func main() {
 // Fooer
 
 type Fooer struct {
-	InnerProc *sci.ShellProcess
-	OutFoo    chan *sci.FileTarget
+	InnerProcess *sci.ShellProcess
+	OutFoo       chan *sci.FileTarget
 }
 
 func NewFooer() *Fooer {
@@ -44,8 +43,8 @@ func NewFooer() *Fooer {
 	}
 	// Connect the ports of the outer task to the inner, generic one
 	fooer := &Fooer{
-		InnerProc: innerFoo,
-		OutFoo:    innerFoo.OutPorts["foo"],
+		InnerProcess: innerFoo,
+		OutFoo:       innerFoo.OutPorts["foo"],
 	}
 	return fooer
 }
@@ -53,33 +52,33 @@ func NewFooer() *Fooer {
 func (p *Fooer) Run() {
 	// Connect inner ports to outer ones again, in order to update
 	// connectivity after the workflow wiring has taken place.
-	p.InnerProc.OutPorts["foo"] = p.OutFoo
+	p.InnerProcess.OutPorts["foo"] = p.OutFoo
 	// Run the inner process
-	p.InnerProc.Run()
+	p.InnerProcess.Run()
 }
 
 // Foo2Barer
 
 type Foo2Barer struct {
-	InnerProc *sci.ShellProcess
-	InFoo     chan *sci.FileTarget
-	OutBar    chan *sci.FileTarget
+	InnerProcess *sci.ShellProcess
+	InFoo        chan *sci.FileTarget
+	OutBar       chan *sci.FileTarget
 }
 
 func NewFoo2Barer() *Foo2Barer {
 	// Initiate task from a "shell like" pattern, though here we
 	// just specify the in-port foo and the out-port bar
-	innerFoo2Bar := sci.Shell("{i:foo}{o:bar}")
+	InnerProcess := sci.Shell("{i:foo}{o:bar}")
 	// Set the output formatter to extend the path on the "bar"" in-port
-	innerFoo2Bar.SetPathFormatterExtend("bar", "foo", ".bar.txt")
+	InnerProcess.SetPathFormatterExtend("bar", "foo", ".bar.txt")
 	// Connect the ports of the outer task to the inner, generic one
 	foo2bar := &Foo2Barer{
-		InnerProc: innerFoo2Bar,
-		InFoo:     innerFoo2Bar.InPorts["foo"],
-		OutBar:    innerFoo2Bar.OutPorts["bar"],
+		InnerProcess: InnerProcess,
+		InFoo:        InnerProcess.InPorts["foo"],
+		OutBar:       InnerProcess.OutPorts["bar"],
 	}
 	// Create the custom execute function, with pure Go code
-	foo2bar.InnerProc.CustomExecute = func(task *sci.ShellTask) {
+	foo2bar.InnerProcess.CustomExecute = func(task *sci.ShellTask) {
 		task.OutTargets["bar"].WriteTempFile(bytes.Replace(task.InTargets["foo"].Read(), []byte("foo"), []byte("bar"), 1))
 	}
 	return foo2bar
@@ -88,8 +87,8 @@ func NewFoo2Barer() *Foo2Barer {
 func (p *Foo2Barer) Run() {
 	// Connect inner ports to outer ones again, in order to update
 	// connectivity after the workflow wiring has taken place.
-	p.InnerProc.InPorts["foo"] = p.InFoo
-	p.InnerProc.OutPorts["bar"] = p.OutBar
+	p.InnerProcess.InPorts["foo"] = p.InFoo
+	p.InnerProcess.OutPorts["bar"] = p.OutBar
 	// Run the inner process
-	p.InnerProc.Run()
+	p.InnerProcess.Run()
 }
