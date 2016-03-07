@@ -6,12 +6,14 @@ import (
 
 	r "reflect"
 
+	"strings"
+
 	sci "github.com/samuell/scipipe"
 )
 
 func main() {
 	p := NewFooToBarReplacer()
-	fmt.Println(p)
+	fmt.Println("Process: ", p)
 }
 
 type FooToBarReplacer struct {
@@ -39,9 +41,16 @@ func NewFooToBarReplacer() interface{} {
 
 func NewProcessFromStruct(procStruct interface{}, execFunc func(*sci.ShellTask), pathFuncs map[string]func(*sci.ShellTask) string) interface{} {
 	// Get in-ports of struct
-	psVal := r.ValueOf(procStruct).Elem()
-	for i := 0; i < psVal.NumField(); i++ {
-		fmt.Println(psVal.Type().Field(i).Name)
+	procStructVal := r.ValueOf(procStruct).Elem()
+	for i := 0; i < procStructVal.NumField(); i++ {
+		structFieldName := procStructVal.Type().Field(i).Name
+		structFieldType := procStructVal.Type().Field(i).Type
+		exampleChan := make(chan *sci.FileTarget)
+		if strings.HasPrefix(structFieldName, "In") && structFieldType == r.TypeOf(exampleChan) {
+			fmt.Println("In-port:", structFieldName)
+		} else if strings.HasPrefix(structFieldName, "Out") && structFieldType == r.TypeOf(exampleChan) {
+			fmt.Println("Out-port:", structFieldName)
+		}
 	}
 	return procStruct
 }
