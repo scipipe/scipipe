@@ -70,17 +70,17 @@ func (p *SciProcess) SetPathFormatStatic(outPortName string, path string) {
 
 // Convenience method to create an (output) path formatter that extends the path of
 // and input FileTarget
-func (p *SciProcess) SetPathFormatExtend(outPortName string, inPort string, extension string) {
+func (p *SciProcess) SetPathFormatExtend(outPortName string, inPortName string, extension string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
-		return t.InTargets[inPort].GetPath() + extension
+		return t.InTargets[inPortName].GetPath() + extension
 	}
 }
 
 // Convenience method to create an (output) path formatter that uses an input's path
 // but replaces parts of it.
-func (p *SciProcess) SetPathFormatReplace(outPortName string, inPort string, old string, new string) {
+func (p *SciProcess) SetPathFormatReplace(outPortName string, inPortName string, old string, new string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
-		return str.Replace(t.InTargets[inPort].GetPath(), old, new, -1)
+		return str.Replace(t.InTargets[inPortName].GetPath(), old, new, -1)
 	}
 }
 
