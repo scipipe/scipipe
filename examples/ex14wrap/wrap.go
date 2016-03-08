@@ -32,7 +32,7 @@ type Fooer struct {
 
 func NewFooer() *Fooer {
 	innerFoo := sci.Shell("fooer", "echo foo > {o:foo}")
-	innerFoo.SetPathFormatterString("foo", "foo.txt")
+	innerFoo.SetPathFormatStatic("foo", "foo.txt")
 	return &Fooer{
 		InnerProc: innerFoo,
 		OutFoo:    innerFoo.OutPorts["foo"],
@@ -54,7 +54,7 @@ type Foo2Barer struct {
 
 func NewFoo2Barer() *Foo2Barer {
 	innerFoo2Bar := sci.Shell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	innerFoo2Bar.SetPathFormatterExtend("bar", "foo", ".bar.txt")
+	innerFoo2Bar.SetPathFormatExtend("bar", "foo", ".bar.txt")
 	return &Foo2Barer{
 		InnerProc: innerFoo2Bar,
 		InFoo:     innerFoo2Bar.InPorts["foo"],

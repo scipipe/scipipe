@@ -36,7 +36,7 @@ func NewFooer() *Fooer {
 	// just specify the out-port foo
 	innerFoo := sci.Shell("fooer", "{o:foo}")
 	// Set the output formatter to a static string
-	innerFoo.SetPathFormatterString("foo", "foo.txt")
+	innerFoo.SetPathFormatStatic("foo", "foo.txt")
 	// Create the custom execute function, with pure Go code
 	innerFoo.CustomExecute = func(task *sci.SciTask) {
 		task.OutTargets["foo"].WriteTempFile([]byte("foo\n"))
@@ -70,7 +70,7 @@ func NewFoo2Barer() *Foo2Barer {
 	// just specify the in-port foo and the out-port bar
 	innerProc := sci.Shell("foo2bar", "{i:foo}{o:bar}")
 	// Set the output formatter to extend the path on the "bar"" in-port
-	innerProc.SetPathFormatterExtend("bar", "foo", ".bar.txt")
+	innerProc.SetPathFormatExtend("bar", "foo", ".bar.txt")
 	// Create the custom execute function, with pure Go code
 	innerProc.CustomExecute = func(task *sci.SciTask) {
 		task.OutTargets["bar"].WriteTempFile(bytes.Replace(task.InTargets["foo"].Read(), []byte("foo"), []byte("bar"), 1))
