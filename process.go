@@ -41,16 +41,6 @@ func NewSciProcess(name string, command string) *SciProcess {
 	}
 }
 
-// ----------- Short-hand init methods ------------
-
-func Sh(name string, cmd string) *SciProcess {
-	return Shell(name, cmd)
-}
-
-func ShExp(name string, cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *SciProcess {
-	return ShellExpand(name, cmd, inPaths, outPaths, params)
-}
-
 // ----------- Main API init methods ------------
 
 func Shell(name string, cmd string) *SciProcess {

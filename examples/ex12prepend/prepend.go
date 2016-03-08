@@ -7,7 +7,7 @@ import (
 func main() {
 	sp.InitLogWarning()
 
-	t := sp.Sh("ls", "ls -l > {o:out}")
+	t := sp.Shell("ls", "ls -l > {o:out}")
 	t.PathFormatters["out"] = func(t *sp.SciTask) string {
 		return "hej.txt"
 	}

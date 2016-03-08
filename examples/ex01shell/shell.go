@@ -8,12 +8,12 @@ import (
 func main() {
 	sci.InitLogInfo()
 
-	h := sci.Sh("fooer", "echo foo > {o:foo}")
+	h := sci.Shell("fooer", "echo foo > {o:foo}")
 	h.PathFormatters["foo"] = func(t *sci.SciTask) string {
 		return "foo.txt"
 	}
 
-	f2b := sci.Sh("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	f2b := sci.Shell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	f2b.PathFormatters["bar"] = func(t *sci.SciTask) string {
 		return fmt.Sprint(t.GetInPath("foo"), ".bar")
 	}

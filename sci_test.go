@@ -49,7 +49,7 @@ func TestParameterCommand(t *t.T) {
 	cmb := NewCombinatoricsProcess()
 
 	// An abc file printer
-	abc := Sh("abc", "echo {p:a} {p:b} {p:c} > {o:out}")
+	abc := Shell("abc", "echo {p:a} {p:b} {p:c} > {o:out}")
 	abc.PathFormatters["out"] = func(task *SciTask) string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
@@ -60,7 +60,7 @@ func TestParameterCommand(t *t.T) {
 	}
 
 	// A printer process
-	prt := Sh("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in}")
+	prt := Shell("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in}")
 
 	// Connection info
 	abc.ParamPorts["a"] = cmb.A
@@ -84,7 +84,7 @@ func TestProcessWithoutInputsOutputs(t *t.T) {
 	Debug.Println("Starting test TestProcessWithoutInputsOutputs")
 
 	f := "/tmp/hej.txt"
-	tsk := Sh("tsk", "echo hej > " + f)
+	tsk := Shell("tsk", "echo hej > " + f)
 	tsk.Run()
 	_, err := os.Stat(f)
 	assert.Nil(t, err, fmt.Sprintf("File is missing: %s", f))
@@ -102,9 +102,9 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	assert.NotNil(t, e1)
 
 	// Run pipeline a first time
-	tsk := Sh("tsk", "echo hej > {o:hej}")
+	tsk := Shell("tsk", "echo hej > {o:hej}")
 	tsk.PathFormatters["hej"] = func(task *SciTask) string { return f }
-	prt := Sh("prt", "echo {i:in} Done!")
+	prt := Shell("prt", "echo {i:in} Done!")
 	prt.InPorts["in"] = tsk.OutPorts["hej"]
 	pl := NewPipeline()
 	pl.AddProcs(tsk, prt)
@@ -122,7 +122,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 
 	Debug.Println("Try running the same workflow again ...")
 	// Run again with different output
-	tsk = Sh("tsk", "echo hej > {o:hej}")
+	tsk = Shell("tsk", "echo hej > {o:hej}")
 	tsk.PathFormatters["hej"] = func(task *SciTask) string { return f }
 	prt.InPorts["in"] = tsk.OutPorts["hej"]
 	pl = NewPipeline()
@@ -154,8 +154,8 @@ func TestSendsOrderedOutputs(t *t.T) {
 
 	fq := NewFileQueue(fnames...)
 
-	fc := Sh("fc", "echo {i:in} > {o:out}")
-	sl := Sh("sl", "cat {i:in} > {o:out}")
+	fc := Shell("fc", "echo {i:in} > {o:out}")
+	sl := Shell("sl", "cat {i:in} > {o:out}")
 
 	fc.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") }
 	sl.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") + ".copy.txt" }
