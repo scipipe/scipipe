@@ -54,7 +54,7 @@ type Foo2Barer struct {
 
 func NewFoo2Barer() *Foo2Barer {
 	innerFoo2Bar := sci.Shell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	innerFoo2Bar.SetPathFormatExtend("bar", "foo", ".bar.txt")
+	innerFoo2Bar.SetPathFormatExtend("foo", "bar", ".bar.txt")
 	return &Foo2Barer{
 		InnerProc: innerFoo2Bar,
 		InFoo:     innerFoo2Bar.InPorts["foo"],
