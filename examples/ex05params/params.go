@@ -34,7 +34,7 @@ func main() {
 	abc.ParamPorts["c"] = cmb.C
 	prt.InPorts["in"] = abc.OutPorts["out"]
 
-	pl := sci.NewPipeline()
+	pl := sci.NewPipelineRunner()
 	pl.AddProcs(cmb, abc, prt)
 	pl.Run()
 }

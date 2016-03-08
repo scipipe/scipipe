@@ -36,7 +36,7 @@ func TestBasicRun(t *t.T) {
 	assert.IsType(t, t2.InPorts["foo"], make(chan *FileTarget))
 	assert.IsType(t, t2.OutPorts["bar"], make(chan *FileTarget))
 
-	pl := NewPipeline()
+	pl := NewPipelineRunner()
 	pl.AddProcs(t1, t2, snk)
 	pl.Run()
 
@@ -68,7 +68,7 @@ func TestParameterCommand(t *t.T) {
 	abc.ParamPorts["c"] = cmb.C
 	prt.InPorts["in"] = abc.OutPorts["out"]
 
-	pl := NewPipeline()
+	pl := NewPipelineRunner()
 	pl.AddProcesses(cmb, abc, prt)
 	pl.Run()
 
@@ -106,7 +106,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	tsk.PathFormatters["hej"] = func(task *SciTask) string { return f }
 	prt := Shell("prt", "echo {i:in} Done!")
 	prt.InPorts["in"] = tsk.OutPorts["hej"]
-	pl := NewPipeline()
+	pl := NewPipelineRunner()
 	pl.AddProcs(tsk, prt)
 	pl.Run()
 
@@ -125,7 +125,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	tsk = Shell("tsk", "echo hej > {o:hej}")
 	tsk.PathFormatters["hej"] = func(task *SciTask) string { return f }
 	prt.InPorts["in"] = tsk.OutPorts["hej"]
-	pl = NewPipeline()
+	pl = NewPipelineRunner()
 	pl.AddProcs(tsk, prt)
 	pl.Run()
 
@@ -204,7 +204,7 @@ func TestStreaming(t *t.T) {
 	snk.In = grp.OutPorts["grepped"]
 
 	// Run
-	pl := NewPipeline()
+	pl := NewPipelineRunner()
 	pl.AddProcs(ls, grp, snk)
 	pl.Run()
 

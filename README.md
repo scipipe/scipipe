@@ -82,8 +82,8 @@ func main() {
 	f2b.InPorts["foo"] = fwt.OutPorts["foo"]
 	snk.In = f2b.OutPorts["bar"]
 
-	// Add to a pipeline and run
-	pl := sp.NewPipeline()
+	// Add to a pipeline runner and run
+	pl := sp.NewPipelineRunner()
 	pl.AddProcs(fwt, f2b, snk)
 	pl.Run()
 }
@@ -149,12 +149,13 @@ f2b.PathFormatters["bar"] = func(t *sp.SciTask) string {
 
 ### Running the pipeline
 
-So, the final part probably explains itself, but the pipeline component is a very simple one
-that will start each component except the last one in a separate go-routine, while the last
-process will be run in the main go-routine, so as to block until the pipeline has finished.
+So, the final part probably explains itself, but the pipeline runner component
+is a very simple one that will start each component except the last one in a
+separate go-routine, while the last process will be run in the main go-routine,
+so as to block until the pipeline has finished.
 
 ```go
-pl := sci.NewPipeline()
+pl := sci.NewPipelineRunner()
 pl.AddProcs(fwt, f2b, snk)
 pl.Run()
 ```

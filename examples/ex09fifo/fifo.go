@@ -37,7 +37,7 @@ func main() {
 	snk.In = ct.OutPorts["out"]
 
 	// run pipeline
-	pl := sci.NewPipeline()
+	pl := sci.NewPipelineRunner()
 	pl.AddProcs(ls, grp, ct, snk)
 	pl.Run()
 

@@ -14,7 +14,7 @@ func main() {
 	f2b.InFoo = foo.OutFoo
 	snk.In = f2b.OutBar
 
-	pl := sci.NewPipeline()
+	pl := sci.NewPipelineRunner()
 	pl.AddProcs(foo, f2b, snk)
 	pl.Run()
 }

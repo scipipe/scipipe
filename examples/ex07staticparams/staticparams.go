@@ -25,7 +25,7 @@ func main() {
 	prt.InPorts["in"] = abc.OutPorts["out"]
 
 	// Pipe it up
-	pl := sci.NewPipeline()
+	pl := sci.NewPipelineRunner()
 	pl.AddProcs(fls, abc, prt)
 
 	// Run

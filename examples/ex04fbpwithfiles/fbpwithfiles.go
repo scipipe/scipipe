@@ -39,7 +39,7 @@ func main() {
 	filew.In = s2byt.Out
 
 	// Create and run pipeline
-	pl := sp.NewPipeline()
+	pl := sp.NewPipelineRunner()
 	pl.AddProcs(hisay, split, lower, upper, zippr, s2byt, filew)
 	pl.Run()
 }

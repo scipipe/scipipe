@@ -10,7 +10,7 @@ func TestAddProcesses(t *t.T) {
 
 	proc1 := NewBogusProcess()
 	proc2 := NewBogusProcess()
-	pipeline := NewPipeline()
+	pipeline := NewPipelineRunner()
 	pipeline.AddProcesses(proc1, proc2)
 
 	assert.EqualValues(t, len(pipeline.processes), 2)
@@ -19,11 +19,11 @@ func TestAddProcesses(t *t.T) {
 	assert.IsType(t, &BogusProcess{}, pipeline.processes[1], "Process 2 was not of the right type!")
 }
 
-func TestRunProcessesInPipeline(t *t.T) {
+func TestRunProcessesInPipelineRunner(t *t.T) {
 	proc1 := NewBogusProcess()
 	proc2 := NewBogusProcess()
 
-	pipeline := NewPipeline()
+	pipeline := NewPipelineRunner()
 	pipeline.AddProcesses(proc1, proc2)
 	pipeline.Run()
 

@@ -23,7 +23,7 @@ func main() {
 	f2b.InPorts["foo"] = h.OutPorts["foo"]
 	sn.In = f2b.OutPorts["bar"]
 
-	pl := sci.NewPipeline()
+	pl := sci.NewPipelineRunner()
 	pl.AddProcs(h, f2b, sn)
 	pl.Run()
 }

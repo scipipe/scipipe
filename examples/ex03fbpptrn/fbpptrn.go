@@ -19,7 +19,7 @@ func main() {
 	fmt.Println("Starting ", numThreads, " threads ...")
 	runtime.GOMAXPROCS(numThreads)
 
-	pipeline := sci.NewPipeline()
+	pipeline := sci.NewPipelineRunner()
 
 	// Init processes
 	hisay := NewHiSayer()
