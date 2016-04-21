@@ -52,6 +52,13 @@ func (ft *FileTarget) Open() *os.File {
 	return f
 }
 
+// Open the file for writing return a file handle (*os.File)
+func (ft *FileTarget) OpenWrite() *os.File {
+	f, err := os.Create(ft.GetPath())
+	Check(err)
+	return f
+}
+
 // Read the whole content of the file and return as a byte array ([]byte)
 func (ft *FileTarget) Read() []byte {
 	dat, err := ioutil.ReadFile(ft.GetPath())
