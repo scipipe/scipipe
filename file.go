@@ -161,7 +161,9 @@ type Sink struct {
 
 // Instantiate a Sink component
 func NewSink() (s *Sink) {
-	return &Sink{}
+	return &Sink{
+		In: make(chan *FileTarget, BUFSIZE),
+	}
 }
 
 // Execute the Sink component
