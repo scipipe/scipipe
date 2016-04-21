@@ -11,20 +11,20 @@ import (
 type FileReader struct {
 	Process
 	FilePath chan string
-	Out      chan []byte
+	OutLine  chan []byte
 }
 
 // Instantiate a new FileReader
 func NewFileReader() *FileReader {
 	return &FileReader{
 		FilePath: make(chan string),
-		Out:      make(chan []byte, BUFSIZE),
+		OutLine:  make(chan []byte, BUFSIZE),
 	}
 }
 
 // Run the FileReader
 func (proc *FileReader) Run() {
-	defer close(proc.Out)
+	defer close(proc.OutLine)
 
 	file, err := os.Open(<-proc.FilePath)
 	if err != nil {
@@ -34,7 +34,7 @@ func (proc *FileReader) Run() {
 
 	scan := bufio.NewScanner(file)
 	for scan.Scan() {
-		proc.Out <- append([]byte(nil), scan.Bytes()...)
+		proc.OutLine <- append(append([]byte(nil), scan.Bytes()...), []byte("\n")...)
 	}
 	if scan.Err() != nil {
 		log.Fatal(scan.Err())
