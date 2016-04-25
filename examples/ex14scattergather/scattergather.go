@@ -31,9 +31,11 @@ func main() {
 	// Count lines in the fasta file
 	gccnt := scipipe.Shell("gccount", "cat {i:infile} | fold -w 1 | grep '[GC]' | wc -l | awk '{ print $1 }' > {o:gccount}")
 	gccnt.SetPathFormatExtend("infile", "gccount", ".gccnt")
+	gcacc := scipipe.NewAccumulatorInt("gctot.txt")
 
 	atcnt := scipipe.Shell("atcount", "cat {i:infile} | fold -w 1 | grep '[AT]' | wc -l | awk '{ print $1 }' > {o:atcount}")
 	atcnt.SetPathFormatExtend("infile", "atcount", ".atcnt")
+	atacc := scipipe.NewAccumulatorInt("attot.txt")
 
 	merge := scipipe.NewMerger()
 
@@ -51,13 +53,16 @@ func main() {
 	gccnt.InPorts["infile"] = dupl.OutFile1
 	atcnt.InPorts["infile"] = dupl.OutFile2
 
-	merge.Ins = append(merge.Ins, gccnt.OutPorts["gccount"])
-	merge.Ins = append(merge.Ins, atcnt.OutPorts["atcount"])
+	gcacc.In = gccnt.OutPorts["gccount"]
+	atacc.In = atcnt.OutPorts["atcount"]
+
+	merge.Ins = append(merge.Ins, gcacc.Out)
+	merge.Ins = append(merge.Ins, atacc.Out)
 
 	asink.In = merge.Out
 
 	piperunner := scipipe.NewPipelineRunner()
-	piperunner.AddProcesses(wget, unzip, split, dupl, gccnt, atcnt, merge, asink)
+	piperunner.AddProcesses(wget, unzip, split, dupl, gccnt, atcnt, gcacc, atacc, merge, asink)
 
 	// ------------------------------------------------------------------------
 	// RUN PIPELINE
