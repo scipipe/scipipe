@@ -24,6 +24,10 @@ func main() {
 	linesPerSplit := 100000
 	split := scipipe.NewFileSplitter(linesPerSplit)
 
+	// Create a 2-way multiplexer that can be used to provide the same
+	// file target to two downstream processes
+	mul2x := scipipe.NewMultiplexerX2()
+
 	// Count lines in the fasta file
 	gccnt := scipipe.Shell("gccount", "cat {i:infile} | fold -w 1 | grep '[GC]' | wc -l | awk '{ print $1 }' > {o:gccount}")
 	gccnt.SetPathFormatExtend("infile", "gccount", ".gccnt")
@@ -39,7 +43,11 @@ func main() {
 
 	unzip.InPorts["gzipped"] = wget.OutPorts["chry_zipped"]
 	split.InFile = unzip.OutPorts["ungzipped"]
-	lncnt.InPorts["infile"] = split.OutSplitFile
+
+	mul2x.InFile = split.OutSplitFile
+
+	gccnt.InPorts["infile"] = mul2x.OutFile1
+	atcnt.InPorts["infile"] = mul2x.OutFile2
 
 	// Here we have to do the assignment the other way: From the sink to the
 	// upstream tasks, so that both of the upstream tasks point to the same
@@ -48,7 +56,7 @@ func main() {
 	atcnt.OutPorts["atcount"] = asink.In
 
 	piperunner := scipipe.NewPipelineRunner()
-	piperunner.AddProcesses(wget, unzip, split, lncnt, asink)
+	piperunner.AddProcesses(wget, unzip, split, mul2x, gccnt, atcnt, asink)
 
 	// ------------------------------------------------------------------------
 	// RUN PIPELINE
