@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	scipipe.InitLogAudit()
+	//scipipe.InitLogDebug()
 
 	// ------------------------------------------------------------------------
 	// INITIALIZE TASKS
@@ -26,7 +26,7 @@ func main() {
 
 	// Create a 2-way multiplexer that can be used to provide the same
 	// file target to two downstream processes
-	mul2x := scipipe.NewMultiplexerX2()
+	dupl := scipipe.NewDuplicator()
 
 	// Count lines in the fasta file
 	gccnt := scipipe.Shell("gccount", "cat {i:infile} | fold -w 1 | grep '[GC]' | wc -l | awk '{ print $1 }' > {o:gccount}")
@@ -34,6 +34,8 @@ func main() {
 
 	atcnt := scipipe.Shell("atcount", "cat {i:infile} | fold -w 1 | grep '[AT]' | wc -l | awk '{ print $1 }' > {o:atcount}")
 	atcnt.SetPathFormatExtend("infile", "atcount", ".atcnt")
+
+	merge := scipipe.NewMerger()
 
 	asink := scipipe.NewSink()
 
@@ -44,19 +46,18 @@ func main() {
 	unzip.InPorts["gzipped"] = wget.OutPorts["chry_zipped"]
 	split.InFile = unzip.OutPorts["ungzipped"]
 
-	mul2x.InFile = split.OutSplitFile
+	dupl.InFile = split.OutSplitFile
 
-	gccnt.InPorts["infile"] = mul2x.OutFile1
-	atcnt.InPorts["infile"] = mul2x.OutFile2
+	gccnt.InPorts["infile"] = dupl.OutFile1
+	atcnt.InPorts["infile"] = dupl.OutFile2
 
-	// Here we have to do the assignment the other way: From the sink to the
-	// upstream tasks, so that both of the upstream tasks point to the same
-	// downstream channel.
-	gccnt.OutPorts["gccount"] = asink.In
-	atcnt.OutPorts["atcount"] = asink.In
+	merge.Ins = append(merge.Ins, gccnt.OutPorts["gccount"])
+	merge.Ins = append(merge.Ins, atcnt.OutPorts["atcount"])
+
+	asink.In = merge.Out
 
 	piperunner := scipipe.NewPipelineRunner()
-	piperunner.AddProcesses(wget, unzip, split, mul2x, gccnt, atcnt, asink)
+	piperunner.AddProcesses(wget, unzip, split, dupl, gccnt, atcnt, merge, asink)
 
 	// ------------------------------------------------------------------------
 	// RUN PIPELINE
