@@ -19,12 +19,12 @@ func (proc *Merger) Run() {
 	var wg sync.WaitGroup
 	wg.Add(len(proc.Ins))
 	for _, ch := range proc.Ins {
-		go func() {
+		go func(ch chan *FileTarget) {
 			for ft := range ch {
 				proc.Out <- ft
 			}
 			wg.Done()
-		}()
+		}(ch)
 	}
 	wg.Wait()
 	close(proc.Out)
