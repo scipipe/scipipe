@@ -12,8 +12,8 @@ func main() {
 	// ------------------------------------------------------------------------
 
 	// Download a zipped Chromosome Y fasta file
-	fasta_url := "ftp://ftp.ensembl.org/pub/release-67/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.67.dna_rm.chromosome.Y.fa.gz"
-	wget := scipipe.Shell("wget", "wget "+fasta_url+" -O {o:chry_zipped}")
+	fastaURL := "ftp://ftp.ensembl.org/pub/release-67/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.67.dna_rm.chromosome.Y.fa.gz"
+	wget := scipipe.Shell("wget", "wget "+fastaURL+" -O {o:chry_zipped}")
 	wget.SetPathFormatStatic("chry_zipped", "chry.fa.gz")
 
 	// Ungzip the fasta file
@@ -25,8 +25,11 @@ func main() {
 	split := scipipe.NewFileSplitter(linesPerSplit)
 
 	// Count lines in the fasta file
-	lncnt := scipipe.Shell("linecount", "wc -l {i:infile} | awk '{ print $1 }' > {o:linecount}")
-	lncnt.SetPathFormatExtend("infile", "linecount", ".linecnt")
+	gccnt := scipipe.Shell("gccount", "cat {i:infile} | fold -w 1 | grep '[GC]' | wc -l | awk '{ print $1 }' > {o:gccount}")
+	gccnt.SetPathFormatExtend("infile", "gccount", ".gccnt")
+
+	atcnt := scipipe.Shell("atcount", "cat {i:infile} | fold -w 1 | grep '[AT]' | wc -l | awk '{ print $1 }' > {o:atcount}")
+	atcnt.SetPathFormatExtend("infile", "atcount", ".atcnt")
 
 	asink := scipipe.NewSink()
 
@@ -37,7 +40,12 @@ func main() {
 	unzip.InPorts["gzipped"] = wget.OutPorts["chry_zipped"]
 	split.InFile = unzip.OutPorts["ungzipped"]
 	lncnt.InPorts["infile"] = split.OutSplitFile
-	asink.In = lncnt.OutPorts["linecount"]
+
+	// Here we have to do the assignment the other way: From the sink to the
+	// upstream tasks, so that both of the upstream tasks point to the same
+	// downstream channel.
+	gccnt.OutPorts["gccount"] = asink.In
+	atcnt.OutPorts["atcount"] = asink.In
 
 	piperunner := scipipe.NewPipelineRunner()
 	piperunner.AddProcesses(wget, unzip, split, lncnt, asink)
