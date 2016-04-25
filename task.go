@@ -56,12 +56,13 @@ func (t *SciTask) GetInPath(inPort string) string {
 func (t *SciTask) Execute() {
 	defer close(t.Done)
 	if !t.anyOutputExists() && !t.fifosInOutTargetsMissing() {
+		Debug.Printf("Task:%-12s Executing task. [%s]\n", t.Name, t.Command)
 		if t.CustomExecute != nil {
-			Info.Printf("Task:%-12s Executing task.\n", t.Command)
 			t.CustomExecute(t)
 		} else {
 			t.executeCommand(t.Command)
 		}
+		Debug.Printf("Task:%-12s Atomizing targets. [%s]\n", t.Name, t.Command)
 		t.atomizeTargets()
 	}
 	Debug.Printf("Task:%s: Starting to send Done in t.Execute() ...) [%s]\n", t.Name, t.Command)
