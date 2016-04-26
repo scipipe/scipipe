@@ -31,13 +31,18 @@ func main() {
 	// Count lines in the fasta file
 	gccnt := scipipe.Shell("gccount", "cat {i:infile} | fold -w 1 | grep '[GC]' | wc -l | awk '{ print $1 }' > {o:gccount}")
 	gccnt.SetPathFormatExtend("infile", "gccount", ".gccnt")
-	gcacc := scipipe.NewAccumulatorInt("gctot.txt")
+	gccat := scipipe.NewConcatenator("gccounts.txt")
+	gcsum := scipipe.Shell("gcsum", "awk '{ SUM += $1 } END { print SUM }' {i:in} > {o:sum}")
+	gcsum.SetPathFormatExtend("in", "sum", ".sum")
 
 	atcnt := scipipe.Shell("atcount", "cat {i:infile} | fold -w 1 | grep '[AT]' | wc -l | awk '{ print $1 }' > {o:atcount}")
 	atcnt.SetPathFormatExtend("infile", "atcount", ".atcnt")
-	atacc := scipipe.NewAccumulatorInt("attot.txt")
+	atcat := scipipe.NewConcatenator("atcounts.txt")
+	atsum := scipipe.Shell("atsum", "awk '{ SUM += $1 } END { print SUM }' {i:in} > {o:sum}")
+	atsum.SetPathFormatExtend("in", "sum", ".sum")
 
-	merge := scipipe.NewMerger()
+	gcrat := scipipe.Shell("gcratio", "gc=$(cat {i:gcsum}); at=$(cat {i:atsum}); calc \"$gc/($gc+$at)\" > {o:gcratio}")
+	gcrat.SetPathFormatStatic("gcratio", "gcratio.txt")
 
 	asink := scipipe.NewSink()
 
@@ -53,16 +58,19 @@ func main() {
 	gccnt.InPorts["infile"] = dupl.OutFile1
 	atcnt.InPorts["infile"] = dupl.OutFile2
 
-	gcacc.In = gccnt.OutPorts["gccount"]
-	atacc.In = atcnt.OutPorts["atcount"]
+	gccat.In = gccnt.OutPorts["gccount"]
+	atcat.In = atcnt.OutPorts["atcount"]
 
-	merge.Ins = append(merge.Ins, gcacc.Out)
-	merge.Ins = append(merge.Ins, atacc.Out)
+	gcsum.InPorts["in"] = gccat.Out
+	atsum.InPorts["in"] = atcat.Out
 
-	asink.In = merge.Out
+	gcrat.InPorts["gcsum"] = gcsum.OutPorts["sum"]
+	gcrat.InPorts["atsum"] = atsum.OutPorts["sum"]
+
+	asink.In = gcrat.OutPorts["gcratio"]
 
 	piperunner := scipipe.NewPipelineRunner()
-	piperunner.AddProcesses(wget, unzip, split, dupl, gccnt, atcnt, gcacc, atacc, merge, asink)
+	piperunner.AddProcesses(wget, unzip, split, dupl, gccnt, atcnt, gccat, atcat, gcsum, atsum, gcrat, asink)
 
 	// ------------------------------------------------------------------------
 	// RUN PIPELINE
