@@ -12,7 +12,7 @@ func main() {
 	// ------------------------------------------------------------------------
 
 	// Download a zipped Chromosome Y fasta file
-	fastaURL := "ftp://ftp.ensembl.org/pub/release-67/fasta/homo_sapiens/dna/Homo_sapiens.GRCh37.67.dna_rm.chromosome.Y.fa.gz"
+	fastaURL := "ftp://ftp.ensembl.org/pub/release-84/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.Y.fa.gz"
 	wget := scipipe.Shell("wget", "wget "+fastaURL+" -O {o:chry_zipped}")
 	wget.SetPathFormatStatic("chry_zipped", "chry.fa.gz")
 
