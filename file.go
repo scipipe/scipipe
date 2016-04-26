@@ -52,9 +52,16 @@ func (ft *FileTarget) Open() *os.File {
 	return f
 }
 
+// Open the temp file and return a file handle (*os.File)
+func (ft *FileTarget) OpenTemp() *os.File {
+	f, err := os.Open(ft.GetTempPath())
+	Check(err)
+	return f
+}
+
 // Open the file for writing return a file handle (*os.File)
-func (ft *FileTarget) OpenWrite() *os.File {
-	f, err := os.Create(ft.GetPath())
+func (ft *FileTarget) OpenWriteTemp() *os.File {
+	f, err := os.Create(ft.GetTempPath())
 	Check(err)
 	return f
 }

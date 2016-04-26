@@ -43,19 +43,24 @@ func (proc *FileSplitter) Run() {
 		i := 1
 		splitIdx := 1
 		splitFt := newSplitFileTargetFromIndex(ft.GetPath(), splitIdx)
-		splitfile := splitFt.OpenWrite()
-		for line := range fileReader.OutLine {
-			if i < splitIdx*proc.LinesPerSplit {
-				splitfile.Write(line)
-				i++
-			} else {
-				splitfile.Close()
-				Audit.Println("FileSplitter      Created split file", splitFt.GetPath())
-				proc.OutSplitFile <- splitFt
-				splitIdx++
-				splitFt = newSplitFileTargetFromIndex(ft.GetPath(), splitIdx)
-				splitfile = splitFt.OpenWrite()
+		if !splitFt.Exists() {
+			splitfile := splitFt.OpenWriteTemp()
+			for line := range fileReader.OutLine {
+				if i < splitIdx*proc.LinesPerSplit {
+					splitfile.Write(line)
+					i++
+				} else {
+					splitfile.Close()
+					splitFt.Atomize()
+					Audit.Println("FileSplitter      Created split file", splitFt.GetPath())
+					proc.OutSplitFile <- splitFt
+					splitIdx++
+					splitFt = newSplitFileTargetFromIndex(ft.GetPath(), splitIdx)
+					splitfile = splitFt.OpenWriteTemp()
+				}
 			}
+		} else {
+			Audit.Printf("Split file already exists: %s, so skipping.\n", splitFt.GetPath())
 		}
 	}
 }
