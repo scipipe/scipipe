@@ -26,17 +26,15 @@ func NewAccumulatorInt(outPath string) *AccumulatorInt {
 func (proc *AccumulatorInt) Run() {
 	defer close(proc.Out)
 	for ft := range proc.In {
-		Audit.Println("Processing file target %s ...", ft.GetPath())
+		Audit.Printf("Accumulator:      Processing file target %s ...\n", ft.GetPath())
 		val, err := strconv.Atoi(strings.TrimSpace(string(ft.Read())))
 		Check(err)
-		fmt.Println("Got value %d ...", val)
+		Debug.Printf("Accumulator:      Got value %d ...\n", val)
 		proc.Accumulator += val
 	}
 	outFt := NewFileTarget(proc.OutPath)
-
 	outVal := fmt.Sprintf("%d", proc.Accumulator)
 	outFt.WriteTempFile([]byte(outVal))
-
 	outFt.Atomize()
 	proc.Out <- outFt
 }
