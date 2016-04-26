@@ -46,6 +46,8 @@ func (proc *FileSplitter) Run() {
 		if !splitFt.Exists() {
 			splitfile := splitFt.OpenWriteTemp()
 			for line := range fileReader.OutLine {
+				// If we have not yet reached the number of lines per split ...
+				/// ... then just continue to write ...
 				if i < splitIdx*proc.LinesPerSplit {
 					splitfile.Write(line)
 					i++
@@ -55,10 +57,15 @@ func (proc *FileSplitter) Run() {
 					Audit.Println("FileSplitter      Created split file", splitFt.GetPath())
 					proc.OutSplitFile <- splitFt
 					splitIdx++
+
 					splitFt = newSplitFileTargetFromIndex(ft.GetPath(), splitIdx)
 					splitfile = splitFt.OpenWriteTemp()
 				}
 			}
+			splitfile.Close()
+			splitFt.Atomize()
+			Audit.Println("FileSplitter      Created split file", splitFt.GetPath())
+			proc.OutSplitFile <- splitFt
 		} else {
 			Audit.Printf("Split file already exists: %s, so skipping.\n", splitFt.GetPath())
 		}
