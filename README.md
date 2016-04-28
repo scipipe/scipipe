@@ -66,17 +66,9 @@ func main() {
 	f2b := sp.Shell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	snk := sp.NewSink() // Will just receive file targets, doing nothing
 
-	// Add output file path formatters
-	fwt.PathFormatters["foo"] = func(t *sp.SciTask) string {
-		// Just a static one in this case (not using incoming file paths)
-		return "foo.txt"
-	}
-	f2b.PathFormatters["bar"] = func(t *sp.SciTask) string {
-		// Here, we instead re-use the file name of the process we depend
-		// on (which we get on the 'foo' inport), and just
-		// pad '.bar' at the end:
-		return t.GetInPath("foo") + ".bar"
-	}
+	// Add output file path formatters for the components created above
+    fwt.SetPathFormatStatic("out", "foo.txt")
+    f2b.SetPathFormatExtend("foo", "bar", ".bar")
 
 	// Connect network
 	f2b.InPorts["foo"] = fwt.OutPorts["foo"]
@@ -145,6 +137,21 @@ f2b.PathFormatters["bar"] = func(t *sp.SciTask) string {
 	// pad '.bar' at the end:
 	return f2b.GetInPath("foo") + ".bar"
 }
+```
+
+### Formatting output file paths: A nicer way
+
+Now, the above way of defining path formats is a bit verbose, isn't it?
+Luckily, there's a shorter way, by using convenience methods for doing the same
+thing. So, the above two path formats can also be defined like so, with the exact same result:
+
+```go
+// Create a static file name for the out-port 'foo':
+fwt.SetPathFormatStatic("out", "foo.txt")
+
+// For out-port 'bar', extend the file names of files on in-port 'foo', with
+// the suffix '.bar':
+f2b.SetPathFormatExtend("foo", "bar", ".bar")
 ```
 
 ### Running the pipeline
