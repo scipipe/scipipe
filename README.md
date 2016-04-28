@@ -54,20 +54,25 @@ and `{p:PARAM_NAME}` for parameters.
 1. Install Go by following in structions on [this page](https://golang.org/doc/install).
   - I typically install to a custom location (`~/go`, and use `~/code/go` for my own go-projects).
   - If you want to install (untar the go tarball) to `~/go` just like me, you should put the following in your `~/.bashrc` file:
-    ```bash
-    # Go stuff
-    export GOROOT=~/go
-    export GOPATH=~/code/go
-    export PATH=$GOROOT/bin:$PATH
-    export PATH=$GOPATH/bin:$PATH
-    ```
-2. Then, install scipipe:
+  
+  ```bash
+  # Go stuff
+  export GOROOT=~/go
+  export GOPATH=~/code/go
+  export PATH=$GOROOT/bin:$PATH
+  export PATH=$GOPATH/bin:$PATH
   ```
+  
+2. Then, install scipipe:
+  
+  ```bash
   go get github.com/samuell/scipipe
   ```
+  
 3. Now, you should be able to write code like in the examples below, in files ending with `.go`.
 4. To run a `.go` file, use `go run`:
-  ```
+  
+  ```bash
   go run myfirstworkflow.go
   ```
 
