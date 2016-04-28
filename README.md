@@ -51,9 +51,9 @@ and `{p:PARAM_NAME}` for parameters.
 
 ## Getting started: Install
 
-1. Install Go by following in structions on [this page](https://golang.org/doc/install).
-  - I typically install to a custom location (`~/go`, and use `~/code/go` for my own go-projects).
-  - If you want to install (untar the go tarball) to `~/go` just like me, you should put the following in your `~/.bashrc` file:
+1. Install Go by following instructions on [this page](https://golang.org/doc/install).
+  - I typically install to a custom location (`~/go` for the go tools, and `~/code/go` for my own go-projects).
+  - If you want to install (which means, untar the go tarball) to `~/go` just like me, you should put the following in your `~/.bashrc` file:
   
   ```bash
   # Go stuff
