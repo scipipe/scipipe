@@ -67,7 +67,7 @@ func main() {
 	snk := sp.NewSink() // Will just receive file targets, doing nothing
 
 	// Add output file path formatters for the components created above
-    fwt.SetPathFormatStatic("out", "foo.txt")
+    fwt.SetPathFormatStatic("foo", "foo.txt")
     f2b.SetPathFormatExtend("foo", "bar", ".bar")
 
 	// Connect network
@@ -85,10 +85,8 @@ And to see what it does, let's put the code in a file `test.go` and run it:
 
 ```bash
 [samuell test]$ go run test.go
-AUDIT: 2015/07/25 17:08:48 Starting process: echo 'foo' > foo.txt
-AUDIT: 2015/07/25 17:08:48 Finished process: echo 'foo' > foo.txt
-AUDIT: 2015/07/25 17:08:48 Starting process: sed 's/foo/bar/g' foo.txt > foo.txt.bar
-AUDIT: 2015/07/25 17:08:48 Finished process: sed 's/foo/bar/g' foo.txt > foo.txt.bar
+AUDIT   2016/04/28 16:04:41 Task:fooer        Executing command: echo 'foo' > foo.txt.tmp
+AUDIT   2016/04/28 16:04:41 Task:foo2bar      Executing command: sed 's/foo/bar/g' foo.txt > foo.txt.bar.tmp
 ```
 
 Now, let's go through the code above in more detail, part by part:
@@ -112,7 +110,7 @@ Connecting outports of one process to the inport of another process is then done
 respective channels to the corresponding places in the hashmap:
 
 ```go
-f2b.InPorts["foo"] = fwt.OutPorts["out"]
+f2b.InPorts["foo"] = fwt.OutPorts["foo"]
 snk.In = f2b.OutPorts["bar"]
 ```
 
@@ -127,7 +125,7 @@ the names of the outports of the processes. So, to define the output filenames o
 above, we would add:
 
 ```go
-fwt.PathFormatters["out"] = func(t *sp.SciTask) string {
+fwt.PathFormatters["foo"] = func(t *sp.SciTask) string {
 	// Just statically create a file named foo.txt
 	return "foo.txt"
 }
@@ -147,7 +145,7 @@ thing. So, the above two path formats can also be defined like so, with the exac
 
 ```go
 // Create a static file name for the out-port 'foo':
-fwt.SetPathFormatStatic("out", "foo.txt")
+fwt.SetPathFormatStatic("foo", "foo.txt")
 
 // For out-port 'bar', extend the file names of files on in-port 'foo', with
 // the suffix '.bar':
