@@ -3,8 +3,8 @@
 [![Build Status](https://travis-ci.org/samuell/scipipe.svg?branch=master)](https://travis-ci.org/samuell/scipipe)
 [![GratiPay amount](http://img.shields.io/gratipay/samuell.svg)](https://gratipay.com/samuell)
 
-An experimental library for writing Scientific Workflows in vanilla [Go(lang)](http://golang.org).
-The architecture of SciPipe is based on an flow-based like pattern in pure Go as presented in
+SciPipe is an experimental library for writing [scientific Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system) in vanilla [Go(lang)](http://golang.org).
+The architecture of SciPipe is based on an [flow-based programming](https://en.wikipedia.org/wiki/Flow-based_programming) like pattern in pure Go as presented in
 [this](http://blog.gopheracademy.com/composable-pipelines-pattern) and [this](https://blog.gopheracademy.com/advent-2015/composable-pipelines-improvements/) Gopher Academy blog posts.
 
 ## Benefits
