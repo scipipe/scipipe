@@ -211,6 +211,7 @@ deciding on what tool fits you best (in approximate order of similarity to SciPi
 - [Luigi](https://github.com/spotify/luigi)/[SciLuigi](https://github.com/samuell/sciluigi)
 - [BPipe](https://code.google.com/p/bpipe/)
 - [SnakeMake](https://bitbucket.org/johanneskoester/snakemake)
+- [Cuneiform](https://github.com/joergen7/cuneiform)
 
 ## Acknowledgements
 
