@@ -1,7 +1,7 @@
 package main
 
 import (
-	sp "github.com/samuell/scipipe"
+	sp "github.com/scipipe/scipipe"
 )
 
 func main() {

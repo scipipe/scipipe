@@ -1,6 +1,6 @@
 package main
 
-import "github.com/samuell/scipipe"
+import "github.com/scipipe/scipipe"
 
 func main() {
 	// Initialize processes

@@ -66,7 +66,7 @@ and `{p:PARAM_NAME}` for parameters.
 2. Then, install scipipe:
   
   ```bash
-  go get github.com/samuell/scipipe
+  go get github.com/scipipe/scipipe
   ```
   
 3. Now, you should be able to write code like in the examples below, in files ending with `.go`.
@@ -84,7 +84,7 @@ Let's look at a toy-example workflow. First the full version:
 package main
 
 import (
-	sp "github.com/samuell/scipipe"
+	sp "github.com/scipipe/scipipe"
 )
 
 func main() {
@@ -111,7 +111,7 @@ func main() {
 And to see what it does, let's put the code in a file `test.go` and run it:
 
 ```bash
-[samuell test]$ go run test.go
+[samuel test]$ go run test.go
 AUDIT   2016/04/28 16:04:41 Task:fooer        Executing command: echo 'foo' > foo.txt.tmp
 AUDIT   2016/04/28 16:04:41 Task:foo2bar      Executing command: sed 's/foo/bar/g' foo.txt > foo.txt.bar.tmp
 ```
@@ -200,7 +200,7 @@ In summary, what we did, was to:
 - Specify process dependencies by wiring outputs of the upstream processes to inports in downstream processes.
 - For each outport, provide a function that will compute a suitable file name for the new file.
 
-For more examples, see the [examples folder](https://github.com/samuell/scipipe/tree/master/examples).
+For more examples, see the [examples folder](https://github.com/scipipe/scipipe/tree/master/examples).
 
 ## Related tools
 

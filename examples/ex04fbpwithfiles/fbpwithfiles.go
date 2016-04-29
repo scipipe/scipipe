@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	sp "github.com/samuell/scipipe"
+	sp "github.com/scipipe/scipipe"
 	"math"
 	"runtime"
 	"strings"

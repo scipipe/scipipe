@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	sci "github.com/samuell/scipipe"
+	sci "github.com/scipipe/scipipe"
 )
 
 func main() {

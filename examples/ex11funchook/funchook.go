@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	sci "github.com/samuell/scipipe"
+	sci "github.com/scipipe/scipipe"
 )
 
 func main() {
