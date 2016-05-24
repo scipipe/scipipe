@@ -163,19 +163,36 @@ func (proc *FileQueue) Run() {
 // without doing anything with them
 type Sink struct {
 	Process
-	In chan *FileTarget
+	In      chan *FileTarget
+	InPorts map[string]chan *FileTarget
 }
 
 // Instantiate a Sink component
 func NewSink() (s *Sink) {
 	return &Sink{
-		In: make(chan *FileTarget, BUFSIZE),
+		In:      nil,
+		InPorts: make(map[string]chan *FileTarget),
 	}
 }
 
 // Execute the Sink component
 func (proc *Sink) Run() {
-	for ft := range proc.In {
-		Debug.Println("Received file in sink: ", ft.GetPath())
+	if proc.In != nil {
+		for ft := range proc.In {
+			Debug.Println("Received file in sink: ", ft.GetPath())
+		}
+	}
+
+	ok := true
+	var ft *FileTarget
+	for len(proc.InPorts) > 0 {
+		for key, ch := range proc.InPorts {
+			ft, ok = <-ch
+			if !ok {
+				delete(proc.InPorts, key)
+				continue
+			}
+			Debug.Println("Received file in sink: ", ft.GetPath())
+		}
 	}
 }
