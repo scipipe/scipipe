@@ -38,7 +38,7 @@ func NewSciTask(name string, cmdPat string, inTargets map[string]*FileTarget, ou
 		if outPortsDoStream[oname] {
 			otgt.doStream = true
 		}
-		Debug.Printf("Task:%s: Creating outTarget with path %s ... [%s]", name, cmdPat)
+		Debug.Printf("Task:%s: Creating outTarget with path %s ...\n", name, otgt.GetPath())
 		outTargets[oname] = otgt
 	}
 	t.OutTargets = outTargets

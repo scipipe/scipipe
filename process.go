@@ -282,7 +282,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 		defer close(ch)
 		for {
 			inTargets, inPortsOpen := p.receiveInputs()
-			Debug.Printf("Process.createTasks:%s Got inTargets: %s", p.Name, inTargets)
+			Debug.Printf("Process.createTasks:%s Got inTargets: %v", p.Name, inTargets)
 			params, paramPortsOpen := p.receiveParams()
 			Debug.Printf("Process.createTasks:%s Got params: %s", p.Name, params)
 			if !inPortsOpen && !paramPortsOpen {
