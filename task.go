@@ -80,11 +80,11 @@ func (t *SciTask) anyOutputExists() (anyFileExists bool) {
 		otmpPath := tgt.GetTempPath()
 		if !tgt.doStream {
 			if _, err := os.Stat(opath); err == nil {
-				Audit.Printf("Task:%-12s Output file already exists: %s, so skipping... [%s]\n", t.Name, opath, t.Command)
+				Info.Printf("Task:%-12s Output file already exists, so skipping: %s\n", t.Name, opath)
 				anyFileExists = true
 			}
 			if _, err := os.Stat(otmpPath); err == nil {
-				Warning.Printf("Task:%-12s Temporary Output file already exists: %s. Check your workflow for correctness! [%s]\n", t.Name, otmpPath, t.Command)
+				Warning.Printf("Task:%-12s Temp   file already exists, so skipping: %s (Note: If resuming form a failed run, clean up .tmp files first).\n", t.Name, otmpPath)
 				anyFileExists = true
 			}
 		}
@@ -99,7 +99,7 @@ func (t *SciTask) anyFifosExist() (anyFifosExist bool) {
 		ofifoPath := tgt.GetFifoPath()
 		if tgt.doStream {
 			if _, err := os.Stat(ofifoPath); err == nil {
-				Warning.Printf("Task:%-12s Output FIFO already exists: %s. Check your workflow for correctness! [%s]\n", t.Name, ofifoPath, t.Command)
+				Warning.Printf("Task:%-12s Output FIFO already exists, so skipping: %s (Note: If resuming form a failed run, clean up .fifo files first).\n", t.Name, ofifoPath)
 				anyFifosExist = true
 			}
 		}
