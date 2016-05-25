@@ -136,10 +136,6 @@ type FileQueue struct {
 	FilePaths []string
 }
 
-func FQ(fps ...string) (fq *FileQueue) {
-	return NewFileQueue(fps...)
-}
-
 // Initialize a new FileQueue component from a list of file paths
 func NewFileQueue(filePaths ...string) (fq *FileQueue) {
 	fq = &FileQueue{

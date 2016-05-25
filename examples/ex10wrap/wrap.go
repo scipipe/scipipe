@@ -15,7 +15,7 @@ func main() {
 	snk.In = f2b.OutBar
 
 	pl := sci.NewPipelineRunner()
-	pl.AddProcs(foo, f2b, snk)
+	pl.AddProcesses(foo, f2b, snk)
 	pl.Run()
 }
 

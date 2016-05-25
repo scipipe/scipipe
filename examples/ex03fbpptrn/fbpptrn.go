@@ -37,7 +37,7 @@ func main() {
 	zippr.In2 = upper.Out
 	prntr.In = zippr.Out
 
-	pipeline.AddProcs(hisay, split, lower, upper, zippr, prntr)
+	pipeline.AddProcesses(hisay, split, lower, upper, zippr, prntr)
 	pipeline.Run()
 }
 

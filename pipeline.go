@@ -13,20 +13,10 @@ func NewPipelineRunner() *PipelineRunner {
 	return &PipelineRunner{}
 }
 
-// Short-hand method
-func (pl *PipelineRunner) AddProc(proc Process) {
-	pl.AddProcess(proc)
-}
 func (pl *PipelineRunner) AddProcess(proc Process) {
 	pl.processes = append(pl.processes, proc)
 }
 
-// Short-hand method
-func (pl *PipelineRunner) AddProcs(procs ...Process) {
-	for _, proc := range procs {
-		pl.AddProcess(proc)
-	}
-}
 func (pl *PipelineRunner) AddProcesses(procs ...Process) {
 	for _, proc := range procs {
 		pl.AddProcess(proc)

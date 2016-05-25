@@ -19,6 +19,6 @@ func main() {
 
 	// Set up a pipeline runner and run the pipeline ...
 	pipeRunner := scipipe.NewPipelineRunner()
-	pipeRunner.AddProcs(fooWriter, fooToBarReplacer, aSink)
+	pipeRunner.AddProcesses(fooWriter, fooToBarReplacer, aSink)
 	pipeRunner.Run()
 }

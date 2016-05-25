@@ -35,7 +35,7 @@ func main() {
 	prt.InPorts["in"] = abc.OutPorts["out"]
 
 	pl := sci.NewPipelineRunner()
-	pl.AddProcs(cmb, abc, prt)
+	pl.AddProcesses(cmb, abc, prt)
 	pl.Run()
 }
 
@@ -59,9 +59,9 @@ func (proc *CombinatoricsTask) Run() {
 	defer close(proc.B)
 	defer close(proc.C)
 
-	for _, a := range sci.SS("a1", "a2", "a3") {
-		for _, b := range sci.SS("b1", "b2", "b3") {
-			for _, c := range sci.SS("c1", "c2", "c3") {
+	for _, a := range []string{"a1", "a2", "a3"} {
+		for _, b := range []string{"b1", "b2", "b3"} {
+			for _, c := range []string{"c1", "c2", "c3"} {
 				proc.A <- a
 				proc.B <- b
 				proc.C <- c

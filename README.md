@@ -103,7 +103,7 @@ func main() {
 
 	// Add to a pipeline runner and run
 	pl := sp.NewPipelineRunner()
-	pl.AddProcs(fwt, f2b, snk)
+	pl.AddProcesses(fwt, f2b, snk)
 	pl.Run()
 }
 ```
@@ -188,7 +188,7 @@ so as to block until the pipeline has finished.
 
 ```go
 pl := sci.NewPipelineRunner()
-pl.AddProcs(fwt, f2b, snk)
+pl.AddProcesses(fwt, f2b, snk)
 pl.Run()
 ```
 ### Summary

@@ -38,7 +38,7 @@ func main() {
 
 	// run pipeline
 	pl := sci.NewPipelineRunner()
-	pl.AddProcs(ls, grp, ct, snk)
+	pl.AddProcesses(ls, grp, ct, snk)
 	pl.Run()
 
 	fmt.Println("Finished program!")

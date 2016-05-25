@@ -21,15 +21,6 @@ func Check(err error) {
 	}
 }
 
-// Short-hand function to create a slice of strings
-func SS(ss ...string) []string {
-	sslice := []string{}
-	for _, s := range ss {
-		sslice = append(sslice, s)
-	}
-	return sslice
-}
-
 func copyMapStrStr(m map[string]string) (nm map[string]string) {
 	nm = make(map[string]string)
 	for k, v := range m {

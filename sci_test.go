@@ -37,7 +37,7 @@ func TestBasicRun(t *t.T) {
 	assert.IsType(t, t2.OutPorts["bar"], make(chan *FileTarget))
 
 	pl := NewPipelineRunner()
-	pl.AddProcs(t1, t2, snk)
+	pl.AddProcesses(t1, t2, snk)
 	pl.Run()
 
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
@@ -84,7 +84,7 @@ func TestProcessWithoutInputsOutputs(t *t.T) {
 	Debug.Println("Starting test TestProcessWithoutInputsOutputs")
 
 	f := "/tmp/hej.txt"
-	tsk := Shell("tsk", "echo hej > " + f)
+	tsk := Shell("tsk", "echo hej > "+f)
 	tsk.Run()
 	_, err := os.Stat(f)
 	assert.Nil(t, err, fmt.Sprintf("File is missing: %s", f))
@@ -107,7 +107,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	prt := Shell("prt", "echo {i:in} Done!")
 	prt.InPorts["in"] = tsk.OutPorts["hej"]
 	pl := NewPipelineRunner()
-	pl.AddProcs(tsk, prt)
+	pl.AddProcesses(tsk, prt)
 	pl.Run()
 
 	// Assert file DO exist after running
@@ -126,7 +126,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	tsk.PathFormatters["hej"] = func(task *SciTask) string { return f }
 	prt.InPorts["in"] = tsk.OutPorts["hej"]
 	pl = NewPipelineRunner()
-	pl.AddProcs(tsk, prt)
+	pl.AddProcesses(tsk, prt)
 	pl.Run()
 
 	// Assert exists
@@ -205,7 +205,7 @@ func TestStreaming(t *t.T) {
 
 	// Run
 	pl := NewPipelineRunner()
-	pl.AddProcs(ls, grp, snk)
+	pl.AddProcesses(ls, grp, snk)
 	pl.Run()
 
 	// Assert that a file exists
@@ -245,9 +245,9 @@ func (proc *CombinatoricsProcess) Run() {
 	defer close(proc.B)
 	defer close(proc.C)
 
-	for _, a := range SS("a1", "a2", "a3") {
-		for _, b := range SS("b1", "b2", "b3") {
-			for _, c := range SS("c1", "c2", "c3") {
+	for _, a := range []string{"a1", "a2", "a3"} {
+		for _, b := range []string{"b1", "b2", "b3"} {
+			for _, c := range []string{"c1", "c2", "c3"} {
 				proc.A <- a
 				proc.B <- b
 				proc.C <- c

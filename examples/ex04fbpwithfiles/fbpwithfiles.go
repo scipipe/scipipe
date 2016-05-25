@@ -40,7 +40,7 @@ func main() {
 
 	// Create and run pipeline
 	pl := sp.NewPipelineRunner()
-	pl.AddProcs(hisay, split, lower, upper, zippr, s2byt, filew)
+	pl.AddProcesses(hisay, split, lower, upper, zippr, s2byt, filew)
 	pl.Run()
 }
 

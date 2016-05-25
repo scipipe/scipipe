@@ -7,7 +7,7 @@ import (
 func main() {
 	sci.InitLogAudit()
 
-	fq := sci.FQ("filequeue", "hej1.txt", "hej2.txt", "hej3.txt")
+	fq := sci.NewFileQueue("hej1.txt", "hej2.txt", "hej3.txt")
 	fw := sci.Shell("filewriter", "echo {i:in} > {o:out}")
 	fw.PathFormatters["out"] = func(t *sci.SciTask) string { return t.GetInPath("in") }
 	sn := sci.NewSink()
@@ -16,7 +16,7 @@ func main() {
 	sn.In = fw.OutPorts["out"]
 
 	pl := sci.NewPipelineRunner()
-	pl.AddProcs(fq, fw, sn)
+	pl.AddProcesses(fq, fw, sn)
 
 	pl.Run()
 }

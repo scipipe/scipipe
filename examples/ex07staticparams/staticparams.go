@@ -26,7 +26,7 @@ func main() {
 
 	// Pipe it up
 	pl := sci.NewPipelineRunner()
-	pl.AddProcs(fls, abc, prt)
+	pl.AddProcesses(fls, abc, prt)
 
 	// Run
 	pl.Run()
