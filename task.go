@@ -124,8 +124,11 @@ func (t *SciTask) fifosInOutTargetsMissing() (fifosInOutTargetsMissing bool) {
 
 func (t *SciTask) executeCommand(cmd string) {
 	Audit.Printf("Task:%-12s Executing command: %s\n", t.Name, cmd)
-	_, err := exec.Command("bash", "-c", cmd).Output()
-	Check(err)
+	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
+	if err != nil {
+		Error.Println("Command failed, with output:\n", string(out))
+		os.Exit(126)
+	}
 }
 
 // Create FIFO files for all out-ports that are specified to support streaming
