@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 )
 
 // ======= FileTarget ========
@@ -183,12 +184,17 @@ func (proc *Sink) Run() {
 	var ft *FileTarget
 	for len(proc.InPorts) > 0 {
 		for key, ch := range proc.InPorts {
-			ft, ok = <-ch
-			if !ok {
-				delete(proc.InPorts, key)
-				continue
+			select {
+			case ft, ok = <-ch:
+				if !ok {
+					delete(proc.InPorts, key)
+					continue
+				}
+				Debug.Println("Received file in sink: ", ft.GetPath())
+			default:
+				Debug.Printf("No receive on inport %s, so continuing ...\n", key)
+				time.Sleep(100 * time.Millisecond)
 			}
-			Debug.Println("Received file in sink: ", ft.GetPath())
 		}
 	}
 }
