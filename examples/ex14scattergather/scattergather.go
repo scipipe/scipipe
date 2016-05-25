@@ -24,7 +24,7 @@ func main() {
 
 	// Create a 2-way multiplexer that can be used to provide the same
 	// file target to two downstream processes
-	dupl := scipipe.NewDuplicator()
+	dupl := scipipe.NewFanOut()
 
 	// Count GC & AT characters in the fasta file
 	charCountCommand := "cat {i:infile} | fold -w 1 | grep '[%s]' | wc -l | awk '{ print $1 }' > {o:%s}"
@@ -56,8 +56,8 @@ func main() {
 	unzip.InPorts["gzipped"] = wget.OutPorts["chry_zipped"]
 	split.InFile = unzip.OutPorts["ungzipped"]
 	dupl.InFile = split.OutSplitFile
-	gccnt.InPorts["infile"] = dupl.OutFile1
-	atcnt.InPorts["infile"] = dupl.OutFile2
+	gccnt.InPorts["infile"] = dupl.GetOutPort("gccnt")
+	atcnt.InPorts["infile"] = dupl.GetOutPort("atcnt")
 	gccat.In = gccnt.OutPorts["gccount"]
 	atcat.In = atcnt.OutPorts["atcount"]
 	gcsum.InPorts["in"] = gccat.Out
