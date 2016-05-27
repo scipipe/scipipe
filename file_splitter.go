@@ -8,21 +8,21 @@ import (
 
 type FileSplitter struct {
 	Process
-	InFile        chan *FileTarget
-	OutSplitFile  chan *FileTarget
+	InFile        *InPort
+	OutSplitFile  *OutPort
 	LinesPerSplit int
 }
 
 func NewFileSplitter(linesPerSplit int) *FileSplitter {
 	return &FileSplitter{
-		InFile:        make(chan *FileTarget, BUFSIZE),
-		OutSplitFile:  make(chan *FileTarget, BUFSIZE),
+		InFile:        NewInPort(),
+		OutSplitFile:  NewOutPort(),
 		LinesPerSplit: linesPerSplit,
 	}
 }
 
 func (proc *FileSplitter) Run() {
-	defer close(proc.OutSplitFile)
+	defer proc.OutSplitFile.Close()
 
 	if !LogExists {
 		InitLogAudit()
@@ -30,7 +30,7 @@ func (proc *FileSplitter) Run() {
 
 	fileReader := NewFileReader()
 
-	for ft := range proc.InFile {
+	for ft := range proc.InFile.Chan {
 		Audit.Println("FileSplitter      Now processing input file ", ft.GetPath(), "...")
 
 		go func() {
@@ -55,7 +55,7 @@ func (proc *FileSplitter) Run() {
 					splitfile.Close()
 					splitFt.Atomize()
 					Audit.Println("FileSplitter      Created split file", splitFt.GetPath())
-					proc.OutSplitFile <- splitFt
+					proc.OutSplitFile.Chan <- splitFt
 					splitIdx++
 
 					splitFt = newSplitFileTargetFromIndex(ft.GetPath(), splitIdx)
@@ -65,11 +65,16 @@ func (proc *FileSplitter) Run() {
 			splitfile.Close()
 			splitFt.Atomize()
 			Audit.Println("FileSplitter      Created split file", splitFt.GetPath())
-			proc.OutSplitFile <- splitFt
+			proc.OutSplitFile.Chan <- splitFt
 		} else {
 			Audit.Printf("Split file already exists: %s, so skipping.\n", splitFt.GetPath())
 		}
 	}
+}
+
+func (proc *FileSplitter) IsConnected() bool {
+	return proc.InFile.IsConnected() &&
+		proc.OutSplitFile.IsConnected()
 }
 
 func newSplitFileTargetFromIndex(basePath string, splitIdx int) *FileTarget {

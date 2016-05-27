@@ -58,6 +58,7 @@ func (t *SciTask) Execute() {
 	if !t.anyOutputExists() && !t.fifosInOutTargetsMissing() {
 		Debug.Printf("Task:%-12s Executing task. [%s]\n", t.Name, t.Command)
 		if t.CustomExecute != nil {
+			Audit.Printf("Task:%-12s Executing custom execution function.\n", t.Name)
 			t.CustomExecute(t)
 		} else {
 			t.executeCommand(t.Command)

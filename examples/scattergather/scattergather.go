@@ -53,18 +53,18 @@ func main() {
 
 	// === CONNECT DEPENDENCIES ===================================================================
 
-	unzip.InPorts["gzipped"] = wget.OutPorts["chry_zipped"]
-	split.InFile = unzip.OutPorts["ungzipped"]
-	dupl.InFile = split.OutSplitFile
-	gccnt.InPorts["infile"] = dupl.GetOutPort("gccnt")
-	atcnt.InPorts["infile"] = dupl.GetOutPort("atcnt")
-	gccat.In = gccnt.OutPorts["gccount"]
-	atcat.In = atcnt.OutPorts["atcount"]
-	gcsum.InPorts["in"] = gccat.Out
-	atsum.InPorts["in"] = atcat.Out
-	gcrat.InPorts["gcsum"] = gcsum.OutPorts["sum"]
-	gcrat.InPorts["atsum"] = atsum.OutPorts["sum"]
-	asink.In = gcrat.OutPorts["gcratio"]
+	unzip.InPorts["gzipped"].Connect(wget.OutPorts["chry_zipped"])
+	split.InFile.Connect(unzip.OutPorts["ungzipped"])
+	dupl.InFile.Connect(split.OutSplitFile)
+	gccnt.InPorts["infile"].Connect(dupl.GetOutPort("gccnt"))
+	atcnt.InPorts["infile"].Connect(dupl.GetOutPort("atcnt"))
+	gccat.In.Connect(gccnt.OutPorts["gccount"])
+	atcat.In.Connect(atcnt.OutPorts["atcount"])
+	gcsum.InPorts["in"].Connect(gccat.Out)
+	atsum.InPorts["in"].Connect(atcat.Out)
+	gcrat.InPorts["gcsum"].Connect(gcsum.OutPorts["sum"])
+	gcrat.InPorts["atsum"].Connect(atsum.OutPorts["sum"])
+	asink.Connect(gcrat.OutPorts["gcratio"])
 
 	// === RUN PIPELINE ===========================================================================
 

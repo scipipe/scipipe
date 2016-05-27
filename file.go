@@ -133,14 +133,14 @@ func (ft *FileTarget) Exists() bool {
 // will return instantiated FileTargets on its Out-port, when run.
 type FileQueue struct {
 	Process
-	Out       chan *FileTarget
+	Out       *OutPort
 	FilePaths []string
 }
 
 // Initialize a new FileQueue component from a list of file paths
 func NewFileQueue(filePaths ...string) (fq *FileQueue) {
 	fq = &FileQueue{
-		Out:       make(chan *FileTarget, BUFSIZE),
+		Out:       NewOutPort(),
 		FilePaths: filePaths,
 	}
 	return
@@ -148,10 +148,15 @@ func NewFileQueue(filePaths ...string) (fq *FileQueue) {
 
 // Execute the FileQueue, returning instantiated FileTargets
 func (proc *FileQueue) Run() {
-	defer close(proc.Out)
+	defer proc.Out.Close()
 	for _, fp := range proc.FilePaths {
-		proc.Out <- NewFileTarget(fp)
+		proc.Out.Chan <- NewFileTarget(fp)
 	}
+}
+
+// Check if the fileQueue outport is connected
+func (proc *FileQueue) IsConnected() bool {
+	return proc.Out.IsConnected()
 }
 
 // ======= Sink =======
@@ -160,41 +165,51 @@ func (proc *FileQueue) Run() {
 // without doing anything with them
 type Sink struct {
 	Process
-	In      chan *FileTarget
-	InPorts map[string]chan *FileTarget
+	inPorts []*InPort
 }
 
 // Instantiate a Sink component
 func NewSink() (s *Sink) {
 	return &Sink{
-		In:      nil,
-		InPorts: make(map[string]chan *FileTarget),
+		inPorts: []*InPort{},
 	}
+}
+
+func (proc *Sink) IsConnected() bool {
+	if len(proc.inPorts) > 0 {
+		return true
+	} else {
+		return false
+	}
+}
+
+func (proc *Sink) Connect(outPort *OutPort) {
+	newInPort := NewInPort()
+	newInPort.Connect(outPort)
+	proc.inPorts = append(proc.inPorts, newInPort)
 }
 
 // Execute the Sink component
 func (proc *Sink) Run() {
-	if proc.In != nil {
-		for ft := range proc.In {
-			Debug.Println("Received file in sink: ", ft.GetPath())
-		}
-	}
-
 	ok := true
 	var ft *FileTarget
-	for len(proc.InPorts) > 0 {
-		for key, ch := range proc.InPorts {
+	for len(proc.inPorts) > 0 {
+		for i, inp := range proc.inPorts {
 			select {
-			case ft, ok = <-ch:
+			case ft, ok = <-inp.Chan:
 				if !ok {
-					delete(proc.InPorts, key)
+					proc.deleteInPortAtKey(i)
 					continue
 				}
 				Debug.Println("Received file in sink: ", ft.GetPath())
 			default:
-				Debug.Printf("No receive on inport %s, so continuing ...\n", key)
+				Debug.Printf("No receive on inport %d, so continuing ...\n", i)
 				time.Sleep(100 * time.Millisecond)
 			}
 		}
 	}
+}
+
+func (proc *Sink) deleteInPortAtKey(i int) {
+	proc.inPorts = append(proc.inPorts[:i], proc.inPorts[i+1:]...)
 }

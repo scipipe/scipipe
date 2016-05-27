@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	sci.InitLogDebug()
+	sci.InitLogAudit()
 
 	runtime.GOMAXPROCS(4)
 	cmb := NewCombinatoricsTask()
@@ -29,10 +29,10 @@ func main() {
 	prt.Spawn = false
 
 	// Connection info
-	abc.ParamPorts["a"] = cmb.A
-	abc.ParamPorts["b"] = cmb.B
-	abc.ParamPorts["c"] = cmb.C
-	prt.InPorts["in"] = abc.OutPorts["out"]
+	abc.ParamPorts["a"].Connect(cmb.A)
+	abc.ParamPorts["b"].Connect(cmb.B)
+	abc.ParamPorts["c"].Connect(cmb.C)
+	prt.InPorts["in"].Connect(abc.OutPorts["out"])
 
 	pl := sci.NewPipelineRunner()
 	pl.AddProcesses(cmb, abc, prt)
@@ -41,31 +41,33 @@ func main() {
 
 type CombinatoricsTask struct {
 	sci.Process
-	A chan string
-	B chan string
-	C chan string
+	A *sci.ParamPort
+	B *sci.ParamPort
+	C *sci.ParamPort
 }
 
 func NewCombinatoricsTask() *CombinatoricsTask {
 	return &CombinatoricsTask{
-		A: make(chan string, sci.BUFSIZE),
-		B: make(chan string, sci.BUFSIZE),
-		C: make(chan string, sci.BUFSIZE),
+		A: sci.NewParamPort(),
+		B: sci.NewParamPort(),
+		C: sci.NewParamPort(),
 	}
 }
 
 func (proc *CombinatoricsTask) Run() {
-	defer close(proc.A)
-	defer close(proc.B)
-	defer close(proc.C)
+	defer proc.A.Close()
+	defer proc.B.Close()
+	defer proc.C.Close()
 
 	for _, a := range []string{"a1", "a2", "a3"} {
 		for _, b := range []string{"b1", "b2", "b3"} {
 			for _, c := range []string{"c1", "c2", "c3"} {
-				proc.A <- a
-				proc.B <- b
-				proc.C <- c
+				proc.A.Chan <- a
+				proc.B.Chan <- b
+				proc.C.Chan <- c
 			}
 		}
 	}
 }
+
+func (proc *CombinatoricsTask) IsConnected() bool { return true }

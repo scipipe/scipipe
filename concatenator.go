@@ -2,24 +2,24 @@ package scipipe
 
 type Concatenator struct {
 	Process
-	In      chan *FileTarget
-	Out     chan *FileTarget
+	In      *InPort
+	Out     *OutPort
 	OutPath string
 }
 
 func NewConcatenator(outPath string) *Concatenator {
 	return &Concatenator{
-		In:      make(chan *FileTarget, BUFSIZE),
-		Out:     make(chan *FileTarget, BUFSIZE),
+		In:      NewInPort(),
+		Out:     NewOutPort(),
 		OutPath: outPath,
 	}
 }
 
 func (proc *Concatenator) Run() {
-	defer close(proc.Out)
+	defer close(proc.Out.Chan)
 	outFt := NewFileTarget(proc.OutPath)
 	outFh := outFt.OpenWriteTemp()
-	for ft := range proc.In {
+	for ft := range proc.In.Chan {
 		fr := NewFileReader()
 		go func() {
 			defer close(fr.FilePath)
@@ -33,5 +33,18 @@ func (proc *Concatenator) Run() {
 	}
 	outFh.Close()
 	outFt.Atomize()
-	proc.Out <- outFt
+	proc.Out.Chan <- outFt
+}
+
+func (proc *Concatenator) IsConnected() bool {
+	isConnected := true
+	if !proc.In.IsConnected() {
+		Error.Println("Concatenator: Port 'In' is not connected!")
+		isConnected = false
+	}
+	if !proc.Out.IsConnected() {
+		Error.Println("Concatenator: Port 'Out' is not connected!")
+		isConnected = false
+	}
+	return isConnected
 }

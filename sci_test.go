@@ -10,6 +10,7 @@ import (
 )
 
 func initTestLogs() {
+	//InitLogDebug()
 	InitLogWarning()
 }
 
@@ -17,24 +18,24 @@ func TestBasicRun(t *t.T) {
 	initTestLogs()
 
 	t1 := Shell("t1", "echo foo > {o:foo}")
-	assert.IsType(t, t1.OutPorts["foo"], make(chan *FileTarget))
+	assert.IsType(t, t1.OutPorts["foo"], NewOutPort())
 	t1.PathFormatters["foo"] = func(t *SciTask) string {
 		return "foo.txt"
 	}
 
 	t2 := Shell("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	assert.IsType(t, t2.InPorts["foo"], make(chan *FileTarget))
-	assert.IsType(t, t2.OutPorts["bar"], make(chan *FileTarget))
+	assert.IsType(t, t2.InPorts["foo"], NewInPort())
+	assert.IsType(t, t2.OutPorts["bar"], NewOutPort())
 	t2.PathFormatters["bar"] = func(t *SciTask) string {
 		return t.GetInPath("foo") + ".bar.txt"
 	}
 	snk := NewSink()
 
-	t2.InPorts["foo"] = t1.OutPorts["foo"]
-	snk.In = t2.OutPorts["bar"]
+	t2.InPorts["foo"].Connect(t1.OutPorts["foo"])
+	snk.Connect(t2.OutPorts["bar"])
 
-	assert.IsType(t, t2.InPorts["foo"], make(chan *FileTarget))
-	assert.IsType(t, t2.OutPorts["bar"], make(chan *FileTarget))
+	assert.IsType(t, t2.InPorts["foo"], NewInPort())
+	assert.IsType(t, t2.OutPorts["bar"], NewOutPort())
 
 	pl := NewPipelineRunner()
 	pl.AddProcesses(t1, t2, snk)
@@ -63,10 +64,10 @@ func TestParameterCommand(t *t.T) {
 	prt := Shell("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in}")
 
 	// Connection info
-	abc.ParamPorts["a"] = cmb.A
-	abc.ParamPorts["b"] = cmb.B
-	abc.ParamPorts["c"] = cmb.C
-	prt.InPorts["in"] = abc.OutPorts["out"]
+	abc.ParamPorts["a"].Connect(cmb.A)
+	abc.ParamPorts["b"].Connect(cmb.B)
+	abc.ParamPorts["c"].Connect(cmb.C)
+	prt.InPorts["in"].Connect(abc.OutPorts["out"])
 
 	pl := NewPipelineRunner()
 	pl.AddProcesses(cmb, abc, prt)
@@ -102,10 +103,12 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	assert.NotNil(t, e1)
 
 	// Run pipeline a first time
-	tsk := Shell("tsk", "echo hej > {o:hej}")
-	tsk.PathFormatters["hej"] = func(task *SciTask) string { return f }
-	prt := Shell("prt", "echo {i:in} Done!")
-	prt.InPorts["in"] = tsk.OutPorts["hej"]
+	tsk := Shell("tsk", "echo hej > {o:hej1}")
+	tsk.PathFormatters["hej1"] = func(task *SciTask) string { return f }
+
+	prt := Shell("prt", "echo {i:in1} Done!")
+	prt.InPorts["in1"].Connect(tsk.OutPorts["hej1"])
+
 	pl := NewPipelineRunner()
 	pl.AddProcesses(tsk, prt)
 	pl.Run()
@@ -122,9 +125,12 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 
 	Debug.Println("Try running the same workflow again ...")
 	// Run again with different output
-	tsk = Shell("tsk", "echo hej > {o:hej}")
-	tsk.PathFormatters["hej"] = func(task *SciTask) string { return f }
-	prt.InPorts["in"] = tsk.OutPorts["hej"]
+	tsk = Shell("tsk", "echo hej > {o:hej2}")
+	tsk.PathFormatters["hej2"] = func(task *SciTask) string { return f }
+
+	prt = Shell("prt", "echo {i:in2} Done!")
+	prt.InPorts["in2"].Connect(tsk.OutPorts["hej2"])
+
 	pl = NewPipelineRunner()
 	pl.AddProcesses(tsk, prt)
 	pl.Run()
@@ -160,18 +166,19 @@ func TestSendsOrderedOutputs(t *t.T) {
 	fc.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") }
 	sl.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") + ".copy.txt" }
 
+	fc.InPorts["in"].Connect(fq.Out)
+	sl.InPorts["in"].Connect(fc.OutPorts["out"])
+	sl.OutPorts["out"].Chan = make(chan *FileTarget, BUFSIZE)
+
 	go fq.Run()
 	go fc.Run()
 	go sl.Run()
-
-	fc.InPorts["in"] = fq.Out
-	sl.InPorts["in"] = fc.OutPorts["out"]
 
 	assert.NotEmpty(t, sl.OutPorts)
 
 	var expFname string
 	i := 1
-	for ft := range sl.OutPorts["out"] {
+	for ft := range sl.OutPorts["out"].Chan {
 		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
 		assert.EqualValues(t, expFname, ft.GetPath())
 		i++
@@ -200,8 +207,8 @@ func TestStreaming(t *t.T) {
 	snk := NewSink()
 
 	// Connect
-	grp.InPorts["in"] = ls.OutPorts["lsl"]
-	snk.In = grp.OutPorts["grepped"]
+	grp.InPorts["in"].Connect(ls.OutPorts["lsl"])
+	snk.Connect(grp.OutPorts["grepped"])
 
 	// Run
 	pl := NewPipelineRunner()
@@ -227,34 +234,36 @@ func TestStreaming(t *t.T) {
 
 type CombinatoricsProcess struct {
 	Process
-	A chan string
-	B chan string
-	C chan string
+	A *ParamPort
+	B *ParamPort
+	C *ParamPort
 }
 
 func NewCombinatoricsProcess() *CombinatoricsProcess {
 	return &CombinatoricsProcess{
-		A: make(chan string, BUFSIZE),
-		B: make(chan string, BUFSIZE),
-		C: make(chan string, BUFSIZE),
+		A: NewParamPort(),
+		B: NewParamPort(),
+		C: NewParamPort(),
 	}
 }
 
 func (proc *CombinatoricsProcess) Run() {
-	defer close(proc.A)
-	defer close(proc.B)
-	defer close(proc.C)
+	defer proc.A.Close()
+	defer proc.B.Close()
+	defer proc.C.Close()
 
 	for _, a := range []string{"a1", "a2", "a3"} {
 		for _, b := range []string{"b1", "b2", "b3"} {
 			for _, c := range []string{"c1", "c2", "c3"} {
-				proc.A <- a
-				proc.B <- b
-				proc.C <- c
+				proc.A.Chan <- a
+				proc.B.Chan <- b
+				proc.C.Chan <- c
 			}
 		}
 	}
 }
+
+func (proc *CombinatoricsProcess) IsConnected() bool { return true }
 
 // Helper functions
 func cleanFiles(fileNames ...string) {

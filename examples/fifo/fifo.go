@@ -32,9 +32,9 @@ func main() {
 	snk := sci.NewSink()
 
 	// connect network
-	grp.InPorts["in"] = ls.OutPorts["lsl"]
-	ct.InPorts["in"] = grp.OutPorts["grep"]
-	snk.In = ct.OutPorts["out"]
+	grp.InPorts["in"].Connect(ls.OutPorts["lsl"])
+	ct.InPorts["in"].Connect(grp.OutPorts["grep"])
+	snk.Connect(ct.OutPorts["out"])
 
 	// run pipeline
 	pl := sci.NewPipelineRunner()

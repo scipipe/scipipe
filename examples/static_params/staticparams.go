@@ -21,8 +21,8 @@ func main() {
 	prt := sci.Shell("prt", "echo {i:in} >> log.txt")
 
 	// Connect
-	abc.InPorts["in"] = fls.Out
-	prt.InPorts["in"] = abc.OutPorts["out"]
+	abc.InPorts["in"].Connect(fls.Out)
+	prt.InPorts["in"].Connect(abc.OutPorts["out"])
 
 	// Pipe it up
 	pl := sci.NewPipelineRunner()
@@ -38,18 +38,22 @@ func main() {
 
 type FileSender struct {
 	sci.Process
-	Out chan *sci.FileTarget
+	Out *sci.OutPort
 }
 
 func NewFileSender() *FileSender {
 	return &FileSender{
-		Out: make(chan *sci.FileTarget, sci.BUFSIZE),
+		Out: sci.NewOutPort(),
 	}
 }
 
 func (proc *FileSender) Run() {
-	defer close(proc.Out)
+	defer proc.Out.Close()
 	for _, fn := range []string{"file1.txt", "file2.txt", "file3.txt"} {
-		proc.Out <- sci.NewFileTarget(fn)
+		proc.Out.Chan <- sci.NewFileTarget(fn)
 	}
+}
+
+func (proc *FileSender) IsConnected() bool {
+	return proc.Out.IsConnected()
 }

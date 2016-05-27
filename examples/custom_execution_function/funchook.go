@@ -6,14 +6,14 @@ import (
 )
 
 func main() {
-	sci.InitLogInfo()
+	sci.InitLogAudit()
 
 	foo := NewFooer()
 	f2b := NewFoo2Barer()
 	snk := sci.NewSink()
 
-	f2b.InFoo = foo.OutFoo
-	snk.In = f2b.OutBar
+	sci.ConnectFwd(foo.OutFoo, f2b.InFoo)
+	snk.Connect(f2b.OutBar)
 
 	pl := sci.NewPipelineRunner()
 	pl.AddProcesses(foo, f2b, snk)
@@ -28,7 +28,7 @@ func main() {
 
 type Fooer struct {
 	InnerProcess *sci.SciProcess
-	OutFoo       chan *sci.FileTarget
+	OutFoo       *sci.OutPort
 }
 
 func NewFooer() *Fooer {
@@ -44,7 +44,7 @@ func NewFooer() *Fooer {
 	// Connect the ports of the outer task to the inner, generic one
 	fooer := &Fooer{
 		InnerProcess: innerFoo,
-		OutFoo:       innerFoo.OutPorts["foo"],
+		OutFoo:       sci.NewOutPort(),
 	}
 	return fooer
 }
@@ -57,12 +57,16 @@ func (p *Fooer) Run() {
 	p.InnerProcess.Run()
 }
 
+func (p *Fooer) IsConnected() bool {
+	return p.OutFoo.IsConnected()
+}
+
 // Foo2Barer
 
 type Foo2Barer struct {
 	InnerProcess *sci.SciProcess
-	InFoo        chan *sci.FileTarget
-	OutBar       chan *sci.FileTarget
+	InFoo        *sci.InPort
+	OutBar       *sci.OutPort
 }
 
 func NewFoo2Barer() *Foo2Barer {
@@ -79,8 +83,8 @@ func NewFoo2Barer() *Foo2Barer {
 	// Connect the ports of the outer task to the inner, generic one
 	return &Foo2Barer{
 		InnerProcess: innerProc,
-		InFoo:        innerProc.InPorts["foo"],
-		OutBar:       innerProc.OutPorts["bar"],
+		InFoo:        sci.NewInPort(),
+		OutBar:       sci.NewOutPort(),
 	}
 }
 
@@ -91,4 +95,9 @@ func (p *Foo2Barer) Run() {
 	p.InnerProcess.OutPorts["bar"] = p.OutBar
 	// Run the inner process
 	p.InnerProcess.Run()
+}
+
+func (p *Foo2Barer) IsConnected() bool {
+	return p.InFoo.IsConnected() &&
+		p.OutBar.IsConnected()
 }

@@ -41,6 +41,18 @@ func main() {
 	pipeline.Run()
 }
 
+type StringInPort struct {
+	sci.InPort
+	Connected bool
+	Chan      chan string
+}
+
+type StringOutPort struct {
+	sci.InPort
+	Connected bool
+	Chan      chan string
+}
+
 // ======= HiSayer =======
 
 type hiSayer struct {
@@ -53,10 +65,12 @@ func NewHiSayer() *hiSayer {
 
 func (proc *hiSayer) Run() {
 	defer close(proc.Out)
-	for i := 1; i <= 1e6; i++ {
+	for i := 1; i <= 1e3; i++ {
 		proc.Out <- fmt.Sprintf("Hi for the %d:th time!", i)
 	}
 }
+
+func (proc *hiSayer) IsConnected() bool { return true }
 
 // ======= StringSplitter =======
 
@@ -83,6 +97,8 @@ func (proc *stringSplitter) Run() {
 	}
 }
 
+func (proc *stringSplitter) IsConnected() bool { return true }
+
 // ======= LowerCaser =======
 
 type lowerCaser struct {
@@ -101,6 +117,8 @@ func (proc *lowerCaser) Run() {
 	}
 }
 
+func (proc *lowerCaser) IsConnected() bool { return true }
+
 // ======= UpperCaser =======
 
 type upperCaser struct {
@@ -118,6 +136,8 @@ func (proc *upperCaser) Run() {
 		proc.Out <- strings.ToUpper(s)
 	}
 }
+
+func (proc *upperCaser) IsConnected() bool { return true }
 
 // ======= Merger =======
 
@@ -143,6 +163,8 @@ func (proc *zipper) Run() {
 	}
 }
 
+func (proc *zipper) IsConnected() bool { return true }
+
 // ======= Printer =======
 
 type printer struct {
@@ -158,3 +180,5 @@ func (proc *printer) Run() {
 		fmt.Println(s)
 	}
 }
+
+func (proc *printer) IsConnected() bool { return true }

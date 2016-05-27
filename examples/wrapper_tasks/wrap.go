@@ -5,14 +5,14 @@ import (
 )
 
 func main() {
-	sci.InitLogInfo()
+	sci.InitLogDebug()
 
 	foo := NewFooer()
 	f2b := NewFoo2Barer()
 	snk := sci.NewSink()
 
-	f2b.InFoo = foo.OutFoo
-	snk.In = f2b.OutBar
+	f2b.InFoo.Connect(foo.OutFoo)
+	snk.Connect(f2b.OutBar)
 
 	pl := sci.NewPipelineRunner()
 	pl.AddProcesses(foo, f2b, snk)
@@ -27,7 +27,7 @@ func main() {
 
 type Fooer struct {
 	InnerProc *sci.SciProcess
-	OutFoo    chan *sci.FileTarget
+	OutFoo    *sci.OutPort
 }
 
 func NewFooer() *Fooer {
@@ -35,7 +35,7 @@ func NewFooer() *Fooer {
 	innerFoo.SetPathFormatStatic("foo", "foo.txt")
 	return &Fooer{
 		InnerProc: innerFoo,
-		OutFoo:    innerFoo.OutPorts["foo"],
+		OutFoo:    sci.NewOutPort(),
 	}
 }
 
@@ -44,12 +44,16 @@ func (p *Fooer) Run() {
 	p.InnerProc.Run()
 }
 
+func (p *Fooer) IsConnected() bool {
+	return p.OutFoo.IsConnected()
+}
+
 // Foo2Barer
 
 type Foo2Barer struct {
 	InnerProc *sci.SciProcess
-	InFoo     chan *sci.FileTarget
-	OutBar    chan *sci.FileTarget
+	InFoo     *sci.InPort
+	OutBar    *sci.OutPort
 }
 
 func NewFoo2Barer() *Foo2Barer {
@@ -57,8 +61,8 @@ func NewFoo2Barer() *Foo2Barer {
 	innerFoo2Bar.SetPathFormatExtend("foo", "bar", ".bar.txt")
 	return &Foo2Barer{
 		InnerProc: innerFoo2Bar,
-		InFoo:     innerFoo2Bar.InPorts["foo"],
-		OutBar:    innerFoo2Bar.OutPorts["bar"],
+		InFoo:     sci.NewInPort(),
+		OutBar:    sci.NewOutPort(),
 	}
 }
 
@@ -66,4 +70,9 @@ func (p *Foo2Barer) Run() {
 	p.InnerProc.InPorts["foo"] = p.InFoo
 	p.InnerProc.OutPorts["bar"] = p.OutBar
 	p.InnerProc.Run()
+}
+
+func (p *Foo2Barer) IsConnected() bool {
+	return p.InFoo.IsConnected() &&
+		p.OutBar.IsConnected()
 }

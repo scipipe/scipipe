@@ -5,27 +5,25 @@ import (
 )
 
 type Merger struct {
-	Ins [](chan *FileTarget)
-	Out chan *FileTarget
+	Ins [](*InPort)
+	Out *OutPort
 }
 
 func NewMerger() *Merger {
-	return &Merger{
-		Out: make(chan *FileTarget, BUFSIZE),
-	}
+	return &Merger{}
 }
 
 func (proc *Merger) Run() {
 	var wg sync.WaitGroup
 	wg.Add(len(proc.Ins))
-	for _, ch := range proc.Ins {
+	for _, inp := range proc.Ins {
 		go func(ch chan *FileTarget) {
 			for ft := range ch {
-				proc.Out <- ft
+				proc.Out.Chan <- ft
 			}
 			wg.Done()
-		}(ch)
+		}(inp.Chan)
 	}
 	wg.Wait()
-	close(proc.Out)
+	proc.Out.Close()
 }

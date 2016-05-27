@@ -44,3 +44,5 @@ func (proc *FileWriter) Run() {
 	}
 	w.Flush()
 }
+
+func (proc *FileWriter) IsConnected() bool { return true }

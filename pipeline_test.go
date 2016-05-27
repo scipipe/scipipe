@@ -67,3 +67,7 @@ func NewBogusProcess() *BogusProcess {
 func (p *BogusProcess) Run() {
 	p.WasRun = true
 }
+
+func (p *BogusProcess) IsConnected() bool {
+	return true
+}

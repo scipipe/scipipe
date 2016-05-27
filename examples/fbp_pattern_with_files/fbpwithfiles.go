@@ -25,7 +25,7 @@ func main() {
 	lower := NewLowerCaser()
 	upper := NewUpperCaser()
 	zippr := NewZipper()
-	s2byt := sp.NewStrToByte()
+	s2byt := NewStrToByte()
 	filew := sp.NewFileWriterFromPath("out2.txt")
 	// prntr := NewPrinter(pl)
 
@@ -62,6 +62,8 @@ func (proc *hiSayer) Run() {
 	}
 }
 
+func (proc *hiSayer) IsConnected() bool { return true }
+
 // ======= StringSplitter =======
 
 type stringSplitter struct {
@@ -88,6 +90,8 @@ func (proc *stringSplitter) Run() {
 	}
 }
 
+func (proc *stringSplitter) IsConnected() bool { return true }
+
 // ======= LowerCaser =======
 
 type lowerCaser struct {
@@ -107,6 +111,8 @@ func (proc *lowerCaser) Run() {
 	}
 }
 
+func (proc *lowerCaser) IsConnected() bool { return true }
+
 // ======= UpperCaser =======
 
 type upperCaser struct {
@@ -125,6 +131,8 @@ func (proc *upperCaser) Run() {
 		proc.Out <- strings.ToUpper(s)
 	}
 }
+
+func (proc *upperCaser) IsConnected() bool { return true }
 
 // ======= Merger =======
 
@@ -151,6 +159,8 @@ func (proc *zipper) Run() {
 	}
 }
 
+func (proc *zipper) IsConnected() bool { return true }
+
 // ======= Printer =======
 
 type printer struct {
@@ -168,8 +178,27 @@ func (proc *printer) Run() {
 	}
 }
 
-// ======= process interface =======
+func (proc *printer) IsConnected() bool { return true }
 
-type process interface {
-	Run()
+// ======= StrToByte =======
+
+type strToByte struct {
+	In  chan string
+	Out chan []byte
 }
+
+func NewStrToByte() *strToByte {
+	return &strToByte{
+		In:  make(chan string, BUFSIZE),
+		Out: make(chan []byte, BUFSIZE),
+	}
+}
+
+func (proc *strToByte) Run() {
+	defer close(proc.Out)
+	for line := range proc.In {
+		proc.Out <- []byte(line)
+	}
+}
+
+func (proc *strToByte) IsConnected() bool { return true }

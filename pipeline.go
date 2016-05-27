@@ -2,6 +2,7 @@ package scipipe
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 )
 
@@ -30,14 +31,28 @@ func (pl *PipelineRunner) PrintProcesses() {
 }
 
 func (pl *PipelineRunner) Run() {
-	for i, proc := range pl.processes {
-		Debug.Printf("PipelineRunner: Looping over process %d: %v ...\n", i, proc)
-		if i < len(pl.processes)-1 {
-			Debug.Printf("PipelineRunner: Starting process %d in new go-routine: %v\n", i, proc)
-			go proc.Run()
-		} else {
-			Debug.Printf("PipelineRunner: Starting process %d: in main go-routine: %v\n", i, proc)
-			proc.Run()
+	if !LogExists {
+		InitLogAudit()
+	}
+	everythingConnected := true
+	for _, proc := range pl.processes {
+		if !proc.IsConnected() {
+			everythingConnected = false
+		}
+	}
+	if !everythingConnected {
+		Error.Println("PipelineRunner: Pipeline shutting down, since not all ports are connected!")
+		os.Exit(128)
+	} else {
+		for i, proc := range pl.processes {
+			Debug.Printf("PipelineRunner: Looping over process %d: %v ...\n", i, proc)
+			if i < len(pl.processes)-1 {
+				Debug.Printf("PipelineRunner: Starting process %d in new go-routine: %v\n", i, proc)
+				go proc.Run()
+			} else {
+				Debug.Printf("PipelineRunner: Starting process %d: in main go-routine: %v\n", i, proc)
+				proc.Run()
+			}
 		}
 	}
 }

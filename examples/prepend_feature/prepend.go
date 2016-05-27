@@ -5,12 +5,15 @@ import (
 )
 
 func main() {
-	sp.InitLogWarning()
+	sp.InitLogAudit()
 
 	p := sp.Shell("ls", "ls -l > {o:out}")
 	p.PathFormatters["out"] = func(p *sp.SciTask) string {
 		return "hej.txt"
 	}
 	p.Prepend = "echo"
-	p.Run()
+	snk := sp.NewSink()
+	snk.Connect(p.OutPorts["out"])
+	go p.Run()
+	snk.Run()
 }

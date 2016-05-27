@@ -8,24 +8,22 @@ import (
 
 type AccumulatorInt struct {
 	Process
-	In          chan *FileTarget
-	Out         chan *FileTarget
+	In          *InPort
+	Out         *OutPort
 	Accumulator int
 	OutPath     string
 }
 
 func NewAccumulatorInt(outPath string) *AccumulatorInt {
 	return &AccumulatorInt{
-		In:          make(chan *FileTarget, BUFSIZE),
-		Out:         make(chan *FileTarget, BUFSIZE),
 		Accumulator: 0,
 		OutPath:     outPath,
 	}
 }
 
 func (proc *AccumulatorInt) Run() {
-	defer close(proc.Out)
-	for ft := range proc.In {
+	defer close(proc.Out.Chan)
+	for ft := range proc.In.Chan {
 		Audit.Printf("Accumulator:      Processing file target %s ...\n", ft.GetPath())
 		val, err := strconv.Atoi(strings.TrimSpace(string(ft.Read())))
 		Check(err)
@@ -36,5 +34,5 @@ func (proc *AccumulatorInt) Run() {
 	outVal := fmt.Sprintf("%d", proc.Accumulator)
 	outFt.WriteTempFile([]byte(outVal))
 	outFt.Atomize()
-	proc.Out <- outFt
+	proc.Out.Chan <- outFt
 }
