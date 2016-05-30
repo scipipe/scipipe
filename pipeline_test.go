@@ -35,6 +35,26 @@ func TestRunProcessesInPipelineRunner(t *t.T) {
 	assert.True(t, proc2.WasRun, "Process 2 was not run!")
 }
 
+func ExamplePrintProcesses() {
+	proc1 := NewBogusProcess()
+	proc2 := NewBogusProcess()
+
+	pipeline := NewPipelineRunner()
+	pipeline.AddProcesses(proc1, proc2)
+	pipeline.Run()
+
+	pipeline.PrintProcesses()
+	// Output:
+	// Process 0: *scipipe.BogusProcess
+	// Process 1: *scipipe.BogusProcess
+}
+
+// --------------------------------
+// Helper stuff
+// --------------------------------
+
+// A process with does just satisfy the Process interface, without doing any
+// actual work.
 type BogusProcess struct {
 	Process
 	WasRun bool
