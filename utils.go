@@ -24,14 +24,6 @@ func Check(err error) {
 	}
 }
 
-func copyMapStrStr(m map[string]string) (nm map[string]string) {
-	nm = make(map[string]string)
-	for k, v := range m {
-		nm[k] = v
-	}
-	return nm
-}
-
 // Return the regular expression used to parse the place-holder syntax for in-, out- and
 // parameter ports, that can be used to instantiate a SciProcess.
 func getShellCommandPlaceHolderRegex() *re.Regexp {
