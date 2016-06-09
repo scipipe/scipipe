@@ -98,8 +98,8 @@ func main() {
     f2b.SetPathExtend("foo", "bar", ".bar")
 
 	// Connect network
-	f2b.InPorts["foo"].Connect(fwt.OutPorts["foo"])
-	snk.Connect(f2b.OutPorts["bar"])
+	f2b.In["foo"].Connect(fwt.Out["foo"])
+	snk.Connect(f2b.Out["bar"])
 
 	// Add to a pipeline runner and run
 	pl := sp.NewPipelineRunner()
@@ -127,7 +127,7 @@ snk := sci.NewSink() // Will just receive file targets, doing nothing
 ```
 
 For these inports and outports, channels for sending and receiving FileTargets are automatically
-created and put in a hashmap added as a struct field of the process, named `InPorts` and `OutPorts` repectively,
+created and put in a hashmap added as a struct field of the process, named `In` and `Out` repectively,
 Eash channel is added to the hashmap with its inport/outport name as key in the hashmap,
 so that the channel can be retrieved from the hashmap using the in/outport name.
 
@@ -138,8 +138,8 @@ done with the `Connect` method available on each port object. Sink objects have
 a `Connect` method too:
 
 ```go
-f2b.InPorts["foo"].Connect(fwt.OutPorts["foo"])
-snk.Connect(f2b.OutPorts["bar"])
+f2b.In["foo"].Connect(fwt.Out["foo"])
+snk.Connect(f2b.Out["bar"])
 ```
 
 (Note that the sink has just one inport, as a static struct field).

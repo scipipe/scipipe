@@ -12,8 +12,8 @@ func main() {
 	fw.PathFormatters["out"] = func(t *sci.SciTask) string { return t.GetInPath("in") }
 	sn := sci.NewSink()
 
-	fw.InPorts["in"].Connect(fq.Out)
-	sn.Connect(fw.OutPorts["out"])
+	fw.In["in"].Connect(fq.Out)
+	sn.Connect(fw.Out["out"])
 
 	pl := sci.NewPipelineRunner()
 	pl.AddProcesses(fq, fw, sn)

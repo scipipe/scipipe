@@ -21,8 +21,8 @@ type SciProcess struct {
 	CommandPattern   string
 	Prepend          string
 	Spawn            bool
-	InPorts          map[string]*InPort
-	OutPorts         map[string]*OutPort
+	In               map[string]*InPort
+	Out              map[string]*OutPort
 	OutPortsDoStream map[string]bool
 	PathFormatters   map[string]func(*SciTask) string
 	ParamPorts       map[string]*ParamPort
@@ -33,8 +33,8 @@ func NewSciProcess(name string, command string) *SciProcess {
 	return &SciProcess{
 		Name:             name,
 		CommandPattern:   command,
-		InPorts:          make(map[string]*InPort),
-		OutPorts:         make(map[string]*OutPort),
+		In:               make(map[string]*InPort),
+		Out:              make(map[string]*OutPort),
 		OutPortsDoStream: make(map[string]bool),
 		PathFormatters:   make(map[string]func(*SciTask) string),
 		ParamPorts:       make(map[string]*ParamPort),
@@ -160,7 +160,7 @@ func (p *SciProcess) initPortsFromCmdPattern(cmd string, params map[string]strin
 		typ := m[1]
 		name := m[2]
 		if typ == "o" || typ == "os" {
-			p.OutPorts[name] = NewOutPort()
+			p.Out[name] = NewOutPort()
 			if typ == "os" {
 				p.OutPortsDoStream[name] = true
 			}
@@ -170,7 +170,7 @@ func (p *SciProcess) initPortsFromCmdPattern(cmd string, params map[string]strin
 			// It might be nice to have it init'ed with a channel
 			// anyways, for use cases when we want to send FileTargets
 			// on the inport manually.
-			p.InPorts[name] = NewInPort()
+			p.In[name] = NewInPort()
 		} else if typ == "p" {
 			if params == nil || params[name] == "" {
 				p.ParamPorts[name] = NewParamPort()
@@ -182,13 +182,13 @@ func (p *SciProcess) initPortsFromCmdPattern(cmd string, params map[string]strin
 // ------- Sanity checks -------
 func (proc *SciProcess) IsConnected() (isConnected bool) {
 	isConnected = true
-	for portName, port := range proc.InPorts {
+	for portName, port := range proc.In {
 		if !port.IsConnected() {
 			Error.Printf("InPort %s of process %s is not connected - check your workflow code!\n", portName, proc.Name)
 			isConnected = false
 		}
 	}
-	for portName, port := range proc.OutPorts {
+	for portName, port := range proc.Out {
 		if !port.IsConnected() {
 			Error.Printf("OutPort %s of process %s is not connected - check your workflow code!\n", portName, proc.Name)
 			isConnected = false
@@ -232,7 +232,7 @@ func (p *SciProcess) Run() {
 		for oname, otgt := range t.OutTargets {
 			if otgt.doStream {
 				Debug.Printf("Process %s: Sending FIFO target on outport '%s' for task [%s] ...\n", p.Name, oname, t.Command)
-				p.OutPorts[oname].Chan <- otgt
+				p.Out[oname].Chan <- otgt
 			}
 		}
 
@@ -259,7 +259,7 @@ func (p *SciProcess) Run() {
 		for oname, otgt := range t.OutTargets {
 			if !otgt.doStream {
 				Debug.Printf("Process %s: Sending target on outport %s, for task [%s] ...\n", p.Name, oname, t.Command)
-				p.OutPorts[oname].Chan <- otgt
+				p.Out[oname].Chan <- otgt
 				Debug.Printf("Process %s: Done sending target on outport %s, for task [%s] ...\n", p.Name, oname, t.Command)
 			}
 		}
@@ -272,7 +272,7 @@ func (p *SciProcess) receiveInputs() (inTargets map[string]*FileTarget, inPortsO
 	inPortsOpen = true
 	inTargets = make(map[string]*FileTarget)
 	// Read input targets on in-ports and set up path mappings
-	for inpName, inPort := range p.InPorts {
+	for inpName, inPort := range p.In {
 		Debug.Printf("Process %s: Receieving on inPort %s ...", p.Name, inpName)
 		inTarget, open := <-inPort.Chan
 		if !open {
@@ -314,7 +314,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 				Debug.Printf("Process.createTasks:%s Breaking: Both inPorts and paramPorts closed", p.Name)
 				break
 			}
-			if len(p.InPorts) == 0 && !paramPortsOpen {
+			if len(p.In) == 0 && !paramPortsOpen {
 				Debug.Printf("Process.createTasks:%s Breaking: No inports, and params closed", p.Name)
 				break
 			}
@@ -327,7 +327,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 				t.CustomExecute = p.CustomExecute
 			}
 			ch <- t
-			if len(p.InPorts) == 0 && len(p.ParamPorts) == 0 {
+			if len(p.In) == 0 && len(p.ParamPorts) == 0 {
 				Debug.Printf("Process.createTasks:%s Breaking: No inports nor params", p.Name)
 				break
 			}
@@ -337,7 +337,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 }
 
 func (p *SciProcess) closeOutPorts() {
-	for oname, oport := range p.OutPorts {
+	for oname, oport := range p.Out {
 		Debug.Printf("Process %s: Closing port %s ...\n", p.Name, oname)
 		oport.Close()
 	}

@@ -11,11 +11,11 @@ func TestNewFromShell(t *testing.T) {
 	}
 
 	p2 := NewFromShell("cat", "cat {i:infile} > {o:outfile}")
-	if p2.InPorts["infile"] == nil {
-		t.Error(`p.OutPorts["infile"] = nil. want: not nil`)
+	if p2.In["infile"] == nil {
+		t.Error(`p.Out["infile"] = nil. want: not nil`)
 	}
-	if p2.OutPorts["outfile"] == nil {
-		t.Error(`p.OutPorts["outfile"] = nil. want: not nil`)
+	if p2.Out["outfile"] == nil {
+		t.Error(`p.Out["outfile"] = nil. want: not nil`)
 	}
 }
 

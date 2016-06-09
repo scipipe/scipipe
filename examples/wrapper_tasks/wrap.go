@@ -40,7 +40,7 @@ func NewFooer() *Fooer {
 }
 
 func (p *Fooer) Run() {
-	p.InnerProc.OutPorts["foo"] = p.OutFoo
+	p.InnerProc.Out["foo"] = p.OutFoo
 	p.InnerProc.Run()
 }
 
@@ -67,8 +67,8 @@ func NewFoo2Barer() *Foo2Barer {
 }
 
 func (p *Foo2Barer) Run() {
-	p.InnerProc.InPorts["foo"] = p.InFoo
-	p.InnerProc.OutPorts["bar"] = p.OutBar
+	p.InnerProc.In["foo"] = p.InFoo
+	p.InnerProc.Out["bar"] = p.OutBar
 	p.InnerProc.Run()
 }
 

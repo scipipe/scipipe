@@ -32,7 +32,7 @@ func main() {
 	abc.ParamPorts["a"].Connect(cmb.A)
 	abc.ParamPorts["b"].Connect(cmb.B)
 	abc.ParamPorts["c"].Connect(cmb.C)
-	prt.InPorts["in"].Connect(abc.OutPorts["out"])
+	prt.In["in"].Connect(abc.Out["out"])
 
 	pl := sci.NewPipelineRunner()
 	pl.AddProcesses(cmb, abc, prt)

@@ -13,7 +13,7 @@ func main() {
 	}
 	p.Prepend = "echo"
 	snk := sp.NewSink()
-	snk.Connect(p.OutPorts["out"])
+	snk.Connect(p.Out["out"])
 	go p.Run()
 	snk.Run()
 }
