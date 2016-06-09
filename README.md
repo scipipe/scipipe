@@ -98,8 +98,8 @@ func main() {
     f2b.SetPathFormatExtend("foo", "bar", ".bar")
 
 	// Connect network
-	f2b.InPorts["foo"] = fwt.OutPorts["foo"]
-	snk.In = f2b.OutPorts["bar"]
+	f2b.InPorts["foo"].Connect(fwt.OutPorts["foo"])
+	snk.Connect(f2b.OutPorts["bar"])
 
 	// Add to a pipeline runner and run
 	pl := sp.NewPipelineRunner()
@@ -133,12 +133,13 @@ so that the channel can be retrieved from the hashmap using the in/outport name.
 
 ### Connecting processes into a network
 
-Connecting outports of one process to the inport of another process is then done by assigning the
-respective channels to the corresponding places in the hashmap:
+Connecting outports of one process to the inport of another process is then
+done with the `Connect` method available on each port object. Sink objects have
+a `Connect` method too:
 
 ```go
-f2b.InPorts["foo"] = fwt.OutPorts["foo"]
-snk.In = f2b.OutPorts["bar"]
+f2b.InPorts["foo"].Connect(fwt.OutPorts["foo"])
+snk.Connect(f2b.OutPorts["bar"])
 ```
 
 (Note that the sink has just one inport, as a static struct field).
