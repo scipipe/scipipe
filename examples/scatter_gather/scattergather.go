@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	sp "github.com/scipipe/scipipe"
-	sputils "github.com/scipipe/scipipe/scipipeutils"
+	"github.com/scipipe/scipipe/proclib"
 )
 
 func main() {
@@ -21,11 +21,11 @@ func main() {
 
 	// Split the fasta file in to parts with 100000 lines in each
 	linesPerSplit := 100000
-	split := sputils.NewFileSplitter(linesPerSplit)
+	split := proclib.NewFileSplitter(linesPerSplit)
 
 	// Create a 2-way multiplexer that can be used to provide the same
 	// file target to two downstream processes
-	dupl := sputils.NewFanOut()
+	dupl := proclib.NewFanOut()
 
 	// Count GC & AT characters in the fasta file
 	charCountCommand := "cat {i:infile} | fold -w 1 | grep '[%s]' | wc -l | awk '{ print $1 }' > {o:%s}"
@@ -35,8 +35,8 @@ func main() {
 	atcnt.SetPathFormatExtend("infile", "atcount", ".atcnt")
 
 	// Concatenate GC & AT counts
-	gccat := sputils.NewConcatenator("gccounts.txt")
-	atcat := sputils.NewConcatenator("atcounts.txt")
+	gccat := proclib.NewConcatenator("gccounts.txt")
+	atcat := proclib.NewConcatenator("atcounts.txt")
 
 	// Sum up the GC & AT counts on the concatenated file
 	sumCommand := "awk '{ SUM += $1 } END { print SUM }' {i:in} > {o:sum}"

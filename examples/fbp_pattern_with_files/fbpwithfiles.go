@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	sp "github.com/scipipe/scipipe"
-	sputils "github.com/scipipe/scipipe/scipipeutils"
+	"github.com/scipipe/scipipe/proclib"
 	"math"
 	"runtime"
 	"strings"
@@ -27,7 +27,7 @@ func main() {
 	upper := NewUpperCaser()
 	zippr := NewZipper()
 	s2byt := NewStrToByte()
-	filew := sputils.NewFileWriterFromPath("out2.txt")
+	filew := proclib.NewFileWriterFromPath("out2.txt")
 	// prntr := NewPrinter(pl)
 
 	// Network definition *** This is where to look! ***

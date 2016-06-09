@@ -1,4 +1,4 @@
-package scipipeutils
+package proclib
 
 import (
 	"os"
