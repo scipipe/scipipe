@@ -34,6 +34,10 @@ func (pl *PipelineRunner) Run() {
 	if !LogExists {
 		InitLogAudit()
 	}
+	if len(pl.processes) == 0 {
+		Error.Println("PipelineRunner: The PipelineRunner is empty. Did you forget to add the processes to it?")
+		os.Exit(1)
+	}
 	everythingConnected := true
 	for _, proc := range pl.processes {
 		if !proc.IsConnected() {
