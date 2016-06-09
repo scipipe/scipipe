@@ -7,6 +7,50 @@ SciPipe is an experimental library for writing [scientific Workflows](https://en
 The architecture of SciPipe is based on an [flow-based programming](https://en.wikipedia.org/wiki/Flow-based_programming) like pattern in pure Go as presented in
 [this](http://blog.gopheracademy.com/composable-pipelines-pattern) and [this](https://blog.gopheracademy.com/advent-2015/composable-pipelines-improvements/) Gopher Academy blog posts.
 
+## An example workflow
+
+Before going into details, let's look at a toy-example workflow, to get a feel
+for what writing workflows with SciPipe looks like:
+
+```go
+package main
+
+import (
+	sp "github.com/scipipe/scipipe"
+)
+
+func main() {
+	// Initialize processes
+	foo := sp.NewFromShell("foowriter", "echo 'foo' > {o:foo}")
+	f2b := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	snk := sp.NewSink() // Will just receive file targets, doing nothing
+
+	// Add output file path formatters for the components created above
+    foo.SetPathStatic("foo", "foo.txt")
+    f2b.SetPathExtend("foo", "bar", ".bar")
+
+	// Connect network
+	f2b.In["foo"].Connect(foo.Out["foo"])
+	snk.Connect(f2b.Out["bar"])
+
+	// Add to a pipeline runner and run
+	pl := sp.NewPipelineRunner()
+	pl.AddProcesses(foo, f2b, snk)
+	pl.Run()
+}
+```
+
+... and to see how we would run this code, let's assume we put this code in a
+file `myfirstworkflow.go` and run it. Then it can look like this:
+
+```bash
+[samuel test]$ go run myfirstworkflow.go
+AUDIT   2016/06/09 17:17:41 Task:foowriter    Executing command: echo 'foo' > foo.txt.tmp
+AUDIT   2016/06/09 17:17:41 Task:foo2bar      Executing command: sed 's/foo/bar/g' foo.txt > foo.txt.bar.tmp
+```
+
+As you see, it displays all the shell commands it has executed based on the defined workflow.
+
 ## Benefits
 
 Some benefits of SciPipe that are not always available in other scientific workflow systems:
@@ -69,61 +113,23 @@ and `{p:PARAM_NAME}` for parameters.
   go get github.com/scipipe/scipipe
   ```
   
-3. Now, you should be able to write code like in the examples below, in files ending with `.go`.
+3. Now, you should be able to write code like in the example below, in files ending with `.go`.
 4. To run a `.go` file, use `go run`:
   
   ```bash
   go run myfirstworkflow.go
   ```
 
-## An example workflow
+## Writing workflows with SciPipe
 
-Let's look at a toy-example workflow. First the full version:
-
-```go
-package main
-
-import (
-	sp "github.com/scipipe/scipipe"
-)
-
-func main() {
-	// Initialize processes
-	fwt := sp.NewFromShell("fooer", "echo 'foo' > {o:foo}")
-	f2b := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	snk := sp.NewSink() // Will just receive file targets, doing nothing
-
-	// Add output file path formatters for the components created above
-    fwt.SetPathStatic("foo", "foo.txt")
-    f2b.SetPathExtend("foo", "bar", ".bar")
-
-	// Connect network
-	f2b.In["foo"].Connect(fwt.Out["foo"])
-	snk.Connect(f2b.Out["bar"])
-
-	// Add to a pipeline runner and run
-	pl := sp.NewPipelineRunner()
-	pl.AddProcesses(fwt, f2b, snk)
-	pl.Run()
-}
-```
-
-And to see what it does, let's put the code in a file `test.go` and run it:
-
-```bash
-[samuel test]$ go run test.go
-AUDIT   2016/04/28 16:04:41 Task:fooer        Executing command: echo 'foo' > foo.txt.tmp
-AUDIT   2016/04/28 16:04:41 Task:foo2bar      Executing command: sed 's/foo/bar/g' foo.txt > foo.txt.bar.tmp
-```
-
-Now, let's go through the code above in more detail, part by part:
+Let's now go through the code example further above on the page, and look closer into how SciPipe works.
 
 ### Initializing processes
 
 ```go
-fwt := sci.NewFromShell("foowriter", "echo 'foo' > {o:out}")
-f2b := sci.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-snk := sci.NewSink() // Will just receive file targets, doing nothing
+foo := sp.NewFromShell("foowriter", "echo 'foo' > {o:out}")
+f2b := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+snk := sp.NewSink() // Will just receive file targets, doing nothing
 ```
 
 For these inports and outports, channels for sending and receiving FileTargets are automatically
@@ -138,7 +144,7 @@ done with the `Connect` method available on each port object. Sink objects have
 a `Connect` method too:
 
 ```go
-f2b.In["foo"].Connect(fwt.Out["foo"])
+f2b.In["foo"].Connect(foo.Out["foo"])
 snk.Connect(f2b.Out["bar"])
 ```
 
@@ -153,7 +159,7 @@ the names of the outports of the processes. So, to define the output filenames o
 above, we would add:
 
 ```go
-fwt.PathFormatters["foo"] = func(t *sp.SciTask) string {
+foo.PathFormatters["foo"] = func(t *sp.SciTask) string {
 	// Just statically create a file named foo.txt
 	return "foo.txt"
 }
@@ -173,7 +179,7 @@ thing. So, the above two path formats can also be defined like so, with the exac
 
 ```go
 // Create a static file name for the out-port 'foo':
-fwt.SetPathStatic("foo", "foo.txt")
+foo.SetPathStatic("foo", "foo.txt")
 
 // For out-port 'bar', extend the file names of files on in-port 'foo', with
 // the suffix '.bar':
@@ -188,8 +194,8 @@ separate go-routine, while the last process will be run in the main go-routine,
 so as to block until the pipeline has finished.
 
 ```go
-pl := sci.NewPipelineRunner()
-pl.AddProcesses(fwt, f2b, snk)
+pl := sp.NewPipelineRunner()
+pl.AddProcesses(foo, f2b, snk)
 pl.Run()
 ```
 ### Summary
