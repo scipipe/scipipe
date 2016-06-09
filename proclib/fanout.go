@@ -33,7 +33,7 @@ func (proc *FanOut) Run() {
 
 	for ft := range proc.InFile.Chan {
 		for key, outPort := range proc.outPorts {
-			Debug.Println("FanOut: Sending file ", ft.GetPath(), " on out-port ", key)
+			scipipe.Debug.Println("FanOut: Sending file ", ft.GetPath(), " on out-port ", key)
 			outPort.Chan <- ft
 		}
 	}
@@ -46,7 +46,7 @@ func (proc *FanOut) IsConnected() bool {
 	} else {
 		for portName, port := range proc.outPorts {
 			if !port.IsConnected() {
-				Error.Printf("FanOut: Port %s is not connected!", portName)
+				scipipe.Error.Printf("FanOut: Port %s is not connected!\n", portName)
 				isConnected = false
 			}
 		}

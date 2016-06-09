@@ -29,7 +29,7 @@ func (proc *Concatenator) Run() {
 		}()
 		go fr.Run()
 		for line := range fr.OutLine {
-			Debug.Println("Processing ", line, "...")
+			scipipe.Debug.Println("Processing ", line, "...")
 			outFh.Write(line)
 		}
 	}
@@ -41,11 +41,11 @@ func (proc *Concatenator) Run() {
 func (proc *Concatenator) IsConnected() bool {
 	isConnected := true
 	if !proc.In.IsConnected() {
-		Error.Println("Concatenator: Port 'In' is not connected!")
+		scipipe.Error.Println("Concatenator: Port 'In' is not connected!")
 		isConnected = false
 	}
 	if !proc.Out.IsConnected() {
-		Error.Println("Concatenator: Port 'Out' is not connected!")
+		scipipe.Error.Println("Concatenator: Port 'Out' is not connected!")
 		isConnected = false
 	}
 	return isConnected

@@ -1,12 +1,13 @@
 package proclib
 
 import (
+	"github.com/scipipe/scipipe"
 	"os"
 )
 
 func Check(err error) {
 	if err != nil {
-		Error.Println(err.Error())
+		scipipe.Error.Println(err.Error())
 		os.Exit(1)
 	}
 }

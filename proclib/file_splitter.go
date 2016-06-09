@@ -25,14 +25,14 @@ func NewFileSplitter(linesPerSplit int) *FileSplitter {
 func (proc *FileSplitter) Run() {
 	defer proc.OutSplitFile.Close()
 
-	if !LogExists {
-		InitLogAudit()
+	if !scipipe.LogExists {
+		scipipe.InitLogAudit()
 	}
 
 	fileReader := NewFileReader()
 
 	for ft := range proc.InFile.Chan {
-		Audit.Println("FileSplitter      Now processing input file ", ft.GetPath(), "...")
+		scipipe.Audit.Println("FileSplitter      Now processing input file ", ft.GetPath(), "...")
 
 		go func() {
 			defer close(fileReader.FilePath)
@@ -55,7 +55,7 @@ func (proc *FileSplitter) Run() {
 				} else {
 					splitfile.Close()
 					splitFt.Atomize()
-					Audit.Println("FileSplitter      Created split file", splitFt.GetPath())
+					scipipe.Audit.Println("FileSplitter      Created split file", splitFt.GetPath())
 					proc.OutSplitFile.Chan <- splitFt
 					splitIdx++
 
@@ -65,10 +65,10 @@ func (proc *FileSplitter) Run() {
 			}
 			splitfile.Close()
 			splitFt.Atomize()
-			Audit.Println("FileSplitter      Created split file", splitFt.GetPath())
+			scipipe.Audit.Println("FileSplitter      Created split file", splitFt.GetPath())
 			proc.OutSplitFile.Chan <- splitFt
 		} else {
-			Audit.Printf("Split file already exists: %s, so skipping.\n", splitFt.GetPath())
+			scipipe.Audit.Printf("Split file already exists: %s, so skipping.\n", splitFt.GetPath())
 		}
 	}
 }

@@ -25,10 +25,10 @@ func NewAccumulatorInt(outPath string) *AccumulatorInt {
 func (proc *AccumulatorInt) Run() {
 	defer close(proc.Out.Chan)
 	for ft := range proc.In.Chan {
-		Audit.Printf("Accumulator:      Processing file target %s ...\n", ft.GetPath())
+		scipipe.Audit.Printf("Accumulator:      Processing file target %s ...\n", ft.GetPath())
 		val, err := strconv.Atoi(strings.TrimSpace(string(ft.Read())))
 		Check(err)
-		Debug.Printf("Accumulator:      Got value %d ...\n", val)
+		scipipe.Debug.Printf("Accumulator:      Got value %d ...\n", val)
 		proc.Accumulator += val
 	}
 	outFt := scipipe.NewFileTarget(proc.OutPath)
