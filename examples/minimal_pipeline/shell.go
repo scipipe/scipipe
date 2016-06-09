@@ -15,7 +15,7 @@ func main() {
 
 	// Connect workflow dependency network
 	// ... from out-ports to in-ports ...
-	sp.ConnectRev(fooToBarReplacer.InPorts["foo"], fooWriter.OutPorts["foo"])
+	sp.ConnectToFrom(fooToBarReplacer.InPorts["foo"], fooWriter.OutPorts["foo"])
 	aSink.Connect(fooToBarReplacer.OutPorts["bar"])
 
 	// Set up a pipeline runner and run the pipeline ...

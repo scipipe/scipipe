@@ -6,11 +6,11 @@ type Port interface {
 	SetConnectedStatus(bool)
 }
 
-func ConnectFwd(outPort *OutPort, inPort *InPort) {
+func ConnectFromTo(outPort *OutPort, inPort *InPort) {
 	inPort.Connect(outPort)
 }
 
-func ConnectRev(inPort *InPort, outPort *OutPort) {
+func ConnectToFrom(inPort *InPort, outPort *OutPort) {
 	inPort.Connect(outPort)
 }
 

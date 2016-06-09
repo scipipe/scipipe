@@ -65,6 +65,7 @@ func main() {
 	atsum.InPorts["in"].Connect(atcat.Out)
 	gcrat.InPorts["gcsum"].Connect(gcsum.OutPorts["sum"])
 	gcrat.InPorts["atsum"].Connect(atsum.OutPorts["sum"])
+
 	asink.Connect(gcrat.OutPorts["gcratio"])
 
 	// === RUN PIPELINE ===========================================================================

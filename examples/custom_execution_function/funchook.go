@@ -12,7 +12,7 @@ func main() {
 	f2b := NewFoo2Barer()
 	snk := sci.NewSink()
 
-	sci.ConnectFwd(foo.OutFoo, f2b.InFoo)
+	foo.OutFoo.Connect(f2b.InFoo)
 	snk.Connect(f2b.OutBar)
 
 	pl := sci.NewPipelineRunner()
