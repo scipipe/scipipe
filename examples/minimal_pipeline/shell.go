@@ -5,10 +5,10 @@ import sp "github.com/scipipe/scipipe"
 func main() {
 	sp.InitLogAudit()
 	// Initialize processes
-	fooWriter := sp.Shell("fooer", "echo foo > {o:foo}")
+	fooWriter := sp.NewFromShell("fooer", "echo foo > {o:foo}")
 	fooWriter.SetPathStatic("foo", "foo.txt")
 
-	fooToBarReplacer := sp.Shell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	fooToBarReplacer := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	fooToBarReplacer.SetPathExtend("foo", "bar", ".bar.txt")
 
 	aSink := sp.NewSink()

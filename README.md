@@ -44,7 +44,7 @@ From Flow-based programming, SciPipe uses the ideas of separate network (workflo
 definition, named in- and out-ports, sub-networks/sub-workflows and bounded buffers (already available
 in Go's channels) to make writing workflows as easy as possible.
 
-In addition to that it adds convenience factory methods such as `sci.Shell()` which creates ad hoc processes
+In addition to that it adds convenience factory methods such as `scipipe.NewFromShell()` which creates ad hoc processes
 on the fly based on a shell command pattern, where  inputs, outputs and parameters are defined in-line
 in the shell command with a syntax of `{i:INPORT_NAME}` for inports, and `{o:OUTPORT_NAME}` for outports
 and `{p:PARAM_NAME}` for parameters.
@@ -89,8 +89,8 @@ import (
 
 func main() {
 	// Initialize processes
-	fwt := sp.Shell("fooer", "echo 'foo' > {o:foo}")
-	f2b := sp.Shell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	fwt := sp.NewFromShell("fooer", "echo 'foo' > {o:foo}")
+	f2b := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	snk := sp.NewSink() // Will just receive file targets, doing nothing
 
 	// Add output file path formatters for the components created above
@@ -121,8 +121,8 @@ Now, let's go through the code above in more detail, part by part:
 ### Initializing processes
 
 ```go
-fwt := sci.Shell("foowriter", "echo 'foo' > {o:out}")
-f2b := sci.Shell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+fwt := sci.NewFromShell("foowriter", "echo 'foo' > {o:out}")
+f2b := sci.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 snk := sci.NewSink() // Will just receive file targets, doing nothing
 ```
 

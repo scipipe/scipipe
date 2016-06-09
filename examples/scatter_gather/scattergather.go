@@ -12,11 +12,11 @@ func main() {
 
 	// Download a zipped Chromosome Y fasta file
 	fastaURL := "ftp://ftp.ensembl.org/pub/release-84/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.Y.fa.gz"
-	wget := sp.Shell("wget", "wget "+fastaURL+" -O {o:chry_zipped}")
+	wget := sp.NewFromShell("wget", "wget "+fastaURL+" -O {o:chry_zipped}")
 	wget.SetPathStatic("chry_zipped", "chry.fa.gz")
 
 	// Ungzip the fasta file
-	unzip := sp.Shell("ungzip", "gunzip -c {i:gzipped} > {o:ungzipped}")
+	unzip := sp.NewFromShell("ungzip", "gunzip -c {i:gzipped} > {o:ungzipped}")
 	unzip.SetPathReplace("gzipped", "ungzipped", ".gz", "")
 
 	// Split the fasta file in to parts with 100000 lines in each
@@ -29,9 +29,9 @@ func main() {
 
 	// Count GC & AT characters in the fasta file
 	charCountCommand := "cat {i:infile} | fold -w 1 | grep '[%s]' | wc -l | awk '{ print $1 }' > {o:%s}"
-	gccnt := sp.Shell("gccount", fmt.Sprintf(charCountCommand, "GC", "gccount"))
+	gccnt := sp.NewFromShell("gccount", fmt.Sprintf(charCountCommand, "GC", "gccount"))
 	gccnt.SetPathExtend("infile", "gccount", ".gccnt")
-	atcnt := sp.Shell("atcount", fmt.Sprintf(charCountCommand, "AT", "atcount"))
+	atcnt := sp.NewFromShell("atcount", fmt.Sprintf(charCountCommand, "AT", "atcount"))
 	atcnt.SetPathExtend("infile", "atcount", ".atcnt")
 
 	// Concatenate GC & AT counts
@@ -40,13 +40,13 @@ func main() {
 
 	// Sum up the GC & AT counts on the concatenated file
 	sumCommand := "awk '{ SUM += $1 } END { print SUM }' {i:in} > {o:sum}"
-	gcsum := sp.Shell("gcsum", sumCommand)
+	gcsum := sp.NewFromShell("gcsum", sumCommand)
 	gcsum.SetPathExtend("in", "sum", ".sum")
-	atsum := sp.Shell("atsum", sumCommand)
+	atsum := sp.NewFromShell("atsum", sumCommand)
 	atsum.SetPathExtend("in", "sum", ".sum")
 
 	// Finally, calculate the ratio between GC chars, vs. GC+AT chars
-	gcrat := sp.Shell("gcratio", "gc=$(cat {i:gcsum}); at=$(cat {i:atsum}); calc \"$gc/($gc+$at)\" > {o:gcratio}")
+	gcrat := sp.NewFromShell("gcratio", "gc=$(cat {i:gcsum}); at=$(cat {i:atsum}); calc \"$gc/($gc+$at)\" > {o:gcratio}")
 	gcrat.SetPathStatic("gcratio", "gcratio.txt")
 
 	// A sink, to drive the network

@@ -34,7 +34,7 @@ type Fooer struct {
 func NewFooer() *Fooer {
 	// Initiate task from a "shell like" pattern, though here we
 	// just specify the out-port foo
-	innerFoo := sci.Shell("fooer", "{o:foo}")
+	innerFoo := sci.NewFromShell("fooer", "{o:foo}")
 	// Set the output formatter to a static string
 	innerFoo.SetPathStatic("foo", "foo.txt")
 	// Create the custom execute function, with pure Go code
@@ -72,7 +72,7 @@ type Foo2Barer struct {
 func NewFoo2Barer() *Foo2Barer {
 	// Initiate task from a "shell like" pattern, though here we
 	// just specify the in-port foo and the out-port bar
-	innerProc := sci.Shell("foo2bar", "{i:foo}{o:bar}")
+	innerProc := sci.NewFromShell("foo2bar", "{i:foo}{o:bar}")
 	// Set the output formatter to extend the path on the "bar"" in-port
 	innerProc.SetPathExtend("foo", "bar", ".bar.txt")
 	// Create the custom execute function, with pure Go code

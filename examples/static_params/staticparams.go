@@ -18,7 +18,7 @@ func main() {
 		return t.GetInPath("in")
 	}
 
-	prt := sci.Shell("prt", "echo {i:in} >> log.txt")
+	prt := sci.NewFromShell("prt", "echo {i:in} >> log.txt")
 
 	// Connect
 	abc.InPorts["in"].Connect(fls.Out)

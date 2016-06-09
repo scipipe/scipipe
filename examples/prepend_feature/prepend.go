@@ -7,7 +7,7 @@ import (
 func main() {
 	sp.InitLogAudit()
 
-	p := sp.Shell("ls", "ls -l > {o:out}")
+	p := sp.NewFromShell("ls", "ls -l > {o:out}")
 	p.PathFormatters["out"] = func(p *sp.SciTask) string {
 		return "hej.txt"
 	}

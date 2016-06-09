@@ -4,13 +4,13 @@ import (
 	"testing"
 )
 
-func TestShell(t *testing.T) {
-	p1 := Shell("echo", "echo {p:text}")
+func TestNewFromShell(t *testing.T) {
+	p1 := NewFromShell("echo", "echo {p:text}")
 	if p1.ParamPorts["text"] == nil {
 		t.Error(`p.ParamPorts["text"] = nil. want: not nil`)
 	}
 
-	p2 := Shell("cat", "cat {i:infile} > {o:outfile}")
+	p2 := NewFromShell("cat", "cat {i:infile} > {o:outfile}")
 	if p2.InPorts["infile"] == nil {
 		t.Error(`p.OutPorts["infile"] = nil. want: not nil`)
 	}
@@ -34,7 +34,7 @@ func TestShellExpand_InputOutput(t *testing.T) {
 }
 
 func TestSetPathStatic(t *testing.T) {
-	p := Shell("echo_foo", "echo foo > {o:bar}")
+	p := NewFromShell("echo_foo", "echo foo > {o:bar}")
 	p.SetPathStatic("bar", "bar.txt")
 
 	mock_task := NewSciTask("echo_foo_task", "", nil, nil, nil, nil, "")
@@ -45,7 +45,7 @@ func TestSetPathStatic(t *testing.T) {
 }
 
 func TestSetPathExtend(t *testing.T) {
-	p := Shell("cat_foo", "cat {i:foo} > {o:bar}")
+	p := NewFromShell("cat_foo", "cat {i:foo} > {o:bar}")
 	p.SetPathExtend("foo", "bar", ".bar.txt")
 
 	mock_task := NewSciTask("echo_foo_task", "", map[string]*FileTarget{"foo": NewFileTarget("foo.txt")}, nil, nil, nil, "")
@@ -56,7 +56,7 @@ func TestSetPathExtend(t *testing.T) {
 }
 
 func TestSetPathReplace(t *testing.T) {
-	p := Shell("cat_foo", "cat {i:foo} > {o:bar}")
+	p := NewFromShell("cat_foo", "cat {i:foo} > {o:bar}")
 	p.SetPathReplace("foo", "bar", ".txt", ".bar.txt")
 
 	mock_task := NewSciTask("echo_foo_task", "", map[string]*FileTarget{"foo": NewFileTarget("foo.txt")}, nil, nil, nil, "")

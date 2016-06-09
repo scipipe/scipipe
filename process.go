@@ -44,7 +44,7 @@ func NewSciProcess(name string, command string) *SciProcess {
 
 // ----------- Main API init methods ------------
 
-func Shell(name string, cmd string) *SciProcess {
+func NewFromShell(name string, cmd string) *SciProcess {
 	if !LogExists {
 		InitLogAudit()
 	}
