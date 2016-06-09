@@ -1,24 +1,26 @@
-package scipipe
+package scipipeutils
+
+import "github.com/scipipe/scipipe"
 
 // FanOut sends *FileTarget received on the InFile in-bound port, and sends
 // them on all out-ports created via the GetOutPort method.
 type FanOut struct {
-	Process
-	InFile   *InPort
-	outPorts map[string]*OutPort
+	scipipe.Process
+	InFile   *scipipe.InPort
+	outPorts map[string]*scipipe.OutPort
 }
 
 // NewFanOut creates a new FanOut process
 func NewFanOut() *FanOut {
 	return &FanOut{
-		InFile:   NewInPort(),
-		outPorts: make(map[string]*OutPort),
+		InFile:   scipipe.NewInPort(),
+		outPorts: make(map[string]*scipipe.OutPort),
 	}
 }
 
-func (p *FanOut) GetOutPort(portName string) *OutPort {
+func (p *FanOut) GetOutPort(portName string) *scipipe.OutPort {
 	if p.outPorts[portName] == nil {
-		p.outPorts[portName] = NewOutPort()
+		p.outPorts[portName] = scipipe.NewOutPort()
 	}
 	return p.outPorts[portName]
 }

@@ -1,16 +1,18 @@
-package scipipe
+package scipipeutils
+
+import "github.com/scipipe/scipipe"
 
 // SciPipe component that converts packets of string type to byte
 type strToByte struct {
-	Process
+	scipipe.Process
 	In  chan string
 	Out chan []byte
 }
 
 func NewStrToByte() *strToByte {
 	return &strToByte{
-		In:  make(chan string, BUFSIZE),
-		Out: make(chan []byte, BUFSIZE),
+		In:  make(chan string, scipipe.BUFSIZE),
+		Out: make(chan []byte, scipipe.BUFSIZE),
 	}
 }
 

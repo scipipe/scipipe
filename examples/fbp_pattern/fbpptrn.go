@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	sci "github.com/scipipe/scipipe"
+	sp "github.com/scipipe/scipipe"
 	"math"
 	"runtime"
 	"strings"
@@ -19,7 +19,7 @@ func main() {
 	fmt.Println("Starting ", numThreads, " threads ...")
 	runtime.GOMAXPROCS(numThreads)
 
-	pipeline := sci.NewPipelineRunner()
+	pipeline := sp.NewPipelineRunner()
 
 	// Init processes
 	hisay := NewHiSayer()
@@ -42,13 +42,13 @@ func main() {
 }
 
 type StringInPort struct {
-	sci.InPort
+	sp.InPort
 	Connected bool
 	Chan      chan string
 }
 
 type StringOutPort struct {
-	sci.InPort
+	sp.InPort
 	Connected bool
 	Chan      chan string
 }

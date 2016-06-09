@@ -1,12 +1,13 @@
-package scipipe
+package scipipeutils
 
 import (
+	"github.com/scipipe/scipipe"
 	"sync"
 )
 
 type Merger struct {
-	Ins [](*InPort)
-	Out *OutPort
+	Ins [](*scipipe.InPort)
+	Out *scipipe.OutPort
 }
 
 func NewMerger() *Merger {
@@ -17,7 +18,7 @@ func (proc *Merger) Run() {
 	var wg sync.WaitGroup
 	wg.Add(len(proc.Ins))
 	for _, inp := range proc.Ins {
-		go func(ch chan *FileTarget) {
+		go func(ch chan *scipipe.FileTarget) {
 			for ft := range ch {
 				proc.Out.Chan <- ft
 			}

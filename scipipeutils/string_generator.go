@@ -1,9 +1,11 @@
-package scipipe
+package scipipeutils
+
+import "github.com/scipipe/scipipe"
 
 // StringGenerator takes a number of strings and returns a generator process
 // which sends the strings, one by one, on its `Out` port
 type StringGenerator struct {
-	Process
+	scipipe.Process
 	Strings []string
 	Out     chan string
 }
@@ -11,7 +13,7 @@ type StringGenerator struct {
 // Instantiate a new StringGenerator
 func NewStringGenerator(strings ...string) *StringGenerator {
 	return &StringGenerator{
-		Out:     make(chan string, BUFSIZE),
+		Out:     make(chan string, scipipe.BUFSIZE),
 		Strings: strings,
 	}
 }

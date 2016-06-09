@@ -1,23 +1,25 @@
-package scipipe
+package scipipeutils
+
+import "github.com/scipipe/scipipe"
 
 type Concatenator struct {
-	Process
-	In      *InPort
-	Out     *OutPort
+	scipipe.Process
+	In      *scipipe.InPort
+	Out     *scipipe.OutPort
 	OutPath string
 }
 
 func NewConcatenator(outPath string) *Concatenator {
 	return &Concatenator{
-		In:      NewInPort(),
-		Out:     NewOutPort(),
+		In:      scipipe.NewInPort(),
+		Out:     scipipe.NewOutPort(),
 		OutPath: outPath,
 	}
 }
 
 func (proc *Concatenator) Run() {
 	defer close(proc.Out.Chan)
-	outFt := NewFileTarget(proc.OutPath)
+	outFt := scipipe.NewFileTarget(proc.OutPath)
 	outFh := outFt.OpenWriteTemp()
 	for ft := range proc.In.Chan {
 		fr := NewFileReader()

@@ -1,7 +1,8 @@
-package scipipe
+package scipipeutils
 
 import (
 	"bufio"
+	"github.com/scipipe/scipipe"
 	"log"
 	"os"
 )
@@ -9,7 +10,7 @@ import (
 // FileReader takes a file path on its FilePath in-port, and returns the file
 // content as []byte on its out-port Out
 type FileReader struct {
-	Process
+	scipipe.Process
 	FilePath chan string
 	OutLine  chan []byte
 }
@@ -18,7 +19,7 @@ type FileReader struct {
 func NewFileReader() *FileReader {
 	return &FileReader{
 		FilePath: make(chan string),
-		OutLine:  make(chan []byte, BUFSIZE),
+		OutLine:  make(chan []byte, scipipe.BUFSIZE),
 	}
 }
 

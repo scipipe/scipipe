@@ -1,15 +1,16 @@
-package scipipe
+package scipipeutils
 
 import (
 	"fmt"
+	"github.com/scipipe/scipipe"
 	"strconv"
 	"strings"
 )
 
 type AccumulatorInt struct {
-	Process
-	In          *InPort
-	Out         *OutPort
+	scipipe.Process
+	In          *scipipe.InPort
+	Out         *scipipe.OutPort
 	Accumulator int
 	OutPath     string
 }
@@ -30,7 +31,7 @@ func (proc *AccumulatorInt) Run() {
 		Debug.Printf("Accumulator:      Got value %d ...\n", val)
 		proc.Accumulator += val
 	}
-	outFt := NewFileTarget(proc.OutPath)
+	outFt := scipipe.NewFileTarget(proc.OutPath)
 	outVal := fmt.Sprintf("%d", proc.Accumulator)
 	outFt.WriteTempFile([]byte(outVal))
 	outFt.Atomize()

@@ -1,22 +1,23 @@
-package scipipe
+package scipipeutils
 
 import (
 	"fmt"
+	"github.com/scipipe/scipipe"
 )
 
 // File splitter component
 
 type FileSplitter struct {
-	Process
-	InFile        *InPort
-	OutSplitFile  *OutPort
+	scipipe.Process
+	InFile        *scipipe.InPort
+	OutSplitFile  *scipipe.OutPort
 	LinesPerSplit int
 }
 
 func NewFileSplitter(linesPerSplit int) *FileSplitter {
 	return &FileSplitter{
-		InFile:        NewInPort(),
-		OutSplitFile:  NewOutPort(),
+		InFile:        scipipe.NewInPort(),
+		OutSplitFile:  scipipe.NewOutPort(),
 		LinesPerSplit: linesPerSplit,
 	}
 }
@@ -77,6 +78,6 @@ func (proc *FileSplitter) IsConnected() bool {
 		proc.OutSplitFile.IsConnected()
 }
 
-func newSplitFileTargetFromIndex(basePath string, splitIdx int) *FileTarget {
-	return NewFileTarget(basePath + fmt.Sprintf(".split_%v", splitIdx))
+func newSplitFileTargetFromIndex(basePath string, splitIdx int) *scipipe.FileTarget {
+	return scipipe.NewFileTarget(basePath + fmt.Sprintf(".split_%v", splitIdx))
 }

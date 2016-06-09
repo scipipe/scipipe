@@ -1,8 +1,9 @@
-package scipipe
+package scipipeutils
 
 import (
 	"bufio"
 	"fmt"
+	"github.com/scipipe/scipipe"
 	"log"
 	"os"
 )
@@ -10,7 +11,7 @@ import (
 // FileWriter takes a file path on its FilePath in-port, file contents on its In in-port
 // and write the file contents to a file with the specified path.
 type FileWriter struct {
-	Process
+	scipipe.Process
 	In       chan []byte
 	FilePath chan string
 }
