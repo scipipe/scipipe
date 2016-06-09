@@ -13,7 +13,7 @@ func ExecCmd(cmd string) string {
 	combOutput, err := exec.Command("bash", "-lc", cmd).CombinedOutput()
 	if err != nil {
 		Error.Println("Could not execute command `" + cmd + "`: " + string(combOutput))
-		os.Exit(128)
+		os.Exit(1)
 	}
 	return string(combOutput)
 }

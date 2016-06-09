@@ -42,7 +42,7 @@ func (pl *PipelineRunner) Run() {
 	}
 	if !everythingConnected {
 		Error.Println("PipelineRunner: Pipeline shutting down, since not all ports are connected!")
-		os.Exit(128)
+		os.Exit(1)
 	} else {
 		for i, proc := range pl.processes {
 			Debug.Printf("PipelineRunner: Looping over process %d: %v ...\n", i, proc)
