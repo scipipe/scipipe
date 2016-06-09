@@ -7,21 +7,25 @@ import "github.com/scipipe/scipipe"
 type StringGenerator struct {
 	scipipe.Process
 	Strings []string
-	Out     chan string
+	Out     *scipipe.ParamPort
 }
 
 // Instantiate a new StringGenerator
 func NewStringGenerator(strings ...string) *StringGenerator {
 	return &StringGenerator{
-		Out:     make(chan string, scipipe.BUFSIZE),
+		Out:     scipipe.NewParamPort(),
 		Strings: strings,
 	}
 }
 
 // Run the StringGenerator
 func (proc *StringGenerator) Run() {
-	defer close(proc.Out)
+	defer proc.Out.Close()
 	for _, str := range proc.Strings {
-		proc.Out <- str
+		proc.Out.Chan <- str
 	}
+}
+
+func (proc *StringGenerator) IsConnected() bool {
+	return proc.Out.IsConnected()
 }
