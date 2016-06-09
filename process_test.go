@@ -33,9 +33,9 @@ func TestShellExpand_InputOutput(t *testing.T) {
 	}
 }
 
-func TestSetPathFormatStatic(t *testing.T) {
+func TestSetPathStatic(t *testing.T) {
 	p := Shell("echo_foo", "echo foo > {o:bar}")
-	p.SetPathFormatStatic("bar", "bar.txt")
+	p.SetPathStatic("bar", "bar.txt")
 
 	mock_task := NewSciTask("echo_foo_task", "", nil, nil, nil, nil, "")
 
@@ -44,9 +44,9 @@ func TestSetPathFormatStatic(t *testing.T) {
 	}
 }
 
-func TestSetPathFormatExtend(t *testing.T) {
+func TestSetPathExtend(t *testing.T) {
 	p := Shell("cat_foo", "cat {i:foo} > {o:bar}")
-	p.SetPathFormatExtend("foo", "bar", ".bar.txt")
+	p.SetPathExtend("foo", "bar", ".bar.txt")
 
 	mock_task := NewSciTask("echo_foo_task", "", map[string]*FileTarget{"foo": NewFileTarget("foo.txt")}, nil, nil, nil, "")
 
@@ -55,9 +55,9 @@ func TestSetPathFormatExtend(t *testing.T) {
 	}
 }
 
-func TestSetPathFormatReplace(t *testing.T) {
+func TestSetPathReplace(t *testing.T) {
 	p := Shell("cat_foo", "cat {i:foo} > {o:bar}")
-	p.SetPathFormatReplace("foo", "bar", ".txt", ".bar.txt")
+	p.SetPathReplace("foo", "bar", ".txt", ".bar.txt")
 
 	mock_task := NewSciTask("echo_foo_task", "", map[string]*FileTarget{"foo": NewFileTarget("foo.txt")}, nil, nil, nil, "")
 

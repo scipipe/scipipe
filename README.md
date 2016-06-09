@@ -94,8 +94,8 @@ func main() {
 	snk := sp.NewSink() // Will just receive file targets, doing nothing
 
 	// Add output file path formatters for the components created above
-    fwt.SetPathFormatStatic("foo", "foo.txt")
-    f2b.SetPathFormatExtend("foo", "bar", ".bar")
+    fwt.SetPathStatic("foo", "foo.txt")
+    f2b.SetPathExtend("foo", "bar", ".bar")
 
 	// Connect network
 	f2b.InPorts["foo"].Connect(fwt.OutPorts["foo"])
@@ -173,11 +173,11 @@ thing. So, the above two path formats can also be defined like so, with the exac
 
 ```go
 // Create a static file name for the out-port 'foo':
-fwt.SetPathFormatStatic("foo", "foo.txt")
+fwt.SetPathStatic("foo", "foo.txt")
 
 // For out-port 'bar', extend the file names of files on in-port 'foo', with
 // the suffix '.bar':
-f2b.SetPathFormatExtend("foo", "bar", ".bar")
+f2b.SetPathExtend("foo", "bar", ".bar")
 ```
 
 ### Running the pipeline

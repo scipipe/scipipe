@@ -63,7 +63,7 @@ func ShellExpand(name string, cmd string, inPaths map[string]string, outPaths ma
 // ----------- Other API methods ------------
 
 // Convenience method to create an (output) path formatter returning a static string file name
-func (p *SciProcess) SetPathFormatStatic(outPortName string, path string) {
+func (p *SciProcess) SetPathStatic(outPortName string, path string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
 		return path
 	}
@@ -71,7 +71,7 @@ func (p *SciProcess) SetPathFormatStatic(outPortName string, path string) {
 
 // Convenience method to create an (output) path formatter that extends the path of
 // an input FileTarget
-func (p *SciProcess) SetPathFormatExtend(inPortName string, outPortName string, extension string) {
+func (p *SciProcess) SetPathExtend(inPortName string, outPortName string, extension string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
 		return t.InTargets[inPortName].GetPath() + extension
 	}
@@ -79,7 +79,7 @@ func (p *SciProcess) SetPathFormatExtend(inPortName string, outPortName string, 
 
 // Convenience method to create an (output) path formatter that uses an input's path
 // but replaces parts of it.
-func (p *SciProcess) SetPathFormatReplace(inPortName string, outPortName string, old string, new string) {
+func (p *SciProcess) SetPathReplace(inPortName string, outPortName string, old string, new string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
 		return str.Replace(t.InTargets[inPortName].GetPath(), old, new, -1)
 	}

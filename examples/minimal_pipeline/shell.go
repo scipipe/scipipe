@@ -6,10 +6,10 @@ func main() {
 	sp.InitLogAudit()
 	// Initialize processes
 	fooWriter := sp.Shell("fooer", "echo foo > {o:foo}")
-	fooWriter.SetPathFormatStatic("foo", "foo.txt")
+	fooWriter.SetPathStatic("foo", "foo.txt")
 
 	fooToBarReplacer := sp.Shell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	fooToBarReplacer.SetPathFormatExtend("foo", "bar", ".bar.txt")
+	fooToBarReplacer.SetPathExtend("foo", "bar", ".bar.txt")
 
 	aSink := sp.NewSink()
 
