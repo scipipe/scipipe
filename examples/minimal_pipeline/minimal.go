@@ -30,7 +30,7 @@ func main() {
 	// Connect workflow dependency network
 	// --------------------------------
 
-	sp.ConnectToFrom(f2b.In["foo"], foo.Out["foo"])
+	f2b.In["foo"].Connect(foo.Out["foo"])
 	snk.Connect(f2b.Out["bar"])
 
 	// --------------------------------
