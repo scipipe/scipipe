@@ -1,3 +1,7 @@
+// Implementation (work in progress) of the resequencing analysis pipeline used
+// to teach the introductory NGS bioinformatics analysis course at SciLifeLab
+// as described on this page:
+// http://uppnex.se/twiki/do/view/Courses/NgsIntro1502/ResequencingAnalysis.html
 package main
 
 import (
@@ -8,7 +12,7 @@ import (
 
 const (
 	fastq_base_url = "http://bioinfo.perdanauniversity.edu.my/tein4ngs/ngspractice/"
-	fastq_file     = "%s.ILLUMINA.low_coverage.4p_%s.fq"
+	fastq_file_pat = "%s.ILLUMINA.low_coverage.4p_%s.fq"
 	ref_base_url   = "http://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/dna/"
 	ref_file       = "Homo_sapiens.GRCh37.75.dna.chromosome.17.fa"
 	ref_file_gz    = "Homo_sapiens.GRCh37.75.dna.chromosome.17.fa.gz"
@@ -22,18 +26,20 @@ var (
 )
 
 func main() {
-	//sp.InitLogDebug()
-	gunzipCmdPat := "gunzip -c {i:in} > {o:out}"
+	// Create ungzip command pattern for later use
+	ungzCmdPat := "gunzip -c {i:in} > {o:out}"
 
 	// --------------------------------------------------------------------------------
 	// Initialize pipeline runner
 	// --------------------------------------------------------------------------------
+
 	pipeRun := sp.NewPipelineRunner()
 	sink := sp.NewSink()
 
 	// --------------------------------------------------------------------------------
 	// Download Reference Genome
 	// --------------------------------------------------------------------------------
+
 	dlRefGz := sp.NewFromShell("dl_gzipped",
 		"wget -O {o:outfile} "+ref_base_url+ref_file_gz)
 	pipeRun.AddProcess(dlRefGz)
@@ -42,93 +48,106 @@ func main() {
 	// --------------------------------------------------------------------------------
 	// Unzip ref file
 	// --------------------------------------------------------------------------------
-	gunzipRef := sp.NewFromShell("gunzipRef", gunzipCmdPat)
-	pipeRun.AddProcess(gunzipRef)
-	gunzipRef.SetPathReplace("in", "out", ".gz", "")
-	gunzipRef.In["in"].Connect(dlRefGz.Out["outfile"])
 
-	refFanOut := plib.NewFanOut()
-	pipeRun.AddProcess(refFanOut)
+	ungzRef := sp.NewFromShell("ungzRef", ungzCmdPat)
+	ungzRef.SetPathReplace("in", "out", ".gz", "")
+	ungzRef.In["in"].Connect(dlRefGz.Out["outfile"])
+	pipeRun.AddProcess(ungzRef)
 
-	refFanOut.InFile.Connect(gunzipRef.Out["out"])
+	// Create a FanOut so multiple downstream processes can read from the
+	// ungzip process
+	refFOut := plib.NewFanOut()
+	refFOut.InFile.Connect(ungzRef.Out["out"])
+	pipeRun.AddProcess(refFOut)
 
 	// --------------------------------------------------------------------------------
 	// Index Reference Genome
 	// --------------------------------------------------------------------------------
-	idxRef := sp.NewFromShell("Index Ref",
+
+	indxRef := sp.NewFromShell("Index Ref",
 		"bwa index -a bwtsw {i:index}; echo done > {o:done}")
-	idxRef.SetPathExtend("index", "done", ".indexed")
-	pipeRun.AddProcess(idxRef)
-	idxRef.In["index"].Connect(refFanOut.GetOutPort("index_ref"))
+	indxRef.SetPathExtend("index", "done", ".indexed")
+	indxRef.In["index"].Connect(refFOut.GetOutPort("index_ref"))
+	pipeRun.AddProcess(indxRef)
 
-	idxRefDoneFanOut := plib.NewFanOut()
-	pipeRun.AddProcess(idxRefDoneFanOut)
-	idxRefDoneFanOut.InFile.Connect(idxRef.Out["done"])
+	idxDnFO := plib.NewFanOut()
+	idxDnFO.InFile.Connect(indxRef.Out["done"])
+	pipeRun.AddProcess(idxDnFO)
 
+	// Create (multi-level) maps where we can gather outports from processes
+	// for each for loop iteration and access them in the merge step later
 	outPorts := make(map[string]map[string]map[string]*sp.OutPort)
-	for _, individual := range individuals {
-		outPorts[individual] = make(map[string]map[string]*sp.OutPort)
-		for _, sample := range samples {
-			outPorts[individual][sample] = make(map[string]*sp.OutPort)
+	for _, indv := range individuals {
+		outPorts[indv] = make(map[string]map[string]*sp.OutPort)
+		for _, smpl := range samples {
+			outPorts[indv][smpl] = make(map[string]*sp.OutPort)
 
 			// --------------------------------------------------------------------------------
 			// Download FastQ component
 			// --------------------------------------------------------------------------------
-			file_name := fmt.Sprintf(fastq_file, individual, sample)
+
+			file_name := fmt.Sprintf(fastq_file_pat, indv, smpl)
 			dlFastq := sp.NewFromShell("dl_fastq",
 				"wget -O {o:fastq} "+fastq_base_url+file_name)
 			dlFastq.SetPathStatic("fastq", file_name)
 			pipeRun.AddProcess(dlFastq)
 
-			fastQFanOut := plib.NewFanOut()
-			fastQFanOut.InFile.Connect(dlFastq.Out["fastq"])
-			pipeRun.AddProcess(fastQFanOut)
+			fqFnOut := plib.NewFanOut()
+			fqFnOut.InFile.Connect(dlFastq.Out["fastq"])
+			pipeRun.AddProcess(fqFnOut)
 
-			outPorts[individual][sample]["fastq"] = sp.NewOutPort()
-			outPorts[individual][sample]["fastq"] = fastQFanOut.GetOutPort("merg")
+			// Save outPorts for later use
+			outPorts[indv][smpl]["fastq"] = fqFnOut.GetOutPort("merg")
 
 			// --------------------------------------------------------------------------------
 			// BWA Align
 			// --------------------------------------------------------------------------------
-			bwaAln := sp.NewFromShell("bwa_aln",
+
+			bwaAlgn := sp.NewFromShell("bwa_aln",
 				"bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}")
-			pipeRun.AddProcess(bwaAln)
-			bwaAln.SetPathExtend("fastq", "sai", ".sai")
-			// Connect
-			bwaAln.In["ref"].Connect(refFanOut.GetOutPort("bwa_aln_" + individual + "_" + sample))
-			bwaAln.In["idxdone"].Connect(idxRefDoneFanOut.GetOutPort("bwa_aln_" + individual + "_" + sample))
-			bwaAln.In["fastq"].Connect(fastQFanOut.GetOutPort("bwa_aln"))
-			// Store in map
-			outPorts[individual][sample]["sai"] = sp.NewOutPort()
-			outPorts[individual][sample]["sai"] = bwaAln.Out["sai"]
+			bwaAlgn.SetPathExtend("fastq", "sai", ".sai")
+			bwaAlgn.In["ref"].Connect(refFOut.GetOutPort("bwa_aln_" + indv + "_" + smpl))
+			bwaAlgn.In["idxdone"].Connect(idxDnFO.GetOutPort("bwa_aln_" + indv + "_" + smpl))
+			bwaAlgn.In["fastq"].Connect(fqFnOut.GetOutPort("bwa_aln"))
+			pipeRun.AddProcess(bwaAlgn)
+
+			// Save outPorts for later use
+			outPorts[indv][smpl]["sai"] = bwaAlgn.Out["sai"]
 		}
 
 		// --------------------------------------------------------------------------------
 		// Merge
 		// --------------------------------------------------------------------------------
-		individualParamGen := plib.NewStringGenerator(individual)
-		pipeRun.AddProcess(individualParamGen)
 
-		merg := sp.NewFromShell("merge_"+individual,
-			"bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:individual}")
-		pipeRun.AddProcess(merg)
-		merg.PathFormatters["merged"] = func(t *sp.SciTask) string {
-			return fmt.Sprintf("%s.merged.sam", t.Params["individual"])
+		// This one is is needed so bwaMerg can take a proper parameter for
+		// individual, which it uses to generate output paths
+		indParamGen := plib.NewStringGenerator(indv)
+		pipeRun.AddProcess(indParamGen)
+
+		// bwa sampe process
+		bwaMerg := sp.NewFromShell("merge_"+indv,
+			"bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}")
+		bwaMerg.PathFormatters["merged"] = func(t *sp.SciTask) string {
+			return fmt.Sprintf("%s.merged.sam", t.Params["indv"])
 		}
+		// Connect
+		bwaMerg.In["ref"].Connect(refFOut.GetOutPort("merg_" + indv))
+		bwaMerg.In["refdone"].Connect(idxDnFO.GetOutPort("merg_" + indv))
+		bwaMerg.In["sai1"].Connect(outPorts[indv]["1"]["sai"])
+		bwaMerg.In["sai2"].Connect(outPorts[indv]["2"]["sai"])
+		bwaMerg.In["fq1"].Connect(outPorts[indv]["1"]["fastq"])
+		bwaMerg.In["fq2"].Connect(outPorts[indv]["2"]["fastq"])
+		bwaMerg.ParamPorts["indv"].Connect(indParamGen.Out)
+		// Add to runner
+		pipeRun.AddProcess(bwaMerg)
 
-		merg.In["ref"].Connect(refFanOut.GetOutPort("merg_" + individual))
-		merg.In["refdone"].Connect(idxRefDoneFanOut.GetOutPort("merg_" + individual))
-		merg.In["sai1"].Connect(outPorts[individual]["1"]["sai"])
-		merg.In["sai2"].Connect(outPorts[individual]["2"]["sai"])
-		merg.In["fq1"].Connect(outPorts[individual]["1"]["fastq"])
-		merg.In["fq2"].Connect(outPorts[individual]["2"]["fastq"])
-		merg.ParamPorts["individual"].Connect(individualParamGen.Out)
-
-		sink.Connect(merg.Out["merged"])
+		sink.Connect(bwaMerg.Out["merged"])
 	}
+
 	// --------------------------------------------------------------------------------
 	// Run pipeline
 	// --------------------------------------------------------------------------------
+
 	pipeRun.AddProcess(sink)
 	pipeRun.Run()
 }
