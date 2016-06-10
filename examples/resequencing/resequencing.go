@@ -2,10 +2,19 @@
 // to teach the introductory NGS bioinformatics analysis course at SciLifeLab
 // as described on this page:
 // http://uppnex.se/twiki/do/view/Courses/NgsIntro1502/ResequencingAnalysis.html
+// Prerequisites:
+// - Samtools
+// - BWA
+// - Picard
+// - GATK
+// Install all tools except GATK like this on X/L/K/Ubuntu:
+// sudo apt-get install samtools bwa picard-tools
+// (GATK needs to be downloaded and installed manually from www.broadinstitute.org/gatk)
 package main
 
 import (
 	"fmt"
+
 	sp "github.com/scipipe/scipipe"
 	plib "github.com/scipipe/scipipe/proclib"
 )
