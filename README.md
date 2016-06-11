@@ -110,10 +110,19 @@ and `{p:PARAM_NAME}` for parameters.
 2. Then, install scipipe:
   
   ```bash
-  go get github.com/scipipe/scipipe
+  go get github.com/scipipe/scipipe/...
   ```
+**N.B:** Don't miss the `...`, or you won't get the `scipipe` helper tool.
   
 3. Now, you should be able to write code like in the example below, in files ending with `.go`.
+  0. The easiest way to get started is to let the scipipe tool generate a starting point for you:
+
+  ```bash
+  scipipe new myfirstworkflow.go
+  ```
+
+  ... which you can then edit to your liking.
+
 4. To run a `.go` file, use `go run`:
   
   ```bash
