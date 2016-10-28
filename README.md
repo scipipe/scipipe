@@ -1,6 +1,6 @@
 # SciPipe
 
-[![Build Status](https://travis-ci.org/samuell/scipipe.svg?branch=master)](https://travis-ci.org/samuell/scipipe)
+[![Build Status](https://travis-ci.org/scipipe/scipipe.svg?branch=master)](https://travis-ci.org/scipipe/scipipe)
 [![GratiPay amount](http://img.shields.io/gratipay/samuell.svg)](https://gratipay.com/samuell)
 
 SciPipe is an experimental library for writing [scientific Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system) in vanilla [Go(lang)](http://golang.org).
