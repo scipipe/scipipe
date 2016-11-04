@@ -30,7 +30,7 @@ func (proc *Concatenator) Run() {
 		go fr.Run()
 		for line := range fr.OutLine {
 			scipipe.Debug.Println("Processing ", line, "...")
-			outFh.Write(line)
+			outFh.Write([]byte(line))
 		}
 	}
 	outFh.Close()
