@@ -78,6 +78,7 @@ Some benefits of SciPipe that are not always available in other scientific workf
 - **Efficient:** Workflows are compiled into static compiled code, that runs fast.
 - **Portable:** Workflows can be distributed as go code to be run with the `go run` command
   or compiled into stand-alone binaries for basically any unix-like operating system.
+- Works well in [Jupyter notebooks](http://jupyter.org), using the [gophernotes kernel](https://github.com/gopherds/gophernotes) (Thx @dwhitena for this!)
 
 ## Known limitations
 
