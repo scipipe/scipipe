@@ -5,3 +5,4 @@ go:
 
 install:
   - go get github.com/stretchr/testify
+  - go get gopkg.in/urfave/cli.v1
