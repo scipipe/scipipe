@@ -5,7 +5,11 @@
 
 SciPipe is an experimental library for writing [scientific Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system) in vanilla [Go(lang)](http://golang.org).
 The architecture of SciPipe is based on an [flow-based programming](https://en.wikipedia.org/wiki/Flow-based_programming) like pattern in pure Go as presented in
-[this](http://blog.gopheracademy.com/composable-pipelines-pattern) and [this](https://blog.gopheracademy.com/advent-2015/composable-pipelines-improvements/) Gopher Academy blog posts.
+[this](http://blog.gopheracademy.com/composable-pipelines-pattern) and
+[this](https://blog.gopheracademy.com/advent-2015/composable-pipelines-improvements/)
+Gopher Academy blog posts, and implemented in the
+[FlowBase](http://flowbase.org/) Flow-Based programming inspired micro
+framework, which SciPipe will be refactored to use, shortly.
 
 **UPDATE Nov 4, 2016:** See [a poster on SciPipe](http://dx.doi.org/10.13140/RG.2.2.34414.61760), presented at the [e-Science Academy in Lund, on Oct 12-13 2016](essenceofescience.se/event/swedish-e-science-academy-2016-2/).
 
