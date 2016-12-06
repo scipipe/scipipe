@@ -38,12 +38,12 @@ func main() {
 
 type FileSender struct {
 	sci.Process
-	Out *sci.OutPort
+	Out *sci.FilePort
 }
 
 func NewFileSender() *FileSender {
 	return &FileSender{
-		Out: sci.NewOutPort(),
+		Out: sci.NewFilePort(),
 	}
 }
 

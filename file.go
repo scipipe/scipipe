@@ -132,14 +132,14 @@ func (ft *FileTarget) Exists() bool {
 // will return instantiated FileTargets on its Out-port, when run.
 type FileQueue struct {
 	Process
-	Out       *OutPort
+	Out       *FilePort
 	FilePaths []string
 }
 
 // Initialize a new FileQueue component from a list of file paths
 func NewFileQueue(filePaths ...string) (fq *FileQueue) {
 	fq = &FileQueue{
-		Out:       NewOutPort(),
+		Out:       NewFilePort(),
 		FilePaths: filePaths,
 	}
 	return

@@ -28,7 +28,7 @@ func main() {
 
 type Fooer struct {
 	InnerProcess *sci.SciProcess
-	OutFoo       *sci.OutPort
+	OutFoo       *sci.FilePort
 }
 
 func NewFooer() *Fooer {
@@ -44,7 +44,7 @@ func NewFooer() *Fooer {
 	// Connect the ports of the outer task to the inner, generic one
 	fooer := &Fooer{
 		InnerProcess: innerFoo,
-		OutFoo:       sci.NewOutPort(),
+		OutFoo:       sci.NewFilePort(),
 	}
 	return fooer
 }
@@ -65,8 +65,8 @@ func (p *Fooer) IsConnected() bool {
 
 type Foo2Barer struct {
 	InnerProcess *sci.SciProcess
-	InFoo        *sci.InPort
-	OutBar       *sci.OutPort
+	InFoo        *sci.FilePort
+	OutBar       *sci.FilePort
 }
 
 func NewFoo2Barer() *Foo2Barer {
@@ -83,8 +83,8 @@ func NewFoo2Barer() *Foo2Barer {
 	// Connect the ports of the outer task to the inner, generic one
 	return &Foo2Barer{
 		InnerProcess: innerProc,
-		InFoo:        sci.NewInPort(),
-		OutBar:       sci.NewOutPort(),
+		InFoo:        sci.NewFilePort(),
+		OutBar:       sci.NewFilePort(),
 	}
 }
 

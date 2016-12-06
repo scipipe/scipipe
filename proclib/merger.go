@@ -6,8 +6,8 @@ import (
 )
 
 type Merger struct {
-	ins [](*scipipe.InPort)
-	Out *scipipe.OutPort
+	ins [](*scipipe.FilePort)
+	Out *scipipe.FilePort
 }
 
 func NewMerger() *Merger {
@@ -29,8 +29,8 @@ func (proc *Merger) Run() {
 	proc.Out.Close()
 }
 
-func (proc *Merger) Connect(outPort *scipipe.OutPort) {
-	inPort := scipipe.NewInPort()
+func (proc *Merger) Connect(outPort *scipipe.FilePort) {
+	inPort := scipipe.NewFilePort()
 	inPort.Connect(outPort)
 	proc.ins = append(proc.ins, inPort)
 }

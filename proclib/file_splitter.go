@@ -9,15 +9,15 @@ import (
 
 type FileSplitter struct {
 	scipipe.Process
-	InFile        *scipipe.InPort
-	OutSplitFile  *scipipe.OutPort
+	InFile        *scipipe.FilePort
+	OutSplitFile  *scipipe.FilePort
 	LinesPerSplit int
 }
 
 func NewFileSplitter(linesPerSplit int) *FileSplitter {
 	return &FileSplitter{
-		InFile:        scipipe.NewInPort(),
-		OutSplitFile:  scipipe.NewOutPort(),
+		InFile:        scipipe.NewFilePort(),
+		OutSplitFile:  scipipe.NewFilePort(),
 		LinesPerSplit: linesPerSplit,
 	}
 }

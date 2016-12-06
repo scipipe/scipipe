@@ -73,8 +73,7 @@ func main() {
 	// Index Reference Genome
 	// --------------------------------------------------------------------------------
 
-	indxRef := sp.NewFromShell("Index Ref",
-		"bwa index -a bwtsw {i:index}; echo done > {o:done}")
+	indxRef := sp.NewFromShell("Index Ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
 	indxRef.SetPathExtend("index", "done", ".indexed")
 	indxRef.In["index"].Connect(refFOut.GetOutPort("index_ref"))
 	pipeRun.AddProcess(indxRef)
@@ -85,11 +84,11 @@ func main() {
 
 	// Create (multi-level) maps where we can gather outports from processes
 	// for each for loop iteration and access them in the merge step later
-	outPorts := make(map[string]map[string]map[string]*sp.OutPort)
+	outPorts := make(map[string]map[string]map[string]*sp.FilePort)
 	for _, indv := range individuals {
-		outPorts[indv] = make(map[string]map[string]*sp.OutPort)
+		outPorts[indv] = make(map[string]map[string]*sp.FilePort)
 		for _, smpl := range samples {
-			outPorts[indv][smpl] = make(map[string]*sp.OutPort)
+			outPorts[indv][smpl] = make(map[string]*sp.FilePort)
 
 			// --------------------------------------------------------------------------------
 			// Download FastQ component

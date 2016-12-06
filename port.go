@@ -6,77 +6,50 @@ type Port interface {
 	SetConnectedStatus(bool)
 }
 
-func ConnectTo(outPort *OutPort, inPort *InPort) {
-	inPort.Connect(outPort)
+func Connect(port1 *FilePort, port2 *FilePort) {
+	port1.Connect(port2)
 }
 
-func ConnectFrom(inPort *InPort, outPort *OutPort) {
-	inPort.Connect(outPort)
-}
-
-// InPort
-type InPort struct {
+// FilePort
+type FilePort struct {
 	Port
 	Chan      chan *FileTarget
 	connected bool
 }
 
-func NewInPort() *InPort {
-	return &InPort{connected: false}
+func NewFilePort() *FilePort {
+	return &FilePort{connected: false}
 }
 
-func (inp *InPort) Connect(outp *OutPort) {
-	if inp.Chan != nil && outp.Chan != nil {
-		Error.Println("Both in-port and out-port already have initialized channels, so can't choose which to use!")
-	} else if inp.Chan != nil && outp.Chan == nil {
-		Debug.Println("InPort, but not OutPort initialized, so connecting InPort to OutPort")
-		outp.Chan = inp.Chan
-	} else if outp.Chan != nil && inp.Chan == nil {
-		Debug.Println("OutPort, but not InPort initialized, so connecting OutPort to InPort")
-		inp.Chan = outp.Chan
-	} else if inp.Chan == nil && outp.Chan == nil {
-		Debug.Println("Neither InPort nor OutPort initialized, so creating new channel")
+func (pt1 *FilePort) Connect(pt2 *FilePort) {
+	if pt1.Chan != nil && pt2.Chan != nil {
+		Error.Println("Both ports already have initialized channels, so can't choose which to use!")
+	} else if pt1.Chan != nil && pt2.Chan == nil {
+		Debug.Println("port2 not initialized, so connecting port1 to port2")
+		pt2.Chan = pt1.Chan
+	} else if pt2.Chan != nil && pt1.Chan == nil {
+		Debug.Println("port1 not initialized, so connecting port2 to port1")
+		pt1.Chan = pt2.Chan
+	} else if pt1.Chan == nil && pt2.Chan == nil {
+		Debug.Println("Neither port1 nor port2 initialized, so creating new channel")
 		ch := make(chan *FileTarget, BUFSIZE)
-		inp.Chan = ch
-		outp.Chan = ch
+		pt1.Chan = ch
+		pt2.Chan = ch
 	}
-	inp.SetConnectedStatus(true)
-	outp.SetConnectedStatus(true)
+	pt1.SetConnectedStatus(true)
+	pt2.SetConnectedStatus(true)
 }
 
-func (inp *InPort) SetConnectedStatus(connected bool) {
-	inp.connected = connected
+func (pt *FilePort) SetConnectedStatus(connected bool) {
+	pt.connected = connected
 }
 
-func (inp *InPort) IsConnected() bool {
-	return inp.connected
+func (pt *FilePort) IsConnected() bool {
+	return pt.connected
 }
 
-// OutPort
-type OutPort struct {
-	Port
-	Chan      chan *FileTarget
-	connected bool
-}
-
-func NewOutPort() *OutPort {
-	return &OutPort{connected: false}
-}
-
-func (outp *OutPort) Connect(inp *InPort) {
-	inp.Connect(outp)
-}
-
-func (outp *OutPort) IsConnected() bool {
-	return outp.connected
-}
-
-func (outp *OutPort) SetConnectedStatus(connected bool) {
-	outp.connected = connected
-}
-
-func (outp *OutPort) Close() {
-	close(outp.Chan)
+func (pt *FilePort) Close() {
+	close(pt.Chan)
 }
 
 // ParamPort

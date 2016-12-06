@@ -27,7 +27,7 @@ func main() {
 
 type Fooer struct {
 	InnerProc *sci.SciProcess
-	OutFoo    *sci.OutPort
+	OutFoo    *sci.FilePort
 }
 
 func NewFooer() *Fooer {
@@ -35,7 +35,7 @@ func NewFooer() *Fooer {
 	innerFoo.SetPathStatic("foo", "foo.txt")
 	return &Fooer{
 		InnerProc: innerFoo,
-		OutFoo:    sci.NewOutPort(),
+		OutFoo:    sci.NewFilePort(),
 	}
 }
 
@@ -52,8 +52,8 @@ func (p *Fooer) IsConnected() bool {
 
 type Foo2Barer struct {
 	InnerProc *sci.SciProcess
-	InFoo     *sci.InPort
-	OutBar    *sci.OutPort
+	InFoo     *sci.FilePort
+	OutBar    *sci.FilePort
 }
 
 func NewFoo2Barer() *Foo2Barer {
@@ -61,8 +61,8 @@ func NewFoo2Barer() *Foo2Barer {
 	innerFoo2Bar.SetPathExtend("foo", "bar", ".bar.txt")
 	return &Foo2Barer{
 		InnerProc: innerFoo2Bar,
-		InFoo:     sci.NewInPort(),
-		OutBar:    sci.NewOutPort(),
+		InFoo:     sci.NewFilePort(),
+		OutBar:    sci.NewFilePort(),
 	}
 }
 

@@ -8,13 +8,13 @@ import (
 // without doing anything with them
 type Sink struct {
 	Process
-	inPorts []*InPort
+	inPorts []*FilePort
 }
 
 // Instantiate a Sink component
 func NewSink() (s *Sink) {
 	return &Sink{
-		inPorts: []*InPort{},
+		inPorts: []*FilePort{},
 	}
 }
 
@@ -26,8 +26,8 @@ func (proc *Sink) IsConnected() bool {
 	}
 }
 
-func (proc *Sink) Connect(outPort *OutPort) {
-	newInPort := NewInPort()
+func (proc *Sink) Connect(outPort *FilePort) {
+	newInPort := NewFilePort()
 	newInPort.Connect(outPort)
 	proc.inPorts = append(proc.inPorts, newInPort)
 }

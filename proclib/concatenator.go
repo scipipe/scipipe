@@ -4,15 +4,15 @@ import "github.com/scipipe/scipipe"
 
 type Concatenator struct {
 	scipipe.Process
-	In      *scipipe.InPort
-	Out     *scipipe.OutPort
+	In      *scipipe.FilePort
+	Out     *scipipe.FilePort
 	OutPath string
 }
 
 func NewConcatenator(outPath string) *Concatenator {
 	return &Concatenator{
-		In:      scipipe.NewInPort(),
-		Out:     scipipe.NewOutPort(),
+		In:      scipipe.NewFilePort(),
+		Out:     scipipe.NewFilePort(),
 		OutPath: outPath,
 	}
 }

@@ -9,8 +9,8 @@ import (
 
 type AccumulatorInt struct {
 	scipipe.Process
-	In          *scipipe.InPort
-	Out         *scipipe.OutPort
+	In          *scipipe.FilePort
+	Out         *scipipe.FilePort
 	Accumulator int
 	OutPath     string
 }

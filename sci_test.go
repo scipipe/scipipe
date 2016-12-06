@@ -18,14 +18,14 @@ func TestBasicRun(t *t.T) {
 	initTestLogs()
 
 	t1 := NewFromShell("t1", "echo foo > {o:foo}")
-	assert.IsType(t, t1.Out["foo"], NewOutPort())
+	assert.IsType(t, t1.Out["foo"], NewFilePort())
 	t1.PathFormatters["foo"] = func(t *SciTask) string {
 		return "foo.txt"
 	}
 
 	t2 := NewFromShell("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	assert.IsType(t, t2.In["foo"], NewInPort())
-	assert.IsType(t, t2.Out["bar"], NewOutPort())
+	assert.IsType(t, t2.In["foo"], NewFilePort())
+	assert.IsType(t, t2.Out["bar"], NewFilePort())
 	t2.PathFormatters["bar"] = func(t *SciTask) string {
 		return t.GetInPath("foo") + ".bar.txt"
 	}
@@ -34,8 +34,8 @@ func TestBasicRun(t *t.T) {
 	t2.In["foo"].Connect(t1.Out["foo"])
 	snk.Connect(t2.Out["bar"])
 
-	assert.IsType(t, t2.In["foo"], NewInPort())
-	assert.IsType(t, t2.Out["bar"], NewOutPort())
+	assert.IsType(t, t2.In["foo"], NewFilePort())
+	assert.IsType(t, t2.Out["bar"], NewFilePort())
 
 	pl := NewPipelineRunner()
 	pl.AddProcesses(t1, t2, snk)

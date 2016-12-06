@@ -41,18 +41,6 @@ func main() {
 	pipeline.Run()
 }
 
-type StringInPort struct {
-	sp.InPort
-	Connected bool
-	Chan      chan string
-}
-
-type StringOutPort struct {
-	sp.InPort
-	Connected bool
-	Chan      chan string
-}
-
 // ======= HiSayer =======
 
 type hiSayer struct {

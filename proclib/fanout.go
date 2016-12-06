@@ -6,21 +6,21 @@ import "github.com/scipipe/scipipe"
 // them on all out-ports created via the GetOutPort method.
 type FanOut struct {
 	scipipe.Process
-	InFile   *scipipe.InPort
-	outPorts map[string]*scipipe.OutPort
+	InFile   *scipipe.FilePort
+	outPorts map[string]*scipipe.FilePort
 }
 
 // NewFanOut creates a new FanOut process
 func NewFanOut() *FanOut {
 	return &FanOut{
-		InFile:   scipipe.NewInPort(),
-		outPorts: make(map[string]*scipipe.OutPort),
+		InFile:   scipipe.NewFilePort(),
+		outPorts: make(map[string]*scipipe.FilePort),
 	}
 }
 
-func (p *FanOut) GetOutPort(portName string) *scipipe.OutPort {
+func (p *FanOut) GetOutPort(portName string) *scipipe.FilePort {
 	if p.outPorts[portName] == nil {
-		p.outPorts[portName] = scipipe.NewOutPort()
+		p.outPorts[portName] = scipipe.NewFilePort()
 	}
 	return p.outPorts[portName]
 }

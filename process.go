@@ -21,8 +21,8 @@ type SciProcess struct {
 	CommandPattern   string
 	Prepend          string
 	Spawn            bool
-	In               map[string]*InPort
-	Out              map[string]*OutPort
+	In               map[string]*FilePort
+	Out              map[string]*FilePort
 	OutPortsDoStream map[string]bool
 	PathFormatters   map[string]func(*SciTask) string
 	ParamPorts       map[string]*ParamPort
@@ -33,8 +33,8 @@ func NewSciProcess(name string, command string) *SciProcess {
 	return &SciProcess{
 		Name:             name,
 		CommandPattern:   command,
-		In:               make(map[string]*InPort),
-		Out:              make(map[string]*OutPort),
+		In:               make(map[string]*FilePort),
+		Out:              make(map[string]*FilePort),
 		OutPortsDoStream: make(map[string]bool),
 		PathFormatters:   make(map[string]func(*SciTask) string),
 		ParamPorts:       make(map[string]*ParamPort),
@@ -160,7 +160,7 @@ func (p *SciProcess) initPortsFromCmdPattern(cmd string, params map[string]strin
 		typ := m[1]
 		name := m[2]
 		if typ == "o" || typ == "os" {
-			p.Out[name] = NewOutPort()
+			p.Out[name] = NewFilePort()
 			if typ == "os" {
 				p.OutPortsDoStream[name] = true
 			}
@@ -170,7 +170,7 @@ func (p *SciProcess) initPortsFromCmdPattern(cmd string, params map[string]strin
 			// It might be nice to have it init'ed with a channel
 			// anyways, for use cases when we want to send FileTargets
 			// on the inport manually.
-			p.In[name] = NewInPort()
+			p.In[name] = NewFilePort()
 		} else if typ == "p" {
 			if params == nil || params[name] == "" {
 				p.ParamPorts[name] = NewParamPort()
