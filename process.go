@@ -60,16 +60,16 @@ func ShellExpand(name string, cmd string, inPaths map[string]string, outPaths ma
 	return p
 }
 
-// ----------- Other API methods ------------
+// ----------- Path formatting methods ------------
 
-// Convenience method to create an (output) path formatter returning a static string file name
+// SetPathStatic creates an (output) path formatter returning a static string file name
 func (p *SciProcess) SetPathStatic(outPortName string, path string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
 		return path
 	}
 }
 
-// Convenience method to create an (output) path formatter that extends the path of
+// SetPathExtend creates an (output) path formatter that extends the path of
 // an input FileTarget
 func (p *SciProcess) SetPathExtend(inPortName string, outPortName string, extension string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
@@ -77,7 +77,7 @@ func (p *SciProcess) SetPathExtend(inPortName string, outPortName string, extens
 	}
 }
 
-// Convenience method to create an (output) path formatter that uses an input's path
+// SetPathReplace creates an (output) path formatter that uses an input's path
 // but replaces parts of it.
 func (p *SciProcess) SetPathReplace(inPortName string, outPortName string, old string, new string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
