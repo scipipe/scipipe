@@ -16,7 +16,7 @@ import (
 	"fmt"
 
 	sp "github.com/scipipe/scipipe"
-	plib "github.com/scipipe/scipipe/components"
+	"github.com/scipipe/scipipe/components"
 )
 
 const (
@@ -65,7 +65,7 @@ func main() {
 
 	// Create a FanOut so multiple downstream processes can read from the
 	// ungzip process
-	refFOut := plib.NewFanOut()
+	refFOut := components.NewFanOut()
 	refFOut.InFile.Connect(ungzRef.Out["out"])
 	pipeRun.AddProcess(refFOut)
 
@@ -78,7 +78,7 @@ func main() {
 	indxRef.In["index"].Connect(refFOut.GetOutPort("index_ref"))
 	pipeRun.AddProcess(indxRef)
 
-	idxDnFO := plib.NewFanOut()
+	idxDnFO := components.NewFanOut()
 	idxDnFO.InFile.Connect(indxRef.Out["done"])
 	pipeRun.AddProcess(idxDnFO)
 
@@ -100,7 +100,7 @@ func main() {
 			dlFastq.SetPathStatic("fastq", file_name)
 			pipeRun.AddProcess(dlFastq)
 
-			fqFnOut := plib.NewFanOut()
+			fqFnOut := components.NewFanOut()
 			fqFnOut.InFile.Connect(dlFastq.Out["fastq"])
 			pipeRun.AddProcess(fqFnOut)
 
@@ -129,7 +129,7 @@ func main() {
 
 		// This one is is needed so bwaMerg can take a proper parameter for
 		// individual, which it uses to generate output paths
-		indParamGen := plib.NewStringGenerator(indv)
+		indParamGen := components.NewStringGenerator(indv)
 		pipeRun.AddProcess(indParamGen)
 
 		// bwa sampe process
