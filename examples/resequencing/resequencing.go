@@ -16,7 +16,7 @@ import (
 	"fmt"
 
 	sp "github.com/scipipe/scipipe"
-	plib "github.com/scipipe/scipipe/proclib"
+	plib "github.com/scipipe/scipipe/components"
 )
 
 const (

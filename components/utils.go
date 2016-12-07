@@ -1,4 +1,4 @@
-package proclib
+package components
 
 import (
 	"github.com/scipipe/scipipe"
