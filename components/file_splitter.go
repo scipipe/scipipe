@@ -43,7 +43,7 @@ func (proc *FileSplitter) Run() {
 
 		i := 1
 		splitIdx := 1
-		splitFt := newSplitFileTargetFromIndex(ft.GetPath(), splitIdx)
+		splitFt := newSplitInformationPacketFromIndex(ft.GetPath(), splitIdx)
 		if !splitFt.Exists() {
 			splitfile := splitFt.OpenWriteTemp()
 			for line := range fileReader.OutLine {
@@ -59,7 +59,7 @@ func (proc *FileSplitter) Run() {
 					proc.OutSplitFile.Chan <- splitFt
 					splitIdx++
 
-					splitFt = newSplitFileTargetFromIndex(ft.GetPath(), splitIdx)
+					splitFt = newSplitInformationPacketFromIndex(ft.GetPath(), splitIdx)
 					splitfile = splitFt.OpenWriteTemp()
 				}
 			}
@@ -78,6 +78,6 @@ func (proc *FileSplitter) IsConnected() bool {
 		proc.OutSplitFile.IsConnected()
 }
 
-func newSplitFileTargetFromIndex(basePath string, splitIdx int) *scipipe.FileTarget {
-	return scipipe.NewFileTarget(basePath + fmt.Sprintf(".split_%v", splitIdx))
+func newSplitInformationPacketFromIndex(basePath string, splitIdx int) *scipipe.InformationPacket {
+	return scipipe.NewInformationPacket(basePath + fmt.Sprintf(".split_%v", splitIdx))
 }

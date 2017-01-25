@@ -18,7 +18,7 @@ func (proc *Merger) Run() {
 	var wg sync.WaitGroup
 	wg.Add(len(proc.ins))
 	for _, inp := range proc.ins {
-		go func(ch chan *scipipe.FileTarget) {
+		go func(ch chan *scipipe.InformationPacket) {
 			for ft := range ch {
 				proc.Out.Chan <- ft
 			}

@@ -31,7 +31,7 @@ func (proc *AccumulatorInt) Run() {
 		scipipe.Debug.Printf("Accumulator:      Got value %d ...\n", val)
 		proc.Accumulator += val
 	}
-	outFt := scipipe.NewFileTarget(proc.OutPath)
+	outFt := scipipe.NewInformationPacket(proc.OutPath)
 	outVal := fmt.Sprintf("%d", proc.Accumulator)
 	outFt.WriteTempFile([]byte(outVal))
 	outFt.Atomize()

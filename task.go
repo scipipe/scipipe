@@ -14,27 +14,27 @@ type SciTask struct {
 	Name          string
 	Command       string
 	CustomExecute func(*SciTask)
-	InTargets     map[string]*FileTarget
-	OutTargets    map[string]*FileTarget
+	InTargets     map[string]*InformationPacket
+	OutTargets    map[string]*InformationPacket
 	Params        map[string]string
 	Done          chan int
 }
 
-func NewSciTask(name string, cmdPat string, inTargets map[string]*FileTarget, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string) *SciTask {
+func NewSciTask(name string, cmdPat string, inTargets map[string]*InformationPacket, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string) *SciTask {
 	t := &SciTask{
 		Name:       name,
 		InTargets:  inTargets,
-		OutTargets: make(map[string]*FileTarget),
+		OutTargets: make(map[string]*InformationPacket),
 		Params:     params,
 		Command:    "",
 		Done:       make(chan int),
 	}
 	// Create out targets
 	Debug.Printf("Task:%s: Creating outTargets now ... [%s]", name, cmdPat)
-	outTargets := make(map[string]*FileTarget)
+	outTargets := make(map[string]*InformationPacket)
 	for oname, ofun := range outPathFuncs {
 		opath := ofun(t)
-		otgt := NewFileTarget(opath)
+		otgt := NewInformationPacket(opath)
 		if outPortsDoStream[oname] {
 			otgt.doStream = true
 		}
@@ -170,7 +170,7 @@ func (t *SciTask) cleanUpFifos() {
 
 // ================== Helper functions==================
 
-func formatCommand(cmd string, inTargets map[string]*FileTarget, outTargets map[string]*FileTarget, params map[string]string, prepend string) string {
+func formatCommand(cmd string, inTargets map[string]*InformationPacket, outTargets map[string]*InformationPacket, params map[string]string, prepend string) string {
 
 	// Debug.Println("Formatting command with the following data:")
 	// Debug.Println("prepend:", prepend)

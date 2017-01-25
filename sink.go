@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// Sink is a simple component that just receives FileTargets on its In-port
+// Sink is a simple component that just receives InformationPacket on its In-port
 // without doing anything with them
 type Sink struct {
 	Process
@@ -35,7 +35,7 @@ func (proc *Sink) Connect(outPort *FilePort) {
 // Execute the Sink component
 func (proc *Sink) Run() {
 	ok := true
-	var ft *FileTarget
+	var ft *InformationPacket
 	for len(proc.inPorts) > 0 {
 		for i, inp := range proc.inPorts {
 			select {

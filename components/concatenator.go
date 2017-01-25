@@ -19,7 +19,7 @@ func NewConcatenator(outPath string) *Concatenator {
 
 func (proc *Concatenator) Run() {
 	defer close(proc.Out.Chan)
-	outFt := scipipe.NewFileTarget(proc.OutPath)
+	outFt := scipipe.NewInformationPacket(proc.OutPath)
 	outFh := outFt.OpenWriteTemp()
 	for ft := range proc.In.Chan {
 		fr := NewFileReader()

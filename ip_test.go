@@ -9,11 +9,11 @@ const (
 	TESTPATH = "somepath.txt"
 )
 
-func TestFileTargetPaths(t *testing.T) {
-	ft := NewFileTarget(TESTPATH)
-	assertPathsEqual(t, ft.GetPath(), TESTPATH)
-	assertPathsEqual(t, ft.GetTempPath(), TESTPATH+".tmp")
-	assertPathsEqual(t, ft.GetFifoPath(), TESTPATH+".fifo")
+func TestInformationPacketPaths(t *testing.T) {
+	ip := NewInformationPacket(TESTPATH)
+	assertPathsEqual(t, ip.GetPath(), TESTPATH)
+	assertPathsEqual(t, ip.GetTempPath(), TESTPATH+".tmp")
+	assertPathsEqual(t, ip.GetFifoPath(), TESTPATH+".fifo")
 }
 
 func assertPathsEqual(t *testing.T, path1 string, path2 string) {

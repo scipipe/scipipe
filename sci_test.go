@@ -158,7 +158,7 @@ func TestSendsOrderedOutputs(t *t.T) {
 		fnames = append(fnames, fmt.Sprintf("/tmp/f%d.txt", i))
 	}
 
-	fq := NewFileQueue(fnames...)
+	fq := NewIPQueue(fnames...)
 
 	fc := NewFromShell("fc", "echo {i:in} > {o:out}")
 	sl := NewFromShell("sl", "cat {i:in} > {o:out}")
@@ -168,7 +168,7 @@ func TestSendsOrderedOutputs(t *t.T) {
 
 	fc.In["in"].Connect(fq.Out)
 	sl.In["in"].Connect(fc.Out["out"])
-	sl.Out["out"].Chan = make(chan *FileTarget, BUFSIZE)
+	sl.Out["out"].Chan = make(chan *InformationPacket, BUFSIZE)
 
 	go fq.Run()
 	go fc.Run()

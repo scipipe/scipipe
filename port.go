@@ -13,7 +13,7 @@ func Connect(port1 *FilePort, port2 *FilePort) {
 // FilePort
 type FilePort struct {
 	Port
-	Chan      chan *FileTarget
+	Chan      chan *InformationPacket
 	connected bool
 }
 
@@ -32,7 +32,7 @@ func (pt1 *FilePort) Connect(pt2 *FilePort) {
 		pt1.Chan = pt2.Chan
 	} else if pt1.Chan == nil && pt2.Chan == nil {
 		Debug.Println("Neither port1 nor port2 initialized, so creating new channel")
-		ch := make(chan *FileTarget, BUFSIZE)
+		ch := make(chan *InformationPacket, BUFSIZE)
 		pt1.Chan = ch
 		pt2.Chan = ch
 	}
