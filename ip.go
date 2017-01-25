@@ -13,10 +13,11 @@ import (
 // InformationPacket contains information and helper methods for a physical file on a
 // normal disk.
 type InformationPacket struct {
-	path     string
-	buffer   *bytes.Buffer
-	doStream bool
-	lock     *sync.Mutex
+	path       string
+	buffer     *bytes.Buffer
+	doStream   bool
+	lock       *sync.Mutex
+	auditInfos []*AuditInfo
 }
 
 // Create new InformationPacket "object"
@@ -124,6 +125,19 @@ func (ip *InformationPacket) Exists() bool {
 	}
 	ip.lock.Unlock()
 	return exists
+}
+
+func (ip *InformationPacket) AddAuditInfo(ai *AuditInfo) {
+	ip.auditInfos = append(ip.auditInfos, ai)
+}
+
+func (ip *InformationPacket) WriteAuditLogToFile() {
+	auditDataStr := ""
+	for _, ai := range ip.auditInfos {
+		auditDataStr += ai.Command + "\n"
+	}
+	err := ioutil.WriteFile(ip.GetPath()+".audit.log", []byte(auditDataStr), 0644)
+	Check(err)
 }
 
 // ======= IPQueue =======

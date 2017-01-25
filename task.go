@@ -63,6 +63,16 @@ func (t *SciTask) Execute() {
 		} else {
 			t.executeCommand(t.Command)
 		}
+
+		// Append audit info for the task to all its output targets
+		auditInfo := NewAuditInfo()
+		auditInfo.Command = t.Command
+		auditInfo.Params = t.Params
+		for _, oip := range t.OutTargets {
+			oip.AddAuditInfo(auditInfo)
+			oip.WriteAuditLogToFile()
+		}
+
 		Debug.Printf("Task:%-12s Atomizing targets. [%s]\n", t.Name, t.Command)
 		t.atomizeTargets()
 	}

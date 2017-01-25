@@ -229,10 +229,10 @@ func (p *SciProcess) Run() {
 		}
 
 		// Sending FIFOs for the task
-		for oname, otgt := range t.OutTargets {
-			if otgt.doStream {
+		for oname, oip := range t.OutTargets {
+			if oip.doStream {
 				Debug.Printf("Process %s: Sending FIFO target on outport '%s' for task [%s] ...\n", p.Name, oname, t.Command)
-				p.Out[oname].Chan <- otgt
+				p.Out[oname].Chan <- oip
 			}
 		}
 
@@ -256,10 +256,10 @@ func (p *SciProcess) Run() {
 		Debug.Printf("Process %s: Waiting for Done from task: [%s]\n", p.Name, t.Command)
 		<-t.Done
 		Debug.Printf("Process %s: Received Done from task: [%s]\n", p.Name, t.Command)
-		for oname, otgt := range t.OutTargets {
-			if !otgt.doStream {
+		for oname, oip := range t.OutTargets {
+			if !oip.doStream {
 				Debug.Printf("Process %s: Sending target on outport %s, for task [%s] ...\n", p.Name, oname, t.Command)
-				p.Out[oname].Chan <- otgt
+				p.Out[oname].Chan <- oip
 				Debug.Printf("Process %s: Done sending target on outport %s, for task [%s] ...\n", p.Name, oname, t.Command)
 			}
 		}
