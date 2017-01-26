@@ -176,10 +176,14 @@ func (ipq *IPQueue) IsConnected() bool {
 	return ipq.Out.IsConnected()
 }
 
-func (ipq *Sink) deleteInPortAtKey(i int) {
-	if ipq.inPorts[i] != nil {
-		ipq.inPorts = append(ipq.inPorts[:i], ipq.inPorts[i+1:]...)
+func (snk *Sink) deleteInPortAtKey(i int) {
+	if snk.inPorts != nil {
+		if snk.inPorts[i] != nil {
+			snk.inPorts = append(snk.inPorts[:i], snk.inPorts[i+1:]...)
+		} else {
+			Warning.Println("Inport %d does not exist, in sink")
+		}
 	} else {
-		Warning.Println("Inport %d does not exist, in sink")
+		Warning.Println("Inports array not initialized!")
 	}
 }
