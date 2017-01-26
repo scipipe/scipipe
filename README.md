@@ -88,7 +88,7 @@ Some benefits of SciPipe that are not always available in other scientific workf
 
 ## Known limitations
 
-- There is not yet a really comprehensive audit log generation. It is being worked on currently.
+- There are still a number of missing good-to-have features, for workflow design. See the [issues](https://github.com/scipipe/scipipe/issues) tracker for details.
 - There is not yet support for the [Common Workflow Language](http://common-workflow-language.github.io), but that is also something that we plan to support in the future.
 
 ## Connection to flow-based programming
