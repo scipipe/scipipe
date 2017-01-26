@@ -56,20 +56,18 @@ func (t *SciTask) GetInPath(inPort string) string {
 
 func (t *SciTask) Execute() {
 	defer close(t.Done)
-	var startTime time.Time
-	var execTime time.Duration
+
 	if !t.anyOutputExists() && !t.fifosInOutTargetsMissing() {
 		Debug.Printf("Task:%-12s Executing task. [%s]\n", t.Name, t.Command)
+
+		startTime := time.Now()
 		if t.CustomExecute != nil {
 			Audit.Printf("Task:%-12s Executing custom execution function.\n", t.Name)
-			startTime = time.Now()
 			t.CustomExecute(t)
-			execTime = time.Since(startTime)
 		} else {
-			startTime = time.Now()
 			t.executeCommand(t.Command)
-			execTime = time.Since(startTime)
 		}
+		execTime := time.Since(startTime)
 
 		// Append audit info for the task to all its output targets
 		auditInfo := NewAuditInfo()
