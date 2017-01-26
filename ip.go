@@ -2,6 +2,7 @@ package scipipe
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -136,15 +137,11 @@ func (ip *InformationPacket) SetAuditInfo(ai *AuditInfo) {
 }
 
 func (ip *InformationPacket) WriteAuditLogToFile() {
-	auditDataStr := ip.GetAuditInfo().Command + "\n"
-	auditDataStr += "[Previous commands]\n"
-	for uaiPath, uai := range ip.GetAuditInfo().UpstreamAuditInfos {
-		if uai != nil {
-			auditDataStr += uaiPath + ": " + uai.Command + "\n"
-		}
-	}
-	err := ioutil.WriteFile(ip.GetPath()+".audit.log", []byte(auditDataStr), 0644)
-	Check(err)
+	auditInfo := ip.GetAuditInfo()
+	auditInfoJson, jsonErr := json.MarshalIndent(auditInfo, "", "    ")
+	Check(jsonErr)
+	writeErr := ioutil.WriteFile(ip.GetPath()+".audit.json", auditInfoJson, 0644)
+	Check(writeErr)
 }
 
 // ======= IPQueue =======

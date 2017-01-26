@@ -61,7 +61,7 @@ func TestParameterCommand(t *t.T) {
 	}
 
 	// A printer process
-	prt := NewFromShell("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.log")
+	prt := NewFromShell("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
 
 	// Connection info
 	abc.ParamPorts["a"].Connect(cmb.A)
@@ -272,9 +272,9 @@ func cleanFiles(fileNames ...string) {
 		if _, err := os.Stat(fileName); err == nil {
 			os.Remove(fileName)
 			Debug.Println("Successfully removed file", fileName)
-			// Remove any accompanying audit log files ....
-			os.Remove(fileName + ".audit.log")
-			Debug.Println("Successfully removed audit log file", fileName)
+			// Remove any accompanying audit.json files ....
+			os.Remove(fileName + ".audit.json")
+			Debug.Println("Successfully removed audit.json file", fileName)
 		}
 	}
 }
