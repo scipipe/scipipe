@@ -68,8 +68,12 @@ func (t *SciTask) Execute() {
 		auditInfo := NewAuditInfo()
 		auditInfo.Command = t.Command
 		auditInfo.Params = t.Params
+		for _, iip := range t.InTargets {
+			iipPath := iip.GetPath()
+			auditInfo.UpstreamAuditInfos[iipPath] = iip.auditInfo
+		}
 		for _, oip := range t.OutTargets {
-			oip.AddAuditInfo(auditInfo)
+			oip.SetAuditInfo(auditInfo)
 			oip.WriteAuditLogToFile()
 		}
 
