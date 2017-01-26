@@ -154,7 +154,8 @@ func (p *SciProcess) initPortsFromCmdPattern(cmd string, params map[string]strin
 
 	for _, m := range ms {
 		if len(m) < 3 {
-			Check(errors.New("Too few matches"))
+			msg := "Too few matches"
+			Check(errors.New(msg), msg)
 		}
 
 		typ := m[1]

@@ -204,7 +204,7 @@ func formatCommand(cmd string, inTargets map[string]*InformationPacket, outTarge
 			// Out-ports
 			if outTargets[name] == nil {
 				msg := fmt.Sprint("Missing outpath for outport '", name, "' for command '", cmd, "'")
-				Check(errors.New(msg))
+				Check(errors.New(msg), msg)
 			} else {
 				if typ == "o" {
 					filePath = outTargets[name].GetTempPath() // Means important to Atomize afterwards!
@@ -216,10 +216,10 @@ func formatCommand(cmd string, inTargets map[string]*InformationPacket, outTarge
 			// In-ports
 			if inTargets[name] == nil {
 				msg := fmt.Sprint("Missing intarget for inport '", name, "' for command '", cmd, "'")
-				Check(errors.New(msg))
+				Check(errors.New(msg), msg)
 			} else if inTargets[name].GetPath() == "" {
 				msg := fmt.Sprint("Missing inpath for inport '", name, "' for command '", cmd, "'")
-				Check(errors.New(msg))
+				Check(errors.New(msg), msg)
 			} else {
 				if inTargets[name].doStream {
 					filePath = inTargets[name].GetFifoPath()
@@ -230,14 +230,14 @@ func formatCommand(cmd string, inTargets map[string]*InformationPacket, outTarge
 		} else if typ == "p" {
 			if params[name] == "" {
 				msg := fmt.Sprint("Missing param value param '", name, "' for command '", cmd, "'")
-				Check(errors.New(msg))
+				Check(errors.New(msg), msg)
 			} else {
 				filePath = params[name]
 			}
 		}
 		if filePath == "" {
 			msg := fmt.Sprint("Replace failed for port ", name, " for command '", cmd, "'")
-			Check(errors.New(msg))
+			Check(errors.New(msg), msg)
 		}
 		cmd = str.Replace(cmd, placeHolderStr, filePath, -1)
 	}

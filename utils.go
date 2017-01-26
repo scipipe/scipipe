@@ -18,8 +18,9 @@ func ExecCmd(cmd string) string {
 	return string(combOutput)
 }
 
-func Check(err error) {
+func Check(err error, errMsg string) {
 	if err != nil {
+		Error.Println(errMsg)
 		panic(err)
 	}
 }
@@ -27,7 +28,8 @@ func Check(err error) {
 // Return the regular expression used to parse the place-holder syntax for in-, out- and
 // parameter ports, that can be used to instantiate a SciProcess.
 func getShellCommandPlaceHolderRegex() *re.Regexp {
-	r, err := re.Compile("{(o|os|i|is|p):([^{}:]+)}")
-	Check(err)
+	regex := "{(o|os|i|is|p):([^{}:]+)}"
+	r, err := re.Compile(regex)
+	Check(err, "Could not compile regex: "+regex)
 	return r
 }

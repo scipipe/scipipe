@@ -50,35 +50,35 @@ func (ip *InformationPacket) GetFifoPath() string {
 // Open the file and return a file handle (*os.File)
 func (ip *InformationPacket) Open() *os.File {
 	f, err := os.Open(ip.GetPath())
-	Check(err)
+	Check(err, "Could not open file: "+ip.GetPath())
 	return f
 }
 
 // Open the temp file and return a file handle (*os.File)
 func (ip *InformationPacket) OpenTemp() *os.File {
 	f, err := os.Open(ip.GetTempPath())
-	Check(err)
+	Check(err, "Could not open temp file: "+ip.GetTempPath())
 	return f
 }
 
 // Open the file for writing return a file handle (*os.File)
 func (ip *InformationPacket) OpenWriteTemp() *os.File {
 	f, err := os.Create(ip.GetTempPath())
-	Check(err)
+	Check(err, "Could not open temp file for writing: "+ip.GetTempPath())
 	return f
 }
 
 // Read the whole content of the file and return as a byte array ([]byte)
 func (ip *InformationPacket) Read() []byte {
 	dat, err := ioutil.ReadFile(ip.GetPath())
-	Check(err)
+	Check(err, "Could not open file for reading: "+ip.GetPath())
 	return dat
 }
 
 // Write a byte array ([]byte) to the file (first to its temp path, and then atomize)
 func (ip *InformationPacket) WriteTempFile(dat []byte) {
 	err := ioutil.WriteFile(ip.GetTempPath(), dat, 0644)
-	Check(err)
+	Check(err, "Could not write to temp file: "+ip.GetTempPath())
 }
 
 // Change from the temporary file name to the final file name
@@ -86,7 +86,7 @@ func (ip *InformationPacket) Atomize() {
 	Debug.Println("InformationPacket: Atomizing", ip.GetTempPath(), "->", ip.GetPath())
 	ip.lock.Lock()
 	err := os.Rename(ip.GetTempPath(), ip.path)
-	Check(err)
+	Check(err, "Could not rename file: "+ip.GetTempPath())
 	ip.lock.Unlock()
 	Debug.Println("InformationPacket: Done atomizing", ip.GetTempPath(), "->", ip.GetPath())
 }
@@ -101,7 +101,7 @@ func (ip *InformationPacket) CreateFifo() {
 		Warning.Println("FIFO already exists, so not creating a new one:", ip.GetFifoPath())
 	} else {
 		_, err := exec.Command("bash", "-c", cmd).Output()
-		Check(err)
+		Check(err, "Could not execute command: "+cmd)
 	}
 
 	ip.lock.Unlock()
@@ -112,7 +112,7 @@ func (ip *InformationPacket) RemoveFifo() {
 	// FIXME: Shouldn't we check first whether the fifo exists?
 	ip.lock.Lock()
 	output, err := exec.Command("bash", "-c", "rm "+ip.GetFifoPath()).Output()
-	Check(err)
+	Check(err, "Could not delete fifo file: "+ip.GetFifoPath())
 	Debug.Println("Removed FIFO output: ", output)
 	ip.lock.Unlock()
 }
@@ -139,9 +139,9 @@ func (ip *InformationPacket) SetAuditInfo(ai *AuditInfo) {
 func (ip *InformationPacket) WriteAuditLogToFile() {
 	auditInfo := ip.GetAuditInfo()
 	auditInfoJson, jsonErr := json.MarshalIndent(auditInfo, "", "    ")
-	Check(jsonErr)
+	Check(jsonErr, "Could not marshall JSON")
 	writeErr := ioutil.WriteFile(ip.GetPath()+".audit.json", auditInfoJson, 0644)
-	Check(writeErr)
+	Check(writeErr, "Could not write audit file: "+ip.GetPath())
 }
 
 // ======= IPQueue =======

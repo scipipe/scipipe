@@ -21,5 +21,5 @@ func TestCheck_Panics(t *testing.T) {
 		}
 	}()
 	err := errors.New("A test-error")
-	Check(err)
+	Check(err, "Checking the test-error")
 }
