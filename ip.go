@@ -177,5 +177,9 @@ func (ipq *IPQueue) IsConnected() bool {
 }
 
 func (ipq *Sink) deleteInPortAtKey(i int) {
-	ipq.inPorts = append(ipq.inPorts[:i], ipq.inPorts[i+1:]...)
+	if ipq.inPorts[i] != nil {
+		ipq.inPorts = append(ipq.inPorts[:i], ipq.inPorts[i+1:]...)
+	} else {
+		Warning.Println("Inport %d does not exist, in sink")
+	}
 }
