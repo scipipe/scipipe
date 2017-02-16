@@ -5,6 +5,21 @@ import (
 	str "strings"
 )
 
+// ExecMode specifies which execution mode should be used for a SciProcess and
+// its corresponding SciTasks
+type ExecMode int
+
+const (
+	// ExecModeLocal indicates that commands on the local computer
+	ExecModeLocal ExecMode = iota
+	// ExecModeSLURM indicates that commands should be executed on a HPC cluster
+	// via a SLURM resource manager
+	ExecModeSLURM ExecMode = iota
+	// ExecModeK8s indicates that commands should be executed on a Kubernetes
+	// cluster
+	ExecModeK8s ExecMode = iota
+)
+
 // ================== Process ==================
 
 // Base interface for all processes
@@ -19,6 +34,7 @@ type SciProcess struct {
 	Process
 	Name             string
 	CommandPattern   string
+	ExecMode         ExecMode
 	Prepend          string
 	Spawn            bool
 	In               map[string]*FilePort
@@ -343,7 +359,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 				Debug.Printf("Process.createTasks:%s Breaking: No params, and inPorts closed", p.Name)
 				break
 			}
-			t := NewSciTask(p.Name, p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend)
+			t := NewSciTask(p.Name, p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode)
 			if p.CustomExecute != nil {
 				t.CustomExecute = p.CustomExecute
 			}

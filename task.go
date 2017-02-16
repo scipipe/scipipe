@@ -14,6 +14,7 @@ import (
 type SciTask struct {
 	Name          string
 	Command       string
+	ExecMode      ExecMode
 	CustomExecute func(*SciTask)
 	InTargets     map[string]*InformationPacket
 	OutTargets    map[string]*InformationPacket
@@ -21,13 +22,14 @@ type SciTask struct {
 	Done          chan int
 }
 
-func NewSciTask(name string, cmdPat string, inTargets map[string]*InformationPacket, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string) *SciTask {
+func NewSciTask(name string, cmdPat string, inTargets map[string]*InformationPacket, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode) *SciTask {
 	t := &SciTask{
 		Name:       name,
 		InTargets:  inTargets,
 		OutTargets: make(map[string]*InformationPacket),
 		Params:     params,
 		Command:    "",
+		ExecMode:   execMode,
 		Done:       make(chan int),
 	}
 	// Create out targets

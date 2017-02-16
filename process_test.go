@@ -37,9 +37,9 @@ func TestSetPathStatic(t *testing.T) {
 	p := NewFromShell("echo_foo", "echo foo > {o:bar}")
 	p.SetPathStatic("bar", "bar.txt")
 
-	mock_task := NewSciTask("echo_foo_task", "", nil, nil, nil, nil, "")
+	mockTask := NewSciTask("echo_foo_task", "", nil, nil, nil, nil, "", p.ExecMode)
 
-	if p.PathFormatters["bar"](mock_task) != "bar.txt" {
+	if p.PathFormatters["bar"](mockTask) != "bar.txt" {
 		t.Error(`p.PathFormatters["bar"]() != "bar.txt"`)
 	}
 }
@@ -48,9 +48,9 @@ func TestSetPathExtend(t *testing.T) {
 	p := NewFromShell("cat_foo", "cat {i:foo} > {o:bar}")
 	p.SetPathExtend("foo", "bar", ".bar.txt")
 
-	mock_task := NewSciTask("echo_foo_task", "", map[string]*InformationPacket{"foo": NewInformationPacket("foo.txt")}, nil, nil, nil, "")
+	mockTask := NewSciTask("echo_foo_task", "", map[string]*InformationPacket{"foo": NewInformationPacket("foo.txt")}, nil, nil, nil, "", p.ExecMode)
 
-	if p.PathFormatters["bar"](mock_task) != "foo.txt.bar.txt" {
+	if p.PathFormatters["bar"](mockTask) != "foo.txt.bar.txt" {
 		t.Error(`p.PathFormatters["bar"]() != "foo.txt.bar.txt"`)
 	}
 }
@@ -59,9 +59,9 @@ func TestSetPathReplace(t *testing.T) {
 	p := NewFromShell("cat_foo", "cat {i:foo} > {o:bar}")
 	p.SetPathReplace("foo", "bar", ".txt", ".bar.txt")
 
-	mock_task := NewSciTask("echo_foo_task", "", map[string]*InformationPacket{"foo": NewInformationPacket("foo.txt")}, nil, nil, nil, "")
+	mockTask := NewSciTask("echo_foo_task", "", map[string]*InformationPacket{"foo": NewInformationPacket("foo.txt")}, nil, nil, nil, "", p.ExecMode)
 
-	if p.PathFormatters["bar"](mock_task) != "foo.bar.txt" {
+	if p.PathFormatters["bar"](mockTask) != "foo.bar.txt" {
 		t.Error(`p.PathFormatters["bar"]() != "foo.bar.txt"`)
 	}
 }
