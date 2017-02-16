@@ -206,11 +206,11 @@ func (proc *SciProcess) IsConnected() (isConnected bool) {
 
 // ============== SciProcess Run Method ===============
 
-// The Run method of SciProcess takes care of instantiating tasks for all
-// sets of inputs and parameters that it receives, except when there is no
-// input or parameter at all, when it will run once, and then terminate.
-// Note that the actual execution of shell commands are done inside
-// SciTask, not SciProcess.
+// Run runs the process by instantiating and executing SciTasks for all inputs
+// and parameter values on its in-ports. in the case when there are no inputs
+// or parameter values on the in-ports, it will run just once before it
+// terminates. note that the actual execution of shell commands are done inside
+// SciTask.Execute, not here.
 func (p *SciProcess) Run() {
 	defer p.closeOutPorts()
 
