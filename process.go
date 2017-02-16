@@ -260,16 +260,19 @@ func (p *SciProcess) Run() {
 		tasks = append(tasks, t)
 
 		anyPreviousFifosExists := t.anyFifosExist()
-		if !anyPreviousFifosExists {
-			Debug.Printf("Process %s: No FIFOs existed, so creating, for task [%s] ...", p.Name, t.Command)
-			t.createFifos()
-		}
 
-		// Sending FIFOs for the task
-		for oname, oip := range t.OutTargets {
-			if oip.doStream {
-				Debug.Printf("Process %s: Sending FIFO target on outport '%s' for task [%s] ...\n", p.Name, oname, t.Command)
-				p.Out[oname].Chan <- oip
+		if p.ExecMode == ExecModeLocal {
+			if !anyPreviousFifosExists {
+				Debug.Printf("Process %s: No FIFOs existed, so creating, for task [%s] ...", p.Name, t.Command)
+				t.createFifos()
+			}
+
+			// Sending FIFOs for the task
+			for oname, oip := range t.OutTargets {
+				if oip.doStream {
+					Debug.Printf("Process %s: Sending FIFO target on outport '%s' for task [%s] ...\n", p.Name, oname, t.Command)
+					p.Out[oname].Chan <- oip
+				}
 			}
 		}
 
