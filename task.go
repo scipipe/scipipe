@@ -67,7 +67,14 @@ func (t *SciTask) Execute() {
 			Audit.Printf("Task:%-12s Executing custom execution function.\n", t.Name)
 			t.CustomExecute(t)
 		} else {
-			t.executeCommand(t.Command)
+			switch t.ExecMode {
+			case ExecModeLocal:
+				t.executeCommand(t.Command)
+			case ExecModeSLURM:
+				Error.Printf("Task:%-12s SLURM Execution mode not implemented!", t.Name)
+			case ExecModeK8s:
+				Error.Printf("Task:%-12s Kubernetes Execution mode not implemented!", t.Name)
+			}
 		}
 		execTime := time.Since(startTime)
 
