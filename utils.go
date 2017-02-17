@@ -26,6 +26,13 @@ func Check(err error, errMsg string) {
 	}
 }
 
+func CheckErr(err error) {
+	if err != nil {
+		Error.Println(err)
+		panic(err)
+	}
+}
+
 // Return the regular expression used to parse the place-holder syntax for in-, out- and
 // parameter ports, that can be used to instantiate a SciProcess.
 func getShellCommandPlaceHolderRegex() *re.Regexp {

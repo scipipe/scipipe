@@ -2,11 +2,18 @@ package scipipe
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
 	str "strings"
 	"time"
+
+	"k8s.io/client-go/kubernetes"
+	apiUnver "k8s.io/client-go/pkg/api/unversioned"
+	api "k8s.io/client-go/pkg/api/v1"
+	batchapi "k8s.io/client-go/pkg/apis/batch/v1"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // ================== SciTask ==================
@@ -74,6 +81,7 @@ func (t *SciTask) Execute() {
 				Error.Printf("Task:%-12s SLURM Execution mode not implemented!", t.Name)
 			case ExecModeK8s:
 				Error.Printf("Task:%-12s Kubernetes Execution mode not implemented!", t.Name)
+				t.executeCommandonKubernetes(t.Command)
 			}
 		}
 		execTime := time.Since(startTime)
@@ -197,6 +205,82 @@ func (t *SciTask) cleanUpFifos() {
 			Debug.Printf("Task:%s: output target is not FIFO, so not removing any FIFO: %s [%s]\n", t.Name, tgt.GetPath(), t.Command)
 		}
 	}
+}
+
+var (
+	kubeconfig = flag.String("kubeconfig", "/home/samuel/.kube/config", "absolute path to the kubeconfig file")
+	trueVal    = true
+	falseVal   = false
+)
+
+func (t *SciTask) executeCommandonKubernetes(command string) {
+	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+	CheckErr(err)
+
+	clientset, err := kubernetes.NewForConfig(config)
+	CheckErr(err)
+
+	batchClient := clientset.BatchV1Client
+	jobsClient := batchClient.Jobs("default")
+	CheckErr(err)
+
+	// For an example of how to create jobs, see this file:
+	// https://github.com/pachyderm/pachyderm/blob/805e63/src/server/pps/server/api_server.go#L2320-L2345
+	batchJob := &batchapi.Job{
+		TypeMeta: apiUnver.TypeMeta{
+			Kind:       "Job",
+			APIVersion: "v1",
+		},
+		ObjectMeta: api.ObjectMeta{
+			Name:   "scipipe-task-" + t.Name,
+			Labels: make(map[string]string),
+		},
+		Spec: batchapi.JobSpec{
+			Template: api.PodTemplateSpec{
+				ObjectMeta: api.ObjectMeta{
+					Name:   "scipipe-pod-" + t.Name,
+					Labels: make(map[string]string),
+				},
+				Spec: api.PodSpec{
+					InitContainers: []api.Container{}, // Doesn't seem obligatory(?)...
+					Containers: []api.Container{
+						{
+							Name:    "scipipe-container-" + t.Name,
+							Image:   "perl",
+							Command: []string{"sh", "-c", command},
+							SecurityContext: &api.SecurityContext{
+								Privileged: &falseVal,
+							},
+							ImagePullPolicy: api.PullPolicy(api.PullIfNotPresent),
+							Env:             []api.EnvVar{},
+							VolumeMounts: []api.VolumeMount{
+								api.VolumeMount{
+									Name:      "scipipe-volume-" + t.Name,
+									MountPath: "/scidata",
+								},
+							},
+						},
+					},
+					RestartPolicy:    api.RestartPolicyOnFailure,
+					ImagePullSecrets: []api.LocalObjectReference{},
+					Volumes: []api.Volume{
+						api.Volume{
+							Name: "scipipe-volume-" + t.Name,
+							VolumeSource: api.VolumeSource{
+								HostPath: &api.HostPathVolumeSource{
+									Path: "/data",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	newJob, err := jobsClient.Create(batchJob)
+	CheckErr(err)
+	Debug.Printf("Started Kubernetes job with name '%s'", newJob.Name)
 }
 
 // ================== Helper functions==================
