@@ -80,7 +80,6 @@ func (t *SciTask) Execute() {
 			case ExecModeSLURM:
 				Error.Printf("Task:%-12s SLURM Execution mode not implemented!", t.Name)
 			case ExecModeK8s:
-				Error.Printf("Task:%-12s Kubernetes Execution mode not implemented!", t.Name)
 				t.executeCommandonKubernetes(t.Command)
 			}
 		}
