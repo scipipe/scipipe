@@ -255,7 +255,7 @@ func (t *SciTask) executeCommandonKubernetes(command string) {
 							VolumeMounts: []api.VolumeMount{
 								api.VolumeMount{
 									Name:      "scipipe-volume-" + t.Name,
-									MountPath: "/scidata",
+									MountPath: "/hostshare",
 								},
 							},
 						},
@@ -267,7 +267,7 @@ func (t *SciTask) executeCommandonKubernetes(command string) {
 							Name: "scipipe-volume-" + t.Name,
 							VolumeSource: api.VolumeSource{
 								HostPath: &api.HostPathVolumeSource{
-									Path: "/data",
+									Path: "/hostshare",
 								},
 							},
 						},
