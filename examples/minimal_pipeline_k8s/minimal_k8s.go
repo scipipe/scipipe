@@ -15,7 +15,7 @@ func main() {
 
 	foo := sp.NewFromShell("fooer",
 		"echo foo > {o:foo}")
-	foo.SetPathStatic("foo", "/scipipe-data/foo.txt")
+	foo.SetPathStatic("foo", sp.DefaultDataFolder+"/foo.txt")
 	foo.ExecMode = sp.ExecModeK8s
 	run.AddProcess(foo)
 
