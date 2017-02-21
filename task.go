@@ -249,7 +249,7 @@ func (t *SciTask) executeCommandonKubernetes(command string, imageName string, d
 					InitContainers: []api.Container{}, // Doesn't seem obligatory(?)...
 					Containers: []api.Container{
 						{
-							Name:    "scipipe-cont-" + batchJobId,
+							Name:    "scipipe-container-" + batchJobId,
 							Image:   imageName,
 							Command: []string{"sh", "-c", command},
 							SecurityContext: &api.SecurityContext{
@@ -259,7 +259,7 @@ func (t *SciTask) executeCommandonKubernetes(command string, imageName string, d
 							Env:             []api.EnvVar{},
 							VolumeMounts: []api.VolumeMount{
 								api.VolumeMount{
-									Name:      "scipipe-vol-" + batchJobId,
+									Name:      "scipipe-volume-" + batchJobId,
 									MountPath: dataFolder,
 								},
 							},
@@ -269,7 +269,7 @@ func (t *SciTask) executeCommandonKubernetes(command string, imageName string, d
 					ImagePullSecrets: []api.LocalObjectReference{},
 					Volumes: []api.Volume{
 						api.Volume{
-							Name: "scipipe-vol-" + batchJobId,
+							Name: "scipipe-volume-" + batchJobId,
 							VolumeSource: api.VolumeSource{
 								HostPath: &api.HostPathVolumeSource{
 									Path: dataFolder,
