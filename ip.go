@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 )
 
 // ======= InformationPacket ========
@@ -87,6 +88,7 @@ func (ip *InformationPacket) WriteTempFile(dat []byte) {
 func (ip *InformationPacket) Atomize() {
 	Debug.Println("InformationPacket: Atomizing", ip.GetTempPath(), "->", ip.GetPath())
 	ip.lock.Lock()
+	time.Sleep(1 * time.Second)
 	err := os.Rename(ip.GetTempPath(), ip.path)
 	Check(err, "Could not rename file: "+ip.GetTempPath())
 	ip.lock.Unlock()
