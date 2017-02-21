@@ -2,6 +2,7 @@ package scipipe
 
 import (
 	"errors"
+	"os/user"
 	str "strings"
 )
 
@@ -46,11 +47,17 @@ type SciProcess struct {
 	PathFormatters   map[string]func(*SciTask) string
 	ParamPorts       map[string]*ParamPort
 	CustomExecute    func(*SciTask)
+	KubeConfigPath   string
 	Image            string
 	DataFolder       string
 }
 
 func NewSciProcess(name string, command string) *SciProcess {
+	usr, err := user.Current()
+	CheckErr(err)
+	defaultKubeConfigPath := usr.HomeDir + "/.kube/config"
+	Debug.Printf("Process %s: Setting default kube config path to %s\n", name, defaultKubeConfigPath)
+
 	return &SciProcess{
 		Name:             name,
 		CommandPattern:   command,
@@ -60,6 +67,7 @@ func NewSciProcess(name string, command string) *SciProcess {
 		PathFormatters:   make(map[string]func(*SciTask) string),
 		ParamPorts:       make(map[string]*ParamPort),
 		Spawn:            true,
+		KubeConfigPath:   defaultKubeConfigPath,
 		Image:            DefaultImage,
 		DataFolder:       DefaultDataFolder,
 	}
@@ -374,6 +382,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 			if p.CustomExecute != nil {
 				t.CustomExecute = p.CustomExecute
 			}
+			t.KubeConfigPath = p.KubeConfigPath
 			t.Image = p.Image
 			t.DataFolder = p.DataFolder
 			ch <- t

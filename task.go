@@ -2,7 +2,6 @@ package scipipe
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -19,16 +18,17 @@ import (
 // ================== SciTask ==================
 
 type SciTask struct {
-	Name          string
-	Command       string
-	ExecMode      ExecMode
-	CustomExecute func(*SciTask)
-	InTargets     map[string]*InformationPacket
-	OutTargets    map[string]*InformationPacket
-	Params        map[string]string
-	Done          chan int
-	Image         string
-	DataFolder    string
+	Name           string
+	Command        string
+	ExecMode       ExecMode
+	CustomExecute  func(*SciTask)
+	InTargets      map[string]*InformationPacket
+	OutTargets     map[string]*InformationPacket
+	Params         map[string]string
+	Done           chan int
+	KubeConfigPath string
+	Image          string
+	DataFolder     string
 }
 
 func NewSciTask(name string, cmdPat string, inTargets map[string]*InformationPacket, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode) *SciTask {
@@ -83,7 +83,7 @@ func (t *SciTask) Execute() {
 			case ExecModeSLURM:
 				Error.Printf("Task:%-12s SLURM Execution mode not implemented!", t.Name)
 			case ExecModeK8s:
-				t.executeCommandonKubernetes(t.Command, t.Image, t.DataFolder)
+				t.executeCommandonKubernetes(t.Command, t.KubeConfigPath, t.Image, t.DataFolder)
 			}
 		}
 		execTime := time.Since(startTime)
@@ -210,13 +210,12 @@ func (t *SciTask) cleanUpFifos() {
 }
 
 var (
-	kubeconfig = flag.String("kubeconfig", "/home/samuel/.kube/config", "absolute path to the kubeconfig file")
-	trueVal    = true
-	falseVal   = false
+	trueVal  = true
+	falseVal = false
 )
 
-func (t *SciTask) executeCommandonKubernetes(command string, imageName string, dataFolder string) {
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+func (t *SciTask) executeCommandonKubernetes(command string, kubeConfigPath string, imageName string, dataFolder string) {
+	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath) // Kind of hacky to pretend this is a flag, eh?
 	CheckErr(err)
 
 	clientset, err := kubernetes.NewForConfig(config)
