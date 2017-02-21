@@ -15,7 +15,7 @@ func main() {
 
 	foo := sp.NewFromShell("fooer",
 		"echo foo > {o:foo}")
-	foo.SetPathStatic("foo", "/hostshare/foo.txt")
+	foo.SetPathStatic("foo", "/scipipe-data/foo.txt")
 	foo.ExecMode = sp.ExecModeK8s
 	run.AddProcess(foo)
 
