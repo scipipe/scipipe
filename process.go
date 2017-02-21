@@ -30,6 +30,9 @@ type Process interface {
 
 // ================== SciProcess ==================
 
+var DefaultImage = "perl"
+var DefaultDataFolder = "/scipipe-data"
+
 type SciProcess struct {
 	Process
 	Name             string
@@ -43,6 +46,8 @@ type SciProcess struct {
 	PathFormatters   map[string]func(*SciTask) string
 	ParamPorts       map[string]*ParamPort
 	CustomExecute    func(*SciTask)
+	Image            string
+	DataFolder       string
 }
 
 func NewSciProcess(name string, command string) *SciProcess {
@@ -55,6 +60,8 @@ func NewSciProcess(name string, command string) *SciProcess {
 		PathFormatters:   make(map[string]func(*SciTask) string),
 		ParamPorts:       make(map[string]*ParamPort),
 		Spawn:            true,
+		Image:            DefaultImage,
+		DataFolder:       DefaultDataFolder,
 	}
 }
 
@@ -367,6 +374,8 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 			if p.CustomExecute != nil {
 				t.CustomExecute = p.CustomExecute
 			}
+			t.Image = p.Image
+			t.DataFolder = p.DataFolder
 			ch <- t
 			if len(p.In) == 0 && len(p.ParamPorts) == 0 {
 				Debug.Printf("Process.createTasks:%s Breaking: No inports nor params", p.Name)

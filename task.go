@@ -40,9 +40,8 @@ func NewSciTask(name string, cmdPat string, inTargets map[string]*InformationPac
 		Command:    "",
 		ExecMode:   execMode,
 		Done:       make(chan int),
-		Image:      "perl",
-		DataFolder: "/scipipe-data",
 	}
+
 	// Create out targets
 	Debug.Printf("Task:%s: Creating outTargets now ... [%s]", name, cmdPat)
 	outTargets := make(map[string]*InformationPacket)
