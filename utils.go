@@ -3,9 +3,11 @@ package scipipe
 import (
 	// "github.com/go-errors/errors"
 	//"os"
+	"math/rand"
 	"os"
 	"os/exec"
 	re "regexp"
+	"time"
 )
 
 func ExecCmd(cmd string) string {
@@ -40,4 +42,16 @@ func getShellCommandPlaceHolderRegex() *re.Regexp {
 	r, err := re.Compile(regex)
 	Check(err, "Could not compile regex: "+regex)
 	return r
+}
+
+var letters = []byte("abcdefghijklmnopqrstuvwxyz0123456789")
+
+func randSeqLC(n int) string {
+	aseed := rand.NewSource(time.Now().UnixNano())
+	arand := rand.New(aseed)
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[arand.Intn(len(letters))]
+	}
+	return string(b)
 }

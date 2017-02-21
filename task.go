@@ -223,6 +223,7 @@ func (t *SciTask) executeCommandonKubernetes(command string) {
 	jobsClient := batchClient.Jobs("default")
 	CheckErr(err)
 
+	batchJobId := t.Name + "-" + randSeqLC(6)
 	// For an example of how to create jobs, see this file:
 	// https://github.com/pachyderm/pachyderm/blob/805e63/src/server/pps/server/api_server.go#L2320-L2345
 	batchJob := &batchapi.Job{
@@ -231,20 +232,20 @@ func (t *SciTask) executeCommandonKubernetes(command string) {
 			APIVersion: "v1",
 		},
 		ObjectMeta: api.ObjectMeta{
-			Name:   "scipipe-task-" + t.Name,
+			Name:   "scipipe-task-" + batchJobId,
 			Labels: make(map[string]string),
 		},
 		Spec: batchapi.JobSpec{
 			Template: api.PodTemplateSpec{
 				ObjectMeta: api.ObjectMeta{
-					Name:   "scipipe-pod-" + t.Name,
+					Name:   "scipipe-pod-" + batchJobId,
 					Labels: make(map[string]string),
 				},
 				Spec: api.PodSpec{
 					InitContainers: []api.Container{}, // Doesn't seem obligatory(?)...
 					Containers: []api.Container{
 						{
-							Name:    "scipipe-container-" + t.Name,
+							Name:    "scipipe-cont-" + batchJobId,
 							Image:   "perl",
 							Command: []string{"sh", "-c", command},
 							SecurityContext: &api.SecurityContext{
@@ -254,7 +255,7 @@ func (t *SciTask) executeCommandonKubernetes(command string) {
 							Env:             []api.EnvVar{},
 							VolumeMounts: []api.VolumeMount{
 								api.VolumeMount{
-									Name:      "scipipe-volume-" + t.Name,
+									Name:      "scipipe-vol-" + batchJobId,
 									MountPath: "/hostshare",
 								},
 							},
@@ -264,7 +265,7 @@ func (t *SciTask) executeCommandonKubernetes(command string) {
 					ImagePullSecrets: []api.LocalObjectReference{},
 					Volumes: []api.Volume{
 						api.Volume{
-							Name: "scipipe-volume-" + t.Name,
+							Name: "scipipe-vol-" + batchJobId,
 							VolumeSource: api.VolumeSource{
 								HostPath: &api.HostPathVolumeSource{
 									Path: "/hostshare",
