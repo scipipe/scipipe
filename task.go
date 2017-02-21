@@ -27,6 +27,8 @@ type SciTask struct {
 	OutTargets    map[string]*InformationPacket
 	Params        map[string]string
 	Done          chan int
+	Image         string
+	DataFolder    string
 }
 
 func NewSciTask(name string, cmdPat string, inTargets map[string]*InformationPacket, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode) *SciTask {
@@ -38,6 +40,8 @@ func NewSciTask(name string, cmdPat string, inTargets map[string]*InformationPac
 		Command:    "",
 		ExecMode:   execMode,
 		Done:       make(chan int),
+		Image:      "perl",
+		DataFolder: "/scipipe-data",
 	}
 	// Create out targets
 	Debug.Printf("Task:%s: Creating outTargets now ... [%s]", name, cmdPat)
@@ -80,7 +84,7 @@ func (t *SciTask) Execute() {
 			case ExecModeSLURM:
 				Error.Printf("Task:%-12s SLURM Execution mode not implemented!", t.Name)
 			case ExecModeK8s:
-				t.executeCommandonKubernetes(t.Command)
+				t.executeCommandonKubernetes(t.Command, t.Image, t.DataFolder)
 			}
 		}
 		execTime := time.Since(startTime)
@@ -212,7 +216,7 @@ var (
 	falseVal   = false
 )
 
-func (t *SciTask) executeCommandonKubernetes(command string) {
+func (t *SciTask) executeCommandonKubernetes(command string, imageName string, dataFolder string) {
 	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
 	CheckErr(err)
 
@@ -246,7 +250,7 @@ func (t *SciTask) executeCommandonKubernetes(command string) {
 					Containers: []api.Container{
 						{
 							Name:    "scipipe-cont-" + batchJobId,
-							Image:   "perl",
+							Image:   imageName,
 							Command: []string{"sh", "-c", command},
 							SecurityContext: &api.SecurityContext{
 								Privileged: &falseVal,
@@ -256,7 +260,7 @@ func (t *SciTask) executeCommandonKubernetes(command string) {
 							VolumeMounts: []api.VolumeMount{
 								api.VolumeMount{
 									Name:      "scipipe-vol-" + batchJobId,
-									MountPath: "/hostshare",
+									MountPath: dataFolder,
 								},
 							},
 						},
@@ -268,7 +272,7 @@ func (t *SciTask) executeCommandonKubernetes(command string) {
 							Name: "scipipe-vol-" + batchJobId,
 							VolumeSource: api.VolumeSource{
 								HostPath: &api.HostPathVolumeSource{
-									Path: "/hostshare",
+									Path: dataFolder,
 								},
 							},
 						},
