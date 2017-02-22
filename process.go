@@ -38,7 +38,7 @@ type Process interface {
 
 // ================== SciProcess ==================
 
-var DefaultImage = "perl"
+var DefaultImage = "alpine:3.5"
 var DefaultDataFolder = "/scipipe-data"
 
 type SciProcess struct {
