@@ -12,6 +12,7 @@ import (
 	apiUnver "k8s.io/client-go/pkg/api/unversioned"
 	api "k8s.io/client-go/pkg/api/v1"
 	batchapi "k8s.io/client-go/pkg/apis/batch/v1"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -26,6 +27,7 @@ type SciTask struct {
 	OutTargets     map[string]*InformationPacket
 	Params         map[string]string
 	Done           chan int
+	K8sConfMode    K8sConfMode
 	KubeConfigPath string
 	Image          string
 	DataFolder     string
@@ -215,8 +217,16 @@ var (
 )
 
 func (t *SciTask) executeCommandonKubernetes(command string, kubeConfigPath string, imageName string, dataFolder string) {
-	config, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath) // Kind of hacky to pretend this is a flag, eh?
-	CheckErr(err)
+	var config *rest.Config
+	var err error
+
+	if t.K8sConfMode == K8sConfModeInCluster {
+		config, err = rest.InClusterConfig()
+		CheckErr(err)
+	} else {
+		config, err = clientcmd.BuildConfigFromFlags("", kubeConfigPath) // Kind of hacky to pretend this is a flag, eh?
+		CheckErr(err)
+	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	CheckErr(err)

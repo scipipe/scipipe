@@ -21,6 +21,13 @@ const (
 	ExecModeK8s ExecMode = iota
 )
 
+type K8sConfMode int
+
+const (
+	K8sConfModeInCluster    K8sConfMode = iota
+	K8sConfModeOutOfCluster K8sConfMode = iota
+)
+
 // ================== Process ==================
 
 // Base interface for all processes
@@ -48,6 +55,7 @@ type SciProcess struct {
 	ParamPorts       map[string]*ParamPort
 	CustomExecute    func(*SciTask)
 	KubeConfigPath   string
+	K8sConfMode      K8sConfMode
 	Image            string
 	DataFolder       string
 }
@@ -383,6 +391,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 				t.CustomExecute = p.CustomExecute
 			}
 			t.KubeConfigPath = p.KubeConfigPath
+			t.K8sConfMode = p.K8sConfMode
 			t.Image = p.Image
 			t.DataFolder = p.DataFolder
 			ch <- t
