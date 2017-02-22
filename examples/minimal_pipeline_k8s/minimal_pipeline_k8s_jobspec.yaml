@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minimal-pipeline-k8s-job
+spec:
+  activeDeadlineSeconds: 100
+  template:
+    metadata:
+      name: minimal-pipeline-k8s
+    spec:
+      containers:
+      - name:  minimal-pipeline-k8s-container
+        image: perl
+        command: ["echo", "hej"]
+      restartPolicy: Never
+      volumes:
+      - name: scipipe-volume
+        hostPath:
+          path: "/scipipe-data"
