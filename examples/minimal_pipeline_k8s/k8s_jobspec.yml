@@ -10,8 +10,8 @@ spec:
     spec:
       containers:
       - name:  minimal-pipeline-k8s-container
-        image: perl
-        command: ["echo", "hej"]
+        image: "farmbio/scipipe"
+        command: ["go", "run", "/scipipe-data/minimal_k8s.go"]
       restartPolicy: Never
       volumes:
       - name: scipipe-volume
