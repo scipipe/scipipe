@@ -87,7 +87,7 @@ func (ip *InformationPacket) WriteTempFile(dat []byte) {
 // Change from the temporary file name to the final file name
 func (ip *InformationPacket) Atomize() {
 	Debug.Println("InformationPacket: Atomizing", ip.GetTempPath(), "->", ip.GetPath())
-	sleepingDurationSec := 1
+	sleepingDurationSec := 10
 	Debug.Printf("Sleeping for %d seconds before atomizing ...\n", sleepingDurationSec)
 	time.Sleep(time.Duration(sleepingDurationSec) * time.Second)
 	ip.lock.Lock()
