@@ -91,8 +91,8 @@ func (ip *InformationPacket) Atomize() {
 	sleepingDurationSec := 1
 	Debug.Printf("Sleeping for %d seconds before atomizing ...\n", sleepingDurationSec)
 	time.Sleep(time.Duration(sleepingDurationSec) * time.Second)
-	err := os.Rename(ip.GetTempPath(), ip.path)
-	Check(err, "Could not rename file: "+ip.GetTempPath())
+	out, err := exec.Command("sh", "-c", "mv "+ip.GetTempPath()+" "+ip.path).CombinedOutput()
+	Check(err, "Could not rename file: "+ip.GetTempPath()+". Output: "+string(out))
 	ip.lock.Unlock()
 	Debug.Println("InformationPacket: Done atomizing", ip.GetTempPath(), "->", ip.GetPath())
 }
