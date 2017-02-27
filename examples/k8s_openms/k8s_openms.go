@@ -23,6 +23,8 @@ func main() {
 		outPath := workDir + "results/" + str.Join(parts[:len(parts)-1], "_") + ".peaks"
 		return outPath
 	}
+	peakPicker.ExecMode = sp.ExecModeK8s
+	peakPicker.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
 	prun.AddProcess(peakPicker)
 
 	sink := sp.NewSink()

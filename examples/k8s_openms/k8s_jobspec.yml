@@ -11,7 +11,7 @@ spec:
       containers:
       - name:  minimal-pipeline-k8s-container
         image: "farmbio/scipipe"
-        command: ["go", "run", "/scipipe-data/k8s_minimal.go"]
+        command: ["go", "run", "/scipipe-data/k8s_openms.go"]
         volumeMounts:
         - mountPath: "/scipipe-data"
           name: scipipe-volume
