@@ -88,7 +88,9 @@ func (ip *InformationPacket) WriteTempFile(dat []byte) {
 func (ip *InformationPacket) Atomize() {
 	Debug.Println("InformationPacket: Atomizing", ip.GetTempPath(), "->", ip.GetPath())
 	ip.lock.Lock()
-	time.Sleep(5 * time.Second)
+	sleepingDurationSec := 5
+	Debug.Println("Sleeping for %d seconds before atomizing ...", sleepingDurationSec)
+	time.Sleep(time.Duration(sleepingDurationSec) * time.Second)
 	err := os.Rename(ip.GetTempPath(), ip.path)
 	Check(err, "Could not rename file: "+ip.GetTempPath())
 	ip.lock.Unlock()
