@@ -1,15 +1,15 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: minimal-pipeline-k8s-job
+  name: openms-pipeline-k8s-job
 spec:
   activeDeadlineSeconds: 100
   template:
     metadata:
-      name: minimal-pipeline-k8s
+      name: openms-pipeline-k8s
     spec:
       containers:
-      - name:  minimal-pipeline-k8s-container
+      - name: openms-pipeline-k8s-container
         image: "farmbio/scipipe"
         command: ["go", "run", "/scipipe-data/k8s_openms.go"]
         volumeMounts:
