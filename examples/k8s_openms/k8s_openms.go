@@ -20,11 +20,11 @@ func main() {
 	// -------------------------------------------------------------------
 	// Peak Picker Process
 	// -------------------------------------------------------------------
-	peakPicker := sp.NewFromShell("peakpicker", "PeakPickerHiRes -in {i:sample} -out {o:out} -ini "+workDir+"openms-params/PPparam.ini")
-	peakPicker.PathFormatters["out"] = func(t *sp.SciTask) string {
+	peakPicker := sp.NewFromShell("peakpicker", "PeakPickerHiRes -in {i:sample} -out {o:peaks} -ini "+workDir+"openms-params/PPparam.ini")
+	peakPicker.PathFormatters["peaks"] = func(t *sp.SciTask) string {
 		parts := str.Split(filepath.Base(t.GetInPath("sample")), ".")
-		outPath := workDir + "results/" + str.Join(parts[:len(parts)-1], "_") + ".peaks"
-		return outPath
+		peaksPath := workDir + "results/" + str.Join(parts[:len(parts)-1], "_") + ".peaks"
+		return peaksPath
 	}
 	peakPicker.ExecMode = sp.ExecModeK8s
 	peakPicker.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
