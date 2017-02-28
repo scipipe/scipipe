@@ -84,17 +84,27 @@ func (ip *InformationPacket) WriteTempFile(dat []byte) {
 	Check(err, "Could not write to temp file: "+ip.GetTempPath())
 }
 
+const (
+	sleepDurationSec = 1
+)
+
 // Change from the temporary file name to the final file name
 func (ip *InformationPacket) Atomize() {
 	Debug.Println("InformationPacket: Atomizing", ip.GetTempPath(), "->", ip.GetPath())
-	sleepingDurationSec := 10
-	Debug.Printf("Sleeping for %d seconds before atomizing ...\n", sleepingDurationSec)
-	time.Sleep(time.Duration(sleepingDurationSec) * time.Second)
-	ip.lock.Lock()
-	out, err := exec.Command("sh", "-c", "mv "+ip.GetTempPath()+" "+ip.path).CombinedOutput()
-	Check(err, "Could not rename file: "+ip.GetTempPath()+". Output: "+string(out))
-	ip.lock.Unlock()
-	Debug.Println("InformationPacket: Done atomizing", ip.GetTempPath(), "->", ip.GetPath())
+	doneAtomizing := false
+	for !doneAtomizing {
+		if ip.TempFileExists() {
+			ip.lock.Lock()
+			out, err := exec.Command("sh", "-c", "mv "+ip.GetTempPath()+" "+ip.path).CombinedOutput()
+			Check(err, "Could not rename file: "+ip.GetTempPath()+". Output: "+string(out))
+			ip.lock.Unlock()
+			doneAtomizing = true
+			Debug.Println("InformationPacket: Done atomizing", ip.GetTempPath(), "->", ip.GetPath())
+		} else {
+			Debug.Printf("Sleeping for %d seconds before atomizing ...\n", sleepDurationSec)
+			time.Sleep(time.Duration(sleepDurationSec) * time.Second)
+		}
+	}
 }
 
 // Create FIFO file for the InformationPacket
@@ -132,6 +142,17 @@ func (ip *InformationPacket) Exists() bool {
 	}
 	ip.lock.Unlock()
 	return exists
+}
+
+// Check if the temp-file exists
+func (ip *InformationPacket) TempFileExists() bool {
+	tempFileExists := false
+	ip.lock.Lock()
+	if _, err := os.Stat(ip.GetTempPath()); err == nil {
+		tempFileExists = true
+	}
+	ip.lock.Unlock()
+	return tempFileExists
 }
 
 func (ip *InformationPacket) GetAuditInfo() *AuditInfo {
