@@ -46,6 +46,14 @@ func main() {
 	// def output(self):
 	//     filename = basename("{0}.featureXML".format(*self.sampleFile.rsplit('.', 1)))
 	//     return luigi.LocalTarget("results/"+filename)
+	featFinder := sp.NewFromShell("featfinder", "PeakPickerHiRes -in {i:peaks} -out {o:feats} -ini "+workDir+"openms-params/PPparam.ini")
+	featFinder.PathFormatters["feats"] = func(t *sp.SciTask) string {
+		featsPath := t.GetInPath("peaks") + ".features.xml"
+		return featsPath
+	}
+	featFinder.ExecMode = sp.ExecModeK8s
+	featFinder.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
+	prun.AddProcess(featFinder)
 
 	// -------------------------------------------------------------------
 	// Feature Linker process
@@ -103,7 +111,8 @@ func main() {
 	prun.AddProcess(sink)
 
 	peakPicker.In["sample"].Connect(sampleFilesSender.Out)
-	sink.Connect(peakPicker.Out["out"])
+	featFinder.In["peaks"].Connect(peakPicker.Out["peaks"])
+	sink.Connect(featFinder.Out["feats"])
 
 	prun.Run()
 }
