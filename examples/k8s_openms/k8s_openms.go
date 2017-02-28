@@ -46,7 +46,7 @@ func main() {
 	// def output(self):
 	//     filename = basename("{0}.featureXML".format(*self.sampleFile.rsplit('.', 1)))
 	//     return luigi.LocalTarget("results/"+filename)
-	featFinder := sp.NewFromShell("featfinder", "PeakPickerHiRes -in {i:peaks} -out {o:feats} -ini "+workDir+"openms-params/PPparam.ini")
+	featFinder := sp.NewFromShell("featfinder", "FeatureFinderMetabo -in {i:peaks} -out {o:feats} -ini "+workDir+"openms-params/PPparam.ini")
 	featFinder.PathFormatters["feats"] = func(t *sp.SciTask) string {
 		featsPath := t.GetInPath("peaks") + ".features.xml"
 		return featsPath
