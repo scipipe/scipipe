@@ -33,18 +33,71 @@ func main() {
 	// -------------------------------------------------------------------
 	// Feature Finder process
 	// -------------------------------------------------------------------
+	// sampleFile = luigi.Parameter()
+	//
+	// "FeatureFinderMetabo",
+	//     "-in", "/work/" + self.input().path,
+	//     "-out", "/work/" + self.output().path,
+	//     "-ini", "/work/openms-params/FFparam.ini"
+	//
+	// def requires(self):
+	//     return PeakPickerTask(sampleFile=self.sampleFile)
+	//
+	// def output(self):
+	//     filename = basename("{0}.featureXML".format(*self.sampleFile.rsplit('.', 1)))
+	//     return luigi.LocalTarget("results/"+filename)
 
 	// -------------------------------------------------------------------
 	// Feature Linker process
 	// -------------------------------------------------------------------
+	// groupSuffix = luigi.Parameter()
+	// inputList = map(lambda i: "/work/" + i.path, self.input())
+	// inputStr = ' '.join(inputList)
+	//
+	// "command": ["sh","-c"],
+	// "args": [
+	//     "FeatureLinkerUnlabeledQT -in " + inputStr +
+	//     " -out /work/" + self.output().path +
+	//     " -ini /work/openms-params/FLparam.ini" +
+	//     " -threads 2"],
+	//
+	// def requires(self):
+	//     inputFiles = glob.glob("data/*_"+self.groupSuffix+".mzML")
+	//     return map(lambda f: FeatureFinderTask(sampleFile=f),inputFiles)
+	//
+	// def output(self):
+	//     return luigi.LocalTarget("results/linked_"+self.groupSuffix+".consensusXML")
 
 	// -------------------------------------------------------------------
 	// File Filter process
 	// -------------------------------------------------------------------
+	// groupSuffix = luigi.Parameter()
+	//
+	// "FileFilter",
+	//     "-in", "/work/" + self.input().path,
+	//     "-out", "/work/" + self.output().path,
+	//     "-ini", "/work/openms-params/FileFparam.ini"
+	//
+	// def requires(self):
+	//     return FeatureLinkerTask(groupSuffix=self.groupSuffix)
+	//
+	// def output(self):
+	//     return luigi.LocalTarget("results/linked_filtered_"+self.groupSuffix+".consensusXML")
 
 	// -------------------------------------------------------------------
 	// Text Exporter process
 	// -------------------------------------------------------------------
+	//
+	// "TextExporter",
+	//     "-in", "/work/" + self.input().path,
+	//     "-out", "/work/" + self.output().path,
+	//     "-ini", "/work/openms-params/TEparam.ini"
+	//
+	// def requires(self):
+	//     return FileFilterTask(groupSuffix=self.groupSuffix)
+	//
+	// def output(self):
+	//     return luigi.LocalTarget("results/"+self.groupSuffix+".csv")
 
 	sink := sp.NewSink()
 	prun.AddProcess(sink)
