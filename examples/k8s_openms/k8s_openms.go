@@ -17,6 +17,9 @@ func main() {
 	sampleFilesSender := sp.NewIPQueue(workDir + "002_CRa_H9M5_M470_Pool_01_alternate_neg_low_mr.mzML")
 	prun.AddProcess(sampleFilesSender)
 
+	// -------------------------------------------------------------------
+	// Peak Picker Process
+	// -------------------------------------------------------------------
 	peakPicker := sp.NewFromShell("peakpicker", "PeakPickerHiRes -in {i:sample} -out {o:out} -ini "+workDir+"openms-params/PPparam.ini")
 	peakPicker.PathFormatters["out"] = func(t *sp.SciTask) string {
 		parts := str.Split(filepath.Base(t.GetInPath("sample")), ".")
@@ -26,6 +29,22 @@ func main() {
 	peakPicker.ExecMode = sp.ExecModeK8s
 	peakPicker.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
 	prun.AddProcess(peakPicker)
+
+	// -------------------------------------------------------------------
+	// Feature Finder process
+	// -------------------------------------------------------------------
+
+	// -------------------------------------------------------------------
+	// Feature Linker process
+	// -------------------------------------------------------------------
+
+	// -------------------------------------------------------------------
+	// File Filter process
+	// -------------------------------------------------------------------
+
+	// -------------------------------------------------------------------
+	// Text Exporter process
+	// -------------------------------------------------------------------
 
 	sink := sp.NewSink()
 	prun.AddProcess(sink)
