@@ -75,6 +75,14 @@ func main() {
 	//
 	// def output(self):
 	//     return luigi.LocalTarget("results/linked_"+self.groupSuffix+".consensusXML")
+	featLinker := sp.NewFromShell("featlinker", "FeatureLinkerUnlabeledQT -in {i:feats} -out {o:consensus} -ini "+workDir+"openms-params/FLparam.ini")
+	featLinker.PathFormatters["consensus"] = func(t *sp.SciTask) string {
+		featsPath := t.GetInPath("feats") + ".consensus.xml"
+		return featsPath
+	}
+	featLinker.ExecMode = sp.ExecModeK8s
+	featLinker.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
+	prun.AddProcess(featLinker)
 
 	// -------------------------------------------------------------------
 	// File Filter process
@@ -110,9 +118,13 @@ func main() {
 	sink := sp.NewSink()
 	prun.AddProcess(sink)
 
+	// -------------------------------------------------------------------
+	// Connect network
+	// -------------------------------------------------------------------
 	peakPicker.In["sample"].Connect(sampleFilesSender.Out)
 	featFinder.In["peaks"].Connect(peakPicker.Out["peaks"])
-	sink.Connect(featFinder.Out["feats"])
+	featLinker.In["feats"] = featFinder.Out["feats"]
+	sink.Connect(featLinker.Out["consensus"])
 
 	prun.Run()
 }
