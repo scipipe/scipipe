@@ -338,8 +338,7 @@ func formatCommand(cmd string, inTargets map[string]*InformationPacket, outTarge
 			if inTargets[name] == nil {
 				msg := fmt.Sprint("Missing intarget for inport '", name, "' for command '", cmd, "'")
 				Check(errors.New(msg), msg)
-			} else if inTargets[name].GetPath() == "_substream.txt" && reduceInputs {
-				Debug.Println("*** CASE 2 ***")
+			} else if inTargets[name].GetPath() == "" && reduceInputs {
 				ips := []*InformationPacket{}
 				Debug.Println("Got ips: ", ips)
 				for ip := range inTargets[name].SubStream.Chan {

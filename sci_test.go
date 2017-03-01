@@ -329,7 +329,7 @@ func NewStreamToSubStream() *StreamToSubStream {
 func (proc *StreamToSubStream) Run() {
 	defer proc.OutSubStream.Close()
 
-	subStreamIP := NewInformationPacket("_substream.txt")
+	subStreamIP := NewInformationPacket("")
 	Connect(proc.In, subStreamIP.SubStream)
 
 	proc.OutSubStream.Chan <- subStreamIP

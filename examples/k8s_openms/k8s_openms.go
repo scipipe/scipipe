@@ -5,6 +5,7 @@ import (
 	str "strings"
 
 	sp "github.com/scipipe/scipipe"
+	spcomp "github.com/scipipe/scipipe/components"
 )
 
 const (
@@ -33,19 +34,6 @@ func main() {
 	// -------------------------------------------------------------------
 	// Feature Finder process
 	// -------------------------------------------------------------------
-	// sampleFile = luigi.Parameter()
-	//
-	// "FeatureFinderMetabo",
-	//     "-in", "/work/" + self.input().path,
-	//     "-out", "/work/" + self.output().path,
-	//     "-ini", "/work/openms-params/FFparam.ini"
-	//
-	// def requires(self):
-	//     return PeakPickerTask(sampleFile=self.sampleFile)
-	//
-	// def output(self):
-	//     filename = basename("{0}.featureXML".format(*self.sampleFile.rsplit('.', 1)))
-	//     return luigi.LocalTarget("results/"+filename)
 	featFinder := sp.NewFromShell("featfinder", "FeatureFinderMetabo -in {i:peaks} -out {o:feats} -ini "+workDir+"openms-params/FFparam.ini")
 	featFinder.PathFormatters["feats"] = func(t *sp.SciTask) string {
 		featsPath := t.GetInPath("peaks") + ".features.xml"
@@ -75,7 +63,10 @@ func main() {
 	//
 	// def output(self):
 	//     return luigi.LocalTarget("results/linked_"+self.groupSuffix+".consensusXML")
-	featLinker := sp.NewFromShell("featlinker", "FeatureLinkerUnlabeledQT -in {i:feats} -out {o:consensus} -ini "+workDir+"openms-params/FLparam.ini")
+	strToSubstr := spcomp.NewStreamToSubStream()
+	prun.AddProcess(strToSubstr)
+
+	featLinker := sp.NewFromShell("featlinker", "FeatureLinkerUnlabeledQT -in {i:feats:r: } -out {o:consensus} -ini "+workDir+"openms-params/FLparam.ini -threads 2")
 	featLinker.PathFormatters["consensus"] = func(t *sp.SciTask) string {
 		featsPath := t.GetInPath("feats") + ".consensus.xml"
 		return featsPath
@@ -123,7 +114,8 @@ func main() {
 	// -------------------------------------------------------------------
 	peakPicker.In["sample"].Connect(sampleFilesSender.Out)
 	featFinder.In["peaks"].Connect(peakPicker.Out["peaks"])
-	featLinker.In["feats"] = featFinder.Out["feats"]
+	strToSubstr.In = featFinder.Out["feats"]
+	featLinker.In["feats"] = strToSubstr.OutSubStream
 	sink.Connect(featLinker.Out["consensus"])
 
 	prun.Run()
