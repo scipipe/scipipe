@@ -60,6 +60,24 @@ func ShellExpand(name string, cmd string, inPaths map[string]string, outPaths ma
 	return p
 }
 
+func (p *SciProcess) GetInPort(portName string) *FilePort {
+	if p.In[portName] != nil {
+		return p.In[portName]
+	} else {
+		Error.Printf("No such in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.Name)
+	}
+	return nil
+}
+
+func (p *SciProcess) GetOutPort(portName string) *FilePort {
+	if p.Out[portName] != nil {
+		return p.Out[portName]
+	} else {
+		Error.Printf("No such out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.Name)
+	}
+	return nil
+}
+
 // ----------- Path formatting methods ------------
 
 // SetPathStatic creates an (output) path formatter returning a static string file name
@@ -100,6 +118,7 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 		Debug.Println("outPaths:", outPaths)
 	}
 	cmdExpr = cmd
+	Debug.Println("Got command: ", cmd)
 	for _, m := range ms {
 		placeHolderStr := m[0]
 		typ := m[1]
@@ -151,6 +170,7 @@ func (p *SciProcess) initPortsFromCmdPattern(cmd string, params map[string]strin
 	// Find in/out port names and Params and set up in struct fields
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
+	Debug.Printf("Got the following matches for placeholders in the command, when initializing ports: %v\n", ms)
 
 	for _, m := range ms {
 		if len(m) < 3 {
