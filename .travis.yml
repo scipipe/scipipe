@@ -13,4 +13,5 @@ install:
   - godep restore ./...
   - cd $GOPATH/src/github.com/scipipe/scipipe
 
+# Building the full repo (with ./...) goes out of memory with travis containers, so:
 script: go test -v .
