@@ -19,7 +19,7 @@ type InformationPacket struct {
 	doStream  bool
 	lock      *sync.Mutex
 	auditInfo *AuditInfo
-	subStream chan *InformationPacket
+	SubStream *FilePort
 }
 
 // Create new InformationPacket "object"
@@ -27,7 +27,7 @@ func NewInformationPacket(path string) *InformationPacket {
 	ip := new(InformationPacket)
 	ip.path = path
 	ip.lock = new(sync.Mutex)
-	ip.subStream = make(chan *InformationPacket, 16)
+	ip.SubStream = NewFilePort()
 	//Don't init buffer if not needed?
 	//buf := make([]byte, 0, 128)
 	//ip.buffer = bytes.NewBuffer(buf)

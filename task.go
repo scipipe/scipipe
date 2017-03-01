@@ -204,9 +204,17 @@ func formatCommand(cmd string, inTargets map[string]*InformationPacket, outTarge
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
+		var reduceInputs bool = false
+
 		placeHolderStr := m[0]
 		typ := m[1]
 		name := m[2]
+		sep := " " // Default
+		if len(m) > 3 {
+			sep = m[5]
+			reduceInputs = true
+		}
+		Debug.Printf("Found the following parts in the command: (type: '%s', name: '%s', sep: '%s', reduceInputs: %v). Command: %s\n", typ, name, sep, reduceInputs, cmd)
 		var filePath string
 		if typ == "o" || typ == "os" {
 			// Out-ports
@@ -225,8 +233,25 @@ func formatCommand(cmd string, inTargets map[string]*InformationPacket, outTarge
 			if inTargets[name] == nil {
 				msg := fmt.Sprint("Missing intarget for inport '", name, "' for command '", cmd, "'")
 				Check(errors.New(msg), msg)
+			} else if inTargets[name].GetPath() == "_substream.txt" && reduceInputs {
+				Debug.Println("*** CASE 2 ***")
+				ips := []*InformationPacket{}
+				Debug.Println("Got ips: ", ips)
+				for ip := range inTargets[name].SubStream.Chan {
+					Debug.Println("Got ip: ", ip)
+					ips = append(ips, ip)
+				}
+				Debug.Println("Got ips: ", ips)
+				paths := []string{}
+				Debug.Println("Got paths: ", paths)
+				for _, ip := range ips {
+					paths = append(paths, ip.GetPath())
+				}
+				Debug.Println("Got paths: ", paths)
+				filePath = str.Join(paths, sep)
+				Debug.Println("Got filePath: ", filePath)
 			} else if inTargets[name].GetPath() == "" {
-				msg := fmt.Sprint("Missing inpath for inport '", name, "' for command '", cmd, "'")
+				msg := fmt.Sprint("Missing inpath for inport '", name, "', and no substream, for command '", cmd, "'")
 				Check(errors.New(msg), msg)
 			} else {
 				if inTargets[name].doStream {
@@ -235,6 +260,7 @@ func formatCommand(cmd string, inTargets map[string]*InformationPacket, outTarge
 					filePath = inTargets[name].GetPath()
 				}
 			}
+			Debug.Printf("filePath determined to: %s, for command '%s'\n", filePath, cmd)
 		} else if typ == "p" {
 			if params[name] == "" {
 				msg := fmt.Sprint("Missing param value param '", name, "' for command '", cmd, "'")

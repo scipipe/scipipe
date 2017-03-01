@@ -2,6 +2,8 @@ package scipipe
 
 import (
 	"fmt"
+	"os/exec"
+
 	"github.com/stretchr/testify/assert"
 	//"os"
 	"os"
@@ -230,8 +232,51 @@ func TestStreaming(t *t.T) {
 	cleanFiles("/tmp/lsl.txt.fifo")
 }
 
-// Helper processes
+func TestSubStreamReduceInPlaceHolder(t *t.T) {
+	InitLogWarning()
 
+	exec.Command("bash", "-c", "echo 1 > /tmp/file1.txt").CombinedOutput()
+	exec.Command("bash", "-c", "echo 2 > /tmp/file2.txt").CombinedOutput()
+	exec.Command("bash", "-c", "echo 3 > /tmp/file3.txt").CombinedOutput()
+
+	plr := NewPipelineRunner()
+
+	// Create some input files
+
+	ipq := NewIPQueue("/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
+	plr.AddProcess(ipq)
+
+	sts := NewStreamToSubStream()
+	plr.AddProcess(sts)
+	Connect(sts.In, ipq.Out)
+
+	cat := NewFromShell("concatenate", "cat {i:infiles:r: } > {o:merged}")
+	cat.SetPathStatic("merged", "/tmp/substream_merged.txt")
+	plr.AddProcess(cat)
+	Connect(cat.In["infiles"], sts.OutSubStream)
+
+	snk := NewSink()
+	plr.AddProcess(snk)
+	snk.Connect(cat.Out["merged"])
+
+	plr.Run()
+
+	_, err1 := os.Stat("/tmp/file1.txt")
+	assert.Nil(t, err1, "File missing!")
+
+	_, err2 := os.Stat("/tmp/file2.txt")
+	assert.Nil(t, err2, "File missing!")
+
+	_, err3 := os.Stat("/tmp/file3.txt")
+	assert.Nil(t, err3, "File missing!")
+
+	_, err4 := os.Stat("/tmp/substream_merged.txt")
+	assert.Nil(t, err4, "File missing!")
+
+	cleanFiles("/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt", "/tmp/substream_merged.txt")
+}
+
+// Helper processes
 type CombinatoricsProcess struct {
 	Process
 	A *ParamPort
@@ -264,6 +309,35 @@ func (proc *CombinatoricsProcess) Run() {
 }
 
 func (proc *CombinatoricsProcess) IsConnected() bool { return true }
+
+// StreamToSubstream helper process
+
+type StreamToSubStream struct {
+	In           *FilePort
+	OutSubStream *FilePort
+}
+
+// Instantiate a new StreamToSubStream
+func NewStreamToSubStream() *StreamToSubStream {
+	return &StreamToSubStream{
+		In:           NewFilePort(),
+		OutSubStream: NewFilePort(),
+	}
+}
+
+// Run the StreamToSubStream
+func (proc *StreamToSubStream) Run() {
+	defer proc.OutSubStream.Close()
+
+	subStreamIP := NewInformationPacket("_substream.txt")
+	Connect(proc.In, subStreamIP.SubStream)
+
+	proc.OutSubStream.Chan <- subStreamIP
+}
+
+func (proc *StreamToSubStream) IsConnected() bool {
+	return proc.In.IsConnected() && proc.OutSubStream.IsConnected()
+}
 
 // Helper functions
 func cleanFiles(fileNames ...string) {
