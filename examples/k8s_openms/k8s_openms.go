@@ -112,11 +112,11 @@ func main() {
 	// -------------------------------------------------------------------
 	// Connect network
 	// -------------------------------------------------------------------
-	peakPicker.In["sample"].Connect(sampleFilesSender.Out)
-	featFinder.In["peaks"].Connect(peakPicker.Out["peaks"])
-	strToSubstr.In.Connect(featFinder.Out["feats"])
-	featLinker.In["feats"].Connect(strToSubstr.OutSubStream)
-	sink.Connect(featLinker.Out["consensus"])
+	peakPicker.GetInPort("sample").Connect(sampleFilesSender.Out)
+	featFinder.GetInPort("peaks").Connect(peakPicker.GetOutPort("peaks"))
+	strToSubstr.In.Connect(featFinder.GetOutPort("feats"))
+	featLinker.GetInPort("feats").Connect(strToSubstr.OutSubStream)
+	sink.Connect(featLinker.GetOutPort("consensus"))
 
 	prun.Run()
 }
