@@ -68,7 +68,7 @@ func main() {
 
 	featLinker := sp.NewFromShell("featlinker", "FeatureLinkerUnlabeledQT -in {i:feats:r: } -out {o:consensus} -ini "+workDir+"openms-params/FLparam.ini -threads 2")
 	featLinker.PathFormatters["consensus"] = func(t *sp.SciTask) string {
-		featsPath := t.GetInPath("feats") + ".consensusXML"
+		featsPath := "linked.consensusXML"
 		return featsPath
 	}
 	featLinker.ExecMode = sp.ExecModeK8s
