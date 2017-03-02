@@ -36,7 +36,7 @@ func main() {
 	// -------------------------------------------------------------------
 	featFinder := sp.NewFromShell("featfinder", "FeatureFinderMetabo -in {i:peaks} -out {o:feats} -ini "+workDir+"openms-params/FFparam.ini")
 	featFinder.PathFormatters["feats"] = func(t *sp.SciTask) string {
-		featsPath := t.GetInPath("peaks") + ".features.xml"
+		featsPath := t.GetInPath("peaks") + ".featureXML"
 		return featsPath
 	}
 	featFinder.ExecMode = sp.ExecModeK8s
@@ -68,7 +68,7 @@ func main() {
 
 	featLinker := sp.NewFromShell("featlinker", "FeatureLinkerUnlabeledQT -in {i:feats:r: } -out {o:consensus} -ini "+workDir+"openms-params/FLparam.ini -threads 2")
 	featLinker.PathFormatters["consensus"] = func(t *sp.SciTask) string {
-		featsPath := t.GetInPath("feats") + ".consensus.xml"
+		featsPath := t.GetInPath("feats") + ".consensusXML"
 		return featsPath
 	}
 	featLinker.ExecMode = sp.ExecModeK8s
