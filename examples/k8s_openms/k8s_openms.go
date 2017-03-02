@@ -114,8 +114,8 @@ func main() {
 	// -------------------------------------------------------------------
 	peakPicker.In["sample"].Connect(sampleFilesSender.Out)
 	featFinder.In["peaks"].Connect(peakPicker.Out["peaks"])
-	strToSubstr.In = featFinder.Out["feats"]
-	featLinker.In["feats"] = strToSubstr.OutSubStream
+	strToSubstr.In.Connect(featFinder.Out["feats"])
+	featLinker.In["feats"].Connect(strToSubstr.OutSubStream)
 	sink.Connect(featLinker.Out["consensus"])
 
 	prun.Run()
