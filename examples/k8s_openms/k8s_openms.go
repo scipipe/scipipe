@@ -15,7 +15,7 @@ const (
 func main() {
 	prun := sp.NewPipelineRunner()
 
-	sampleFilesSender := sp.NewIPQueue(workDir + "002_CRa_H9M5_M470_Pool_01_alternate_neg_low_mr.mzML")
+	sampleFilesSender := sp.NewIPQueue(workDir+"002_CRa_H9M5_M470_Pool_01_alternate_neg_low_mr.mzML", workDir+"001_CRa_H9M5_M470_Blank_01_alternate_neg_low_mr.mzML")
 	prun.AddProcess(sampleFilesSender)
 
 	// -------------------------------------------------------------------
