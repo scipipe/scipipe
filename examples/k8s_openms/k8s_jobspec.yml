@@ -11,7 +11,7 @@ spec:
       containers:
       - name: openms-pipeline-k8s-container
         image: "farmbio/scipipe"
-        command: ["go", "run", "/scipipe-data/k8s_openms.go"]
+        command: ["sh", "-c", "cd $GOPATH/src/github.com/scipipe/scipipe; git pull; cd -; go run k8s_openms.go"]
         volumeMounts:
         - mountPath: "/scipipe-data"
           name: scipipe-volume
