@@ -17,15 +17,15 @@ func NewStreamToSubStream() *StreamToSubStream {
 }
 
 // Run the StreamToSubStream
-func (proc *StreamToSubStream) Run() {
-	defer proc.OutSubStream.Close()
+func (p *StreamToSubStream) Run() {
+	defer p.OutSubStream.Close()
 
 	subStreamIP := scipipe.NewInformationPacket("")
-	subStreamIP.SubStream.Connect(proc.In)
+	subStreamIP.SubStream = p.In
 
-	proc.OutSubStream.Chan <- subStreamIP
+	p.OutSubStream.Chan <- subStreamIP
 }
 
-func (proc *StreamToSubStream) IsConnected() bool {
-	return proc.In.IsConnected() && proc.OutSubStream.IsConnected()
+func (p *StreamToSubStream) IsConnected() bool {
+	return p.In.IsConnected() && p.OutSubStream.IsConnected()
 }
