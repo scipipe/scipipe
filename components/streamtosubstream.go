@@ -21,7 +21,7 @@ func (proc *StreamToSubStream) Run() {
 	defer proc.OutSubStream.Close()
 
 	subStreamIP := scipipe.NewInformationPacket("")
-	subStreamIP.SubStream = proc.In
+	subStreamIP.SubStream.Connect(proc.In)
 
 	proc.OutSubStream.Chan <- subStreamIP
 }
