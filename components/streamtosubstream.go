@@ -13,7 +13,10 @@ type StreamToSubStream struct {
 
 // Instantiate a new StreamToSubStream
 func NewStreamToSubStream() *StreamToSubStream {
-	return &StreamToSubStream{}
+	return &StreamToSubStream{
+		In:           scipipe.NewFilePort(),
+		OutSubStream: scipipe.NewFilePort(),
+	}
 }
 
 // Run the StreamToSubStream
