@@ -48,31 +48,11 @@ func main() {
 	// -------------------------------------------------------------------
 	// Feature Linker process
 	// -------------------------------------------------------------------
-	// groupSuffix = luigi.Parameter()
-	// inputList = map(lambda i: "/work/" + i.path, self.input())
-	// inputStr = ' '.join(inputList)
-	//
-	// "command": ["sh","-c"],
-	// "args": [
-	//     "FeatureLinkerUnlabeledQT -in " + inputStr +
-	//     " -out /work/" + self.output().path +
-	//     " -ini /work/openms-params/FLparam.ini" +
-	//     " -threads 2"],
-	//
-	// def requires(self):
-	//     inputFiles = glob.glob("data/*_"+self.groupSuffix+".mzML")
-	//     return map(lambda f: FeatureFinderTask(sampleFile=f),inputFiles)
-	//
-	// def output(self):
-	//     return luigi.LocalTarget("results/linked_"+self.groupSuffix+".consensusXML")
 	strToSubstr := spcomp.NewStreamToSubStream()
 	prun.AddProcess(strToSubstr)
 
 	featLinker := sp.NewFromShell("featlinker", "FeatureLinkerUnlabeledQT -in {i:feats:r: } -out {o:consensus} -ini "+workDir+"openms-params/FLparam.ini -threads 2")
-	featLinker.PathFormatters["consensus"] = func(t *sp.SciTask) string {
-		featsPath := workDir + "results/" + "linked.consensusXML"
-		return featsPath
-	}
+	featLinker.SetPathStatic("consensus", workDir+"results/"+"linked.consensusXML")
 	featLinker.ExecMode = sp.ExecModeK8s
 	featLinker.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
 	prun.AddProcess(featLinker)
@@ -80,18 +60,11 @@ func main() {
 	// -------------------------------------------------------------------
 	// File Filter process
 	// -------------------------------------------------------------------
-	// groupSuffix = luigi.Parameter()
-	//
-	// "FileFilter",
-	//     "-in", "/work/" + self.input().path,
-	//     "-out", "/work/" + self.output().path,
-	//     "-ini", "/work/openms-params/FileFparam.ini"
-	//
-	// def requires(self):
-	//     return FeatureLinkerTask(groupSuffix=self.groupSuffix)
-	//
-	// def output(self):
-	//     return luigi.LocalTarget("results/linked_filtered_"+self.groupSuffix+".consensusXML")
+	fileFilter := sp.NewFromShell("filefilter", "FileFilter -in {i:unfiltered} -out {o:filtered} -ini "+workDir+"openms-params/FileFparam.ini")
+	fileFilter.SetPathReplace("unfiltered", "filtered", "linked", "linked_filtered")
+	fileFilter.ExecMode = sp.ExecModeK8s
+	fileFilter.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
+	prun.AddProcess(fileFilter)
 
 	// -------------------------------------------------------------------
 	// Text Exporter process
@@ -118,7 +91,8 @@ func main() {
 	featFinder.GetInPort("peaks").Connect(peakPicker.GetOutPort("peaks"))
 	strToSubstr.In.Connect(featFinder.GetOutPort("feats"))
 	featLinker.GetInPort("feats").Connect(strToSubstr.OutSubStream)
-	sink.Connect(featLinker.GetOutPort("consensus"))
+	fileFilter.GetInPort("unfiltered").Connect(featLinker.GetOutPort("consensus"))
+	sink.Connect(fileFilter.GetOutPort("filtered"))
 
 	prun.Run()
 }
