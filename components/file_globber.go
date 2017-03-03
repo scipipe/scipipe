@@ -30,3 +30,7 @@ func (p *FileGlobber) Run() {
 		p.Out.Chan <- ip
 	}
 }
+
+func (p *FileGlobber) IsConnected() bool {
+	return p.Out.IsConnected()
+}
