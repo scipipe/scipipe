@@ -17,8 +17,8 @@ func main() {
 
 	prun := sp.NewPipelineRunner()
 
-	sampleFilesSender := sp.NewIPQueue(workDir+"002_CRa_H9M5_M470_Pool_01_alternate_neg_low_mr.mzML", workDir+"001_CRa_H9M5_M470_Blank_01_alternate_neg_low_mr.mzML")
-	prun.AddProcess(sampleFilesSender)
+	altNegLowMRFiles := spcomp.NewFileGlobber(workDir + "*alternate_neg_low_mr.mzML")
+	prun.AddProcess(altNegLowMRFiles)
 
 	// -------------------------------------------------------------------
 	// Peak Picker Process
@@ -114,7 +114,7 @@ func main() {
 	// -------------------------------------------------------------------
 	// Connect network
 	// -------------------------------------------------------------------
-	peakPicker.GetInPort("sample").Connect(sampleFilesSender.Out)
+	peakPicker.GetInPort("sample").Connect(altNegLowMRFiles.Out)
 	featFinder.GetInPort("peaks").Connect(peakPicker.GetOutPort("peaks"))
 	strToSubstr.In.Connect(featFinder.GetOutPort("feats"))
 	featLinker.GetInPort("feats").Connect(strToSubstr.OutSubStream)
