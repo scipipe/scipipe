@@ -69,17 +69,11 @@ func main() {
 	// -------------------------------------------------------------------
 	// Text Exporter process
 	// -------------------------------------------------------------------
-	//
-	// "TextExporter",
-	//     "-in", "/work/" + self.input().path,
-	//     "-out", "/work/" + self.output().path,
-	//     "-ini", "/work/openms-params/TEparam.ini"
-	//
-	// def requires(self):
-	//     return FileFilterTask(groupSuffix=self.groupSuffix)
-	//
-	// def output(self):
-	//     return luigi.LocalTarget("results/"+self.groupSuffix+".csv")
+	textExporter := sp.NewFromShell("textexport", "TextExporter -in {i:consensus} -out {o:csv} -ini "+workDir+"openms-params/TEparam.ini")
+	textExporter.SetPathExtend("consensus", "csv", ".csv")
+	textExporter.ExecMode = sp.ExecModeK8s
+	textExporter.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
+	prun.AddProcess(textExporter)
 
 	sink := sp.NewSink()
 	prun.AddProcess(sink)
@@ -92,7 +86,8 @@ func main() {
 	strToSubstr.In.Connect(featFinder.GetOutPort("feats"))
 	featLinker.GetInPort("feats").Connect(strToSubstr.OutSubStream)
 	fileFilter.GetInPort("unfiltered").Connect(featLinker.GetOutPort("consensus"))
-	sink.Connect(fileFilter.GetOutPort("filtered"))
+	textExporter.GetInPort("consensus").Connect(fileFilter.GetOutPort("filtered"))
+	sink.Connect(textExporter.GetOutPort("csv"))
 
 	prun.Run()
 }
