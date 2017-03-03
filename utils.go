@@ -20,7 +20,8 @@ func ExecCmd(cmd string) string {
 
 func Check(err error, errMsg string) {
 	if err != nil {
-		Error.Println(errMsg)
+		Error.Println("Custom Error Message: " + errMsg)
+		Error.Println("Original Error Message: " + err.Error())
 		panic(err)
 	}
 }
