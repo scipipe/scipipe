@@ -95,8 +95,8 @@ func (ip *InformationPacket) Atomize() {
 	for !doneAtomizing {
 		if ip.TempFileExists() {
 			ip.lock.Lock()
-			out, err := exec.Command("sh", "-c", "mv "+ip.GetTempPath()+" "+ip.path).CombinedOutput()
-			Check(err, "Could not rename file: "+ip.GetTempPath()+". Output: "+string(out))
+			err := os.Rename(ip.GetTempPath(), ip.path)
+			Check(err, "Could not rename file: "+ip.GetTempPath())
 			ip.lock.Unlock()
 			doneAtomizing = true
 			Debug.Println("InformationPacket: Done atomizing", ip.GetTempPath(), "->", ip.GetPath())
