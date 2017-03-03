@@ -23,8 +23,8 @@ func main() {
 
 	for _, groupSuffix := range groupSuffixes {
 
-		altNegLowMRFiles := spcomp.NewFileGlobber(workDir + "*" + groupSuffix + ".mzML")
-		prun.AddProcess(altNegLowMRFiles)
+		filesInGroup := spcomp.NewFileGlobber(workDir + "*" + groupSuffix + ".mzML")
+		prun.AddProcess(filesInGroup)
 
 		// -------------------------------------------------------------------
 		// Peak Picker Process
@@ -84,7 +84,7 @@ func main() {
 		// -------------------------------------------------------------------
 		// Connect network
 		// -------------------------------------------------------------------
-		peakPicker.GetInPort("sample").Connect(altNegLowMRFiles.Out)
+		peakPicker.GetInPort("sample").Connect(filesInGroup.Out)
 		featFinder.GetInPort("peaks").Connect(peakPicker.GetOutPort("peaks"))
 		strToSubstr.In.Connect(featFinder.GetOutPort("feats"))
 		featLinker.GetInPort("feats").Connect(strToSubstr.OutSubStream)
