@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	workDir = "/scipipe-data/"
+	workDir     = "/scipipe-data/"
+	openMSImage = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
 )
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 			return peaksPath
 		}
 		peakPicker.ExecMode = sp.ExecModeK8s
-		peakPicker.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
+		peakPicker.Image = openMSImage
 		prun.AddProcess(peakPicker)
 
 		// -------------------------------------------------------------------
@@ -47,7 +48,7 @@ func main() {
 			return featsPath
 		}
 		featFinder.ExecMode = sp.ExecModeK8s
-		featFinder.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
+		featFinder.Image = openMSImage
 		prun.AddProcess(featFinder)
 
 		// -------------------------------------------------------------------
@@ -59,7 +60,7 @@ func main() {
 		featLinker := sp.NewFromShell("featlinker-"+str.Replace(groupSuffix, "_", "-", -1), "FeatureLinkerUnlabeledQT -in {i:feats:r: } -out {o:consensus} -ini "+workDir+"openms-params/FLparam.ini -threads 2")
 		featLinker.SetPathStatic("consensus", workDir+"results/linked_"+groupSuffix+".consensusXML")
 		featLinker.ExecMode = sp.ExecModeK8s
-		featLinker.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
+		featLinker.Image = openMSImage
 		prun.AddProcess(featLinker)
 
 		// -------------------------------------------------------------------
@@ -68,7 +69,7 @@ func main() {
 		fileFilter := sp.NewFromShell("filefilter-"+str.Replace(groupSuffix, "_", "-", -1), "FileFilter -in {i:unfiltered} -out {o:filtered} -ini "+workDir+"openms-params/FileFparam.ini")
 		fileFilter.SetPathReplace("unfiltered", "filtered", "linked", "linked_filtered")
 		fileFilter.ExecMode = sp.ExecModeK8s
-		fileFilter.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
+		fileFilter.Image = openMSImage
 		prun.AddProcess(fileFilter)
 
 		// -------------------------------------------------------------------
@@ -77,7 +78,7 @@ func main() {
 		textExporter := sp.NewFromShell("textexport-"+str.Replace(groupSuffix, "_", "-", -1), "TextExporter -in {i:consensus} -out {o:csv} -ini "+workDir+"openms-params/TEparam.ini")
 		textExporter.SetPathExtend("consensus", "csv", ".csv")
 		textExporter.ExecMode = sp.ExecModeK8s
-		textExporter.Image = "container-registry.phenomenal-h2020.eu/phnmnl/openms:v1.11.1_cv0.1.9"
+		textExporter.Image = openMSImage
 		prun.AddProcess(textExporter)
 
 		// -------------------------------------------------------------------
