@@ -29,21 +29,21 @@ import (
 
 func main() {
 	// Initialize processes
-	foo := sp.NewFromShell("foowriter", "echo 'foo' > {o:foo}")
-	f2b := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	snk := sp.NewSink() // Will just receive file targets, doing nothing
+	fooWriter := sp.NewFromShell("foowriter", "echo 'foo' > {o:foo}")
+	fooToBar := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	sink := sp.NewSink() // Will just receive file targets, doing nothing
 
 	// Add output file path formatters for the components created above
-    foo.SetPathStatic("foo", "foo.txt")
-    f2b.SetPathExtend("foo", "bar", ".bar")
+    fooWriter.SetPathStatic("foo", "foo.txt")
+    fooToBar.SetPathExtend("foo", "bar", ".bar")
 
 	// Connect network
-	f2b.In["foo"].Connect(foo.Out["foo"])
-	snk.Connect(f2b.Out["bar"])
+	fooToBar.In["foo"].Connect(fooWriter.Out["foo"])
+	sink.Connect(fooToBar.Out["bar"])
 
 	// Add to a pipeline runner and run
 	pl := sp.NewPipelineRunner()
-	pl.AddProcesses(foo, f2b, snk)
+	pl.AddProcesses(foo, fooToBar, sink)
 	pl.Run()
 }
 ```
