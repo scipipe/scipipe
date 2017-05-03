@@ -15,22 +15,22 @@ import (
 
 func main() {
     // Initialize processes
-    foo := sp.NewFromShell("foowriter", "echo 'foo' > {o:foo}")
-    f2b := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-    snk := sp.NewSink() // Will just receive file targets, doing nothing
+    fooWriter := sp.NewFromShell("foowriter", "echo 'foo' > {o:foo}")
+    fooToBar := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+    sink := sp.NewSink() // Will just receive file targets, doing nothing
 
     // Add output file path formatters for the components created above
-    foo.SetPathStatic("foo", "foo.txt")
-    f2b.SetPathExtend("foo", "bar", ".bar")
+    fooWriter.SetPathStatic("foo", "foo.txt")
+    fooToBar.SetPathExtend("foo", "bar", ".bar")
 
     // Connect network
-    f2b.In["foo"].Connect(foo.Out["foo"])
-    snk.Connect(f2b.Out["bar"])
+    fooToBar.In["foo"].Connect(fooWriter.Out["foo"])
+    sink.Connect(fooToBar.Out["bar"])
 
     // Add to a pipeline runner and run
-    pl := sp.NewPipelineRunner()
-    pl.AddProcesses(foo, f2b, snk)
-    pl.Run()
+    pipeline := sp.NewPipelineRunner()
+    pipeline.AddProcesses(fooWriter, fooToBar, sink)
+    pipeline.Run()
 }
 ```
 
@@ -40,9 +40,9 @@ detail what we are doing.
 ## Initializing processes
 
 ```go
-foo := sp.NewFromShell("foowriter", "echo 'foo' > {o:out}")
-f2b := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-snk := sp.NewSink() // Will just receive file targets, doing nothing
+fooWriter := sp.NewFromShell("foowriter", "echo 'foo' > {o:out}")
+fooToBar := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+sink := sp.NewSink() // Will just receive file targets, doing nothing
 ```
 
 For these inports and outports, channels for sending and receiving FileTargets are automatically
@@ -57,8 +57,8 @@ done with the `Connect` method available on each port object. Sink objects have
 a `Connect` method too:
 
 ```go
-f2b.In["foo"].Connect(foo.Out["foo"])
-snk.Connect(f2b.Out["bar"])
+fooToBar.In["foo"].Connect(fooWriter.Out["foo"])
+sink.Connect(fooToBar.Out["bar"])
 ```
 
 (Note that the sink has just one inport, as a static struct field).
@@ -72,15 +72,15 @@ the names of the outports of the processes. So, to define the output filenames o
 above, we would add:
 
 ```go
-foo.PathFormatters["foo"] = func(t *sp.SciTask) string {
+fooWriter.PathFormatters["foo"] = func(t *sp.SciTask) string {
 	// Just statically create a file named foo.txt
 	return "foo.txt"
 }
-f2b.PathFormatters["bar"] = func(t *sp.SciTask) string {
+fooToBar.PathFormatters["bar"] = func(t *sp.SciTask) string {
 	// Here, we instead re-use the file name of the process we depend
 	// on (which we get on the 'foo' inport), and just
 	// pad '.bar' at the end:
-	return f2b.GetInPath("foo") + ".bar"
+	return fooToBar.GetInPath("foo") + ".bar"
 }
 ```
 
@@ -92,11 +92,11 @@ thing. So, the above two path formats can also be defined like so, with the exac
 
 ```go
 // Create a static file name for the out-port 'foo':
-foo.SetPathStatic("foo", "foo.txt")
+fooWriter.SetPathStatic("foo", "foo.txt")
 
 // For out-port 'bar', extend the file names of files on in-port 'foo', with
 // the suffix '.bar':
-f2b.SetPathExtend("foo", "bar", ".bar")
+fooToBar.SetPathExtend("foo", "bar", ".bar")
 ```
 
 ## Running the pipeline
@@ -107,9 +107,9 @@ separate go-routine, while the last process will be run in the main go-routine,
 so as to block until the pipeline has finished.
 
 ```go
-pl := sp.NewPipelineRunner()
-pl.AddProcesses(foo, f2b, snk)
-pl.Run()
+pipeline := sp.NewPipelineRunner()
+pipeline.AddProcesses(fooWriter, fooToBar, sink)
+pipeline.Run()
 ```
 ## Summary
 
