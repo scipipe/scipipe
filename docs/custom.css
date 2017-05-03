@@ -1,0 +1,38 @@
+body {
+    background: white;
+}
+
+a,
+a:link,
+a:visited {
+    color: #699;
+}
+a {
+  -webkit-transition: all 250ms ease;
+  transition: all 250ms ease;
+}
+
+.navbar {
+    background: white;
+    border-bottom: 1px solid #ccc;
+}
+.navbar a {
+  -webkit-transition: all 500ms ease;
+  transition: all 500ms ease;
+}
+.navbar a,
+.navbar a:link,
+.navbar a:visited {
+    color: #444!important;
+    background: white!important;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+}
+.navbar a:hover {
+    color: #669999!important;
+    border-bottom: 4px solid #699;
+}
+
+.navbar-brand {
+    background; url('img/scipipe_logo_compact.png');
+}
