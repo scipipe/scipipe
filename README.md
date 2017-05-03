@@ -40,17 +40,17 @@ func main() {
 	sink := sp.NewSink() // Will just receive file targets, doing nothing
 
 	// Add output file path formatters for the components created above
-    fooWriter.SetPathStatic("foo", "foo.txt")
-    fooToBar.SetPathExtend("foo", "bar", ".bar")
+	fooWriter.SetPathStatic("foo", "foo.txt")
+	fooToBar.SetPathExtend("foo", "bar", ".bar")
 
 	// Connect network
 	fooToBar.In["foo"].Connect(fooWriter.Out["foo"])
 	sink.Connect(fooToBar.Out["bar"])
 
 	// Add to a pipeline runner and run
-	pl := sp.NewPipelineRunner()
-	pl.AddProcesses(foo, fooToBar, sink)
-	pl.Run()
+	pipeline := sp.NewPipelineRunner()
+	pipeline.AddProcesses(foo, fooToBar, sink)
+	pipeline.Run()
 }
 ```
 
