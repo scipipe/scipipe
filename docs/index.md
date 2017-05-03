@@ -46,9 +46,9 @@ func main() {
 	sink.Connect(fooToBar.Out["bar"])
 
 	// Add to a pipeline runner and run
-	pl := sp.NewPipelineRunner()
-	pl.AddProcesses(foo, fooToBar, sink)
-	pl.Run()
+	pipeline := sp.NewPipelineRunner()
+	pipeline.AddProcesses(foo, fooToBar, sink)
+	pipeline.Run()
 }
 ```
 
