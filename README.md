@@ -1,25 +1,18 @@
 # SciPipe
 
 [![Build Status](https://travis-ci.org/scipipe/scipipe.svg?branch=master)](https://travis-ci.org/scipipe/scipipe)
-[![GratiPay amount](http://img.shields.io/gratipay/samuell.svg)](https://gratipay.com/samuell)
 
 SciPipe is a library for writing [scientific
 Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system) in the
-[Go programming language](http://golang.org). The architecture of SciPipe is based on an
-[flow-based programming](https://en.wikipedia.org/wiki/Flow-based_programming)
-like pattern in pure Go presented in
-[this](http://blog.gopheracademy.com/composable-pipelines-pattern) and
-[this](https://blog.gopheracademy.com/advent-2015/composable-pipelines-improvements/)
-Gopher Academy blog posts.
-
+[Go programming language](http://golang.org).
 See the [Benefits section](#benefits) below for more information about what is
 the key features of SciPipe compared to other similar tools.
 
-For documentation and more detailed information about SciPipe, see [scipipe.org](http://scipipe.org).
+## Project links
 
-**UPDATE Nov 4, 2016:** See [a poster on SciPipe](http://dx.doi.org/10.13140/RG.2.2.34414.61760), presented at the [e-Science Academy in Lund, on Oct 12-13 2016](essenceofescience.se/event/swedish-e-science-academy-2016-2/).
-
-**UPDATE June 23, 2016:** See [slides from a recent presentation of SciPipe for use in a Bioinformatics setting](http://www.slideshare.net/SamuelLampa/scipipe-a-lightweight-workflow-library-inspired-by-flowbased-programming).
+- For documentation and more detailed information about SciPipe, see [scipipe.org](http://scipipe.org)
+- For reporting issues, please use the [issue tracker](https://github.com/scipipe/scipipe/issues)
+- For general questions, see the [mailing list](https://groups.google.com/forum/#!forum/scipipe)
 
 ## An example workflow
 
@@ -49,7 +42,7 @@ func main() {
 
 	// Add to a pipeline runner and run
 	pipeline := sp.NewPipelineRunner()
-	pipeline.AddProcesses(foo, fooToBar, sink)
+	pipeline.AddProcesses(foowriter, fooToBar, sink)
 	pipeline.Run()
 }
 ```
@@ -109,6 +102,17 @@ In addition to that it adds convenience factory methods such as `scipipe.NewFrom
 on the fly based on a shell command pattern, where  inputs, outputs and parameters are defined in-line
 in the shell command with a syntax of `{i:INPORT_NAME}` for inports, and `{o:OUTPORT_NAME}` for outports
 and `{p:PARAM_NAME}` for parameters.
+
+## Publications mentioning SciPipe
+
+- See [a poster on SciPipe](http://dx.doi.org/10.13140/RG.2.2.34414.61760), presented at the [e-Science Academy in Lund, on Oct 12-13 2016](essenceofescience.se/event/swedish-e-science-academy-2016-2/).
+- See [slides from a recent presentation of SciPipe for use in a Bioinformatics setting](http://www.slideshare.net/SamuelLampa/scipipe-a-lightweight-workflow-library-inspired-by-flowbased-programming).
+- The architecture of SciPipe is based on an [flow-based
+  programming](https://en.wikipedia.org/wiki/Flow-based_programming) like
+  pattern in pure Go presented in
+  [this](http://blog.gopheracademy.com/composable-pipelines-pattern) and
+  [this](https://blog.gopheracademy.com/advent-2015/composable-pipelines-improvements/)
+  blog posts on Gopher Academy.
 
 ## Related tools
 
