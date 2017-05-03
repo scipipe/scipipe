@@ -1,5 +1,6 @@
 site_name: SciPipe Docs
 theme: material
+extra_css: ['custom.css']
 repo_name: 'scipipe/scipipe'
 repo_url: 'https://github.com/scipipe/scipipe'
 extra:
