@@ -16,3 +16,8 @@ extra:
           link: 'https://www.linkedin.com/in/samuellampa/'
 markdown_extensions:
   - codehilite
+pages:
+  - 'SciPipe Overview': 'index.md'
+  - 'Installing SciPipe': 'install.md'
+  - 'Writing Workflows': 'writing_workflows.md'
+  - 'Examples': 'examples.md'
