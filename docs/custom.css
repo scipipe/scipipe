@@ -1,38 +1,17 @@
-body {
-    background: white;
+/* Code highlighting customizations */
+.md-logo img {
+    width: 64px;
+    height: 64px;
+    margin-top: -19px;
 }
-
-a,
-a:link,
-a:visited {
-    color: #699;
+.codehilite .kn,
+.codehilite .kd {
+    color: #069;
 }
-a {
-  -webkit-transition: all 250ms ease;
-  transition: all 250ms ease;
+.codehilite .nx {
+    color: black;
 }
-
-.navbar {
-    background: white;
-    border-bottom: 1px solid #ccc;
-}
-.navbar a {
-  -webkit-transition: all 500ms ease;
-  transition: all 500ms ease;
-}
-.navbar a,
-.navbar a:link,
-.navbar a:visited {
-    color: #444!important;
-    background: white!important;
-    border-top: 4px solid transparent;
-    border-bottom: 4px solid transparent;
-}
-.navbar a:hover {
-    color: #669999!important;
-    border-bottom: 4px solid #699;
-}
-
-.navbar-brand {
-    background; url('img/scipipe_logo_compact.png');
+.codehilite .s,
+.codehilite .s1 {
+    color: #c00;
 }
