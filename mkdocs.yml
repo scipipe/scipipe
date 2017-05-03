@@ -4,7 +4,7 @@ extra_css: ['custom.css']
 repo_name: 'scipipe/scipipe'
 repo_url: 'https://github.com/scipipe/scipipe'
 extra:
-    logo: 'images/scipipe_logo_square_white.svg'
+    logo: 'images/scipipe_logo_concept2_square_white.svg'
     palette:
         primary: 'blue grey'
         accent: 'cyan'
