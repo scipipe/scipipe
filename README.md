@@ -2,11 +2,18 @@
 
 [![Build Status](https://travis-ci.org/scipipe/scipipe.svg?branch=master)](https://travis-ci.org/scipipe/scipipe)
 
-SciPipe is a library for writing [scientific
-Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system) in the
-[Go programming language](http://golang.org).
+<img src="docs/images/fbp_factory.png" align="right">SciPipe is a library
+for writing [scientific Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system) in the
+[Go programming language](http://golang.org), inspired by the Flow-Based
+Programming paradigm.
+
+SciPipe shines for complex workflows requiring the full flexibility and
+robustness of a compiled programming language and its established tooling
+ecosystem, and the dynamic scheduling capabilities and agile development
+workflow of the [Flow-Based Programming paradigm](https://en.wikipedia.org/wiki/Flow-based_programming).
+
 See the [Benefits section](#benefits) below for more information about what is
-the key features of SciPipe compared to other similar tools.
+the key features of SciPipe.
 
 ## Project links
 
@@ -65,27 +72,36 @@ As you see, scipipe displays all the shell commands it has executed based on the
 Some benefits of SciPipe that are not always available in other scientific workflow systems:
 
 - **Easy-to-grasp behaviour:** Data flowing through a network.
-- **Parallel:** Apart from the inherent pipeline parallelism, SciPipe processes also spawn multiple parallel tasks when the same process has multiple inputs.
-- **Concurrent:** Each process runs in an own light-weight thread, and is not blocked by
-  operations in other processes, except when waiting for inputs from upstream processes.
-- **Inherently simple:** Uses Go's concurrency primitives (go-routines and channels)
-  to create an "implicit" scheduler, which means very little additional infrastructure code.
-  This means that the code is easy to modify and extend.
-- **Resource efficient:** You can choose to stream selected outputs via Unix FIFO files, to avoid temporary storage.
 - **Flexible:** Processes that wrap command-line programs and scripts can be combined with
   processes coded directly in Golang.
-- **Custom file naming:** SciPipe gives you full control over how file names are produced,
-  making it easy to understand and find your way among the output files of your computations.
-- **Highly Debuggable(!):** Since everything in SciPipe is plain Go(lang), you can easily use the [gdb debugger](http://golang.org/doc/gdb) (preferrably
-  with the [cgdb interface](https://www.youtube.com/watch?v=OKLR6rrsBmI) for easier use) to step through your program at any detail, as well as all
-  the other excellent debugging tooling for Go (See eg [delve](https://github.com/derekparker/delve) and [godebug](https://github.com/mailgun/godebug)),
-  or just use `println()` statements at any place in your code. In addition, you can easily
-  turn on very detailed debug output from SciPipe's execution itself, by just turning on debug-level
-  logging with `scipipe.InitLogDebug()` in your `main()` method.
 - **Efficient:** Workflows are compiled into static compiled code, that runs fast.
 - **Portable:** Workflows can be distributed as go code to be run with the `go run` command
   or compiled into stand-alone binaries for basically any unix-like operating system.
-- **Notebookeable:** Works well in [Jupyter notebooks](http://jupyter.org), using the [gophernotes kernel](https://github.com/gopherds/gophernotes) (Thx [@dwhitena](https://twitter.com/dwhitena) for creating this!)
+- **Custom file naming:** SciPipe gives you full control over how file names are produced,
+  making it easy to understand and find your way among the output files of your computations.
+- **Inherently simple:** SciPipe uses the in-built concurrency primitives in
+  the Go programming language (go-routines and channels) to create an
+  "implicit" scheduler, which means very little additional infrastructure code.
+  This means that the code is easy to modify and extend.
+- **Supports streaming:** You can choose to stream selected outputs via Unix FIFO files, to avoid temporary storage.
+- **Parallel:** SciPipe leverages both pipeline parallelism between multiple
+  processes, and task parallelism when there is multiple inputs to a process,
+  to make your computations complete as fast as possible, utilizing all the CPU
+  cores available.
+- **Notebookeable:** Works well in [Jupyter notebooks](http://jupyter.org),
+  using the [gophernotes kernel](https://github.com/gopherds/gophernotes).
+- **Concurrent:** Each process runs in an own light-weight thread, and is not blocked by
+  operations in other processes, except when waiting for inputs from upstream processes.
+- **Easy to debug:** Since everything in SciPipe is just Go code, you can
+  easily use the [gdb debugger](http://golang.org/doc/gdb) (with the [cgdb
+  interface](https://www.youtube.com/watch?v=OKLR6rrsBmI) for easier use) to
+  step through your program at any detail, as well as all the other excellent
+  debugging tooling for Go (See eg
+  [delve](https://github.com/derekparker/delve) and
+  [godebug](https://github.com/mailgun/godebug)), or just use `println()`
+  statements at any place in your code. In addition, you can easily turn on
+  detailed debug output from SciPipe's execution itself, by just turning
+  on debug-level logging with `scipipe.InitLogDebug()` in your `main()` method.
 
 ## Known limitations
 
