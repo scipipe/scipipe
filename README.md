@@ -66,7 +66,7 @@ import (
 )
 
 func main() {
-        // Initialize processes
+        // Initialize processes from shell command patterns
         helloWriter := sp.NewFromShell("helloWriter", "echo 'Hello ' > {o:hellofile}")
         worldAppender := sp.NewFromShell("worldAppender", "echo $(cat {i:infile}) World >> {o:worldfile}")
         // Create a sink, that will just receive the final outputs
