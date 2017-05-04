@@ -15,8 +15,9 @@
 .codehilite .s1 {
     color: #c00;
 }
-.md-sidebar .md-nav,
+.md-sidebar .md-nav__title,
+.md-sidebar .md-nav__source,
 .md-header {
     background: white!important;
-    color: #546e7a; /* #546e7a; */
+    color: #546e7a!important;
 }

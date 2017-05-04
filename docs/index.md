@@ -3,17 +3,20 @@
 [![Build Status](https://travis-ci.org/scipipe/scipipe.svg?branch=master)](https://travis-ci.org/scipipe/scipipe)
 
 <img src="images/fbp_factory.png" style="float: right; margin: 0 .4em;">SciPipe is a library
-for writing [scientific Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system) in the
-[Go programming language](http://golang.org), inspired by the Flow-Based
-Programming paradigm.
+for writing [scientific Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system),
+in the [Go programming language](http://golang.org).
 
-SciPipe shines for complex workflows requiring the full flexibility and
-robustness of a compiled programming language and its established tooling
-ecosystem, and the dynamic scheduling capabilities and agile development
-workflow of the [Flow-Based Programming paradigm](https://en.wikipedia.org/wiki/Flow-based_programming).
+So, when you have multiple commandline applications that need to be run after
+each other in a chain, where one program depends on the output of the other,
+you can define these dependencies in SciPipe. SciPipe will then take care of
+running the programs in the right order, at the right time, and produce audit
+reports about exactly what was run.
 
-See the [Benefits section](#benefits) below for more information about the key
-features of SciPipe.
+SciPipe is especially well suited for complex dependency networks, where you
+also don't always know how many outputs are produced by a particular program.
+SciPipe also gives you a lot of flexibility in how your files are named.
+SciPipe has many more benefits, which are listed under the [Benefits
+section](#benefits) below.
 
 ## Project links
 
