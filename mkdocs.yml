@@ -24,6 +24,9 @@ extra:
           link: 'https://twitter.com/scipipe'
         - type: 'linkedin'
           link: 'https://www.linkedin.com/in/samuellampa/'
+google_analytics:
+  - 'UA-48319762-3'
+  - 'auto'
 markdown_extensions:
   - codehilite
 extra_css: ['custom.css']
