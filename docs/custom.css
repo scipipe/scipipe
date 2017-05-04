@@ -2,7 +2,7 @@
 .md-logo img {
     width: 64px;
     height: 64px;
-    margin-top: -19px;
+    margin-top: -20px;
 }
 .codehilite .kn,
 .codehilite .kd {
@@ -14,4 +14,9 @@
 .codehilite .s,
 .codehilite .s1 {
     color: #c00;
+}
+.md-sidebar .md-nav,
+.md-header {
+    background: white!important;
+    color: #546e7a; /* #546e7a; */
 }

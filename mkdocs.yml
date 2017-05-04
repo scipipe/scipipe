@@ -1,10 +1,14 @@
 site_name: SciPipe Docs
 theme: material
-extra_css: ['custom.css']
+pages:
+  - 'SciPipe Overview': 'index.md'
+  - 'Installing SciPipe': 'install.md'
+  - 'Writing Workflows': 'writing_workflows.md'
+  - 'Examples': 'examples.md'
 repo_name: 'scipipe/scipipe'
 repo_url: 'https://github.com/scipipe/scipipe'
 extra:
-    logo: 'images/scipipe_logo_concept2_square_white.svg'
+    logo: 'images/scipipe_logo_bluegrey.svg'
     palette:
         primary: 'blue grey'
         accent: 'cyan'
@@ -17,8 +21,4 @@ extra:
           link: 'https://www.linkedin.com/in/samuellampa/'
 markdown_extensions:
   - codehilite
-pages:
-  - 'SciPipe Overview': 'index.md'
-  - 'Installing SciPipe': 'install.md'
-  - 'Writing Workflows': 'writing_workflows.md'
-  - 'Examples': 'examples.md'
+extra_css: ['custom.css']
