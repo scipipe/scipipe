@@ -2,154 +2,125 @@
 
 [![Build Status](https://travis-ci.org/scipipe/scipipe.svg?branch=master)](https://travis-ci.org/scipipe/scipipe)
 
-<img src="docs/images/fbp_factory.png" align="right">SciPipe is a library
-for writing [scientific Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system),
-in the [Go programming language](http://golang.org).
+<strong>Project links: \[ [Documentation](http://scipipe.org) | [Issue Tracker](https://github.com/scipipe/scipipe/issues) | [Mailing List](https://groups.google.com/forum/#!forum/scipipe) \]</strong>
 
-So, when you have multiple commandline applications that need to be run after
-each other in a chain, where one program depends on the output of the other,
-you can define these dependencies in SciPipe. SciPipe will then take care of
-running the programs in the right order, at the right time, and produce audit
-reports about exactly what was run.
+<img src="docs/images/fbp_factory.png" align="right">
 
-SciPipe is especially well suited for complex dependency networks, where you
-also don't always know how many outputs are produced by a particular program.
-SciPipe also gives you a lot of flexibility in how your files are named.
-SciPipe has many more benefits, which are listed under the [Benefits section](#benefits)
-below.
+SciPipe is a library for writing [Scientific Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system),
+or "pipelines", in the [Go programming language](http://golang.org).
 
-## Project links
+When you need to run many commandline programs that depend on each other in
+complex ways, SciPipe helps to make running these programs in a flexible,
+robust and reproducible way, even letting you restart an interrupted run
+without over-writing already produced output, among many other things.
 
-- For documentation and more detailed information about SciPipe, see [scipipe.org](http://scipipe.org)
-- For reporting issues, please use the [issue tracker](https://github.com/scipipe/scipipe/issues)
-- For general questions, see the [mailing list](https://groups.google.com/forum/#!forum/scipipe)
+SciPipe is built on the proven principles of [Flow-Based Programming](https://en.wikipedia.org/wiki/Flow-based_programming) (FBP) to
+achieve maximum flexibility, productivity and agility when designing workflows.
+Similar to other FBP systems, SciPipe workflows can be likened to a network of
+assembly lines in a factory, where items (files) are flowing through a network
+of conveyor belts, stopping at different independently running stations
+(processes) for processing, as depicted in the picture above.
 
-## An example workflow
+## Benefits
 
-Let's look at a simple toy example of a workflow, to get a feel for what
-writing workflows with SciPipe looks like:
+Some key benefits of SciPipe, that are not always found in similar systems:
+
+- **Intuitive behaviour:** SciPipe operates by flowing data (files) through a
+  network of channels and processes, not unlike the conveyor belts and stations
+  in a factory.
+- **Flexible:** Processes that wrap command-line programs or scripts, can be
+  combined with processes coded directly in Golang.
+- **Custom file naming:** SciPipe gives you full control over how files are
+  named, making it easy to find your way among the output files of your
+  workflow.
+- **Portable:** Workflows can be distributed either as Go code to be run with
+  `go run`, or as stand-alone executable files that run on almost any UNIX-like
+  operating system.
+- **Easy to debug:** As everything in SciPipe is just Go code, you can use some
+  of the available debugging tools, or just `println()` statements, to debug
+  your workflow. 
+- **Supports streaming:** Can stream outputs via UNIX FIFO files, to avoid temporary storage.
+- **Efficient and Parallel:** Workflows are compiled into statically compiled
+  code that runs fast. SciPipe also leverages pipeline parallelism between
+  processes as well as task parallelism when there are multiple inputs to a
+  process, making efficient use of multiple CPU cores.
+
+## Known limitations
+
+- There are still a number of missing good-to-have features for workflow
+  design. See the [issue tracker](https://github.com/scipipe/scipipe/issues)
+  for details.
+- There is not (yet) support for the [Common Workflow Language](http://common-workflow-language.github.io).
+
+## Hello World example
+
+Let's look at an example workflow to get a feel for what writing workflows in
+SciPipe looks like:
 
 ```go
 package main
 
 import (
-	sp "github.com/scipipe/scipipe"
+        // Import SciPipe, aliased to 'sp' for brevity
+        sp "github.com/scipipe/scipipe"
 )
 
 func main() {
-	// Initialize processes
-	fooWriter := sp.NewFromShell("foowriter", "echo 'foo' > {o:foo}")
-	fooToBar := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	sink := sp.NewSink() // Will just receive file targets, doing nothing
+        // Initialize processes
+        helloWriter := sp.NewFromShell("helloWriter", "echo 'Hello ' > {o:hellofile}")
+        worldAppender := sp.NewFromShell("worldAppender", "echo $(cat {i:infile}) World >> {o:worldfile}")
+        // Create a sink, that will just receive the final outputs
+        sink := sp.NewSink()
 
-	// Add output file path formatters for the components created above
-	fooWriter.SetPathStatic("foo", "foo.txt")
-	fooToBar.SetPathExtend("foo", "bar", ".bar")
+        // Configure output file path formatters for the processes created above
+        helloWriter.SetPathStatic("hellofile", "hello.txt")
+        worldAppender.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
 
-	// Connect network
-	fooToBar.In["foo"].Connect(fooWriter.Out["foo"])
-	sink.Connect(fooToBar.Out["bar"])
+        // Connect network
+        worldAppender.In["infile"].Connect(helloWriter.Out["hellofile"])
+        sink.Connect(worldAppender.Out["worldfile"])
 
-	// Add to a pipeline runner and run
-	pipeline := sp.NewPipelineRunner()
-	pipeline.AddProcesses(foowriter, fooToBar, sink)
-	pipeline.Run()
+        // Create a pipeline runner, add processes, and run
+        pipeline := sp.NewPipelineRunner()
+        pipeline.AddProcesses(helloWriter, worldAppender, sink)
+        pipeline.Run()
 }
 ```
 
-### Running the example workflow
+## Running the example
 
-Let's assume we put the code in a file named `myfirstworkflow.go` and run it.
-Then it can look like this:
+Let's put the code in a file named `scipipe_helloworld.go` and run it:
 
 ```bash
-[samuel test]$ go run myfirstworkflow.go
-AUDIT   2016/06/09 17:17:41 Task:foowriter    Executing command: echo 'foo' > foo.txt.tmp
-AUDIT   2016/06/09 17:17:41 Task:foo2bar      Executing command: sed 's/foo/bar/g' foo.txt > foo.txt.bar.tmp
+$ go run scipipe_helloworld.go 
+AUDIT   2017/05/04 17:05:15 Task:helloWriter  Executing command: echo 'Hello ' > hello.txt.tmp
+AUDIT   2017/05/04 17:05:15 Task:worldAppender Executing command: echo $(cat hello.txt) World >> hello_world.txt.tmp
 ```
 
-As you see, scipipe displays all the shell commands it has executed based on the defined workflow.
+Let's check what file SciPipe has generated:
 
-## Benefits
+```
+$ ls -1tr hello*
+hello.txt.audit.json
+hello.txt
+hello_world.txt
+hello_world.txt.audit.json
+```
 
-Some benefits of SciPipe that are not always available in other scientific workflow systems:
+As you can see, it has created a file `hello.txt`, and `hello_world.txt`, and
+an accompanying `.audit.json` for both of these files.
 
-- **Easy-to-grasp behaviour:** Data flowing through a network.
-- **Flexible:** Processes that wrap command-line programs and scripts can be combined with
-  processes coded directly in Golang.
-- **Efficient:** Workflows are compiled into static compiled code, that runs fast.
-- **Portable:** Workflows can be distributed as go code to be run with the `go run` command
-  or compiled into stand-alone binaries for basically any unix-like operating system.
-- **Custom file naming:** SciPipe gives you full control over how file names are produced,
-  making it easy to understand and find your way among the output files of your computations.
-- **Inherently simple:** SciPipe uses the in-built concurrency primitives in
-  the Go programming language (go-routines and channels) to create an
-  "implicit" scheduler, which means very little additional infrastructure code.
-  This means that the code is easy to modify and extend.
-- **Supports streaming:** You can choose to stream selected outputs via Unix FIFO files, to avoid temporary storage.
-- **Parallel:** SciPipe leverages both pipeline parallelism between multiple
-  processes, and task parallelism when there is multiple inputs to a process,
-  to make your computations complete as fast as possible, utilizing all the CPU
-  cores available.
-- **Notebookeable:** Works well in [Jupyter notebooks](http://jupyter.org),
-  using the [gophernotes kernel](https://github.com/gopherds/gophernotes).
-- **Concurrent:** Each process runs in an own light-weight thread, and is not blocked by
-  operations in other processes, except when waiting for inputs from upstream processes.
-- **Easy to debug:** Since everything in SciPipe is just Go code, you can
-  easily use the [gdb debugger](http://golang.org/doc/gdb) (with the [cgdb
-  interface](https://www.youtube.com/watch?v=OKLR6rrsBmI) for easier use) to
-  step through your program at any detail, as well as all the other excellent
-  debugging tooling for Go (See eg
-  [delve](https://github.com/derekparker/delve) and
-  [godebug](https://github.com/mailgun/godebug)), or just use `println()`
-  statements at any place in your code. In addition, you can easily turn on
-  detailed debug output from SciPipe's execution itself, by just turning
-  on debug-level logging with `scipipe.InitLogDebug()` in your `main()` method.
+Now, let's check the output of the final resulting file:
 
-## Known limitations
+```bash
+$ cat hello_world.txt
+Hello World
+```
 
-- There are still a number of missing good-to-have features, for workflow design. See the [issues](https://github.com/scipipe/scipipe/issues) tracker for details.
-- There is not yet support for the [Common Workflow Language](http://common-workflow-language.github.io), but that is also something that we plan to support in the future.
+Now we can rejoice that it contains the text "Hello World", exactly as a proper
+Hello World example should :)
 
-## Connection to flow-based programming
+You can find many more examples in the [examples folder](https://github.com/scipipe/scipipe/tree/master/examples) in the GitHub repo.
 
-From Flow-based programming, SciPipe uses the ideas of separate network (workflow dependency graph)
-definition, named in- and out-ports, sub-networks/sub-workflows and bounded buffers (already available
-in Go's channels) to make writing workflows as easy as possible.
-
-In addition to that it adds convenience factory methods such as `scipipe.NewFromShell()` which creates ad hoc processes
-on the fly based on a shell command pattern, where  inputs, outputs and parameters are defined in-line
-in the shell command with a syntax of `{i:INPORT_NAME}` for inports, and `{o:OUTPORT_NAME}` for outports
-and `{p:PARAM_NAME}` for parameters.
-
-## Publications mentioning SciPipe
-
-- See [a poster on SciPipe](http://dx.doi.org/10.13140/RG.2.2.34414.61760), presented at the [e-Science Academy in Lund, on Oct 12-13 2016](essenceofescience.se/event/swedish-e-science-academy-2016-2/).
-- See [slides from a recent presentation of SciPipe for use in a Bioinformatics setting](http://www.slideshare.net/SamuelLampa/scipipe-a-lightweight-workflow-library-inspired-by-flowbased-programming).
-- The architecture of SciPipe is based on an [flow-based
-  programming](https://en.wikipedia.org/wiki/Flow-based_programming) like
-  pattern in pure Go presented in
-  [this](http://blog.gopheracademy.com/composable-pipelines-pattern) and
-  [this](https://blog.gopheracademy.com/advent-2015/composable-pipelines-improvements/)
-  blog posts on Gopher Academy.
-
-## Related tools
-
-Find below a few tools that are more or less similar to SciPipe that are worth worth checking out before
-deciding on what tool fits you best (in approximate order of similarity to SciPipe):
-
-- [NextFlow](http://nextflow.io)
-- [Luigi](https://github.com/spotify/luigi)/[SciLuigi](https://github.com/samuell/sciluigi)
-- [BPipe](https://code.google.com/p/bpipe/)
-- [SnakeMake](https://bitbucket.org/johanneskoester/snakemake)
-- [Cuneiform](https://github.com/joergen7/cuneiform)
-
-## Acknowledgements
-
-- This library is heavily influenced/inspired by (and might make use of on in the future),
-  the [GoFlow](https://github.com/trustmaster/goflow) library by [Vladimir Sibirov](https://github.com/trustmaster/goflow).
-- It is also heavily influenced by the [Flow-based programming](http://www.jpaulmorrison.com/fbp) by [John Paul Morrison](http://www.jpaulmorrison.com/fbp).
-- This work is financed by faculty grants and other financing for Jarl Wikberg's [Pharmaceutical Bioinformatics group](http://www.farmbio.uu.se/forskning/researchgroups/pb/) of Dept. of
-  Pharmaceutical Biosciences at Uppsala University, and to a smaller part also by [Swedish Research Council](http://vr.se) through the Swedish [Bioinformatics Infastructure for Life Sciences in Sweden](http://bils.se).
-- Supervisor for the project is [Ola Spjuth](http://www.farmbio.uu.se/research/researchgroups/pb/olaspjuth).
-- Big thanks to [Egon Elbre](http://twitter.com/egonelbre) for very helpful input on the design of the internals of the pipeline, and processes, which simplified the implementation a lot.
+For more information about how to write workflows using SciPipe, and much more,
+see [SciPipe website (scipipe.org)](http://scipipe.org)!

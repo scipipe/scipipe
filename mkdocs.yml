@@ -5,6 +5,11 @@ pages:
   - 'Installing SciPipe': 'install.md'
   - 'Writing Workflows': 'writing_workflows.md'
   - 'Examples': 'examples.md'
+  - 'Known limitations': 'known_limitations.md'
+  - 'Flow-Based Programming': 'flow_based_programming.md'
+  - 'Other resources': 'other_resources.md'
+  - 'Acknowledgements': 'acknowledgements.md'
+  - 'Related tool': 'related_tools.md'
 repo_name: 'scipipe/scipipe'
 repo_url: 'https://github.com/scipipe/scipipe'
 extra:
