@@ -12,8 +12,8 @@ robustness of a compiled programming language and its established tooling
 ecosystem, and the dynamic scheduling capabilities and agile development
 workflow of the [Flow-Based Programming paradigm](https://en.wikipedia.org/wiki/Flow-based_programming).
 
-See the [Benefits section](#benefits) below for more information about what is
-the key features of SciPipe.
+See the [Benefits section](#benefits) below for more information about the key
+features of SciPipe.
 
 ## Project links
 
