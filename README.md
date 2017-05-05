@@ -115,7 +115,7 @@ hello_world.txt.audit.json
 ```
 
 As you can see, it has created a file `hello.txt`, and `hello_world.txt`, and
-an accompanying `.audit.json` for both of these files.
+an accompanying `.audit.json` for each of these files.
 
 Now, let's check the output of the final resulting file:
 
