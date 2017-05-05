@@ -1,5 +1,5 @@
 #!/bin/bash
-read -p "Please write a commit message for the doc change, enclosed by \"\":" msg
+read -p "Please write a commit message for the doc change: " msg
 echo "Committing changes in main repo ..."
 git commit -am "$msg"
 echo "Building docs site..."
