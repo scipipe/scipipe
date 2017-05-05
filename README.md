@@ -6,20 +6,27 @@
 
 <img src="docs/images/fbp_factory.png" align="right">
 
-SciPipe is a library for writing [Scientific Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system),
-or "pipelines", in the [Go programming language](http://golang.org).
+SciPipe is a library for writing [Scientific
+Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system), sometimes
+also called "pipelines", in the [Go programming language](http://golang.org).
 
 When you need to run many commandline programs that depend on each other in
-complex ways, SciPipe helps to make running these programs in a flexible,
-robust and reproducible way, even letting you restart an interrupted run
-without over-writing already produced output, among many other things.
+complex ways, SciPipe helps by making the process of running these programs
+flexible, robust and reproducible. SciPipe also lets you restart an interrupted
+run without over-writing already produced output and produces an audit report
+of what was run, among many other things.
 
-SciPipe is built on the proven principles of [Flow-Based Programming](https://en.wikipedia.org/wiki/Flow-based_programming) (FBP) to
+SciPipe is built on the proven principles of [Flow-Based
+Programming](https://en.wikipedia.org/wiki/Flow-based_programming) (FBP) to
 achieve maximum flexibility, productivity and agility when designing workflows.
 Similar to other FBP systems, SciPipe workflows can be likened to a network of
 assembly lines in a factory, where items (files) are flowing through a network
 of conveyor belts, stopping at different independently running stations
 (processes) for processing, as depicted in the picture above.
+
+SciPipe was initially created for problems in bioinformatics and
+cheminformatics, but works equally well for any problem involving pipelines of
+commandline applications.
 
 ## Benefits
 
