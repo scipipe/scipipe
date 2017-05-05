@@ -1,28 +1,23 @@
-# Install
+# Installing SciPipe
+
+Installing SciPipe means first installing the Go programming langauge, and then
+using Go's `go get` command to install the SciPipe library. After this, you will
+be able to use Go's `go run` command to run SciPipe workflows.
 
 ## Install Go
 
-First install Go by following instructions on [this page](https://golang.org/doc/install).
-  - I typically install to a custom location (`~/go` for the go tools, and `~/code/go` for my own go-projects).
-  - If you want to install (which means, untar the go tarball) to `~/go` just like me, you should put the following in your `~/.bashrc` file:
-  
-```bash
-# Go stuff
-export GOROOT=~/go
-export GOPATH=~/code/go
-export PATH=$GOROOT/bin:$PATH
-export PATH=$GOPATH/bin:$PATH
-```
+Install Go by following the instructions [on this page](https://golang.org/doc/install#install),
+for your operating system.
   
 ## Install SciPipe
 
-Install SciPipe by running the following shell command:
+Then install SciPipe by running the following shell command:
   
 ```bash
 go get github.com/scipipe/scipipe/...
 ```
 
-**N.B:** Don't miss the `...`, or you won't get the `scipipe` helper tool.
+**N.B:** Don't miss the `...`, as otherwise the `scipipe` helper tool will not be installed.
   
 ## Initialize a new workflow file
   
