@@ -1,13 +1,13 @@
 site_name: SciPipe Docs
 theme: material
 pages:
-  - 'SciPipe Overview': 'index.md'
-  - 'Installing SciPipe': 'install.md'
+  - 'SciPipe Introduction': 'index.md'
+  - 'Installing': 'install.md'
   - 'Writing Workflows': 'writing_workflows.md'
   - 'Examples': 'examples.md'
   - 'Other resources': 'other_resources.md'
   - 'Acknowledgements': 'acknowledgements.md'
-  - 'Related tool': 'related_tools.md'
+  - 'Related tools': 'related_tools.md'
 repo_name: 'scipipe/scipipe'
 repo_url: 'https://github.com/scipipe/scipipe'
 extra:
