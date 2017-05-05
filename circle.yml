@@ -1,0 +1,17 @@
+---
+machine:
+  post:
+    - go get github.com/jstemmer/go-junit-report
+    - go get github.com/axw/gocov/gocov
+    - go get github.com/AlekSi/gocov-xml
+
+test:
+  override:
+    - mkdir -p $GOPATH/src/github.com/scipipe
+    - ln -s $HOME/scipipe $GOPATH/src/github.com/scipipe/scipipe
+    - mkdir -p $CIRCLE_TEST_REPORTS/go-junit
+    - go test -v -race ./... | go-junit-report > $CIRCLE_TEST_REPORTS/go-junit/report.xml
+    - bash testcov.sh
+    - gocov convert cover.out | gocov-xml > coverage.xml
+  post:
+    - bash <(curl -s https://codecov.io/bash)
