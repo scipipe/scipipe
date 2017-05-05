@@ -129,11 +129,15 @@ func (ip *InformationPacket) Exists() bool {
 }
 
 func (ip *InformationPacket) GetAuditInfo() *AuditInfo {
+	defer ip.lock.Unlock()
+	ip.lock.Lock()
 	return ip.auditInfo
 }
 
 func (ip *InformationPacket) SetAuditInfo(ai *AuditInfo) {
+	ip.lock.Lock()
 	ip.auditInfo = ai
+	ip.lock.Unlock()
 }
 
 func (ip *InformationPacket) WriteAuditLogToFile() {

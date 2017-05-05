@@ -2,6 +2,7 @@ package scipipe
 
 import (
 	"github.com/stretchr/testify/assert"
+	"sync"
 	t "testing"
 )
 
@@ -57,15 +58,20 @@ func ExamplePrintProcesses() {
 // actual work.
 type BogusProcess struct {
 	Process
-	WasRun bool
+	WasRun     bool
+	WasRunLock sync.Mutex
 }
+
+var bogusWg sync.WaitGroup
 
 func NewBogusProcess() *BogusProcess {
 	return &BogusProcess{WasRun: false}
 }
 
 func (p *BogusProcess) Run() {
+	p.WasRunLock.Lock()
 	p.WasRun = true
+	p.WasRunLock.Unlock()
 }
 
 func (p *BogusProcess) IsConnected() bool {

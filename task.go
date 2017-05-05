@@ -78,7 +78,7 @@ func (t *SciTask) Execute() {
 
 		for _, iip := range t.InTargets {
 			iipPath := iip.GetPath()
-			auditInfo.UpstreamAuditInfos[iipPath] = iip.auditInfo
+			auditInfo.UpstreamAuditInfos[iipPath] = iip.GetAuditInfo()
 		}
 		for _, oip := range t.OutTargets {
 			oip.SetAuditInfo(auditInfo)
