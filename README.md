@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/scipipe/scipipe.svg?branch=master)](https://travis-ci.org/scipipe/scipipe)
 
-<strong>Project links: \[ [Documentation](http://scipipe.org) | [Issue Tracker](https://github.com/scipipe/scipipe/issues) | [Mailing List](https://groups.google.com/forum/#!forum/scipipe) \]</strong>
+<strong>Project links: [Documentation](http://scipipe.org) | [Issue Tracker](https://github.com/scipipe/scipipe/issues) | [Mailing List](https://groups.google.com/forum/#!forum/scipipe)</strong>
 
 <img src="docs/images/fbp_factory.png" align="right">
 
