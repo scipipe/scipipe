@@ -81,7 +81,7 @@ func (proc *stringSplitter) Run() {
 	for s := range proc.In {
 		halfLen := int(math.Floor(float64(len(s)) / float64(2)))
 		proc.OutLeft <- s[0:halfLen]
-		proc.OutRight <- s[halfLen:len(s)]
+		proc.OutRight <- s[halfLen:]
 	}
 }
 
