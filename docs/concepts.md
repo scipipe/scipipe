@@ -2,8 +2,6 @@
 
 ## Defining workflows
 
-### Process overview
-
 Defining workflows in general (not unique to SciPipe) typically means:
 
 1. Defining the processes (or "tasks" or "components") of the workflow.
@@ -51,7 +49,7 @@ import(
 )
 ```
 
-### Defining processes
+## Defining processes
 
 In SciPipe, processes are defined using the `NewFromShell()` command, by
 providing a process name and a shell pattern, where file names are replaced
@@ -65,7 +63,7 @@ Based on this shell command pattern, a process is created, with in- and
 out-ports and where the shell command to be executed, will be calculated from
 the provided pattern.
 
-### Defining dependencies
+## Defining dependencies
 
 The dependency definitions in SciPipe are done by "physically" connecting ports
 (in-ports and out-ports) to each other via buffered channels, on which data
@@ -108,7 +106,7 @@ scipipe.Connect(myOtherProcess.In["infile"], myProcess.Out["outfile"])
 scipipe.Connect(myProcess.Out["outfile"], myOtherProcess.In["infile"])
 ```
 
-### Running workflows
+## Running workflows
 
 In order to run SciPipe workflows, you have to add all processes to a pipeline runner,
 and then execute the `Run()` method on the pipeline runner, like so:
