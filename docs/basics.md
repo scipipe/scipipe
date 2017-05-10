@@ -15,7 +15,7 @@ full, normal Go programs. These always need to do three things:
 
 1. Define the `main` package (always te case for executable files)
 2. Import the SciPipe library
-3. Have a `main()` method, which contains the workflow code.
+3. Have a `main()` function, which contains the workflow code.
 
 Thus, the minimal "boilerplate" code for any SciPipe workflow is a file
 named with the `.go` extension, and with this content:
