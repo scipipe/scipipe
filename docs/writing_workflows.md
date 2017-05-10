@@ -1,8 +1,7 @@
-# Tutorial: HelloWorld workflow
+# Writing Workflows - An Overview
 
-Before going into details about how to write SciPipe workflows, let's look at
-the example workflow used on the front page, and use it as an example when we
-discuss the SciPipe syntax further below:
+In order to give an overview of how to write workflows in SciPipe, let's look
+at the example workflow used on the front page again:
 
 ```go
 package main
@@ -34,8 +33,8 @@ func main() {
 }
 ```
 
-Let's go through the code example step by step, and look in more
-detail at what we are doing.
+Now let's go through the code example in some detail, to see what we are
+actually doing.
 
 ## Initializing processes
 
@@ -165,9 +164,14 @@ So with this, we have done everything needed to set up a file-based batch workfl
 
 In summary, what we did, was to:
 
-- Specify process dependencies by wiring outputs of the upstream processes to
-  inports in downstream processes.
-- For each outport, provide a function that will compute a suitable file name
-  for the new file.
+1. Initialize processes
+2. For each out-port, define a file-naming strategy
+3. Specify dependencies by connecting out- and in-ports
+4. Run the pipeline
 
-For more examples, see the [examples folder](https://github.com/scipipe/scipipe/tree/master/examples).
+This actually turns out to be a fixed set of components that always need to be
+included when writing workflows, so it might be good to keep them in mind and
+memorize these steps, if needed.
+
+For more examples, see the [examples folder](https://github.com/scipipe/scipipe/tree/master/examples)
+in the GitHub repository.

@@ -4,12 +4,13 @@ pages:
   - 'Introduction': 'index.md'
   - 'Installing': 'install.md'
   - 'Basic Concepts': 'basics.md'
-  - Tutorials:
-      - 'Hello World workflow': 'tutorials/helloworld.md'
+  - 'Writing Workflows': 'writing_workflows.md'
+#  - Tutorials:
+#      - 'Hello World workflow': 'tutorials/helloworld.md'
   - 'Examples': 'examples.md'
-  - 'Other resources': 'other_resources.md'
+  - 'Other Resources': 'other_resources.md'
   - 'Acknowledgements': 'acknowledgements.md'
-  - 'Related tools': 'related_tools.md'
+  - 'Related Tools': 'related_tools.md'
 repo_name: 'scipipe/scipipe'
 repo_url: 'https://github.com/scipipe/scipipe'
 extra:
