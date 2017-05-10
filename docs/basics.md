@@ -123,5 +123,5 @@ function properly.
 
 # Next steps
 
-Please see the next section, [Writing Workflows](/writing_workflows), for a
-concrete example of using the concepts above.
+Please see the [Hello World tutorial](/tutorials/helloworld/), for a concrete
+example of using the concepts above.
