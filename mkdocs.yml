@@ -3,6 +3,7 @@ theme: material
 pages:
   - 'Introduction': 'index.md'
   - 'Installing': 'install.md'
+  - 'Basic Concepts': 'concepts.md'
   - 'Writing Workflows': 'writing_workflows/index.md'
   - 'Examples': 'examples.md'
   - 'Other resources': 'other_resources.md'
