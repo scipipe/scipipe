@@ -23,7 +23,7 @@ named with the `.go` extension, and with this content:
 ```go
 package main
 
-import(
+import (
     "github.com/scipipe/scipipe"
 )
 
@@ -44,7 +44,7 @@ If you find it tedious to type `scipipe` over and over in your code you can alia
 it to something shorter, like `sp`, by doing the import like this:
 
 ```go
-import(
+import (
     sp "github.com/scipipe/scipipe"
 )
 ```
@@ -95,7 +95,6 @@ myProcess.Out["outfile"].Connect(myOtherProcess.In["infile"])
 There is also an alternative syntax using the `scipipe.Connect()` method, which
 takes two port-objects and connects them:
 
-```
 ```go
 scipipe.Connect(myOtherProcess.In["infile"], myProcess.Out["outfile"])
 ```
