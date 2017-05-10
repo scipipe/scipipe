@@ -1,6 +1,6 @@
 # Basic concepts
 
-In SciLuigi, we are discussing a few concepts all the time, so to make sure we
+In SciPipe, we are discussing a few concepts all the time, so to make sure we
 are on the same page, we will below go through the basic ones briefly.
 
 ## Processes
