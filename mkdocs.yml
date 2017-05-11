@@ -8,7 +8,7 @@ pages:
 #  - Tutorials:
 #      - 'Hello World workflow': 'tutorials/helloworld.md'
   - Topical How-Tos:
-    - 'Using parameters in commands and file names': 'howtos/using_parameters.md'
+    - 'Using parameters in commands and file names': 'howtos/parameters.md'
     - 'Creating components in Go': 'howtos/golang_components.md'
     - 'Creating re-usable components': 'howtos/reusable_components.md'
     - 'Globbing files': 'howtos/globbing.md'
