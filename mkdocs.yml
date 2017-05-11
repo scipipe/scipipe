@@ -7,6 +7,18 @@ pages:
   - 'Writing Workflows': 'writing_workflows.md'
 #  - Tutorials:
 #      - 'Hello World workflow': 'tutorials/helloworld.md'
+  - Topical How-Tos:
+    - 'Using parameters in commands and file names': 'howtos/using_parameters.md'
+    - 'Creating components in Go': 'howtos/golang_components.md'
+    - 'Creating re-usable components': 'howtos/reusable_components.md'
+    - 'Globbing files': 'howtos/globbing.md'
+    - 'Splitting files': 'howtos/splitting.md'
+    - 'Joining multiple files': 'howtos/joining.md'
+    - 'Enable streaming between components': 'howtos/streaming.md'
+    - 'Creating sub-workflows': 'howtos/subworkflows.md'
+    - 'Implement scatter/gather workflows': 'howtos/scatter_gather.md'
+    - 'Interacting with a resource manager': 'howtos/hpc.md'
+    - 'Configure max processes on a local computer': 'howtos/local.md'
   - 'Examples': 'examples.md'
   - 'Other Resources': 'other_resources.md'
   - 'Acknowledgements': 'acknowledgements.md'
