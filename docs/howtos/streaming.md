@@ -14,3 +14,7 @@ of the `SciProcess.SetPath...()` functions, or by manually adding one to
 `SciProcess.PathFormatters`. This is because a uniqe file name is needed in
 order to create any audit files, as well as to give a unique name for the named
 pipe.
+
+## See also
+
+- [Streaming example on GitHub](https://github.com/scipipe/scipipe/blob/master/examples/fifo/fifo.go#L14).
