@@ -1,6 +1,7 @@
 package scipipe
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -17,6 +18,12 @@ func TestNewFromShell(t *testing.T) {
 	if p2.Out["outfile"] == nil {
 		t.Error(`p.Out["outfile"] = nil. want: not nil`)
 	}
+}
+
+func ExampleExpandParams() {
+	fmt.Println(ExpandParams("echo {p:msg}", map[string]string{"msg": "Hello"}))
+	// Output:
+	// echo Hello
 }
 
 func TestShellExpand_OnlyParams(t *testing.T) {

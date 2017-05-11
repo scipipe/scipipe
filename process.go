@@ -144,6 +144,14 @@ func (p *SciProcess) SetPathReplace(inPortName string, outPortName string, old s
 
 // ------- Helper methods for initialization -------
 
+// ExpandParams takes a command pattern and a map of parameter names mapped to
+// parameter values, and returns the command as a string where any parameter
+// placeholders (on the form `{p:paramname}` are replaced with the parameter
+// value from the provided parameter values map.
+func ExpandParams(cmd string, params map[string]string) string {
+	return expandCommandParamsAndPaths(cmd, params, nil, nil)
+}
+
 func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths map[string]string, outPaths map[string]string) (cmdExpr string) {
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
