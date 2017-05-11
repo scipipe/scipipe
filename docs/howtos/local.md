@@ -1,2 +1,1 @@
-*Topic coming soon. Please add a support request in the [issue tracker](https://github.com/scipipe/scipipe/issues)
-if you need this information fast, and we can prioritize writing it asap.*
+This is [being worked on right now (issue #25)](https://github.com/scipipe/scipipe/issues/25).

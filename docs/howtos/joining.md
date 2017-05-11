@@ -1,2 +1,3 @@
-*Topic coming soon. Please add a support request in the [issue tracker](https://github.com/scipipe/scipipe/issues)
-if you need this information fast, and we can prioritize writing it asap.*
+See the [Concatenator component](https://godoc.org/github.com/scipipe/scipipe/components#Concatenator).
+
+Also see the [page about Scatter/Gather](/howtos/scatter_gather/).
