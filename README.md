@@ -20,9 +20,12 @@ flexible, robust and reproducible. SciPipe also lets you restart an interrupted
 run without over-writing already produced output and produces an audit report
 of what was run, among many other things.
 
-SciPipe is built on the proven principles of [Flow-Based
-Programming](https://en.wikipedia.org/wiki/Flow-based_programming) (FBP) to
-achieve maximum flexibility, productivity and agility when designing workflows.
+SciPipe is built on the proven principles of [Flow-Based Programming](https://en.wikipedia.org/wiki/Flow-based_programming)
+(FBP) to achieve maximum flexibility, productivity and agility when designing
+workflows.  Compared to plain dataflow, FBP provides the benefits that
+processes are fully self-contained, so that a library of re-usable components
+can be created, and plugged into new workflows ad-hoc.
+
 Similar to other FBP systems, SciPipe workflows can be likened to a network of
 assembly lines in a factory, where items (files) are flowing through a network
 of conveyor belts, stopping at different independently running stations
