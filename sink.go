@@ -37,12 +37,13 @@ func (proc *Sink) Run() {
 	ok := true
 	var ft *InformationPacket
 	for len(proc.inPorts) > 0 {
+	loop:
 		for i, inp := range proc.inPorts {
 			select {
 			case ft, ok = <-inp.Chan:
 				if !ok {
 					proc.deleteInPortAtKey(i)
-					continue
+					break loop
 				}
 				Debug.Println("Received file in sink: ", ft.GetPath())
 			default:
