@@ -7,30 +7,21 @@ import (
 	"os/exec"
 	str "strings"
 	"time"
-
-	"k8s.io/client-go/kubernetes"
-	apiUnver "k8s.io/client-go/pkg/api/unversioned"
-	api "k8s.io/client-go/pkg/api/v1"
-	batchapi "k8s.io/client-go/pkg/apis/batch/v1"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 // ================== SciTask ==================
 
 type SciTask struct {
-	Name           string
-	Command        string
-	ExecMode       ExecMode
-	CustomExecute  func(*SciTask)
-	InTargets      map[string]*InformationPacket
-	OutTargets     map[string]*InformationPacket
-	Params         map[string]string
-	Done           chan int
-	K8sConfMode    K8sConfMode
-	KubeConfigPath string
-	Image          string
-	DataFolder     string
+	Name          string
+	Command       string
+	ExecMode      ExecMode
+	CustomExecute func(*SciTask)
+	InTargets     map[string]*InformationPacket
+	OutTargets    map[string]*InformationPacket
+	Params        map[string]string
+	Done          chan int
+	Image         string
+	DataFolder    string
 }
 
 func NewSciTask(name string, cmdPat string, inTargets map[string]*InformationPacket, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode) *SciTask {
@@ -84,8 +75,6 @@ func (t *SciTask) Execute() {
 				t.executeCommand(t.Command)
 			case ExecModeSLURM:
 				Error.Printf("Task:%-12s SLURM Execution mode not implemented!", t.Name)
-			case ExecModeK8s:
-				t.executeCommandonKubernetes(t.Command, t.KubeConfigPath, t.Image, t.DataFolder)
 			}
 		}
 		execTime := time.Since(startTime)
@@ -215,85 +204,6 @@ var (
 	trueVal  = true
 	falseVal = false
 )
-
-func (t *SciTask) executeCommandonKubernetes(command string, kubeConfigPath string, imageName string, dataFolder string) {
-	var config *rest.Config
-	var err error
-
-	if t.K8sConfMode == K8sConfModeInCluster {
-		config, err = rest.InClusterConfig()
-		CheckErr(err)
-	} else {
-		config, err = clientcmd.BuildConfigFromFlags("", kubeConfigPath) // Kind of hacky to pretend this is a flag, eh?
-		CheckErr(err)
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
-	CheckErr(err)
-
-	batchClient := clientset.BatchV1Client
-	jobsClient := batchClient.Jobs("default")
-	CheckErr(err)
-
-	batchJobId := t.Name + "-" + randSeqLC(6)
-	// For an example of how to create jobs, see this file:
-	// https://github.com/pachyderm/pachyderm/blob/805e63/src/server/pps/server/api_server.go#L2320-L2345
-	batchJob := &batchapi.Job{
-		TypeMeta: apiUnver.TypeMeta{
-			Kind:       "Job",
-			APIVersion: "v1",
-		},
-		ObjectMeta: api.ObjectMeta{
-			Name:   "scipipe-task-" + batchJobId,
-			Labels: make(map[string]string),
-		},
-		Spec: batchapi.JobSpec{
-			Template: api.PodTemplateSpec{
-				ObjectMeta: api.ObjectMeta{
-					Name:   "scipipe-pod-" + batchJobId,
-					Labels: make(map[string]string),
-				},
-				Spec: api.PodSpec{
-					InitContainers: []api.Container{}, // Doesn't seem obligatory(?)...
-					Containers: []api.Container{
-						{
-							Name:    "scipipe-container-" + batchJobId,
-							Image:   imageName,
-							Command: []string{"sh", "-c", command},
-							SecurityContext: &api.SecurityContext{
-								Privileged: &falseVal,
-							},
-							ImagePullPolicy: api.PullPolicy(api.PullIfNotPresent),
-							Env:             []api.EnvVar{},
-							VolumeMounts: []api.VolumeMount{
-								api.VolumeMount{
-									Name:      "scipipe-volume-" + batchJobId,
-									MountPath: dataFolder,
-								},
-							},
-						},
-					},
-					RestartPolicy:    api.RestartPolicyOnFailure,
-					ImagePullSecrets: []api.LocalObjectReference{},
-					Volumes: []api.Volume{
-						api.Volume{
-							Name: "scipipe-volume-" + batchJobId,
-							VolumeSource: api.VolumeSource{
-								HostPath: &api.HostPathVolumeSource{
-									Path: dataFolder,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	newJob, err := jobsClient.Create(batchJob)
-	CheckErr(err)
-	Debug.Printf("Started Kubernetes job with name '%s'", newJob.Name)
-}
 
 // ================== Helper functions==================
 

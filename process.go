@@ -2,7 +2,6 @@ package scipipe
 
 import (
 	"errors"
-	"os/user"
 	str "strings"
 )
 
@@ -16,16 +15,6 @@ const (
 	// ExecModeSLURM indicates that commands should be executed on a HPC cluster
 	// via a SLURM resource manager
 	ExecModeSLURM ExecMode = iota
-	// ExecModeK8s indicates that commands should be executed on a Kubernetes
-	// cluster
-	ExecModeK8s ExecMode = iota
-)
-
-type K8sConfMode int
-
-const (
-	K8sConfModeInCluster    K8sConfMode = iota
-	K8sConfModeOutOfCluster K8sConfMode = iota
 )
 
 // ================== Process ==================
@@ -37,9 +26,6 @@ type Process interface {
 }
 
 // ================== SciProcess ==================
-
-var DefaultImage = "alpine:3.5"
-var DefaultDataFolder = "/scipipe-data"
 
 type SciProcess struct {
 	Process
@@ -54,18 +40,9 @@ type SciProcess struct {
 	PathFormatters   map[string]func(*SciTask) string
 	ParamPorts       map[string]*ParamPort
 	CustomExecute    func(*SciTask)
-	KubeConfigPath   string
-	K8sConfMode      K8sConfMode
-	Image            string
-	DataFolder       string
 }
 
 func NewSciProcess(name string, command string) *SciProcess {
-	usr, err := user.Current()
-	CheckErr(err)
-	defaultKubeConfigPath := usr.HomeDir + "/.kube/config"
-	Debug.Printf("Process %s: Setting default kube config path to %s\n", name, defaultKubeConfigPath)
-
 	return &SciProcess{
 		Name:             name,
 		CommandPattern:   command,
@@ -75,9 +52,6 @@ func NewSciProcess(name string, command string) *SciProcess {
 		PathFormatters:   make(map[string]func(*SciTask) string),
 		ParamPorts:       make(map[string]*ParamPort),
 		Spawn:            true,
-		KubeConfigPath:   defaultKubeConfigPath,
-		Image:            DefaultImage,
-		DataFolder:       DefaultDataFolder,
 	}
 }
 
@@ -398,10 +372,6 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 			if p.CustomExecute != nil {
 				t.CustomExecute = p.CustomExecute
 			}
-			t.KubeConfigPath = p.KubeConfigPath
-			t.K8sConfMode = p.K8sConfMode
-			t.Image = p.Image
-			t.DataFolder = p.DataFolder
 			ch <- t
 			if len(p.In) == 0 && len(p.ParamPorts) == 0 {
 				Debug.Printf("Process.createTasks:%s Breaking: No inports nor params", p.Name)
