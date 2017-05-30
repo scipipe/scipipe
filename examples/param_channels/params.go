@@ -15,14 +15,14 @@ func main() {
 	// An abc file printer
 	abc := sci.NewFromShell("abc", "echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
 	abc.Spawn = true
-	abc.PathFormatters["out"] = func(t *sci.SciTask) string {
+	abc.SetPathCustom("out", func(t *sci.SciTask) string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
 			t.Params["a"],
 			t.Params["b"],
 			t.Params["c"],
 		)
-	}
+	})
 
 	// A printer task
 	prt := sci.NewFromShell("printer", "cat {i:in} >> log.txt")

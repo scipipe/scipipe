@@ -135,9 +135,9 @@ func main() {
 		// bwa sampe process
 		bwaMerg := sp.NewFromShell("merge_"+indv,
 			"bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}")
-		bwaMerg.PathFormatters["merged"] = func(t *sp.SciTask) string {
+		bwaMerg.SetPathCustom("merged", func(t *sp.SciTask) string {
 			return fmt.Sprintf("%s.merged.sam", t.Params["indv"])
-		}
+		})
 		// Connect
 		bwaMerg.In["ref"].Connect(refFOut.GetOutPort("merg_" + indv))
 		bwaMerg.In["refdone"].Connect(idxDnFO.GetOutPort("merg_" + indv))

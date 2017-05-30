@@ -8,9 +8,9 @@ func main() {
 	sp.InitLogAudit()
 
 	p := sp.NewFromShell("ls", "ls -l > {o:out}")
-	p.PathFormatters["out"] = func(p *sp.SciTask) string {
+	p.SetPathCustom("out", func(p *sp.SciTask) string {
 		return "hej.txt"
-	}
+	})
 	p.Prepend = "echo"
 	snk := sp.NewSink()
 	snk.Connect(p.Out["out"])

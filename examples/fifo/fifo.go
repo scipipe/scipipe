@@ -12,21 +12,21 @@ func main() {
 
 	// ls processes
 	ls := sci.NewFromShell("ls", "ls -l / > {os:lsl}")
-	ls.PathFormatters["lsl"] = func(tsk *sci.SciTask) string {
+	ls.SetPathCustom("lsl", func(tsk *sci.SciTask) string {
 		return "lsl.txt"
-	}
+	})
 
 	// grep process
 	grp := sci.NewFromShell("grp", "grep etc {i:in} > {o:grep}")
-	grp.PathFormatters["grep"] = func(tsk *sci.SciTask) string {
+	grp.SetPathCustom("grep", func(tsk *sci.SciTask) string {
 		return tsk.GetInPath("in") + ".grepped.txt"
-	}
+	})
 
 	// cat process
 	ct := sci.NewFromShell("cat", "cat {i:in} > {o:out}")
-	ct.PathFormatters["out"] = func(tsk *sci.SciTask) string {
+	ct.SetPathCustom("out", func(tsk *sci.SciTask) string {
 		return tsk.GetInPath("in") + ".out.txt"
-	}
+	})
 
 	// sink
 	snk := sci.NewSink()

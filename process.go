@@ -37,6 +37,7 @@ type ShellProcess interface {
 	SetPathStatic(outPortName string, path string)
 	SetPathExtend(inPortName string, outPortName string, extension string)
 	SetPathReplace(inPortName string, outPortName string, old string, new string)
+	SetPathCustom(outPortName string, pathFmtFunc func(task *SciTask) (path string))
 }
 
 // ================== SciProcess ==================
@@ -136,6 +137,12 @@ func (p *SciProcess) SetPathReplace(inPortName string, outPortName string, old s
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
 		return str.Replace(t.InTargets[inPortName].GetPath(), old, new, -1)
 	}
+}
+
+// SetPathCustom takes a function which produces a file path based on data
+// available in *SciTask, such as concrete file paths and parameter values,
+func (p *SciProcess) SetPathCustom(outPortName string, pathFmtFunc func(task *SciTask) (path string)) {
+	p.PathFormatters[outPortName] = pathFmtFunc
 }
 
 // ------- Helper methods for initialization -------
