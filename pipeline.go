@@ -4,7 +4,114 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 )
+
+// ----------------------------------------------------------------------------
+// Pipeline
+// ----------------------------------------------------------------------------
+
+type Pipeline struct {
+	Runner      *PipelineRunner
+	processes   map[string]ShellProcess
+	lastProcess ShellProcess
+}
+
+func NewPipeline() *Pipeline {
+	return &Pipeline{
+		Runner:      &PipelineRunner{},
+		processes:   map[string]ShellProcess{},
+		lastProcess: nil,
+	}
+}
+
+func (pl *Pipeline) AddProc(procName string, proc ShellProcess) {
+	pl.processes[procName] = proc
+	pl.Runner.AddProcess(proc)
+	pl.lastProcess = proc
+}
+
+func (pl *Pipeline) GetProc(procName string) ShellProcess {
+	return pl.processes[procName]
+}
+
+func (pl *Pipeline) GetLastProc() ShellProcess {
+	return pl.lastProcess
+}
+
+func (pl *Pipeline) NewProc(procName string, commandPattern string) {
+	pl.AddProc(procName, NewFromShell(procName, commandPattern))
+}
+
+func (pl *Pipeline) SetPath(portSpec string, pathSpec string) {
+
+}
+
+func (pl *Pipeline) Connect(connSpec string) {
+	directionLeft := true
+	var bits []string
+	if strings.Contains(connSpec, "<-") {
+		bits = strings.Split(connSpec, "<-")
+	} else if strings.Contains(connSpec, "->") {
+		bits = strings.Split(connSpec, "->")
+		directionLeft = false
+	} else {
+		panic(fmt.Sprintf("No <- or -> in connection string: %s\n", connSpec))
+	}
+	// Trim witespace
+	for i, bit := range bits {
+		bits[i] = strings.Trim(bit, " ")
+	}
+	part1 := bits[0]
+	part2 := bits[1]
+
+	var proc1Name string
+	var proc2Name string
+	var port1Name string
+	var port2Name string
+
+	if strings.Contains(part1, ".") {
+		part1bits := strings.Split(part1, ".")
+		proc1Name = part1bits[0]
+		port1Name = part1bits[1]
+	} else {
+		panic(fmt.Sprintf("No dot to separate process and port, in left part of connection string: %s\n", connSpec))
+	}
+
+	if strings.Contains(part2, ".") {
+		part2bits := strings.Split(part2, ".")
+		proc2Name = part2bits[0]
+		port2Name = part2bits[1]
+	} else {
+		panic(fmt.Sprintf("No dot to separate process and port, in right part of connection string: %s\n", connSpec))
+	}
+
+	if directionLeft {
+		Connect(
+			pl.GetProc(proc1Name).GetInPort(port1Name),
+			pl.GetProc(proc2Name).GetOutPort(port2Name))
+	} else {
+		Connect(
+			pl.GetProc(proc1Name).GetOutPort(port1Name), // <- Order of In/Out ports
+			pl.GetProc(proc2Name).GetInPort(port2Name))  // <- switched here
+	}
+}
+
+func (pl *Pipeline) Run() {
+	sink := NewSink()
+	pl.Runner.AddProcess(sink)
+
+	lastProc := pl.GetLastProc()
+	for _, port := range lastProc.GetOutPorts() {
+		sink.Connect(port)
+	}
+
+	pl.Runner.Run()
+}
+
+// ----------------------------------------------------------------------------
+// Pipeline Runner
+// ----------------------------------------------------------------------------
 
 type PipelineRunner struct {
 	processes []Process

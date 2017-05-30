@@ -25,6 +25,20 @@ type Process interface {
 	Run()
 }
 
+type ShellProcess interface {
+	Process
+
+	GetInPort(string) *FilePort
+	GetInPorts() map[string]*FilePort
+
+	GetOutPort(string) *FilePort
+	GetOutPorts() map[string]*FilePort
+
+	SetPathStatic(outPortName string, path string)
+	SetPathExtend(inPortName string, outPortName string, extension string)
+	SetPathReplace(inPortName string, outPortName string, old string, new string)
+}
+
 // ================== SciProcess ==================
 
 type SciProcess struct {
@@ -82,6 +96,10 @@ func (p *SciProcess) GetInPort(portName string) *FilePort {
 	return nil
 }
 
+func (p *SciProcess) GetInPorts() map[string]*FilePort {
+	return p.In
+}
+
 func (p *SciProcess) GetOutPort(portName string) *FilePort {
 	if p.Out[portName] != nil {
 		return p.Out[portName]
@@ -89,6 +107,10 @@ func (p *SciProcess) GetOutPort(portName string) *FilePort {
 		Error.Printf("No such out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.Name)
 	}
 	return nil
+}
+
+func (p *SciProcess) GetOutPorts() map[string]*FilePort {
+	return p.Out
 }
 
 // ----------- Path formatting methods ------------
