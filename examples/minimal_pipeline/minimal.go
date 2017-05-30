@@ -3,28 +3,22 @@ package main
 import sp "github.com/scipipe/scipipe"
 
 func main() {
-	// --------------------------------
-	// Set up a pipeline runner
-	// --------------------------------
-
-	run := sp.NewPipelineRunner()
+	rnr := sp.NewPipelineRunner()
 
 	// --------------------------------
 	// Initialize processes and add to runner
 	// --------------------------------
 
-	foo := sp.NewFromShell("fooer",
-		"echo foo > {o:foo}")
+	foo := sp.NewFromShell("fooer", "echo foo > {o:foo}")
 	foo.SetPathStatic("foo", "foo.txt")
-	run.AddProcess(foo)
+	rnr.AddProcess(foo)
 
-	f2b := sp.NewFromShell("foo2bar",
-		"sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	f2b := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	f2b.SetPathExtend("foo", "bar", ".bar.txt")
-	run.AddProcess(f2b)
+	rnr.AddProcess(f2b)
 
 	snk := sp.NewSink()
-	run.AddProcess(snk)
+	rnr.AddProcess(snk)
 
 	// --------------------------------
 	// Connect workflow dependency network
@@ -34,8 +28,8 @@ func main() {
 	snk.Connect(f2b.Out["bar"])
 
 	// --------------------------------
-	// Run the pipeline!
+	// rnr the pipeline!
 	// --------------------------------
 
-	run.Run()
+	rnr.Run()
 }
