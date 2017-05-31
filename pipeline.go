@@ -56,7 +56,8 @@ func (pl *Pipeline) Connect(connSpec string) {
 		bits = strings.Split(connSpec, "->")
 		directionLeft = false
 	} else {
-		panic(fmt.Sprintf("No <- or -> in connection string: %s\n", connSpec))
+		Error.Println("Pipeline: No <- or -> in connection string: ", connSpec)
+		os.Exit(1)
 	}
 	// Trim witespace
 	for i, bit := range bits {
@@ -75,7 +76,8 @@ func (pl *Pipeline) Connect(connSpec string) {
 		proc1Name = part1bits[0]
 		port1Name = part1bits[1]
 	} else {
-		panic(fmt.Sprintf("No dot to separate process and port, in left part of connection string: %s\n", connSpec))
+		Error.Println("Pipeline: No dot to separate process and port, in left part of connection string: ", connSpec)
+		os.Exit(1)
 	}
 
 	if strings.Contains(part2, ".") {
@@ -83,7 +85,8 @@ func (pl *Pipeline) Connect(connSpec string) {
 		proc2Name = part2bits[0]
 		port2Name = part2bits[1]
 	} else {
-		panic(fmt.Sprintf("No dot to separate process and port, in right part of connection string: %s\n", connSpec))
+		Error.Println("Pipeline: No dot to separate process and port, in right part of connection string: ", connSpec)
+		os.Exit(1)
 	}
 
 	if directionLeft {
