@@ -28,7 +28,7 @@ func (proc *StringGen) Name() string {
 func (proc *StringGen) Run() {
 	defer proc.Out.Close()
 	for _, str := range proc.Strings {
-		proc.Out.Chan <- str
+		proc.Out.Send(str)
 	}
 }
 

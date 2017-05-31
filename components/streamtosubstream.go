@@ -28,7 +28,7 @@ func (p *StreamToSubStream) Run() {
 	subStreamIP := scipipe.NewInformationPacket("")
 	subStreamIP.SubStream = p.In
 
-	p.OutSubStream.Chan <- subStreamIP
+	p.OutSubStream.Send(subStreamIP)
 }
 
 func (p *StreamToSubStream) Name() string {

@@ -348,9 +348,9 @@ func (proc *CombinatoricsProcess) Run() {
 	for _, a := range []string{"a1", "a2", "a3"} {
 		for _, b := range []string{"b1", "b2", "b3"} {
 			for _, c := range []string{"c1", "c2", "c3"} {
-				proc.A.Chan <- a
-				proc.B.Chan <- b
-				proc.C.Chan <- c
+				proc.A.Send(a)
+				proc.B.Send(b)
+				proc.C.Send(c)
 			}
 		}
 	}
@@ -384,7 +384,7 @@ func (proc *StreamToSubStream) Run() {
 	subStreamIP := NewInformationPacket("")
 	Connect(proc.In, subStreamIP.SubStream)
 
-	proc.OutSubStream.Chan <- subStreamIP
+	proc.OutSubStream.Send(subStreamIP)
 }
 
 func (proc *StreamToSubStream) Name() string {

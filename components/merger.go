@@ -20,7 +20,7 @@ func (proc *Merger) Run() {
 	for _, inp := range proc.ins {
 		go func(ch chan *scipipe.InformationPacket) {
 			for ft := range ch {
-				proc.Out.Chan <- ft
+				proc.Out.Send(ft)
 			}
 			wg.Done()
 		}(inp.Chan)

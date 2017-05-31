@@ -58,7 +58,7 @@ func (proc *FileSplitter) Run() {
 					splitfile.Close()
 					splitFt.Atomize()
 					scipipe.Audit.Println("FileSplitter      Created split file", splitFt.GetPath())
-					proc.OutSplitFile.Chan <- splitFt
+					proc.OutSplitFile.Send(splitFt)
 					splitIdx++
 
 					splitFt = newSplitInformationPacketFromIndex(ft.GetPath(), splitIdx)
@@ -68,7 +68,7 @@ func (proc *FileSplitter) Run() {
 			splitfile.Close()
 			splitFt.Atomize()
 			scipipe.Audit.Println("FileSplitter      Created split file", splitFt.GetPath())
-			proc.OutSplitFile.Chan <- splitFt
+			proc.OutSplitFile.Send(splitFt)
 		} else {
 			scipipe.Audit.Printf("Split file already exists: %s, so skipping.\n", splitFt.GetPath())
 		}

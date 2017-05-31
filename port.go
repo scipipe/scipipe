@@ -1,5 +1,9 @@
 package scipipe
 
+import (
+	"os"
+)
+
 type Port interface {
 	Connect(Port)
 	IsConnected() bool
@@ -49,6 +53,14 @@ func (pt *FilePort) IsConnected() bool {
 	return pt.connected
 }
 
+func (pt *FilePort) Send(ip *InformationPacket) {
+	pt.Chan <- ip
+}
+
+func (pt *FilePort) Recv() *InformationPacket {
+	return <-pt.Chan
+}
+
 func (pt *FilePort) Close() {
 	close(pt.Chan)
 }
@@ -63,34 +75,42 @@ func NewParamPort() *ParamPort {
 	return &ParamPort{}
 }
 
-func (paramp *ParamPort) Connect(otherParamPort *ParamPort) {
-	if paramp.Chan != nil && otherParamPort.Chan != nil {
+func (pp *ParamPort) Connect(otherParamPort *ParamPort) {
+	if pp.Chan != nil && otherParamPort.Chan != nil {
 		Error.Println("Both paramports already have initialized channels, so can't choose which to use!")
 		os.Exit(1)
-	} else if paramp.Chan != nil && otherParamPort.Chan == nil {
+	} else if pp.Chan != nil && otherParamPort.Chan == nil {
 		Debug.Println("Local param port, but not the other one, initialized, so connecting local to other")
-		otherParamPort.Chan = paramp.Chan
-	} else if otherParamPort.Chan != nil && paramp.Chan == nil {
+		otherParamPort.Chan = pp.Chan
+	} else if otherParamPort.Chan != nil && pp.Chan == nil {
 		Debug.Println("The other, but not the local param port initialized, so connecting other to local")
-		paramp.Chan = otherParamPort.Chan
-	} else if paramp.Chan == nil && otherParamPort.Chan == nil {
+		pp.Chan = otherParamPort.Chan
+	} else if pp.Chan == nil && otherParamPort.Chan == nil {
 		Debug.Println("Neither local nor other param port initialized, so creating new channel and connecting both")
 		ch := make(chan string, BUFSIZE)
-		paramp.Chan = ch
+		pp.Chan = ch
 		otherParamPort.Chan = ch
 	}
-	paramp.SetConnectedStatus(true)
+	pp.SetConnectedStatus(true)
 	otherParamPort.SetConnectedStatus(true)
 }
 
-func (paramp *ParamPort) SetConnectedStatus(connected bool) {
-	paramp.connected = connected
+func (pp *ParamPort) SetConnectedStatus(connected bool) {
+	pp.connected = connected
 }
 
-func (paramp *ParamPort) IsConnected() bool {
-	return paramp.connected
+func (pp *ParamPort) IsConnected() bool {
+	return pp.connected
 }
 
-func (paramp *ParamPort) Close() {
-	close(paramp.Chan)
+func (pp *ParamPort) Send(param string) {
+	pp.Chan <- param
+}
+
+func (pp *ParamPort) Recv() string {
+	return <-pp.Chan
+}
+
+func (pp *ParamPort) Close() {
+	close(pp.Chan)
 }

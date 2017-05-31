@@ -35,5 +35,5 @@ func (proc *AccumulatorInt) Run() {
 	outVal := fmt.Sprintf("%d", proc.Accumulator)
 	outFt.WriteTempFile([]byte(outVal))
 	outFt.Atomize()
-	proc.Out.Chan <- outFt
+	proc.Out.Send(outFt)
 }

@@ -41,7 +41,7 @@ func (proc *Concatenator) Run() {
 	}
 	outFh.Close()
 	outFt.Atomize()
-	proc.Out.Chan <- outFt
+	proc.Out.Send(outFt)
 }
 
 func (proc *Concatenator) IsConnected() bool {

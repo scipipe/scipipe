@@ -51,7 +51,7 @@ func NewFileSender(name string) *FileSender {
 func (p *FileSender) Run() {
 	defer p.Out.Close()
 	for _, fn := range []string{"file1.txt", "file2.txt", "file3.txt"} {
-		p.Out.Chan <- sci.NewInformationPacket(fn)
+		p.Out.Send(sci.NewInformationPacket(fn))
 	}
 }
 

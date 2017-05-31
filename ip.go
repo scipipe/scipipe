@@ -200,7 +200,7 @@ func NewIPGen(name string, filePaths ...string) (fq *IPGen) {
 func (ipg *IPGen) Run() {
 	defer ipg.Out.Close()
 	for _, fp := range ipg.FilePaths {
-		ipg.Out.Chan <- NewInformationPacket(fp)
+		ipg.Out.Send(NewInformationPacket(fp))
 	}
 }
 

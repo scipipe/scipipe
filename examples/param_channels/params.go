@@ -67,9 +67,9 @@ func (p *CombinatoricsGen) Run() {
 	for _, a := range []string{"a1", "a2", "a3"} {
 		for _, b := range []string{"b1", "b2", "b3"} {
 			for _, c := range []string{"c1", "c2", "c3"} {
-				p.A.Chan <- a
-				p.B.Chan <- b
-				p.C.Chan <- c
+				p.A.Send(a)
+				p.B.Send(b)
+				p.C.Send(c)
 			}
 		}
 	}

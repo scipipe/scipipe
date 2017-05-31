@@ -40,7 +40,7 @@ func (proc *FanOut) Run() {
 	for ft := range proc.InFile.Chan {
 		for key, outPort := range proc.outPorts {
 			scipipe.Debug.Println("FanOut: Sending file ", ft.GetPath(), " on out-port ", key)
-			outPort.Chan <- ft
+			outPort.Send(ft)
 		}
 	}
 }
