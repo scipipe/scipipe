@@ -24,6 +24,7 @@ func NewFilePort() *FilePort {
 func (pt1 *FilePort) Connect(pt2 *FilePort) {
 	if pt1.Chan != nil && pt2.Chan != nil {
 		Error.Println("Both ports already have initialized channels, so can't choose which to use!")
+		os.Exit(1)
 	} else if pt1.Chan != nil && pt2.Chan == nil {
 		Debug.Println("port2 not initialized, so connecting port1 to port2")
 		pt2.Chan = pt1.Chan
@@ -65,6 +66,7 @@ func NewParamPort() *ParamPort {
 func (paramp *ParamPort) Connect(otherParamPort *ParamPort) {
 	if paramp.Chan != nil && otherParamPort.Chan != nil {
 		Error.Println("Both paramports already have initialized channels, so can't choose which to use!")
+		os.Exit(1)
 	} else if paramp.Chan != nil && otherParamPort.Chan == nil {
 		Debug.Println("Local param port, but not the other one, initialized, so connecting local to other")
 		otherParamPort.Chan = paramp.Chan
