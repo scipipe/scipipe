@@ -35,6 +35,10 @@ func (pl *Pipeline) GetProc(procName string) ShellProcess {
 	return pl.processes[procName]
 }
 
+func (pl *Pipeline) GetProcs() map[string]ShellProcess {
+	return pl.processes
+}
+
 func (pl *Pipeline) GetLastProc() ShellProcess {
 	return pl.lastProcess
 }
