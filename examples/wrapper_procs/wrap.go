@@ -26,63 +26,48 @@ func main() {
 	plr.Run()
 }
 
-// ------------------------------------------------------------------------
+// ------------------------------------------------
 // Components
-// ------------------------------------------------------------------------
+// ------------------------------------------------
 
 // Fooer
+// -----
 
 type Fooer struct {
-	InnerProc *sci.SciProcess
+	*sci.SciProcess
 }
 
 func NewFooer() *Fooer {
 	innerFoo := sci.NewFromShell("fooer", "echo foo > {o:foo}")
 	innerFoo.SetPathStatic("foo", "foo.txt")
-	return &Fooer{
-		InnerProc: innerFoo,
-	}
+	return &Fooer{innerFoo}
 }
 
-func (p *Fooer) Run() {
-	p.InnerProc.Run()
-}
+// Define static ports
 
 func (p *Fooer) OutFoo() *sci.FilePort {
-	return p.InnerProc.Out("foo")
-}
-
-func (p *Fooer) IsConnected() bool {
-	return p.OutFoo().IsConnected()
+	return p.Out("foo")
 }
 
 // Foo2Barer
+// ---------
 
 type Foo2Barer struct {
-	InnerProc *sci.SciProcess
+	*sci.SciProcess
 }
 
 func NewFoo2Barer() *Foo2Barer {
 	innerFoo2Bar := sci.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	innerFoo2Bar.SetPathExtend("foo", "bar", ".bar.txt")
-	return &Foo2Barer{
-		InnerProc: innerFoo2Bar,
-	}
+	return &Foo2Barer{innerFoo2Bar}
 }
 
+// Define static ports
+
 func (p *Foo2Barer) InFoo() *sci.FilePort {
-	return p.InnerProc.In("foo")
+	return p.In("foo")
 }
 
 func (p *Foo2Barer) OutBar() *sci.FilePort {
-	return p.InnerProc.Out("bar")
-}
-
-func (p *Foo2Barer) Run() {
-	p.InnerProc.Run()
-}
-
-func (p *Foo2Barer) IsConnected() bool {
-	return p.InFoo().IsConnected() &&
-		p.OutBar().IsConnected()
+	return p.Out("bar")
 }
