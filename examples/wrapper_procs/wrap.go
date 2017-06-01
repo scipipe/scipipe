@@ -5,18 +5,25 @@ import (
 )
 
 func main() {
-	sci.InitLogDebug()
+	sci.InitLogInfo()
+	plr := sci.NewPipelineRunner()
 
+	// Fooer
 	foo := NewFooer()
+	plr.AddProcess(foo)
+
+	// Foo2barer
 	f2b := NewFoo2Barer()
+	f2b.InFoo().Connect(foo.OutFoo())
+	plr.AddProcess(f2b)
+
+	// Sink
 	snk := sci.NewSink()
+	snk.Connect(f2b.OutBar())
+	plr.AddProcess(snk)
 
-	f2b.InFoo.Connect(foo.OutFoo)
-	snk.Connect(f2b.OutBar)
-
-	pl := sci.NewPipelineRunner()
-	pl.AddProcesses(foo, f2b, snk)
-	pl.Run()
+	// Run
+	plr.Run()
 }
 
 // ------------------------------------------------------------------------
@@ -27,7 +34,6 @@ func main() {
 
 type Fooer struct {
 	InnerProc *sci.SciProcess
-	OutFoo    *sci.FilePort
 }
 
 func NewFooer() *Fooer {
@@ -35,25 +41,25 @@ func NewFooer() *Fooer {
 	innerFoo.SetPathStatic("foo", "foo.txt")
 	return &Fooer{
 		InnerProc: innerFoo,
-		OutFoo:    sci.NewFilePort(),
 	}
 }
 
 func (p *Fooer) Run() {
-	p.InnerProc.SetOutPort("foo", p.OutFoo)
 	p.InnerProc.Run()
 }
 
+func (p *Fooer) OutFoo() *sci.FilePort {
+	return p.InnerProc.Out("foo")
+}
+
 func (p *Fooer) IsConnected() bool {
-	return p.OutFoo.IsConnected()
+	return p.OutFoo().IsConnected()
 }
 
 // Foo2Barer
 
 type Foo2Barer struct {
 	InnerProc *sci.SciProcess
-	InFoo     *sci.FilePort
-	OutBar    *sci.FilePort
 }
 
 func NewFoo2Barer() *Foo2Barer {
@@ -61,18 +67,22 @@ func NewFoo2Barer() *Foo2Barer {
 	innerFoo2Bar.SetPathExtend("foo", "bar", ".bar.txt")
 	return &Foo2Barer{
 		InnerProc: innerFoo2Bar,
-		InFoo:     sci.NewFilePort(),
-		OutBar:    sci.NewFilePort(),
 	}
 }
 
+func (p *Foo2Barer) InFoo() *sci.FilePort {
+	return p.InnerProc.In("foo")
+}
+
+func (p *Foo2Barer) OutBar() *sci.FilePort {
+	return p.InnerProc.Out("bar")
+}
+
 func (p *Foo2Barer) Run() {
-	p.InnerProc.SetInPort("foo", p.InFoo)
-	p.InnerProc.SetOutPort("bar", p.OutBar)
 	p.InnerProc.Run()
 }
 
 func (p *Foo2Barer) IsConnected() bool {
-	return p.InFoo.IsConnected() &&
-		p.OutBar.IsConnected()
+	return p.InFoo().IsConnected() &&
+		p.OutBar().IsConnected()
 }

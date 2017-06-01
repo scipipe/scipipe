@@ -1,44 +1,39 @@
-*Beware: Somewhat technical topic, probably best suited for power-users*
-
 ## What are re-usable components
 
 With re-usable components, we mean components that can be stored in a Go
-package, and imported and used later.
+package and imported and used later.
 
 In order for components in such a library to be easy to use, the ports need to
-be static fields on the process, rather than just stored by a string ID in a
-generic port map, like the `In` and `Out` fields on `SciProcess` processes.
-This is so that the fields can show up in the auto-completion / intellisense
-function in code editors, so that one does not need to look up the name of the
-ports manually in the library code all the time.
+be static fields, or even better --- methods, on the process, rather than just
+stored by a string ID in a generic port map, like the `In` and `Out` fields on
+`SciProcess` processes.  This is so that the methods can show up in the
+auto-completion / intellisense function in code editors, so you don't need to
+look up the name of the ports manually in the library code all the time.
 
 ## How to create re-usable components in SciPipe
 
 SciProcess processes created with the `scipipe.NewFromShell()` command, can be
 turned into such "re-usable" component by using a wrapping strategy, that is
-demonstrated in an [example on GitHub](https://github.com/scipipe/scipipe/blob/master/examples/wrapper_tasks/wrap.go).
+demonstrated in an [example on GitHub](https://github.com/scipipe/scipipe/blob/master/examples/wrapper_procs/wrap.go).
 
 The idea is to create a new struct type for the re-usable component, and then,
 in the factory method for the process, create an "inner" process of type
-SciProcess, using `NewFromShell()` as in the normal case, and then making sure
-that the ports of the inner process are added to the port-fields also of the
-outer, "wrapping" process.
+SciProcess, using `NewFromShell()` as in the normal case, and then adding statically defined
+accessor methods for each of the ports in the inner process, with a similar name.
+So, if the inner process has an outport named "foo", you would define an accessor method named `myproc.OutFoo()`
+that returns this port from the inner process.
 
-There is only a little caveat, or trick, needed to get this to work properly:
-In the Run() method, which is executed after the outer process has been
-connected to other processes in a network, we need to set the ports of the
-inner process to be the same as the ports of the outer process. This is because
-the port object might have been changed when the workflow was connected. I.e,
-the process port fields might have got assigned a port object from another
-process in the workflow.
-
-The full implementation of a process that just writes "hi" to a file, can look
-like this:
+Let's look at a code example of how this works, by creating a process that just
+writes "hi" to a file:
 
 ```go
 type HiWriter struct {
 	InnerProc *sci.SciProcess
-	OutHi  *sci.FilePort
+}
+
+func (p *HiWriter) OutHiFile() *sci.FilePort {
+    // Return the inner process' port named "hifile"
+    return p.InnerProc.Out("hifile")
 }
 
 func NewHiWriter() *HiWriter {
@@ -50,21 +45,18 @@ func NewHiWriter() *HiWriter {
     // added to the InnerProcess field
 	return &HiWriter{
 		InnerProc: innerHiWriter,
-		OutHi:  sci.NewFilePort(),
 	}
 }
 
 func (p *HiWriter) Run() {
-    // Make sure the inner process' port object is the same as the outer one's
-	p.InnerProc.SetOutPort("hifile", p.OutHi)
 	p.InnerProc.Run()
 }
 
 func (p *HiWriter) IsConnected() bool {
-	return p.OutHi.IsConnected()
+	return p.OutHiFile().IsConnected()
 }
 ```
 
 ## See also
 
-- [A full, working, workflow example using this trategy](https://github.com/scipipe/scipipe/blob/master/examples/wrapper_tasks/wrap.go)
+- [A full, working, workflow example using this trategy](https://github.com/scipipe/scipipe/blob/master/examples/wrapper_procs/wrap.go)
