@@ -42,45 +42,42 @@ func main() {
 	// Initialize pipeline runner
 	// --------------------------------------------------------------------------------
 
-	pipeRun := sp.NewPipelineRunner()
+	pr := sp.NewPipelineRunner()
 	sink := sp.NewSink()
 
 	// --------------------------------------------------------------------------------
 	// Download Reference Genome
 	// --------------------------------------------------------------------------------
 
-	dlRefGz := sp.NewFromShell("dl_gzipped",
+	downloadRef := pr.NewFromShell("download_ref",
 		"wget -O {o:outfile} "+ref_base_url+ref_file_gz)
-	pipeRun.AddProcess(dlRefGz)
-	dlRefGz.SetPathStatic("outfile", ref_file_gz)
+	downloadRef.SetPathStatic("outfile", ref_file_gz)
 
 	// --------------------------------------------------------------------------------
 	// Unzip ref file
 	// --------------------------------------------------------------------------------
 
-	ungzRef := sp.NewFromShell("ungzRef", ungzCmdPat)
-	ungzRef.SetPathReplace("in", "out", ".gz", "")
-	ungzRef.In("in").Connect(dlRefGz.Out("outfile"))
-	pipeRun.AddProcess(ungzRef)
+	ungzipRef := pr.NewFromShell("ugzip_ref", ungzCmdPat)
+	ungzipRef.SetPathReplace("in", "out", ".gz", "")
+	ungzipRef.In("in").Connect(downloadRef.Out("outfile"))
 
 	// Create a FanOut so multiple downstream processes can read from the
 	// ungzip process
-	refFOut := components.NewFanOut()
-	refFOut.InFile.Connect(ungzRef.Out("out"))
-	pipeRun.AddProcess(refFOut)
+	refFanOut := components.NewFanOut()
+	refFanOut.InFile.Connect(ungzipRef.Out("out"))
+	pr.AddProcess(refFanOut)
 
 	// --------------------------------------------------------------------------------
 	// Index Reference Genome
 	// --------------------------------------------------------------------------------
 
-	indxRef := sp.NewFromShell("Index Ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
-	indxRef.SetPathExtend("index", "done", ".indexed")
-	indxRef.In("index").Connect(refFOut.GetOutPort("index_ref"))
-	pipeRun.AddProcess(indxRef)
+	indexRef := pr.NewFromShell("index_ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
+	indexRef.SetPathExtend("index", "done", ".indexed")
+	indexRef.In("index").Connect(refFanOut.GetOutPort("index_ref"))
 
-	idxDnFO := components.NewFanOut()
-	idxDnFO.InFile.Connect(indxRef.Out("done"))
-	pipeRun.AddProcess(idxDnFO)
+	indexDoneFanOut := components.NewFanOut()
+	indexDoneFanOut.InFile.Connect(indexRef.Out("done"))
+	pr.AddProcess(indexDoneFanOut)
 
 	// Create (multi-level) maps where we can gather outports from processes
 	// for each for loop iteration and access them in the merge step later
@@ -95,32 +92,30 @@ func main() {
 			// --------------------------------------------------------------------------------
 
 			file_name := fmt.Sprintf(fastq_file_pat, indv, smpl)
-			dlFastq := sp.NewFromShell("dl_fastq",
+			downloadFastQ := pr.NewFromShell("download_fastq_"+indv+"_"+smpl,
 				"wget -O {o:fastq} "+fastq_base_url+file_name)
-			dlFastq.SetPathStatic("fastq", file_name)
-			pipeRun.AddProcess(dlFastq)
+			downloadFastQ.SetPathStatic("fastq", file_name)
 
-			fqFnOut := components.NewFanOut()
-			fqFnOut.InFile.Connect(dlFastq.Out("fastq"))
-			pipeRun.AddProcess(fqFnOut)
+			fastQFanOut := components.NewFanOut()
+			fastQFanOut.InFile.Connect(downloadFastQ.Out("fastq"))
+			pr.AddProcess(fastQFanOut)
 
 			// Save outPorts for later use
-			outPorts[indv][smpl]["fastq"] = fqFnOut.GetOutPort("merg")
+			outPorts[indv][smpl]["fastq"] = fastQFanOut.GetOutPort("merg")
 
 			// --------------------------------------------------------------------------------
 			// BWA Align
 			// --------------------------------------------------------------------------------
 
-			bwaAlgn := sp.NewFromShell("bwa_aln",
+			bwaAlign := pr.NewFromShell("bwa_aln",
 				"bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}")
-			bwaAlgn.SetPathExtend("fastq", "sai", ".sai")
-			bwaAlgn.In("ref").Connect(refFOut.GetOutPort("bwa_aln_" + indv + "_" + smpl))
-			bwaAlgn.In("idxdone").Connect(idxDnFO.GetOutPort("bwa_aln_" + indv + "_" + smpl))
-			bwaAlgn.In("fastq").Connect(fqFnOut.GetOutPort("bwa_aln"))
-			pipeRun.AddProcess(bwaAlgn)
+			bwaAlign.SetPathExtend("fastq", "sai", ".sai")
+			bwaAlign.In("ref").Connect(refFanOut.GetOutPort("bwa_aln_" + indv + "_" + smpl))
+			bwaAlign.In("idxdone").Connect(indexDoneFanOut.GetOutPort("bwa_aln_" + indv + "_" + smpl))
+			bwaAlign.In("fastq").Connect(fastQFanOut.GetOutPort("bwa_aln"))
 
 			// Save outPorts for later use
-			outPorts[indv][smpl]["sai"] = bwaAlgn.Out("sai")
+			outPorts[indv][smpl]["sai"] = bwaAlign.Out("sai")
 		}
 
 		// --------------------------------------------------------------------------------
@@ -130,24 +125,23 @@ func main() {
 		// This one is is needed so bwaMerg can take a proper parameter for
 		// individual, which it uses to generate output paths
 		indParamGen := components.NewStringGenerator(indv)
-		pipeRun.AddProcess(indParamGen)
+		pr.AddProcess(indParamGen)
 
 		// bwa sampe process
-		bwaMerg := sp.NewFromShell("merge_"+indv,
+		bwaMerg := pr.NewFromShell("merge_"+indv,
 			"bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}")
 		bwaMerg.SetPathCustom("merged", func(t *sp.SciTask) string {
 			return fmt.Sprintf("%s.merged.sam", t.Params["indv"])
 		})
 		// Connect
-		bwaMerg.In("ref").Connect(refFOut.GetOutPort("merg_" + indv))
-		bwaMerg.In("refdone").Connect(idxDnFO.GetOutPort("merg_" + indv))
+		bwaMerg.In("ref").Connect(refFanOut.GetOutPort("merg_" + indv))
+		bwaMerg.In("refdone").Connect(indexDoneFanOut.GetOutPort("merg_" + indv))
 		bwaMerg.In("sai1").Connect(outPorts[indv]["1"]["sai"])
 		bwaMerg.In("sai2").Connect(outPorts[indv]["2"]["sai"])
 		bwaMerg.In("fq1").Connect(outPorts[indv]["1"]["fastq"])
 		bwaMerg.In("fq2").Connect(outPorts[indv]["2"]["fastq"])
 		bwaMerg.ParamPort("indv").Connect(indParamGen.Out)
 		// Add to runner
-		pipeRun.AddProcess(bwaMerg)
 
 		sink.Connect(bwaMerg.Out("merged"))
 	}
@@ -156,6 +150,6 @@ func main() {
 	// Run pipeline
 	// --------------------------------------------------------------------------------
 
-	pipeRun.AddProcess(sink)
-	pipeRun.Run()
+	pr.AddProcess(sink)
+	pr.Run()
 }

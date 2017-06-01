@@ -124,6 +124,12 @@ func NewPipelineRunner() *PipelineRunner {
 	return &PipelineRunner{}
 }
 
+func (pl *PipelineRunner) NewFromShell(procName string, commandPattern string) *SciProcess {
+	proc := NewFromShell(procName, commandPattern)
+	pl.AddProcess(proc)
+	return proc
+}
+
 func (pl *PipelineRunner) AddProcess(proc Process) {
 	pl.processes = append(pl.processes, proc)
 }
