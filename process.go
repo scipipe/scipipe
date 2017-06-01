@@ -137,6 +137,10 @@ func (p *SciProcess) GetOutPorts() map[string]*FilePort {
 // Param-port stuff
 // ------------------------------------------------
 
+func (p *SciProcess) PP(paramPortName string) *ParamPort {
+	return p.ParamPort(paramPortName)
+}
+
 func (p *SciProcess) ParamPort(paramPortName string) *ParamPort {
 	if p.paramPorts[paramPortName] != nil {
 		return p.paramPorts[paramPortName]
