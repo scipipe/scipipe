@@ -35,8 +35,6 @@ var (
 )
 
 func main() {
-	// Create ungzip command pattern for later use
-	ungzipCmdPattern := "gunzip -c {i:in} > {o:out}"
 
 	// --------------------------------------------------------------------------------
 	// Initialize pipeline runner
@@ -48,16 +46,15 @@ func main() {
 	// --------------------------------------------------------------------------------
 	// Download Reference Genome
 	// --------------------------------------------------------------------------------
-
-	downloadRef := prun.NewFromShell("download_ref",
-		"wget -O {o:outfile} "+ref_base_url+ref_file_gz)
+	downloadRefCmd := "wget -O {o:outfile} " + ref_base_url + ref_file_gz
+	downloadRef := prun.NewFromShell("download_ref", downloadRefCmd)
 	downloadRef.SetPathStatic("outfile", ref_file_gz)
 
 	// --------------------------------------------------------------------------------
 	// Unzip ref file
 	// --------------------------------------------------------------------------------
-
-	ungzipRef := prun.NewFromShell("ugzip_ref", ungzipCmdPattern)
+	ungzipRefCmd := "gunzip -c {i:in} > {o:out}"
+	ungzipRef := prun.NewFromShell("ugzip_ref", ungzipRefCmd)
 	ungzipRef.SetPathReplace("in", "out", ".gz", "")
 	ungzipRef.In("in").Connect(downloadRef.Out("outfile"))
 
@@ -70,7 +67,6 @@ func main() {
 	// --------------------------------------------------------------------------------
 	// Index Reference Genome
 	// --------------------------------------------------------------------------------
-
 	indexRef := prun.NewFromShell("index_ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
 	indexRef.SetPathExtend("index", "done", ".indexed")
 	indexRef.In("index").Connect(refFanOut.Out("index_ref"))
@@ -90,10 +86,9 @@ func main() {
 			// --------------------------------------------------------------------------------
 			// Download FastQ component
 			// --------------------------------------------------------------------------------
-
 			file_name := fmt.Sprintf(fastq_file_pat, indv, smpl)
-			downloadFastQ := prun.NewFromShell("download_fastq_"+indv+"_"+smpl,
-				"wget -O {o:fastq} "+fastq_base_url+file_name)
+			downloadFastQCmd := "wget -O {o:fastq} " + fastq_base_url + file_name
+			downloadFastQ := prun.NewFromShell("download_fastq_"+indv+"_"+smpl, downloadFastQCmd)
 			downloadFastQ.SetPathStatic("fastq", file_name)
 
 			fastQFanOut := components.NewFanOut()
@@ -106,9 +101,8 @@ func main() {
 			// --------------------------------------------------------------------------------
 			// BWA Align
 			// --------------------------------------------------------------------------------
-
-			bwaAlign := prun.NewFromShell("bwa_aln",
-				"bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}")
+			bwaAlignCmd := "bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}"
+			bwaAlign := prun.NewFromShell("bwa_aln", bwaAlignCmd)
 			bwaAlign.SetPathExtend("fastq", "sai", ".sai")
 			bwaAlign.In("ref").Connect(refFanOut.Out("bwa_aln_" + indv + "_" + smpl))
 			bwaAlign.In("idxdone").Connect(indexDoneFanOut.Out("bwa_aln_" + indv + "_" + smpl))
@@ -121,27 +115,22 @@ func main() {
 		// --------------------------------------------------------------------------------
 		// Merge
 		// --------------------------------------------------------------------------------
-
 		// This one is is needed so bwaMergecan take a proper parameter for
 		// individual, which it uses to generate output paths
 		indParamGen := components.NewStringGenerator(indv)
 		prun.AddProcess(indParamGen)
 
 		// bwa sampe process
-		bwaMerge := prun.NewFromShell("merge_"+indv,
-			"bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}")
-		bwaMerge.SetPathCustom("merged", func(t *sp.SciTask) string {
-			return fmt.Sprintf("%s.merged.sam", t.Params["indv"])
-		})
-		// Connect
-		bwaMerge.In("ref").Connect(refFanOut.Out("merg_" + indv))
-		bwaMerge.In("refdone").Connect(indexDoneFanOut.Out("merg_" + indv))
+		bwaMergeCmd := "bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}"
+		bwaMerge := prun.NewFromShell("merge_"+indv, bwaMergeCmd)
+		bwaMerge.SetPathCustom("merged", func(t *sp.SciTask) string { return fmt.Sprintf("%s.merged.sam", t.Params["indv"]) })
+		bwaMerge.In("ref").Connect(refFanOut.Out("bwa_merge_" + indv))
+		bwaMerge.In("refdone").Connect(indexDoneFanOut.Out("bwa_merge_" + indv))
 		bwaMerge.In("sai1").Connect(outPorts[indv]["1"]["sai"])
 		bwaMerge.In("sai2").Connect(outPorts[indv]["2"]["sai"])
 		bwaMerge.In("fq1").Connect(outPorts[indv]["1"]["fastq"])
 		bwaMerge.In("fq2").Connect(outPorts[indv]["2"]["fastq"])
-		bwaMerge.ParamPort("indv").Connect(indParamGen.Out)
-		// Add to runner
+		bwaMerge.PP("indv").Connect(indParamGen.Out)
 
 		sink.Connect(bwaMerge.Out("merged"))
 	}
