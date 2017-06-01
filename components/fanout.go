@@ -3,7 +3,7 @@ package components
 import "github.com/scipipe/scipipe"
 
 // FanOut sends *FileTarget received on the InFile in-bound port, and sends
-// them on all out-ports created via the GetOutPort method.
+// them on all out-ports created via the Out method.
 type FanOut struct {
 	scipipe.Process
 	InFile   *scipipe.FilePort
@@ -18,7 +18,7 @@ func NewFanOut() *FanOut {
 	}
 }
 
-func (p *FanOut) GetOutPort(portName string) *scipipe.FilePort {
+func (p *FanOut) Out(portName string) *scipipe.FilePort {
 	if p.outPorts[portName] == nil {
 		p.outPorts[portName] = scipipe.NewFilePort()
 	}

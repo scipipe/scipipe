@@ -73,7 +73,7 @@ func main() {
 
 	indexRef := pr.NewFromShell("index_ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
 	indexRef.SetPathExtend("index", "done", ".indexed")
-	indexRef.In("index").Connect(refFanOut.GetOutPort("index_ref"))
+	indexRef.In("index").Connect(refFanOut.Out("index_ref"))
 
 	indexDoneFanOut := components.NewFanOut()
 	indexDoneFanOut.InFile.Connect(indexRef.Out("done"))
@@ -101,7 +101,7 @@ func main() {
 			pr.AddProcess(fastQFanOut)
 
 			// Save outPorts for later use
-			outPorts[indv][smpl]["fastq"] = fastQFanOut.GetOutPort("merg")
+			outPorts[indv][smpl]["fastq"] = fastQFanOut.Out("merg")
 
 			// --------------------------------------------------------------------------------
 			// BWA Align
@@ -110,9 +110,9 @@ func main() {
 			bwaAlign := pr.NewFromShell("bwa_aln",
 				"bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}")
 			bwaAlign.SetPathExtend("fastq", "sai", ".sai")
-			bwaAlign.In("ref").Connect(refFanOut.GetOutPort("bwa_aln_" + indv + "_" + smpl))
-			bwaAlign.In("idxdone").Connect(indexDoneFanOut.GetOutPort("bwa_aln_" + indv + "_" + smpl))
-			bwaAlign.In("fastq").Connect(fastQFanOut.GetOutPort("bwa_aln"))
+			bwaAlign.In("ref").Connect(refFanOut.Out("bwa_aln_" + indv + "_" + smpl))
+			bwaAlign.In("idxdone").Connect(indexDoneFanOut.Out("bwa_aln_" + indv + "_" + smpl))
+			bwaAlign.In("fastq").Connect(fastQFanOut.Out("bwa_aln"))
 
 			// Save outPorts for later use
 			outPorts[indv][smpl]["sai"] = bwaAlign.Out("sai")
@@ -134,8 +134,8 @@ func main() {
 			return fmt.Sprintf("%s.merged.sam", t.Params["indv"])
 		})
 		// Connect
-		bwaMerg.In("ref").Connect(refFanOut.GetOutPort("merg_" + indv))
-		bwaMerg.In("refdone").Connect(indexDoneFanOut.GetOutPort("merg_" + indv))
+		bwaMerg.In("ref").Connect(refFanOut.Out("merg_" + indv))
+		bwaMerg.In("refdone").Connect(indexDoneFanOut.Out("merg_" + indv))
 		bwaMerg.In("sai1").Connect(outPorts[indv]["1"]["sai"])
 		bwaMerg.In("sai2").Connect(outPorts[indv]["2"]["sai"])
 		bwaMerg.In("fq1").Connect(outPorts[indv]["1"]["fastq"])
