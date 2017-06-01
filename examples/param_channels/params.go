@@ -29,10 +29,10 @@ func main() {
 	prt.Spawn = false
 
 	// Connection info
-	abc.ParamPorts["a"].Connect(cmb.A)
-	abc.ParamPorts["b"].Connect(cmb.B)
-	abc.ParamPorts["c"].Connect(cmb.C)
-	prt.In["in"].Connect(abc.Out["out"])
+	abc.ParamPort("a").Connect(cmb.A)
+	abc.ParamPort("b").Connect(cmb.B)
+	abc.ParamPort("c").Connect(cmb.C)
+	prt.In("in").Connect(abc.Out("out"))
 
 	pl := sci.NewPipelineRunner()
 	pl.AddProcesses(cmb, abc, prt)

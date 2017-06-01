@@ -91,12 +91,12 @@ func (pl *Pipeline) Connect(connSpec string) {
 
 	if directionLeft {
 		Connect(
-			pl.GetProc(proc1Name).GetInPort(port1Name),
-			pl.GetProc(proc2Name).GetOutPort(port2Name))
+			pl.GetProc(proc1Name).In(port1Name),
+			pl.GetProc(proc2Name).Out(port2Name))
 	} else {
 		Connect(
-			pl.GetProc(proc1Name).GetOutPort(port1Name), // <- Order of In/Out ports
-			pl.GetProc(proc2Name).GetInPort(port2Name))  // <- switched here
+			pl.GetProc(proc1Name).Out(port1Name), // <- Order of In/Out ports
+			pl.GetProc(proc2Name).In(port2Name))  // <- switched here
 	}
 }
 

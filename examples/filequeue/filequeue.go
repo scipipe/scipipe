@@ -12,8 +12,8 @@ func main() {
 	fw.SetPathCustom("out", func(t *sci.SciTask) string { return t.GetInPath("in") })
 	sn := sci.NewSink()
 
-	fw.In["in"].Connect(fq.Out)
-	sn.Connect(fw.Out["out"])
+	fw.In("in").Connect(fq.Out)
+	sn.Connect(fw.Out("out"))
 
 	pl := sci.NewPipelineRunner()
 	pl.AddProcesses(fq, fw, sn)

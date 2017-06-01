@@ -24,8 +24,8 @@ func main() {
 	// Connect workflow dependency network
 	// --------------------------------
 
-	f2b.In["foo"].Connect(foo.Out["foo"])
-	snk.Connect(f2b.Out["bar"])
+	f2b.In("foo").Connect(foo.Out("foo"))
+	snk.Connect(f2b.Out("bar"))
 
 	// --------------------------------
 	// rnr the pipeline!

@@ -21,8 +21,8 @@ func main() {
 	prt := sci.NewFromShell("prt", "echo {i:in} >> log.txt")
 
 	// Connect
-	abc.In["in"].Connect(fls.Out)
-	prt.In["in"].Connect(abc.Out["out"])
+	abc.In("in").Connect(fls.Out)
+	prt.In("in").Connect(abc.Out("out"))
 
 	// Pipe it up
 	pl := sci.NewPipelineRunner()

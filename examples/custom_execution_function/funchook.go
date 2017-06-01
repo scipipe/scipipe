@@ -52,7 +52,7 @@ func NewFooer() *Fooer {
 func (p *Fooer) Run() {
 	// Connect inner ports to outer ones again, in order to update
 	// connectivity after the workflow wiring has taken place.
-	p.InnerProcess.Out["foo"] = p.OutFoo
+	p.InnerProcess.SetOutPort("foo", p.OutFoo)
 	// Run the inner process
 	p.InnerProcess.Run()
 }
@@ -91,8 +91,8 @@ func NewFoo2Barer() *Foo2Barer {
 func (p *Foo2Barer) Run() {
 	// Connect inner ports to outer ones again, in order to update
 	// connectivity after the workflow wiring has taken place.
-	p.InnerProcess.In["foo"] = p.InFoo
-	p.InnerProcess.Out["bar"] = p.OutBar
+	p.InnerProcess.SetInPort("foo", p.InFoo)
+	p.InnerProcess.SetOutPort("bar", p.OutBar)
 	// Run the inner process
 	p.InnerProcess.Run()
 }

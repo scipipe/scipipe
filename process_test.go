@@ -7,16 +7,16 @@ import (
 
 func TestNewFromShell(t *testing.T) {
 	p1 := NewFromShell("echo", "echo {p:text}")
-	if p1.ParamPorts["text"] == nil {
-		t.Error(`p.ParamPorts["text"] = nil. want: not nil`)
+	if p1.ParamPort("text") == nil {
+		t.Error(`p.ParamPorts("text") = nil. want: not nil`)
 	}
 
 	p2 := NewFromShell("cat", "cat {i:infile} > {o:outfile}")
-	if p2.In["infile"] == nil {
-		t.Error(`p.Out["infile"] = nil. want: not nil`)
+	if p2.In("infile") == nil {
+		t.Error(`p.In("infile") = nil. want: not nil`)
 	}
-	if p2.Out["outfile"] == nil {
-		t.Error(`p.Out["outfile"] = nil. want: not nil`)
+	if p2.Out("outfile") == nil {
+		t.Error(`p.Out("outfile") = nil. want: not nil`)
 	}
 }
 

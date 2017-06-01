@@ -20,24 +20,24 @@ func TestBasicRun(t *t.T) {
 	initTestLogs()
 
 	t1 := NewFromShell("t1", "echo foo > {o:foo}")
-	assert.IsType(t, t1.Out["foo"], NewFilePort())
+	assert.IsType(t, t1.Out("foo"), NewFilePort())
 	t1.PathFormatters["foo"] = func(t *SciTask) string {
 		return "foo.txt"
 	}
 
 	t2 := NewFromShell("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	assert.IsType(t, t2.In["foo"], NewFilePort())
-	assert.IsType(t, t2.Out["bar"], NewFilePort())
+	assert.IsType(t, t2.In("foo"), NewFilePort())
+	assert.IsType(t, t2.Out("bar"), NewFilePort())
 	t2.PathFormatters["bar"] = func(t *SciTask) string {
 		return t.GetInPath("foo") + ".bar.txt"
 	}
 	snk := NewSink()
 
-	t2.In["foo"].Connect(t1.Out["foo"])
-	snk.Connect(t2.Out["bar"])
+	t2.In("foo").Connect(t1.Out("foo"))
+	snk.Connect(t2.Out("bar"))
 
-	assert.IsType(t, t2.In["foo"], NewFilePort())
-	assert.IsType(t, t2.Out["bar"], NewFilePort())
+	assert.IsType(t, t2.In("foo"), NewFilePort())
+	assert.IsType(t, t2.Out("bar"), NewFilePort())
 
 	pl := NewPipelineRunner()
 	pl.AddProcesses(t1, t2, snk)
@@ -66,10 +66,10 @@ func TestParameterCommand(t *t.T) {
 	prt := NewFromShell("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
 
 	// Connection info
-	abc.ParamPorts["a"].Connect(cmb.A)
-	abc.ParamPorts["b"].Connect(cmb.B)
-	abc.ParamPorts["c"].Connect(cmb.C)
-	prt.In["in"].Connect(abc.Out["out"])
+	abc.ParamPort("a").Connect(cmb.A)
+	abc.ParamPort("b").Connect(cmb.B)
+	abc.ParamPort("c").Connect(cmb.C)
+	prt.In("in").Connect(abc.Out("out"))
 
 	pl := NewPipelineRunner()
 	pl.AddProcesses(cmb, abc, prt)
@@ -109,7 +109,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	tsk.PathFormatters["hej1"] = func(task *SciTask) string { return f }
 
 	prt := NewFromShell("prt", "echo {i:in1} Done!")
-	prt.In["in1"].Connect(tsk.Out["hej1"])
+	prt.In("in1").Connect(tsk.Out("hej1"))
 
 	pl := NewPipelineRunner()
 	pl.AddProcesses(tsk, prt)
@@ -131,7 +131,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	tsk.PathFormatters["hej2"] = func(task *SciTask) string { return f }
 
 	prt = NewFromShell("prt", "echo {i:in2} Done!")
-	prt.In["in2"].Connect(tsk.Out["hej2"])
+	prt.In("in2").Connect(tsk.Out("hej2"))
 
 	pl = NewPipelineRunner()
 	pl.AddProcesses(tsk, prt)
@@ -168,9 +168,9 @@ func TestSendsOrderedOutputs(t *t.T) {
 	fc.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") }
 	sl.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") + ".copy.txt" }
 
-	fc.In["in"].Connect(fq.Out)
-	sl.In["in"].Connect(fc.Out["out"])
-	sl.Out["out"].Chan = make(chan *InformationPacket, BUFSIZE)
+	fc.In("in").Connect(fq.Out)
+	sl.In("in").Connect(fc.Out("out"))
+	sl.Out("out").Chan = make(chan *InformationPacket, BUFSIZE)
 
 	go fq.Run()
 	go fc.Run()
@@ -180,7 +180,7 @@ func TestSendsOrderedOutputs(t *t.T) {
 
 	var expFname string
 	i := 1
-	for ft := range sl.Out["out"].Chan {
+	for ft := range sl.Out("out").Chan {
 		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
 		assert.EqualValues(t, expFname, ft.GetPath())
 		i++
@@ -209,8 +209,8 @@ func TestStreaming(t *t.T) {
 	snk := NewSink()
 
 	// Connect
-	grp.In["in"].Connect(ls.Out["lsl"])
-	snk.Connect(grp.Out["grepped"])
+	grp.In("in").Connect(ls.Out("lsl"))
+	snk.Connect(grp.Out("grepped"))
 
 	// Run
 	pl := NewPipelineRunner()
@@ -253,11 +253,11 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 	cat := NewFromShell("concatenate", "cat {i:infiles:r: } > {o:merged}")
 	cat.SetPathStatic("merged", "/tmp/substream_merged.txt")
 	plr.AddProcess(cat)
-	Connect(cat.In["infiles"], sts.OutSubStream)
+	Connect(cat.In("infiles"), sts.OutSubStream)
 
 	snk := NewSink()
 	plr.AddProcess(snk)
-	snk.Connect(cat.Out["merged"])
+	snk.Connect(cat.Out("merged"))
 
 	plr.Run()
 
