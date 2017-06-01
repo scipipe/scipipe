@@ -35,6 +35,12 @@ SciPipe was initially created for problems in bioinformatics and
 cheminformatics, but works equally well for any problem involving pipelines of
 commandline applications.
 
+**Project status:** SciPipe is still alpha software and minor breaking API
+changes still happens as we try to streamline the process of writing workflows.
+Please follow the commit history closely for any API updates if you have code
+already written in SciPipe (Let us know if you need any help in migrating code
+to the latest API).
+
 ## Benefits
 
 Some key benefits of SciPipe, that are not always found in similar systems:
