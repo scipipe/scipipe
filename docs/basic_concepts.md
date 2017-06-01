@@ -53,9 +53,10 @@ be an in-port and out-port named the same), and this name will be used in shell
 command patterns, when connecting dependencies / dataflow networks, and when
 configuring file naming strategies.
 
-In `SciProcess` objects, in-ports are stored in a string->Port map field named
-`In` (so they are accessed with: `myProcess.In["myport"]`), and out-ports
-similarly in a string->Port map field named `Out`. Both are of type [`FilePort`](https://godoc.org/github.com/scipipe/scipipe#FilePort).
+In `SciProcess` objects, in-ports are are accessed with
+`myProcess.In("my_port")`, and out-ports are similarly accessed with
+`myProcess.Out("my_other_port")`. Both are of type
+[`FilePort`](https://godoc.org/github.com/scipipe/scipipe#FilePort).
 
 Some pre-made components might have ports bound to custom field names though,
 such as `myFastaReader.InFastaFile`, or `myZipComponent.OutZipFile`.

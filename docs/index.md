@@ -97,8 +97,8 @@ func main() {
         worldAppender.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
 
         // Connect network
-        worldAppender.In["infile"].Connect(helloWriter.Out["hellofile"])
-        sink.Connect(worldAppender.Out["worldfile"])
+        worldAppender.In("infile").Connect(helloWriter.Out("hellofile"))
+        sink.Connect(worldAppender.Out("worldfile"))
 
         // Create a pipeline runner, add processes, and run
         pipeline := sp.NewPipelineRunner()

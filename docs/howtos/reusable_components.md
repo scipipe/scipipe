@@ -56,7 +56,7 @@ func NewHiWriter() *HiWriter {
 
 func (p *HiWriter) Run() {
     // Make sure the inner process' port object is the same as the outer one's
-	p.InnerProc.Out["hifile"] = p.OutHi
+	p.InnerProc.SetOutPort("hifile", p.OutHi)
 	p.InnerProc.Run()
 }
 
