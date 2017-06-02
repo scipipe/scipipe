@@ -5,10 +5,10 @@ package and imported and used later.
 
 In order for components in such a library to be easy to use, the ports need to
 be static methods bound to the process struct, rather than just stored by a
-string ID in a generic port map, like the `In` and `Out` fields on `SciProcess`
-processes.  This is so that the methods can show up in the auto-completion /
-intellisense function in code editors removing the need to look up the name of
-the ports manually in the library code all the time.
+string ID in a generic port map, like the `In()` and `Out()` methods on
+`SciProcess` processes.  This is so that the methods can show up in the
+auto-completion / intellisense function in code editors removing the need to
+look up the name of the ports manually in the library code all the time.
 
 ## How to create re-usable components in SciPipe
 
