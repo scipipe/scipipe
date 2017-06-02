@@ -17,32 +17,32 @@ func Connect(port1 *FilePort, port2 *FilePort) {
 // FilePort
 type FilePort struct {
 	Port
-	Chan      chan *InformationPacket
-	connected bool
+	Chan           chan *InformationPacket // TODO: Deprecated
+	connectedPorts []*FilePort
+	connected      bool
 }
 
 func NewFilePort() *FilePort {
-	return &FilePort{connected: false}
+	return &FilePort{
+		Chan:           make(chan *InformationPacket, BUFSIZE),
+		connectedPorts: []*FilePort{},
+		connected:      false,
+	}
+
 }
 
-func (pt1 *FilePort) Connect(pt2 *FilePort) {
-	if pt1.Chan != nil && pt2.Chan != nil {
-		Error.Println("Both ports already have initialized channels, so can't choose which to use!")
-		os.Exit(1)
-	} else if pt1.Chan != nil && pt2.Chan == nil {
-		Debug.Println("port2 not initialized, so connecting port1 to port2")
-		pt2.Chan = pt1.Chan
-	} else if pt2.Chan != nil && pt1.Chan == nil {
-		Debug.Println("port1 not initialized, so connecting port2 to port1")
-		pt1.Chan = pt2.Chan
-	} else if pt1.Chan == nil && pt2.Chan == nil {
-		Debug.Println("Neither port1 nor port2 initialized, so creating new channel")
-		ch := make(chan *InformationPacket, BUFSIZE)
-		pt1.Chan = ch
-		pt2.Chan = ch
-	}
-	pt1.SetConnectedStatus(true)
-	pt2.SetConnectedStatus(true)
+func (localPort *FilePort) Connect(remotePort *FilePort) {
+	localPort.AddConnectedPort(remotePort)
+	remotePort.AddConnectedPort(localPort)
+	// Needed in order to receive by ranging over chan
+	remotePort.Chan = localPort.Chan
+
+	localPort.SetConnectedStatus(true)
+	remotePort.SetConnectedStatus(true)
+}
+
+func (pt *FilePort) AddConnectedPort(connPort *FilePort) {
+	pt.connectedPorts = append(pt.connectedPorts, connPort)
 }
 
 func (pt *FilePort) SetConnectedStatus(connected bool) {
@@ -54,15 +54,19 @@ func (pt *FilePort) IsConnected() bool {
 }
 
 func (pt *FilePort) Send(ip *InformationPacket) {
-	pt.Chan <- ip
+	for _, remotePort := range pt.connectedPorts {
+		remotePort.Chan <- ip
+	}
 }
 
 func (pt *FilePort) Recv() *InformationPacket {
-	return <-pt.Chan
+	return <-pt.connectedPorts[0].Chan // TODO: Support more than one in-port too
 }
 
 func (pt *FilePort) Close() {
-	close(pt.Chan)
+	for _, remotePort := range pt.connectedPorts {
+		close(remotePort.Chan)
+	}
 }
 
 // ParamPort
