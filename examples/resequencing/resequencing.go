@@ -77,11 +77,11 @@ func main() {
 
 	// Create (multi-level) maps where we can gather outports from processes
 	// for each for loop iteration and access them in the merge step later
-	outPorts := make(map[string]map[string]map[string]*sp.FilePort)
+	outPorts := map[string]map[string]map[string]*sp.FilePort{}
 	for _, indv := range individuals {
-		outPorts[indv] = make(map[string]map[string]*sp.FilePort)
+		outPorts[indv] = map[string]map[string]*sp.FilePort{}
 		for _, smpl := range samples {
-			outPorts[indv][smpl] = make(map[string]*sp.FilePort)
+			outPorts[indv][smpl] = map[string]*sp.FilePort{}
 
 			// --------------------------------------------------------------------------------
 			// Download FastQ component
