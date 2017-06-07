@@ -91,7 +91,7 @@ func main() {
         hello := NewFromShell("hello", "echo 'Hello ' > {o:hellofile}")
         world := NewFromShell("world", "echo $(cat {i:infile}) World >> {o:worldfile}")
         // Create a sink, that will just receive the final outputs
-        sink := NewSink("sink")
+        asink := NewSink("sink")
 
         // Configure output file path formatters for the processes created above
         hello.SetPathStatic("hellofile", "hello.txt")
