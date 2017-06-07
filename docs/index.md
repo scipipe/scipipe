@@ -81,29 +81,31 @@ SciPipe looks like:
 package main
 
 import (
-        // Import SciPipe, aliased to 'sp' for brevity
-        sp "github.com/scipipe/scipipe"
+        // Import SciPipe into the main namespace (generally frowned upon, but
+        // reasonable for short-lived workflow scripts if you ask me)
+        . "github.com/scipipe/scipipe"
 )
 
 func main() {
         // Initialize processes from shell command patterns
-        helloWriter := sp.NewFromShell("helloWriter", "echo 'Hello ' > {o:hellofile}")
-        worldAppender := sp.NewFromShell("worldAppender", "echo $(cat {i:infile}) World >> {o:worldfile}")
+        hello := NewFromShell("hello", "echo 'Hello ' > {o:hellofile}")
+        world := NewFromShell("world", "echo $(cat {i:infile}) World >> {o:worldfile}")
         // Create a sink, that will just receive the final outputs
-        sink := sp.NewSink("sink")
+        sink := NewSink("sink")
 
         // Configure output file path formatters for the processes created above
-        helloWriter.SetPathStatic("hellofile", "hello.txt")
-        worldAppender.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
+        hello.SetPathStatic("hellofile", "hello.txt")
+        world.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
 
         // Connect network
-        worldAppender.In("infile").Connect(helloWriter.Out("hellofile"))
-        sink.Connect(worldAppender.Out("worldfile"))
+        world.In("infile").Connect(hello.Out("hellofile"))
+        asink.Connect(world.Out("worldfile"))
 
-        // Create a pipeline runner, add processes, and run
-        wf := sp.NewWorkflow()
-        wf.Add(helloWriter, worldAppender)
-        wf.SetDriver(sink) // The driver process needs to be specified, since needs to be run in main thread
+        // Create a workflow component, add processes, including specifying the
+        // "driver process", and run
+        wf := NewWorkflow("helloworldwf")
+        wf.AddProcs(hello, world)
+        wf.SetDriver(asink)
         wf.Run()
 }
 ```
@@ -114,8 +116,8 @@ Let's put the code in a file named `scipipe_helloworld.go` and run it:
 
 ```bash
 $ go run scipipe_helloworld.go 
-AUDIT   2017/05/04 17:05:15 Task:helloWriter  Executing command: echo 'Hello ' > hello.txt.tmp
-AUDIT   2017/05/04 17:05:15 Task:worldAppender Executing command: echo $(cat hello.txt) World >> hello_world.txt.tmp
+AUDIT   2017/05/04 17:05:15 Task:hello         Executing command: echo 'Hello ' > hello.txt.tmp
+AUDIT   2017/05/04 17:05:15 Task:world         Executing command: echo $(cat hello.txt) World >> hello_world.txt.tmp
 ```
 
 Let's check what file SciPipe has generated:
