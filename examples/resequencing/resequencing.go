@@ -16,7 +16,7 @@ import (
 	"fmt"
 
 	. "github.com/scipipe/scipipe"
-	"github.com/scipipe/scipipe/components"
+	comp "github.com/scipipe/scipipe/components"
 )
 
 const (
@@ -35,8 +35,6 @@ var (
 )
 
 func main() {
-
-	InitLogDebug()
 
 	// --------------------------------------------------------------------------------
 	// Initialize pipeline runner
@@ -61,7 +59,7 @@ func main() {
 
 	// Create a FanOut so multiple downstream processes can read from the
 	// ungzip process
-	refFanOut := components.NewFanOut("ref_fanout")
+	refFanOut := comp.NewFanOut("ref_fanout")
 	refFanOut.InFile.Connect(ungzipRef.Out("out"))
 	wf.Add(refFanOut)
 
@@ -72,7 +70,7 @@ func main() {
 	indexRef.SetPathExtend("index", "done", ".indexed")
 	indexRef.In("index").Connect(refFanOut.Out("index_ref"))
 
-	indexDoneFanOut := components.NewFanOut("indexdone_fanout")
+	indexDoneFanOut := comp.NewFanOut("indexdone_fanout")
 	indexDoneFanOut.InFile.Connect(indexRef.Out("done"))
 	wf.Add(indexDoneFanOut)
 
@@ -92,7 +90,7 @@ func main() {
 			downloadFastQ := wf.NewProc("download_fastq"+indv_smpl, downloadFastQCmd)
 			downloadFastQ.SetPathStatic("fastq", file_name)
 
-			fastQFanOut := components.NewFanOut("fastq_fanout")
+			fastQFanOut := comp.NewFanOut("fastq_fanout" + indv_smpl)
 			fastQFanOut.InFile.Connect(downloadFastQ.Out("fastq"))
 			wf.Add(fastQFanOut)
 
@@ -118,20 +116,20 @@ func main() {
 		// --------------------------------------------------------------------------------
 		// This one is is needed so bwaMergecan take a proper parameter for
 		// individual, which it uses to generate output paths
-		indParamGen := components.NewStringGen(indv)
-		wf.Add(indParamGen)
 
 		// bwa sampe process
-		bwaMergeCmd := "bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}"
+		bwaMergeCmd := "bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone}"
 		bwaMerge := wf.NewProc("merge_"+indv, bwaMergeCmd)
-		bwaMerge.SetPathCustom("merged", func(t *SciTask) string { return fmt.Sprintf("%s.merged.sam", t.Params["indv"]) })
+		bwaMerge.SetPathCustom("merged", func(t *SciTask) string {
+			indv := indv
+			return fmt.Sprintf("%s.merged.sam", indv)
+		})
 		bwaMerge.In("ref").Connect(refFanOut.Out("bwa_merge_" + indv))
 		bwaMerge.In("refdone").Connect(indexDoneFanOut.Out("bwa_merge_" + indv))
 		bwaMerge.In("sai1").Connect(outPorts[indv]["1"]["sai"])
 		bwaMerge.In("sai2").Connect(outPorts[indv]["2"]["sai"])
 		bwaMerge.In("fq1").Connect(outPorts[indv]["1"]["fastq"])
 		bwaMerge.In("fq2").Connect(outPorts[indv]["2"]["fastq"])
-		bwaMerge.PP("indv").Connect(indParamGen.Out)
 
 		wf.ConnectLast(bwaMerge.Out("merged"))
 	}
