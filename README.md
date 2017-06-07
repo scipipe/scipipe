@@ -91,15 +91,15 @@ func main() {
     wf := NewWorkflow("hello_world")
 
     // Initialize processes and set output file paths
-    hello := wf.NewProc("hello", "echo 'Hello ' > {o:hellofile}")
-    hello.SetPathStatic("hellofile", "hello.txt")
+    hello := wf.NewProc("hello", "echo 'Hello ' > {o:out}")
+    hello.SetPathStatic("out", "hello.txt")
 
-    world := wf.NewProc("world", "echo $(cat {i:infile}) World >> {o:worldfile}")
-    world.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
+    world := wf.NewProc("world", "echo $(cat {i:in}) World >> {o:out}")
+    world.SetPathReplace("in", "out", ".txt", "_world.txt")
 
     // Connect network
-    world.In("infile").Connect(hello.Out("hellofile"))
-    wf.ConnectLast(world.Out("worldfile"))
+    world.In("in").Connect(hello.Out("out"))
+    wf.ConnectLast(world.Out("out"))
 
     // Run workflow
     wf.Run()

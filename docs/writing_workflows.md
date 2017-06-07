@@ -17,15 +17,15 @@ func main() {
     wf := NewWorkflow("hello_world")
 
     // Initialize processes and set output file paths
-    hello := wf.NewProc("hello", "echo 'Hello ' > {o:hellofile}")
-    hello.SetPathStatic("hellofile", "hello.txt")
+    hello := wf.NewProc("hello", "echo 'Hello ' > {o:out}")
+    hello.SetPathStatic("out", "hello.txt")
 
-    world := wf.NewProc("world", "echo $(cat {i:infile}) World >> {o:worldfile}")
-    world.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
+    world := wf.NewProc("world", "echo $(cat {i:in}) World >> {o:out}")
+    world.SetPathReplace("in", "out", ".txt", "_world.txt")
 
     // Connect network
-    world.In("infile").Connect(hello.Out("hellofile"))
-    wf.ConnectLast(world.Out("worldfile"))
+    world.In("in").Connect(hello.Out("out"))
+    wf.ConnectLast(world.Out("out"))
 
     // Run workflow
     wf.Run()
@@ -39,8 +39,8 @@ actually doing.
 
 ```go
 // Initialize processes from shell command patterns
-hello := sp.NewProc("hello", "echo 'Hello ' > {o:hellofile}")
-world := sp.NewProc("world", "echo $(cat {i:infile}) World >> {o:worldfile}")
+hello := sp.NewProc("hello", "echo 'Hello ' > {o:out}")
+world := sp.NewProc("world", "echo $(cat {i:in}) World >> {o:out}")
 ```
 
 Here we are initializing two new processes, both of them based on a shell
@@ -49,8 +49,8 @@ a shell command pattern as input.
 
 ### The shell command pattern
 
-The shell command patterns, in this case `echo 'Hello ' > {o:hellofile}` and
-`echo $(cat {i:infile}) World >> {o:worldfile}`, are basically normal bash
+The shell command patterns, in this case `echo 'Hello ' > {o:out}` and
+`echo $(cat {i:in}) World >> {o:out}`, are basically normal bash
 shell commands, with the addition of "placeholders" for input and output
 filenames.
 
@@ -72,8 +72,8 @@ be done using special convenience methods on the processes, starting with
 
 ```go
 // Configure output file path formatters for the processes created above
-hello.SetPathStatic("hellofile", "hello.txt")
-world.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
+hello.SetPathStatic("out", "hello.txt")
+world.SetPathReplace("in", "out", ".txt", "_world.txt")
 ```
 
 `SetPathStatic` just takes an out-port name and a static file name to use, and
@@ -98,11 +98,11 @@ would write like this:
 
 ```go
 // Configure output file path formatters for the processes created above
-hello.SetPathCustom("hellofile", func(t *sp.SciTask) string {
+hello.SetPathCustom("out", func(t *sp.SciTask) string {
 return "hello.txt"
 })
-world.SetPathCustom("worldfile", func(t *sp.SciTask) string {
-return strings.Replace(t.InTargets["infile"].GetPath(), ".txt", "_world.txt", -1)
+world.SetPathCustom("out", func(t *sp.SciTask) string {
+return strings.Replace(t.InTargets["in"].GetPath(), ".txt", "_world.txt", -1)
 })
 ```
 
@@ -121,8 +121,8 @@ to drive the workflow.
 
 ```go
 // Connect network
-world.In("infile").Connect(helloWriter.Out("hellofile"))
-wf.ConnectLast(world.Out("worldfile"))
+world.In("in").Connect(helloWriter.Out("out"))
+wf.ConnectLast(world.Out("out"))
 ```
 
 Note: If your "last" process does not have any outputs, you can instead set it
