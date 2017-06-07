@@ -44,7 +44,6 @@ func TestBasicRun(t *t.T) {
 	assert.IsType(t, t2.Out("bar"), NewFilePort())
 
 	wf.Run()
-
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
 }
 
@@ -285,6 +284,42 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 	assert.Nil(t, err4, "File missing!")
 
 	cleanFiles("/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt", "/tmp/substream_merged.txt")
+}
+
+func TestMultipleLastProcs(t *t.T) {
+	InitLogWarning()
+
+	wf := NewWorkflow("TestMultipleLastProcs_WF")
+	strs := []string{"hey", "how", "hoo"}
+
+	for _, str := range strs {
+		writeStr := wf.NewProc("writestr_"+str, "echo "+str+" > {o:out}")
+		writeStr.SetPathStatic("out", "/tmp/"+str+".txt")
+
+		catStr := wf.NewProc("catstr_"+str, "cat {i:in} > {o:out}")
+		catStr.SetPathExtend("in", "out", ".cat.txt")
+
+		catStr.In("in").Connect(writeStr.Out("out"))
+
+		wf.ConnectLast(catStr.Out("out"))
+	}
+
+	wf.Run()
+
+	for _, str := range strs {
+		path := "/tmp/" + str + ".txt"
+		_, err := os.Stat(path)
+		assert.Nil(t, err, "File missing: "+path)
+	}
+
+	for _, str := range strs {
+		path := "/tmp/" + str + ".txt.cat.txt"
+		_, err := os.Stat(path)
+		assert.Nil(t, err, "File missing: "+path)
+	}
+
+	cleanFiles("/tmp/hey.txt", "/tmp/how.txt", "/tmp/hoo.txt")
+	cleanFiles("/tmp/hey.txt.cat.txt", "/tmp/how.txt.cat.txt", "/tmp/hoo.txt.cat.txt")
 }
 
 // Helper processes
