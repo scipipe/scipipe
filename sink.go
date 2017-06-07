@@ -48,7 +48,7 @@ func (p *Sink) Run() {
 			select {
 			case ft, ok = <-inp.Chan:
 				if !ok {
-					Debug.Println(p.name+": Channel closed, so deleting, and restarting loop", ft.GetPath())
+					Debug.Println(p.name + ": Channel closed, so deleting, and restarting loop")
 					p.deleteInPortAtKey(i)
 					break loop
 				}
