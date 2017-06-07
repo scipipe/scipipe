@@ -5,8 +5,6 @@ import (
 )
 
 func main() {
-	sci.InitLogAudit()
-
 	fq := sci.NewIPGen("hej1.txt", "hej2.txt", "hej3.txt")
 	fw := sci.NewFromShell("filewriter", "echo {i:in} > {o:out}")
 	fw.SetPathCustom("out", func(t *sci.SciTask) string { return t.GetInPath("in") })

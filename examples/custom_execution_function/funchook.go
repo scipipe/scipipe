@@ -6,8 +6,6 @@ import (
 )
 
 func main() {
-	sci.InitLogAudit()
-
 	foo := NewFooer()
 	f2b := NewFoo2Barer()
 	snk := sci.NewSink()

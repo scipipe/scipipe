@@ -152,7 +152,7 @@ func (pl *PipelineRunner) PrintProcesses() {
 
 func (pl *PipelineRunner) Run() {
 	if !LogExists {
-		InitLogAudit()
+		InitLogInfo()
 	}
 	if len(pl.processes) == 0 {
 		Error.Println("PipelineRunner: The PipelineRunner is empty. Did you forget to add the processes to it?")

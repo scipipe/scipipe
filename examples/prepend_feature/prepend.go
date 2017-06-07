@@ -5,8 +5,6 @@ import (
 )
 
 func main() {
-	sp.InitLogAudit()
-
 	p := sp.NewFromShell("ls", "ls -l > {o:out}")
 	p.SetPathCustom("out", func(p *sp.SciTask) string {
 		return "hej.txt"

@@ -25,10 +25,6 @@ func NewFileSplitter(linesPerSplit int) *FileSplitter {
 func (proc *FileSplitter) Run() {
 	defer proc.OutSplitFile.Close()
 
-	if !scipipe.LogExists {
-		scipipe.InitLogAudit()
-	}
-
 	fileReader := NewFileReader()
 
 	for ft := range proc.InFile.Chan {

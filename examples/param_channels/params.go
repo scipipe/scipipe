@@ -7,8 +7,6 @@ import (
 )
 
 func main() {
-	sci.InitLogAudit()
-
 	runtime.GOMAXPROCS(4)
 	cmb := NewCombinatoricsTask()
 

@@ -6,8 +6,6 @@ import (
 )
 
 func main() {
-	sci.InitLogAudit()
-
 	fmt.Println("Starting program!")
 
 	// ls processes

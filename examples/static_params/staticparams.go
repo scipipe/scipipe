@@ -6,8 +6,6 @@ import (
 )
 
 func main() {
-	sci.InitLogAudit()
-
 	// Init
 	fls := NewFileSender()
 

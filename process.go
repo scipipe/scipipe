@@ -75,7 +75,7 @@ func NewSciProcess(name string, command string) *SciProcess {
 
 func NewFromShell(name string, cmd string) *SciProcess {
 	if !LogExists {
-		InitLogAudit()
+		InitLogInfo()
 	}
 	p := NewSciProcess(name, cmd)
 	p.initPortsFromCmdPattern(cmd, nil)
