@@ -117,7 +117,7 @@ func main() {
 		// --------------------------------------------------------------------------------
 		// This one is is needed so bwaMergecan take a proper parameter for
 		// individual, which it uses to generate output paths
-		indParamGen := components.NewStringGenerator(indv)
+		indParamGen := components.NewStringGen(indv)
 		prun.AddProcess(indParamGen)
 
 		// bwa sampe process

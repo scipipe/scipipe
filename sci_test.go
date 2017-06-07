@@ -160,7 +160,7 @@ func TestSendsOrderedOutputs(t *t.T) {
 		fnames = append(fnames, fmt.Sprintf("/tmp/f%d.txt", i))
 	}
 
-	fq := NewIPQueue(fnames...)
+	fq := NewIPGen(fnames...)
 
 	fc := NewFromShell("fc", "echo {i:in} > {o:out}")
 	sl := NewFromShell("sl", "cat {i:in} > {o:out}")
@@ -243,7 +243,7 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 
 	// Create some input files
 
-	ipq := NewIPQueue("/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
+	ipq := NewIPGen("/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
 	plr.AddProcess(ipq)
 
 	sts := NewStreamToSubStream()

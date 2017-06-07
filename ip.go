@@ -175,35 +175,35 @@ func (ip *InformationPacket) WriteAuditLogToFile() {
 	Check(writeErr, "Could not write audit file: "+ip.GetPath())
 }
 
-// ======= IPQueue =======
+// ======= IPGen=======
 
-// IPQueue is initialized by a set of strings with file paths, and from that
-// will return instantiated InformationPacket on its Out-port, when run.
-type IPQueue struct {
+// IPGen is initialized by a set of strings with file paths, and from that will
+// return instantiated (generated) InformationPacket on its Out-port, when run.
+type IPGen struct {
 	Process
 	Out       *FilePort
 	FilePaths []string
 }
 
-// Initialize a new IPQueue component from a list of file paths
-func NewIPQueue(filePaths ...string) (fq *IPQueue) {
-	fq = &IPQueue{
+// Initialize a new IPGen component from a list of file paths
+func NewIPGen(filePaths ...string) (fq *IPGen) {
+	fq = &IPGen{
 		Out:       NewFilePort(),
 		FilePaths: filePaths,
 	}
 	return
 }
 
-// Execute the IPQueue, returning instantiated InformationPacket
-func (ipq *IPQueue) Run() {
+// Execute the IPGen, returning instantiated InformationPacket
+func (ipq *IPGen) Run() {
 	defer ipq.Out.Close()
 	for _, fp := range ipq.FilePaths {
 		ipq.Out.Chan <- NewInformationPacket(fp)
 	}
 }
 
-// Check if the IPQueue outport is connected
-func (ipq *IPQueue) IsConnected() bool {
+// Check if the IPGen outport is connected
+func (ipq *IPGen) IsConnected() bool {
 	return ipq.Out.IsConnected()
 }
 

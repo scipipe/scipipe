@@ -2,30 +2,30 @@ package components
 
 import "github.com/scipipe/scipipe"
 
-// StringGenerator takes a number of strings and returns a generator process
+// StringGen takes a number of strings and returns a generator process
 // which sends the strings, one by one, on its `Out` port
-type StringGenerator struct {
+type StringGen struct {
 	scipipe.Process
 	Strings []string
 	Out     *scipipe.ParamPort
 }
 
-// Instantiate a new StringGenerator
-func NewStringGenerator(strings ...string) *StringGenerator {
-	return &StringGenerator{
+// Instantiate a new StringGen
+func NewStringGen(strings ...string) *StringGen {
+	return &StringGen{
 		Out:     scipipe.NewParamPort(),
 		Strings: strings,
 	}
 }
 
-// Run the StringGenerator
-func (proc *StringGenerator) Run() {
+// Run the StringGen
+func (proc *StringGen) Run() {
 	defer proc.Out.Close()
 	for _, str := range proc.Strings {
 		proc.Out.Chan <- str
 	}
 }
 
-func (proc *StringGenerator) IsConnected() bool {
+func (proc *StringGen) IsConnected() bool {
 	return proc.Out.IsConnected()
 }
