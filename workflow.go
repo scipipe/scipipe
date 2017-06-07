@@ -29,6 +29,9 @@ func NewWorkflow(name string) *Workflow {
 }
 
 func (wf *Workflow) Add(proc Process) {
+	if wf.procs[proc.Name()] != nil {
+		Error.Fatalf(wf.name+" workflow: A process with name '%s' already exists in the workflow! Use a more unique name!\n", proc.Name())
+	}
 	wf.procs[proc.Name()] = proc
 }
 
