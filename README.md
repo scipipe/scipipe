@@ -81,32 +81,28 @@ SciPipe looks like:
 package main
 
 import (
-        // Import SciPipe into the main namespace (generally frowned upon, but
-        // reasonable for short-lived workflow scripts if you ask me)
-        . "github.com/scipipe/scipipe"
+    // Import SciPipe into the main namespace (generally frowned upon but could
+    // be argued to be reasonable for short-lived workflow scripts like this)
+    . "github.com/scipipe/scipipe"
 )
 
 func main() {
-        // Initialize processes from shell command patterns
-        hello := NewProc("hello", "echo 'Hello ' > {o:hellofile}")
-        world := NewProc("world", "echo $(cat {i:infile}) World >> {o:worldfile}")
-        // Create a sink, that will just receive the final outputs
-        asink := NewSink("sink")
+    // Init workflow
+    wf := NewWorkflow("hello_world")
 
-        // Configure output file path formatters for the processes created above
-        hello.SetPathStatic("hellofile", "hello.txt")
-        world.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
+    // Initialize processes and set output file paths
+    hello := wf.NewProc("hello", "echo 'Hello ' > {o:hellofile}")
+    hello.SetPathStatic("hellofile", "hello.txt")
 
-        // Connect network
-        world.In("infile").Connect(hello.Out("hellofile"))
-        asink.Connect(world.Out("worldfile"))
+    world := wf.NewProc("world", "echo $(cat {i:infile}) World >> {o:worldfile}")
+    world.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
 
-        // Create a workflow component, add processes, including specifying the
-        // "driver process", and run
-        wf := NewWorkflow("helloworldwf")
-        wf.AddProcs(hello, world)
-        wf.SetDriver(asink)
-        wf.Run()
+    // Connect network
+    world.In("infile").Connect(hello.Out("hellofile"))
+    wf.ConnectLast(world.Out("worldfile"))
+
+    // Run workflow
+    wf.Run()
 }
 ```
 

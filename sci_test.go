@@ -38,7 +38,7 @@ func TestBasicRun(t *t.T) {
 
 	t2.In("foo").Connect(t1.Out("foo"))
 	snk.Connect(t2.Out("bar"))
-	wf.SetDriver(snk)
+	wf.SetSink(snk)
 
 	assert.IsType(t, t2.In("foo"), NewFilePort())
 	assert.IsType(t, t2.Out("bar"), NewFilePort())
@@ -219,7 +219,7 @@ func TestStreaming(t *t.T) {
 	wf.Add(grp)
 
 	snk := NewSink("sink")
-	wf.SetDriver(snk)
+	wf.SetSink(snk)
 
 	// Connect
 	grp.In("in").Connect(ls.Out("lsl"))
@@ -267,7 +267,7 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 	Connect(cat.In("infiles"), sts.OutSubStream)
 
 	snk := NewSink("sink")
-	wf.SetDriver(snk)
+	wf.SetSink(snk)
 	snk.Connect(cat.Out("merged"))
 
 	wf.Run()

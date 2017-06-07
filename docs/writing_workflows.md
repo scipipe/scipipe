@@ -7,29 +7,27 @@ at the example workflow used on the front page again:
 package main
 
 import (
-    // Import SciPipe, aliased to 'sp' for brevity
-    sp "github.com/scipipe/scipipe"
+    // Import SciPipe into the main namespace (generally frowned upon but could
+    // be argued to be reasonable for short-lived workflow scripts like this)
+    . "github.com/scipipe/scipipe"
 )
 
 func main() {
-    // Initialize processes from shell command patterns
-    helloWriter := sp.NewProc("helloWriter", "echo 'Hello ' > {o:hellofile}")
-    worldAppender := sp.NewProc("worldAppender", "echo $(cat {i:infile}) World >> {o:worldfile}")
-    // Create a sink, that will just receive the final outputs
-    sink := sp.NewSink("sink")
+    // Init workflow
+    wf := NewWorkflow("hello_world")
 
-    // Configure output file path formatters for the processes created above
-    helloWriter.SetPathStatic("hellofile", "hello.txt")
-    worldAppender.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
+    // Initialize processes and set output file paths
+    hello := wf.NewProc("hello", "echo 'Hello ' > {o:hellofile}")
+    hello.SetPathStatic("hellofile", "hello.txt")
+
+    world := wf.NewProc("world", "echo $(cat {i:infile}) World >> {o:worldfile}")
+    world.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
 
     // Connect network
-    worldAppender.In("infile").Connect(helloWriter.Out("hellofile"))
-    sink.Connect(worldAppender.Out("worldfile"))
+    world.In("infile").Connect(hello.Out("hellofile"))
+    wf.ConnectLast(world.Out("worldfile"))
 
-    // Create a pipeline runner, add processes, and run
-    wf := sp.NewWorkflow("example_workflow")
-    wf.Add(helloWriter, worldAppender)
-    wf.SetDriver(sink)
+    // Run workflow
     wf.Run()
 }
 ```
@@ -41,17 +39,13 @@ actually doing.
 
 ```go
 // Initialize processes from shell command patterns
-helloWriter := sp.NewProc("helloWriter", "echo 'Hello ' > {o:hellofile}")
-worldAppender := sp.NewProc("worldAppender", "echo $(cat {i:infile}) World >> {o:worldfile}")
-// Create a sink, that will just receive the final outputs
-sink := sp.NewSink("sink")
+hello := sp.NewProc("hello", "echo 'Hello ' > {o:hellofile}")
+world := sp.NewProc("world", "echo $(cat {i:infile}) World >> {o:worldfile}")
 ```
 
-Here we are initializing three new processes, two of them based on a shell
-command, and one "sink", which will just receive inputs adn nothing more.
-
-The two first processes are created using the `scipipe.NewProc()`
-function, which takes a processname, and a shell command pattern as input.
+Here we are initializing two new processes, both of them based on a shell
+command, using the `scipipe.NewProc()` function, which takes a processname, and
+a shell command pattern as input.
 
 ### The shell command pattern
 
@@ -68,20 +62,6 @@ files will be queued on the channel connecting to the port, and for each set of
 files on in-ports, a command will be created and executed whereafter new files
 will be pulled in on the out-ports, and so on.
 
-### The sink
-
-The sink is needed in cases where the workflow ends with a process that is not
-an explicit endpoint without out-ports, such as a "printer" processes or
-similar, but instead has out-ports that need to be connected. Then the sink can
-be used to receive from these out-ports so that the data packets on the
-out-ports don't get stuck and clog the workflow.
-
-For these inports and outports, channels for sending and receiving FileTargets
-are automatically created and put in a hashmap added as a struct field of the
-process, named `In` and `Out` repectively, Eash channel is added to the hashmap
-with its inport/outport name as key in the hashmap, so that the channel can be
-retrieved from the hashmap using the in/outport name.
-
 ## Formatting output file paths
 
 Now we need to provide some way for scipipe to figure out a suitable file name
@@ -92,8 +72,8 @@ be done using special convenience methods on the processes, starting with
 
 ```go
 // Configure output file path formatters for the processes created above
-helloWriter.SetPathStatic("hellofile", "hello.txt")
-worldAppender.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
+hello.SetPathStatic("hellofile", "hello.txt")
+world.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
 ```
 
 `SetPathStatic` just takes an out-port name and a static file name to use, and
@@ -114,16 +94,16 @@ returns file paths given a `scipipe.SciTask` object, which will be produced for
 each command execution.
 
 In order to implement the same path patterns as above, using this method, we
-would write like this: 
+would write like this:
 
 ```go
 // Configure output file path formatters for the processes created above
-helloWriter.PathFormatters["hellofile"] = func(t *sp.SciTask) string {
+hello.SetPathCustom("hellofile", func(t *sp.SciTask) string {
 return "hello.txt"
-}
-worldAppender.PathFormatters["worldfile"] = func(t *sp.SciTask) string {
+})
+world.SetPathCustom("worldfile", func(t *sp.SciTask) string {
 return strings.Replace(t.InTargets["infile"].GetPath(), ".txt", "_world.txt", -1)
-}
+})
 ```
 
 As you can see, this is a much more complicated way to format paths, but it can
@@ -134,31 +114,42 @@ names.
 
 Finally we need to define the data dependencies between our processes.  We do
 this by connecting the outports of one process to the inport of another
-process, using the `Connect` method available on each port object. Sink objects
-have a `Connect` method too, which take an out-port of an upstream process:
+process, using the `Connect` method available on each port object. We also need
+to connect the final out-port of the pipeline to the workflow, so that the
+workflow can pull on this port (technically pulling on a Go channel), in order
+to drive the workflow.
 
 ```go
 // Connect network
-worldAppender.In("infile").Connect(helloWriter.Out("hellofile"))
-sink.Connect(worldAppender.Out("worldfile"))
+world.In("infile").Connect(helloWriter.Out("hellofile"))
+wf.ConnectLast(world.Out("worldfile"))
 ```
 
-(Note that the sink has the `Connect` method bound directly to itself, without
-any port).
+Note: If your "last" process does not have any outputs, you can instead set it
+as the driver process of the workflow, which will replace the default driver
+process which is of type [Sink](https://godoc.org/github.com/scipipe/scipipe#Sink).
+So, for example, given that our `world` process did not have an output, but
+maybe for example just wrote something to a web service, without producing any
+files, we could do:
+
+```go
+wf.SetDriver(world)
+```
 
 ## Running the pipeline
 
 So, the final part probably explains itself, but the workflow component is a
-relatively simple one that will start each component except the last one in a
-separate go-routine, except for the one set as "driver" (often a simple "sink"
-process), which will be run in the main go-routine, so as to block until the
-pipeline has finished.
+relatively simple one that will start each component in a separate go-routine.
+
+For technical reasons, one final process has to be run in the main go-routine
+(that where the program's `main()` function runs), but as long as you have used
+the `wf.ConnectLast()` method to connect the final output in your workflow as
+mentioned above, you don't need to think about this, as the workflow will then
+use an in-built [sink](https://godoc.org/github.com/scipipe/scipipe#Sink)
+process for this purpose. Only if you need to customize things heavily, you
+might want to change this.
 
 ```go
-// Create a pipeline runner, add processes, and run
-wf := sp.NewWorkflow()
-wf.Add(helloWriter, worldAppender)
-wf.SetDriver(sink)
 wf.Run()
 ```
 ## Summary

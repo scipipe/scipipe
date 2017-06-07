@@ -9,20 +9,22 @@ import (
 // ----------------------------------------------------------------------------
 
 type Workflow struct {
-	name       string
-	procs      map[string]Process
-	driver     Process
-	driverName string
+	name   string
+	procs  map[string]Process
+	sink   *Sink
+	driver Process
 }
 
 func NewWorkflow(name string) *Workflow {
 	if !LogExists {
 		InitLogInfo()
 	}
+	sink := NewSink(name + "_default_sink")
 	return &Workflow{
 		name:   name,
 		procs:  map[string]Process{},
-		driver: nil,
+		sink:   sink,
+		driver: sink,
 	}
 }
 
@@ -50,13 +52,35 @@ func (wf *Workflow) Procs() map[string]Process {
 	return wf.procs
 }
 
+func (wf *Workflow) Sink() *Sink {
+	return wf.sink
+}
+
+func (wf *Workflow) SetSink(sink *Sink) {
+	if wf.sink.IsConnected() {
+		Error.Println("Trying to replace a sink which is already connected. Are you combining SetSink() with ConnectFinalOutPort()? That is not allowed!")
+		os.Exit(1)
+	}
+	wf.sink = sink
+	wf.driver = sink
+}
+
 func (wf *Workflow) Driver() Process {
 	return wf.driver
 }
 
 func (wf *Workflow) SetDriver(driver Process) {
 	wf.driver = driver
-	wf.driverName = driver.Name()
+}
+
+// ConnectLast connects the last (most downstream) out-ports in the workflow to
+// an implicit sink process which will be used to drive the workflow. This can
+// be used instead of manually creating a sink, connecting it, and setting it
+// as the driver process of the workflow.
+func (wf *Workflow) ConnectLast(outPort *FilePort) {
+	wf.sink.Connect(outPort)
+	// Make sure the sink is also the driver
+	wf.driver = wf.sink
 }
 
 func (wf *Workflow) Run() {
@@ -64,8 +88,8 @@ func (wf *Workflow) Run() {
 		Error.Println(wf.name + ": The workflow is empty. Did you forget to add the processes to it?")
 		os.Exit(1)
 	}
-	if wf.driver == nil {
-		Error.Println(wf.name + ": No driver (process) added. Please set one, with wf.SetDriver()")
+	if wf.sink == nil {
+		Error.Println(wf.name + ": sink is nil!")
 		os.Exit(1)
 	}
 	everythingConnected := true
@@ -82,7 +106,7 @@ func (wf *Workflow) Run() {
 			Debug.Printf(wf.name+": Starting process %s in new go-routine", pname)
 			go proc.Run()
 		}
-		Debug.Printf(wf.name + ": Starting driver process in main go-routine")
+		Debug.Printf(wf.name + ": Starting sink in main go-routine")
 		wf.driver.Run()
 	}
 }
