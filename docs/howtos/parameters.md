@@ -25,7 +25,7 @@ For example, if you always want to write the string "hello" to output files,
 you could create your processes with this string added manually:
 
 ```go
-helloWriter := scipipe.NewFromShell("helloWriter", "echo hello > {o:outfile}")
+helloWriter := scipipe.NewProc("helloWriter", "echo hello > {o:outfile}")
 ```
 
 If you have a lot of various parameters, and want a little more flexible way
@@ -44,7 +44,7 @@ paramVals := map[string]string{"p1": "one", "p2": "two", "p3": "three"}
 cmd = scipipe.ExpandParams(cmd, paramVals)
 
 // Create a new process with the resulting command
-write123 := scipipe.NewFromShell("write123", cmd)
+write123 := scipipe.NewProc("write123", cmd)
 ```
 
 ### See also

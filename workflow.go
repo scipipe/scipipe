@@ -30,8 +30,8 @@ func (wf *Workflow) Add(proc Process) {
 	wf.procs[proc.Name()] = proc
 }
 
-func (wf *Workflow) NewFromShell(procName string, commandPattern string) *SciProcess {
-	proc := NewFromShell(procName, commandPattern)
+func (wf *Workflow) NewProc(procName string, commandPattern string) *SciProcess {
+	proc := NewProc(procName, commandPattern)
 	wf.Add(proc)
 	return proc
 }

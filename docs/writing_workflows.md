@@ -13,8 +13,8 @@ import (
 
 func main() {
     // Initialize processes from shell command patterns
-    helloWriter := sp.NewFromShell("helloWriter", "echo 'Hello ' > {o:hellofile}")
-    worldAppender := sp.NewFromShell("worldAppender", "echo $(cat {i:infile}) World >> {o:worldfile}")
+    helloWriter := sp.NewProc("helloWriter", "echo 'Hello ' > {o:hellofile}")
+    worldAppender := sp.NewProc("worldAppender", "echo $(cat {i:infile}) World >> {o:worldfile}")
     // Create a sink, that will just receive the final outputs
     sink := sp.NewSink("sink")
 
@@ -41,8 +41,8 @@ actually doing.
 
 ```go
 // Initialize processes from shell command patterns
-helloWriter := sp.NewFromShell("helloWriter", "echo 'Hello ' > {o:hellofile}")
-worldAppender := sp.NewFromShell("worldAppender", "echo $(cat {i:infile}) World >> {o:worldfile}")
+helloWriter := sp.NewProc("helloWriter", "echo 'Hello ' > {o:hellofile}")
+worldAppender := sp.NewProc("worldAppender", "echo $(cat {i:infile}) World >> {o:worldfile}")
 // Create a sink, that will just receive the final outputs
 sink := sp.NewSink("sink")
 ```
@@ -50,7 +50,7 @@ sink := sp.NewSink("sink")
 Here we are initializing three new processes, two of them based on a shell
 command, and one "sink", which will just receive inputs adn nothing more.
 
-The two first processes are created using the `scipipe.NewFromShell()`
+The two first processes are created using the `scipipe.NewProc()`
 function, which takes a processname, and a shell command pattern as input.
 
 ### The shell command pattern

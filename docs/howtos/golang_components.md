@@ -13,7 +13,7 @@ In short, it can be done like this:
 // just specify the out-port, and nothing else. We have to
 // specify the out-port (and any other ports we plan to use later),
 // so that they are correctly initialized.
-fooWriter := sci.NewFromShell("fooer", "{o:foo}")
+fooWriter := sci.NewProc("fooer", "{o:foo}")
 
 // Set the output formatter to a static string
 fooWriter.SetPathStatic("foo", "foo.txt")

@@ -12,13 +12,13 @@ look up the name of the ports manually in the library code all the time.
 
 ## How to create re-usable components in SciPipe
 
-SciProcess processes created with the `scipipe.NewFromShell()` command, can be
+SciProcess processes created with the `scipipe.NewProc()` command, can be
 turned into such "re-usable" component by using a wrapping strategy, that is
 demonstrated in an [example on GitHub](https://github.com/scipipe/scipipe/blob/master/examples/wrapper_procs/wrap.go).
 
 The idea is to create a new struct type for the re-usable component, and then,
 in the factory method for the process, create an "inner" process of type
-SciProcess, using `NewFromShell()` as in the normal case, embedding that in the
+SciProcess, using `NewProc()` as in the normal case, embedding that in the
 outer struct and then adding statically defined accessor methods for each of
 the ports in the inner process, with a similar name.  So, if the inner process
 has an outport named "foo", you would define an accessor method named
@@ -35,7 +35,7 @@ type HiWriter struct {
 
 func NewHiWriter() *HiWriter {
     // Initialize a normal "SciProcess" to use as an "inner" process
-	innerHiWriter := sci.NewFromShell("hiwriter", "echo hi > {o:hifile}")
+	innerHiWriter := sci.NewProc("hiwriter", "echo hi > {o:hifile}")
 	innerHiWriter.SetPathStatic("hifile", "hi.txt")
 
     // Create a new HiWriter process with the inner process embedded into it

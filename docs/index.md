@@ -88,8 +88,8 @@ import (
 
 func main() {
         // Initialize processes from shell command patterns
-        hello := NewFromShell("hello", "echo 'Hello ' > {o:hellofile}")
-        world := NewFromShell("world", "echo $(cat {i:infile}) World >> {o:worldfile}")
+        hello := NewProc("hello", "echo 'Hello ' > {o:hellofile}")
+        world := NewProc("world", "echo $(cat {i:infile}) World >> {o:worldfile}")
         // Create a sink, that will just receive the final outputs
         sink := NewSink("sink")
 

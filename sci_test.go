@@ -20,14 +20,14 @@ func TestBasicRun(t *t.T) {
 	initTestLogs()
 	wf := NewWorkflow("TestBasicRunWf")
 
-	t1 := NewFromShell("t1", "echo foo > {o:foo}")
+	t1 := NewProc("t1", "echo foo > {o:foo}")
 	assert.IsType(t, t1.Out("foo"), NewFilePort())
 	t1.PathFormatters["foo"] = func(t *SciTask) string {
 		return "foo.txt"
 	}
 	wf.Add(t1)
 
-	t2 := NewFromShell("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	t2 := NewProc("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	assert.IsType(t, t2.In("foo"), NewFilePort())
 	assert.IsType(t, t2.Out("bar"), NewFilePort())
 	t2.PathFormatters["bar"] = func(t *SciTask) string {
@@ -56,7 +56,7 @@ func TestParameterCommand(t *t.T) {
 	wf.Add(cmb)
 
 	// An abc file printer
-	abc := NewFromShell("abc", "echo {p:a} {p:b} {p:c} > {o:out}")
+	abc := NewProc("abc", "echo {p:a} {p:b} {p:c} > {o:out}")
 	abc.PathFormatters["out"] = func(task *SciTask) string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
@@ -68,7 +68,7 @@ func TestParameterCommand(t *t.T) {
 	wf.Add(abc)
 
 	// A printer process
-	prt := NewFromShell("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
+	prt := NewProc("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
 
 	// Connection info
 	abc.ParamPort("a").Connect(cmb.A)
@@ -91,7 +91,7 @@ func TestProcessWithoutInputsOutputs(t *t.T) {
 	Debug.Println("Starting test TestProcessWithoutInputsOutputs")
 
 	f := "/tmp/hej.txt"
-	tsk := NewFromShell("tsk", "echo hej > "+f)
+	tsk := NewProc("tsk", "echo hej > "+f)
 	tsk.Run()
 	_, err := os.Stat(f)
 	assert.Nil(t, err, fmt.Sprintf("File is missing: %s", f))
@@ -110,11 +110,11 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	assert.NotNil(t, e1)
 
 	// Run pipeline a first time
-	tsk := NewFromShell("tsk", "echo hej > {o:hej1}")
+	tsk := NewProc("tsk", "echo hej > {o:hej1}")
 	tsk.PathFormatters["hej1"] = func(task *SciTask) string { return f }
 	wf.Add(tsk)
 
-	prt := NewFromShell("prt", "echo {i:in1} Done!")
+	prt := NewProc("prt", "echo {i:in1} Done!")
 	prt.In("in1").Connect(tsk.Out("hej1"))
 	wf.SetDriver(prt)
 
@@ -134,11 +134,11 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	wf = NewWorkflow("TestDontOverWriteExistingOutputsWf2")
 
 	// Run again with different output
-	tsk = NewFromShell("tsk", "echo hej > {o:hej2}")
+	tsk = NewProc("tsk", "echo hej > {o:hej2}")
 	tsk.PathFormatters["hej2"] = func(task *SciTask) string { return f }
 	wf.Add(tsk)
 
-	prt = NewFromShell("prt", "echo {i:in2} Done!")
+	prt = NewProc("prt", "echo {i:in2} Done!")
 	prt.In("in2").Connect(tsk.Out("hej2"))
 	wf.SetDriver(prt)
 
@@ -169,8 +169,8 @@ func TestSendsOrderedOutputs(t *t.T) {
 
 	ig := NewIPGen("ipgen", fnames...)
 
-	fc := NewFromShell("fc", "echo {i:in} > {o:out}")
-	sl := NewFromShell("sl", "cat {i:in} > {o:out}")
+	fc := NewProc("fc", "echo {i:in} > {o:out}")
+	sl := NewProc("sl", "cat {i:in} > {o:out}")
 
 	fc.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") }
 	sl.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") + ".copy.txt" }
@@ -206,13 +206,13 @@ func TestStreaming(t *t.T) {
 	wf := NewWorkflow("TestStreamingWf")
 
 	// Init processes
-	ls := NewFromShell("ls", "ls -l / > {os:lsl}")
+	ls := NewProc("ls", "ls -l / > {os:lsl}")
 	ls.PathFormatters["lsl"] = func(task *SciTask) string {
 		return "/tmp/lsl.txt"
 	}
 	wf.Add(ls)
 
-	grp := NewFromShell("grp", "grep etc {i:in} > {o:grepped}")
+	grp := NewProc("grp", "grep etc {i:in} > {o:grepped}")
 	grp.PathFormatters["grepped"] = func(task *SciTask) string {
 		return task.GetInPath("in") + ".grepped.txt"
 	}
@@ -261,7 +261,7 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 	wf.Add(sts)
 	Connect(sts.In, ipq.Out)
 
-	cat := NewFromShell("concatenate", "cat {i:infiles:r: } > {o:merged}")
+	cat := NewProc("concatenate", "cat {i:infiles:r: } > {o:merged}")
 	cat.SetPathStatic("merged", "/tmp/substream_merged.txt")
 	wf.Add(cat)
 	Connect(cat.In("infiles"), sts.OutSubStream)

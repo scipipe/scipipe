@@ -13,7 +13,7 @@ typically fixed for a workflow during its execution.
 One can create customized types of processes, but for most basic workflows, the
 [`scipipe.SciProcess`](https://godoc.org/github.com/scipipe/scipipe#SciProcess)
 will be used, which is specialized for executing commandline applications. New
-`SciProcess`-es are typically created using the `scipipe.NewFromShell(procName,
+`SciProcess`-es are typically created using the `scipipe.NewProc(procName,
 shellPattern)` command.
 
 * See [GoDoc for SciProcess](https://godoc.org/github.com/scipipe/scipipe#SciProcess)
@@ -98,10 +98,10 @@ tutorials.
 ## Shell command pattern
 
 The `SciProcess` has the speciality that it can be configured using a special
-shell command pattern, supplied to the [`NewFromShell()`](https://godoc.org/github.com/scipipe/scipipe#NewFromShell)
+shell command pattern, supplied to the [`NewProc()`](https://godoc.org/github.com/scipipe/scipipe#NewProc)
 factory function. It is already explained in the section "writing workflows",
 but in brief, it is a normal shell command, with placeholders for in-ports,
 out-ports and parameter ports, on the form `{i:inportname}`, `{o:outportname}`,
 and `{p:paramportname}`, respectively.
 
-* See [GoDoc for NewFromShell()](https://godoc.org/github.com/scipipe/scipipe#NewFromShell)
+* See [GoDoc for NewProc()](https://godoc.org/github.com/scipipe/scipipe#NewProc)

@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	p := sp.NewFromShell("ls", "ls -l > {o:out}")
+	p := sp.NewProc("ls", "ls -l > {o:out}")
 	p.SetPathCustom("out", func(p *sp.SciTask) string {
 		return "hej.txt"
 	})

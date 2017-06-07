@@ -5,13 +5,13 @@ import (
 	"testing"
 )
 
-func TestNewFromShell(t *testing.T) {
-	p1 := NewFromShell("echo", "echo {p:text}")
+func TestNewProc(t *testing.T) {
+	p1 := NewProc("echo", "echo {p:text}")
 	if p1.ParamPort("text") == nil {
 		t.Error(`p.ParamPorts("text") = nil. want: not nil`)
 	}
 
-	p2 := NewFromShell("cat", "cat {i:infile} > {o:outfile}")
+	p2 := NewProc("cat", "cat {i:infile} > {o:outfile}")
 	if p2.In("infile") == nil {
 		t.Error(`p.In("infile") = nil. want: not nil`)
 	}
@@ -41,7 +41,7 @@ func TestShellExpand_InputOutput(t *testing.T) {
 }
 
 func TestSetPathStatic(t *testing.T) {
-	p := NewFromShell("echo_foo", "echo foo > {o:bar}")
+	p := NewProc("echo_foo", "echo foo > {o:bar}")
 	p.SetPathStatic("bar", "bar.txt")
 
 	mockTask := NewSciTask("echo_foo_task", "", nil, nil, nil, nil, "", p.ExecMode)
@@ -52,7 +52,7 @@ func TestSetPathStatic(t *testing.T) {
 }
 
 func TestSetPathExtend(t *testing.T) {
-	p := NewFromShell("cat_foo", "cat {i:foo} > {o:bar}")
+	p := NewProc("cat_foo", "cat {i:foo} > {o:bar}")
 	p.SetPathExtend("foo", "bar", ".bar.txt")
 
 	mockTask := NewSciTask("echo_foo_task", "", map[string]*InformationPacket{"foo": NewInformationPacket("foo.txt")}, nil, nil, nil, "", p.ExecMode)
@@ -63,7 +63,7 @@ func TestSetPathExtend(t *testing.T) {
 }
 
 func TestSetPathReplace(t *testing.T) {
-	p := NewFromShell("cat_foo", "cat {i:foo} > {o:bar}")
+	p := NewProc("cat_foo", "cat {i:foo} > {o:bar}")
 	p.SetPathReplace("foo", "bar", ".txt", ".bar.txt")
 
 	mockTask := NewSciTask("echo_foo_task", "", map[string]*InformationPacket{"foo": NewInformationPacket("foo.txt")}, nil, nil, nil, "", p.ExecMode)

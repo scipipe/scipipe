@@ -9,11 +9,11 @@ func main() {
 	// Initialize processes and add to runner
 	// --------------------------------
 
-	foo := NewFromShell("fooer", "echo foo > {o:foo}")
+	foo := NewProc("fooer", "echo foo > {o:foo}")
 	foo.SetPathStatic("foo", "foo.txt")
 	wfl.Add(foo)
 
-	f2b := NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	f2b := NewProc("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	f2b.SetPathExtend("foo", "bar", ".bar.txt")
 	wfl.Add(f2b)
 

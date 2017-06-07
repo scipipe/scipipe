@@ -1,7 +1,7 @@
 SciPipe can stream the output via UNIX [named pipes (or "FIFO files")](https://en.wikipedia.org/wiki/Named_pipe).
 
 Streaming can be turned on, on out-ports when creating SciProcess processes
-with `NewFromShell()`, by using `{os:outport_name}` as placeholder, instead of
+with `NewProc()`, by using `{os:outport_name}` as placeholder, instead of
 the normal `{o:outport_name}` (note the addisional "s")
 
 You can see how this is used in [this example on GitHub](https://github.com/scipipe/scipipe/blob/master/examples/fifo/fifo.go#L14).

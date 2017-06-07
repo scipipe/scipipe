@@ -11,7 +11,7 @@ func main() {
 	cmb := NewCombinatoricsGen("combgen")
 
 	// An abc file printer
-	abc := sci.NewFromShell("abc", "echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
+	abc := sci.NewProc("abc", "echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
 	abc.Spawn = true
 	abc.SetPathCustom("out", func(t *sci.SciTask) string {
 		return fmt.Sprintf(
@@ -23,7 +23,7 @@ func main() {
 	})
 
 	// A printer task
-	prt := sci.NewFromShell("printer", "cat {i:in} >> log.txt")
+	prt := sci.NewProc("printer", "cat {i:in} >> log.txt")
 	prt.Spawn = false
 
 	// Connection info

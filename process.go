@@ -74,7 +74,7 @@ func NewSciProcess(name string, command string) *SciProcess {
 
 // ----------- Main API init methods ------------
 
-func NewFromShell(name string, cmd string) *SciProcess {
+func NewProc(name string, cmd string) *SciProcess {
 	if !LogExists {
 		InitLogInfo()
 	}

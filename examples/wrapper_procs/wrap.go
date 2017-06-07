@@ -38,7 +38,7 @@ type Fooer struct {
 }
 
 func NewFooer(name string) *Fooer {
-	innerFoo := sci.NewFromShell("fooer", "echo foo > {o:foo}")
+	innerFoo := sci.NewProc("fooer", "echo foo > {o:foo}")
 	innerFoo.SetPathStatic("foo", "foo.txt")
 	return &Fooer{innerFoo, name}
 }
@@ -58,7 +58,7 @@ type Foo2Barer struct {
 }
 
 func NewFoo2Barer(name string) *Foo2Barer {
-	innerFoo2Bar := sci.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	innerFoo2Bar := sci.NewProc("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	innerFoo2Bar.SetPathExtend("foo", "bar", ".bar.txt")
 	return &Foo2Barer{innerFoo2Bar, name}
 }

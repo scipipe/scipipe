@@ -36,12 +36,12 @@ func main() {
 	// Initialize processes and add to runner
 	// --------------------------------
 
-	foo := sp.NewFromShell("fooer",
+	foo := sp.NewProc("fooer",
 		"echo foo > {o:foo}")
 	foo.SetPathStatic("foo", "foo.txt")
 	run.AddProcess(foo)
 
-	f2b := sp.NewFromShell("foo2bar",
+	f2b := sp.NewProc("foo2bar",
 		"sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	f2b.SetPathExtend("foo", "bar", ".bar.txt")
 	run.AddProcess(f2b)

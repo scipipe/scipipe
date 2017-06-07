@@ -39,10 +39,10 @@ func NewFooBarSubWorkflow(name string) *FooBarSubWorkflow {
 		Procs: make(map[string]*sp.SciProcess),
 	}
 
-	fbn.Procs["foo"] = sp.NewFromShell("foo", "echo foo > {o:foo}")
+	fbn.Procs["foo"] = sp.NewProc("foo", "echo foo > {o:foo}")
 	fbn.Procs["foo"].SetPathStatic("foo", "foo.txt")
 
-	fbn.Procs["f2b"] = sp.NewFromShell("f2b", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	fbn.Procs["f2b"] = sp.NewProc("f2b", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	fbn.Procs["f2b"].SetPathReplace("foo", "bar", ".txt", ".bar.txt")
 
 	// Connect together inner processes

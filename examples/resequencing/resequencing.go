@@ -49,14 +49,14 @@ func main() {
 	// Download Reference Genome
 	// --------------------------------------------------------------------------------
 	downloadRefCmd := "wget -O {o:outfile} " + ref_base_url + ref_file_gz
-	downloadRef := wf.NewFromShell("download_ref", downloadRefCmd)
+	downloadRef := wf.NewProc("download_ref", downloadRefCmd)
 	downloadRef.SetPathStatic("outfile", ref_file_gz)
 
 	// --------------------------------------------------------------------------------
 	// Unzip ref file
 	// --------------------------------------------------------------------------------
 	ungzipRefCmd := "gunzip -c {i:in} > {o:out}"
-	ungzipRef := wf.NewFromShell("ugzip_ref", ungzipRefCmd)
+	ungzipRef := wf.NewProc("ugzip_ref", ungzipRefCmd)
 	ungzipRef.SetPathReplace("in", "out", ".gz", "")
 	ungzipRef.In("in").Connect(downloadRef.Out("outfile"))
 
@@ -69,7 +69,7 @@ func main() {
 	// --------------------------------------------------------------------------------
 	// Index Reference Genome
 	// --------------------------------------------------------------------------------
-	indexRef := wf.NewFromShell("index_ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
+	indexRef := wf.NewProc("index_ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
 	indexRef.SetPathExtend("index", "done", ".indexed")
 	indexRef.In("index").Connect(refFanOut.Out("index_ref"))
 
@@ -90,7 +90,7 @@ func main() {
 			// --------------------------------------------------------------------------------
 			file_name := fmt.Sprintf(fastq_file_pat, indv, smpl)
 			downloadFastQCmd := "wget -O {o:fastq} " + fastq_base_url + file_name
-			downloadFastQ := wf.NewFromShell("download_fastq_"+indv+"_"+smpl, downloadFastQCmd)
+			downloadFastQ := wf.NewProc("download_fastq_"+indv+"_"+smpl, downloadFastQCmd)
 			downloadFastQ.SetPathStatic("fastq", file_name)
 
 			fastQFanOut := components.NewFanOut("fastq_fanout")
@@ -104,7 +104,7 @@ func main() {
 			// BWA Align
 			// --------------------------------------------------------------------------------
 			bwaAlignCmd := "bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}"
-			bwaAlign := wf.NewFromShell("bwa_aln", bwaAlignCmd)
+			bwaAlign := wf.NewProc("bwa_aln", bwaAlignCmd)
 			bwaAlign.SetPathExtend("fastq", "sai", ".sai")
 			bwaAlign.In("ref").Connect(refFanOut.Out("bwa_aln_" + indv + "_" + smpl))
 			bwaAlign.In("idxdone").Connect(indexDoneFanOut.Out("bwa_aln_" + indv + "_" + smpl))
@@ -124,7 +124,7 @@ func main() {
 
 		// bwa sampe process
 		bwaMergeCmd := "bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}"
-		bwaMerge := wf.NewFromShell("merge_"+indv, bwaMergeCmd)
+		bwaMerge := wf.NewProc("merge_"+indv, bwaMergeCmd)
 		bwaMerge.SetPathCustom("merged", func(t *SciTask) string { return fmt.Sprintf("%s.merged.sam", t.Params["indv"]) })
 		bwaMerge.In("ref").Connect(refFanOut.Out("bwa_merge_" + indv))
 		bwaMerge.In("refdone").Connect(indexDoneFanOut.Out("bwa_merge_" + indv))

@@ -17,7 +17,7 @@ func main() {
 		return task.GetInPath("in")
 	})
 
-	prt := sci.NewFromShell("prt", "echo {i:in} >> log.txt")
+	prt := sci.NewProc("prt", "echo {i:in} >> log.txt")
 
 	// Connect
 	abc.In("in").Connect(fls.Out)
