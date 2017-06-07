@@ -48,12 +48,13 @@ func (p *Sink) Run() {
 			select {
 			case ft, ok = <-inp.Chan:
 				if !ok {
+					Debug.Println(p.name+": Channel closed, so deleting, and restarting loop", ft.GetPath())
 					p.deleteInPortAtKey(i)
 					break loop
 				}
-				Debug.Println("Received file in sink: ", ft.GetPath())
+				Debug.Println(p.name+": Received file in sink: ", ft.GetPath())
 			default:
-				Debug.Printf("No receive on inport %d, so continuing ...\n", i)
+				Debug.Printf(p.name+": No receive on inport %d, so continuing ...\n", i)
 				time.Sleep(100 * time.Millisecond)
 			}
 		}

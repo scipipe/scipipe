@@ -43,7 +43,6 @@ func main() {
 	// --------------------------------------------------------------------------------
 
 	wf := NewWorkflow("resequencing_wf")
-	sink := NewSink("sink")
 
 	// --------------------------------------------------------------------------------
 	// Download Reference Genome
@@ -84,13 +83,13 @@ func main() {
 		outPorts[indv] = map[string]map[string]*FilePort{}
 		for _, smpl := range samples {
 			outPorts[indv][smpl] = map[string]*FilePort{}
-
+			indv_smpl := "_" + indv + "_" + smpl
 			// --------------------------------------------------------------------------------
 			// Download FastQ component
 			// --------------------------------------------------------------------------------
 			file_name := fmt.Sprintf(fastq_file_pat, indv, smpl)
 			downloadFastQCmd := "wget -O {o:fastq} " + fastq_base_url + file_name
-			downloadFastQ := wf.NewProc("download_fastq_"+indv+"_"+smpl, downloadFastQCmd)
+			downloadFastQ := wf.NewProc("download_fastq"+indv_smpl, downloadFastQCmd)
 			downloadFastQ.SetPathStatic("fastq", file_name)
 
 			fastQFanOut := components.NewFanOut("fastq_fanout")
@@ -104,7 +103,7 @@ func main() {
 			// BWA Align
 			// --------------------------------------------------------------------------------
 			bwaAlignCmd := "bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}"
-			bwaAlign := wf.NewProc("bwa_aln", bwaAlignCmd)
+			bwaAlign := wf.NewProc("bwa_aln"+indv_smpl, bwaAlignCmd)
 			bwaAlign.SetPathExtend("fastq", "sai", ".sai")
 			bwaAlign.In("ref").Connect(refFanOut.Out("bwa_aln_" + indv + "_" + smpl))
 			bwaAlign.In("idxdone").Connect(indexDoneFanOut.Out("bwa_aln_" + indv + "_" + smpl))
@@ -134,13 +133,12 @@ func main() {
 		bwaMerge.In("fq2").Connect(outPorts[indv]["2"]["fastq"])
 		bwaMerge.PP("indv").Connect(indParamGen.Out)
 
-		sink.Connect(bwaMerge.Out("merged"))
+		wf.ConnectLast(bwaMerge.Out("merged"))
 	}
 
 	// --------------------------------------------------------------------------------
 	// Run pipeline
 	// --------------------------------------------------------------------------------
 
-	wf.SetDriver(sink)
 	wf.Run()
 }
