@@ -81,20 +81,19 @@ directly though, since the port objects (see separate section for ports) have
 all the logic to connect to other ports via channels, but it can be good to
 know that they are there, in case you need to do something more advanced.
 
-## Pipeline runner
+## Workflow
 
-The [`PipelineRunner`](https://godoc.org/github.com/scipipe/scipipe#PipelineRunner)
-is a special object in SciPipe, that just takes care of running a pipeline of
-components. 
+The [`Workflow`](https://godoc.org/github.com/scipipe/scipipe#Workflow)
+is a special object in SciPipe, that just takes care of running a set of
+components making up a workflow.
 
-There is not much to say about the pipeline runner other than that it is
-created with `scipipe.NewPipelineRunner()`, that all processes need to be added
-to it in the right order (the last process last) with
-`runner.AddProcesses(processes...)` and that it should be run with
-`runner.Run()`. But this is already covered in the other examples and
+There is not much to say about the workflow component, other than that it is
+created with `scipipe.NewWorkflow(workflowName)`, that all processes need to be added
+to it with `wf.Add(proc)` while the "last", or "driving" process needs to be specified with `wf.SetDriver(driverProcess)`, and that it should be run with
+`wf.Run()`. But this is already covered in the other examples and
 tutorials.
 
-* See [GoDoc for PipelineRunner](https://godoc.org/github.com/scipipe/scipipe#PipelineRunner)
+* See [GoDoc for Workflow](https://godoc.org/github.com/scipipe/scipipe#Workflow)
 
 ## Shell command pattern
 

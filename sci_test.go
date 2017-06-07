@@ -18,12 +18,14 @@ func initTestLogs() {
 
 func TestBasicRun(t *t.T) {
 	initTestLogs()
+	wf := NewWorkflow("TestBasicRunWf")
 
 	t1 := NewFromShell("t1", "echo foo > {o:foo}")
 	assert.IsType(t, t1.Out("foo"), NewFilePort())
 	t1.PathFormatters["foo"] = func(t *SciTask) string {
 		return "foo.txt"
 	}
+	wf.Add(t1)
 
 	t2 := NewFromShell("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	assert.IsType(t, t2.In("foo"), NewFilePort())
@@ -31,25 +33,27 @@ func TestBasicRun(t *t.T) {
 	t2.PathFormatters["bar"] = func(t *SciTask) string {
 		return t.GetInPath("foo") + ".bar.txt"
 	}
-	snk := NewSink()
+	wf.Add(t2)
+	snk := NewSink("sink")
 
 	t2.In("foo").Connect(t1.Out("foo"))
 	snk.Connect(t2.Out("bar"))
+	wf.SetDriver(snk)
 
 	assert.IsType(t, t2.In("foo"), NewFilePort())
 	assert.IsType(t, t2.Out("bar"), NewFilePort())
 
-	pl := NewPipelineRunner()
-	pl.AddProcesses(t1, t2, snk)
-	pl.Run()
+	wf.Run()
 
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
 }
 
 func TestParameterCommand(t *t.T) {
 	initTestLogs()
+	wf := NewWorkflow("TestParameterCommandWf")
 
-	cmb := NewCombinatoricsProcess()
+	cmb := NewCombinatoricsProcess("cmb")
+	wf.Add(cmb)
 
 	// An abc file printer
 	abc := NewFromShell("abc", "echo {p:a} {p:b} {p:c} > {o:out}")
@@ -61,6 +65,7 @@ func TestParameterCommand(t *t.T) {
 			task.Params["c"],
 		)
 	}
+	wf.Add(abc)
 
 	// A printer process
 	prt := NewFromShell("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
@@ -70,10 +75,9 @@ func TestParameterCommand(t *t.T) {
 	abc.ParamPort("b").Connect(cmb.B)
 	abc.ParamPort("c").Connect(cmb.C)
 	prt.In("in").Connect(abc.Out("out"))
+	wf.SetDriver(prt)
 
-	pl := NewPipelineRunner()
-	pl.AddProcesses(cmb, abc, prt)
-	pl.Run()
+	wf.Run()
 
 	// Run tests
 	_, err := os.Stat("/tmp/log.txt")
@@ -97,6 +101,7 @@ func TestProcessWithoutInputsOutputs(t *t.T) {
 func TestDontOverWriteExistingOutputs(t *t.T) {
 	InitLogError()
 	Debug.Println("Starting test TestDontOverWriteExistingOutputs")
+	wf := NewWorkflow("TestDontOverWriteExistingOutputsWf1")
 
 	f := "/tmp/hej.txt"
 
@@ -107,13 +112,13 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	// Run pipeline a first time
 	tsk := NewFromShell("tsk", "echo hej > {o:hej1}")
 	tsk.PathFormatters["hej1"] = func(task *SciTask) string { return f }
+	wf.Add(tsk)
 
 	prt := NewFromShell("prt", "echo {i:in1} Done!")
 	prt.In("in1").Connect(tsk.Out("hej1"))
+	wf.SetDriver(prt)
 
-	pl := NewPipelineRunner()
-	pl.AddProcesses(tsk, prt)
-	pl.Run()
+	wf.Run()
 
 	// Assert file DO exist after running
 	fiBef, e2 := os.Stat(f)
@@ -126,16 +131,18 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	time.Sleep(1 * time.Millisecond)
 
 	Debug.Println("Try running the same workflow again ...")
+	wf = NewWorkflow("TestDontOverWriteExistingOutputsWf2")
+
 	// Run again with different output
 	tsk = NewFromShell("tsk", "echo hej > {o:hej2}")
 	tsk.PathFormatters["hej2"] = func(task *SciTask) string { return f }
+	wf.Add(tsk)
 
 	prt = NewFromShell("prt", "echo {i:in2} Done!")
 	prt.In("in2").Connect(tsk.Out("hej2"))
+	wf.SetDriver(prt)
 
-	pl = NewPipelineRunner()
-	pl.AddProcesses(tsk, prt)
-	pl.Run()
+	wf.Run()
 
 	// Assert exists
 	fiAft, e3 := os.Stat(f)
@@ -160,7 +167,7 @@ func TestSendsOrderedOutputs(t *t.T) {
 		fnames = append(fnames, fmt.Sprintf("/tmp/f%d.txt", i))
 	}
 
-	fq := NewIPGen(fnames...)
+	ig := NewIPGen("ipgen", fnames...)
 
 	fc := NewFromShell("fc", "echo {i:in} > {o:out}")
 	sl := NewFromShell("sl", "cat {i:in} > {o:out}")
@@ -168,11 +175,11 @@ func TestSendsOrderedOutputs(t *t.T) {
 	fc.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") }
 	sl.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") + ".copy.txt" }
 
-	fc.In("in").Connect(fq.Out)
+	fc.In("in").Connect(ig.Out)
 	sl.In("in").Connect(fc.Out("out"))
 	sl.Out("out").Chan = make(chan *InformationPacket, BUFSIZE)
 
-	go fq.Run()
+	go ig.Run()
 	go fc.Run()
 	go sl.Run()
 
@@ -196,26 +203,30 @@ func TestSendsOrderedOutputs(t *t.T) {
 // Test that streaming works
 func TestStreaming(t *t.T) {
 	InitLogWarning()
+	wf := NewWorkflow("TestStreamingWf")
 
 	// Init processes
 	ls := NewFromShell("ls", "ls -l / > {os:lsl}")
 	ls.PathFormatters["lsl"] = func(task *SciTask) string {
 		return "/tmp/lsl.txt"
 	}
+	wf.Add(ls)
+
 	grp := NewFromShell("grp", "grep etc {i:in} > {o:grepped}")
 	grp.PathFormatters["grepped"] = func(task *SciTask) string {
 		return task.GetInPath("in") + ".grepped.txt"
 	}
-	snk := NewSink()
+	wf.Add(grp)
+
+	snk := NewSink("sink")
+	wf.SetDriver(snk)
 
 	// Connect
 	grp.In("in").Connect(ls.Out("lsl"))
 	snk.Connect(grp.Out("grepped"))
 
 	// Run
-	pl := NewPipelineRunner()
-	pl.AddProcesses(ls, grp, snk)
-	pl.Run()
+	wf.Run()
 
 	// Assert that a file exists
 	_, err1 := os.Stat("/tmp/lsl.txt.fifo")
@@ -239,27 +250,27 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 	exec.Command("bash", "-c", "echo 2 > /tmp/file2.txt").CombinedOutput()
 	exec.Command("bash", "-c", "echo 3 > /tmp/file3.txt").CombinedOutput()
 
-	plr := NewPipelineRunner()
+	wf := NewWorkflow("TestSubStreamReduceInPlaceHolderWf")
 
 	// Create some input files
 
-	ipq := NewIPGen("/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
-	plr.AddProcess(ipq)
+	ipq := NewIPGen("ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
+	wf.Add(ipq)
 
 	sts := NewStreamToSubStream()
-	plr.AddProcess(sts)
+	wf.Add(sts)
 	Connect(sts.In, ipq.Out)
 
 	cat := NewFromShell("concatenate", "cat {i:infiles:r: } > {o:merged}")
 	cat.SetPathStatic("merged", "/tmp/substream_merged.txt")
-	plr.AddProcess(cat)
+	wf.Add(cat)
 	Connect(cat.In("infiles"), sts.OutSubStream)
 
-	snk := NewSink()
-	plr.AddProcess(snk)
+	snk := NewSink("sink")
+	wf.SetDriver(snk)
 	snk.Connect(cat.Out("merged"))
 
-	plr.Run()
+	wf.Run()
 
 	_, err1 := os.Stat("/tmp/file1.txt")
 	assert.Nil(t, err1, "File missing!")
@@ -279,16 +290,18 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 // Helper processes
 type CombinatoricsProcess struct {
 	Process
-	A *ParamPort
-	B *ParamPort
-	C *ParamPort
+	name string
+	A    *ParamPort
+	B    *ParamPort
+	C    *ParamPort
 }
 
-func NewCombinatoricsProcess() *CombinatoricsProcess {
+func NewCombinatoricsProcess(name string) *CombinatoricsProcess {
 	return &CombinatoricsProcess{
-		A: NewParamPort(),
-		B: NewParamPort(),
-		C: NewParamPort(),
+		A:    NewParamPort(),
+		B:    NewParamPort(),
+		C:    NewParamPort(),
+		name: name,
 	}
 }
 
@@ -306,6 +319,10 @@ func (proc *CombinatoricsProcess) Run() {
 			}
 		}
 	}
+}
+
+func (proc *CombinatoricsProcess) Name() string {
+	return proc.name
 }
 
 func (proc *CombinatoricsProcess) IsConnected() bool { return true }
@@ -333,6 +350,10 @@ func (proc *StreamToSubStream) Run() {
 	Connect(proc.In, subStreamIP.SubStream)
 
 	proc.OutSubStream.Chan <- subStreamIP
+}
+
+func (proc *StreamToSubStream) Name() string {
+	return "StreamToSubstream"
 }
 
 func (proc *StreamToSubStream) IsConnected() bool {

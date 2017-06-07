@@ -1,24 +1,24 @@
 package main
 
-import sp "github.com/scipipe/scipipe"
+import . "github.com/scipipe/scipipe"
 
 func main() {
-	rnr := sp.NewPipelineRunner()
+	wfl := NewWorkflow("minimalwf")
 
 	// --------------------------------
 	// Initialize processes and add to runner
 	// --------------------------------
 
-	foo := sp.NewFromShell("fooer", "echo foo > {o:foo}")
+	foo := NewFromShell("fooer", "echo foo > {o:foo}")
 	foo.SetPathStatic("foo", "foo.txt")
-	rnr.AddProcess(foo)
+	wfl.Add(foo)
 
-	f2b := sp.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	f2b := NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	f2b.SetPathExtend("foo", "bar", ".bar.txt")
-	rnr.AddProcess(f2b)
+	wfl.Add(f2b)
 
-	snk := sp.NewSink()
-	rnr.AddProcess(snk)
+	snk := NewSink("sink")
+	wfl.SetDriver(snk)
 
 	// --------------------------------
 	// Connect workflow dependency network
@@ -28,8 +28,8 @@ func main() {
 	snk.Connect(f2b.Out("bar"))
 
 	// --------------------------------
-	// rnr the pipeline!
+	// Run the workflow!
 	// --------------------------------
 
-	rnr.Run()
+	wfl.Run()
 }

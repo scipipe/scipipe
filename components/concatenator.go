@@ -4,17 +4,23 @@ import "github.com/scipipe/scipipe"
 
 type Concatenator struct {
 	scipipe.Process
+	name    string
 	In      *scipipe.FilePort
 	Out     *scipipe.FilePort
 	OutPath string
 }
 
-func NewConcatenator(outPath string) *Concatenator {
+func NewConcatenator(name string, outPath string) *Concatenator {
 	return &Concatenator{
+		name:    name,
 		In:      scipipe.NewFilePort(),
 		Out:     scipipe.NewFilePort(),
 		OutPath: outPath,
 	}
+}
+
+func (proc *Concatenator) Name() string {
+	return proc.name
 }
 
 func (proc *Concatenator) Run() {

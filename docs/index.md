@@ -90,7 +90,7 @@ func main() {
         helloWriter := sp.NewFromShell("helloWriter", "echo 'Hello ' > {o:hellofile}")
         worldAppender := sp.NewFromShell("worldAppender", "echo $(cat {i:infile}) World >> {o:worldfile}")
         // Create a sink, that will just receive the final outputs
-        sink := sp.NewSink()
+        sink := sp.NewSink("sink")
 
         // Configure output file path formatters for the processes created above
         helloWriter.SetPathStatic("hellofile", "hello.txt")
@@ -101,9 +101,10 @@ func main() {
         sink.Connect(worldAppender.Out("worldfile"))
 
         // Create a pipeline runner, add processes, and run
-        pipeline := sp.NewPipelineRunner()
-        pipeline.AddProcesses(helloWriter, worldAppender, sink)
-        pipeline.Run()
+        wf := sp.NewWorkflow()
+        wf.Add(helloWriter, worldAppender)
+        wf.SetDriver(sink) // The driver process needs to be specified, since needs to be run in main thread
+        wf.Run()
 }
 ```
 

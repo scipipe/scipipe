@@ -8,41 +8,47 @@ import (
 // without doing anything with them
 type Sink struct {
 	Process
+	name    string
 	inPorts []*FilePort
 }
 
 // Instantiate a Sink component
-func NewSink() (s *Sink) {
+func NewSink(name string) (s *Sink) {
 	return &Sink{
+		name:    name,
 		inPorts: []*FilePort{},
 	}
 }
 
-func (proc *Sink) IsConnected() bool {
-	if len(proc.inPorts) > 0 {
+func (p *Sink) IsConnected() bool {
+	if len(p.inPorts) > 0 {
 		return true
 	} else {
 		return false
 	}
 }
 
-func (proc *Sink) Connect(outPort *FilePort) {
+func (p *Sink) Connect(outPort *FilePort) {
 	newInPort := NewFilePort()
 	newInPort.Connect(outPort)
-	proc.inPorts = append(proc.inPorts, newInPort)
+	p.inPorts = append(p.inPorts, newInPort)
+}
+
+func (p *Sink) Name() string {
+	return p.name
 }
 
 // Execute the Sink component
-func (proc *Sink) Run() {
+func (p *Sink) Run() {
 	ok := true
 	var ft *InformationPacket
-	for len(proc.inPorts) > 0 {
+	for len(p.inPorts) > 0 {
 	loop:
-		for i, inp := range proc.inPorts {
+		for i, inp := range p.inPorts {
 			select {
 			case ft, ok = <-inp.Chan:
 				if !ok {
-					proc.deleteInPortAtKey(i)
+					p.deleteInPortAtKey(i)
 					break loop
 				}
 				Debug.Println("Received file in sink: ", ft.GetPath())

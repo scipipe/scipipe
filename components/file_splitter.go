@@ -9,17 +9,23 @@ import (
 
 type FileSplitter struct {
 	scipipe.Process
+	name          string
 	InFile        *scipipe.FilePort
 	OutSplitFile  *scipipe.FilePort
 	LinesPerSplit int
 }
 
-func NewFileSplitter(linesPerSplit int) *FileSplitter {
+func NewFileSplitter(name string, linesPerSplit int) *FileSplitter {
 	return &FileSplitter{
+		name:          name,
 		InFile:        scipipe.NewFilePort(),
 		OutSplitFile:  scipipe.NewFilePort(),
 		LinesPerSplit: linesPerSplit,
 	}
+}
+
+func (proc *FileSplitter) Name() string {
+	return proc.name
 }
 
 func (proc *FileSplitter) Run() {

@@ -5,25 +5,24 @@ import (
 )
 
 func main() {
-	sci.InitLogInfo()
-	plr := sci.NewPipelineRunner()
+	wfl := sci.NewWorkflow("wrapperwf")
 
 	// Fooer
-	foo := NewFooer()
-	plr.AddProcess(foo)
+	foo := NewFooer("fooer")
+	wfl.Add(foo)
 
 	// Foo2barer
-	f2b := NewFoo2Barer()
+	f2b := NewFoo2Barer("foo2barer")
 	f2b.InFoo().Connect(foo.OutFoo())
-	plr.AddProcess(f2b)
+	wfl.Add(f2b)
 
 	// Sink
-	snk := sci.NewSink()
+	snk := sci.NewSink("sink")
 	snk.Connect(f2b.OutBar())
-	plr.AddProcess(snk)
+	wfl.SetDriver(snk)
 
 	// Run
-	plr.Run()
+	wfl.Run()
 }
 
 // ------------------------------------------------
@@ -35,12 +34,13 @@ func main() {
 
 type Fooer struct {
 	*sci.SciProcess
+	name string
 }
 
-func NewFooer() *Fooer {
+func NewFooer(name string) *Fooer {
 	innerFoo := sci.NewFromShell("fooer", "echo foo > {o:foo}")
 	innerFoo.SetPathStatic("foo", "foo.txt")
-	return &Fooer{innerFoo}
+	return &Fooer{innerFoo, name}
 }
 
 // Define static ports
@@ -54,12 +54,13 @@ func (p *Fooer) OutFoo() *sci.FilePort {
 
 type Foo2Barer struct {
 	*sci.SciProcess
+	name string
 }
 
-func NewFoo2Barer() *Foo2Barer {
+func NewFoo2Barer(name string) *Foo2Barer {
 	innerFoo2Bar := sci.NewFromShell("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	innerFoo2Bar.SetPathExtend("foo", "bar", ".bar.txt")
-	return &Foo2Barer{innerFoo2Bar}
+	return &Foo2Barer{innerFoo2Bar, name}
 }
 
 // Define static ports

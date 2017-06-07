@@ -10,7 +10,7 @@ func main() {
 		return "hej.txt"
 	})
 	p.Prepend = "echo"
-	snk := sp.NewSink()
+	snk := sp.NewSink("sink")
 	snk.Connect(p.Out("out"))
 	go p.Run()
 	snk.Run()

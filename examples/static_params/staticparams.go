@@ -7,7 +7,8 @@ import (
 
 func main() {
 	// Init
-	fls := NewFileSender()
+	wf := sci.NewWorkflow("staticparams_wf")
+	fls := NewFileSender("filesender")
 
 	params := map[string]string{"a": "a1", "b": "b1", "c": "c1"}
 
@@ -23,11 +24,11 @@ func main() {
 	prt.In("in").Connect(abc.Out("out"))
 
 	// Pipe it up
-	pl := sci.NewPipelineRunner()
-	pl.AddProcesses(fls, abc, prt)
+	wf.AddProcs(fls, abc)
+	wf.SetDriver(prt)
 
 	// Run
-	pl.Run()
+	wf.Run()
 }
 
 // --------------------------------
@@ -36,22 +37,28 @@ func main() {
 
 type FileSender struct {
 	sci.Process
-	Out *sci.FilePort
+	name string
+	Out  *sci.FilePort
 }
 
-func NewFileSender() *FileSender {
+func NewFileSender(name string) *FileSender {
 	return &FileSender{
-		Out: sci.NewFilePort(),
+		name: name,
+		Out:  sci.NewFilePort(),
 	}
 }
 
-func (proc *FileSender) Run() {
-	defer proc.Out.Close()
+func (p *FileSender) Run() {
+	defer p.Out.Close()
 	for _, fn := range []string{"file1.txt", "file2.txt", "file3.txt"} {
-		proc.Out.Chan <- sci.NewInformationPacket(fn)
+		p.Out.Chan <- sci.NewInformationPacket(fn)
 	}
 }
 
-func (proc *FileSender) IsConnected() bool {
-	return proc.Out.IsConnected()
+func (p *FileSender) Name() string {
+	return p.name
+}
+
+func (p *FileSender) IsConnected() bool {
+	return p.Out.IsConnected()
 }

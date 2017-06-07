@@ -7,13 +7,15 @@ import "github.com/scipipe/scipipe"
 // are sent on its substream.
 type StreamToSubStream struct {
 	scipipe.Process
+	name         string
 	In           *scipipe.FilePort
 	OutSubStream *scipipe.FilePort
 }
 
 // Instantiate a new StreamToSubStream
-func NewStreamToSubStream() *StreamToSubStream {
+func NewStreamToSubStream(name string) *StreamToSubStream {
 	return &StreamToSubStream{
+		name:         name,
 		In:           scipipe.NewFilePort(),
 		OutSubStream: scipipe.NewFilePort(),
 	}
@@ -27,6 +29,10 @@ func (p *StreamToSubStream) Run() {
 	subStreamIP.SubStream = p.In
 
 	p.OutSubStream.Chan <- subStreamIP
+}
+
+func (p *StreamToSubStream) Name() string {
+	return p.name
 }
 
 func (p *StreamToSubStream) IsConnected() bool {

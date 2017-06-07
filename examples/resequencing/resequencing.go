@@ -15,7 +15,7 @@ package main
 import (
 	"fmt"
 
-	sp "github.com/scipipe/scipipe"
+	. "github.com/scipipe/scipipe"
 	"github.com/scipipe/scipipe/components"
 )
 
@@ -36,64 +36,66 @@ var (
 
 func main() {
 
+	InitLogDebug()
+
 	// --------------------------------------------------------------------------------
 	// Initialize pipeline runner
 	// --------------------------------------------------------------------------------
 
-	prun := sp.NewPipelineRunner()
-	sink := sp.NewSink()
+	wf := NewWorkflow("resequencing_wf")
+	sink := NewSink("sink")
 
 	// --------------------------------------------------------------------------------
 	// Download Reference Genome
 	// --------------------------------------------------------------------------------
 	downloadRefCmd := "wget -O {o:outfile} " + ref_base_url + ref_file_gz
-	downloadRef := prun.NewFromShell("download_ref", downloadRefCmd)
+	downloadRef := wf.NewFromShell("download_ref", downloadRefCmd)
 	downloadRef.SetPathStatic("outfile", ref_file_gz)
 
 	// --------------------------------------------------------------------------------
 	// Unzip ref file
 	// --------------------------------------------------------------------------------
 	ungzipRefCmd := "gunzip -c {i:in} > {o:out}"
-	ungzipRef := prun.NewFromShell("ugzip_ref", ungzipRefCmd)
+	ungzipRef := wf.NewFromShell("ugzip_ref", ungzipRefCmd)
 	ungzipRef.SetPathReplace("in", "out", ".gz", "")
 	ungzipRef.In("in").Connect(downloadRef.Out("outfile"))
 
 	// Create a FanOut so multiple downstream processes can read from the
 	// ungzip process
-	refFanOut := components.NewFanOut()
+	refFanOut := components.NewFanOut("ref_fanout")
 	refFanOut.InFile.Connect(ungzipRef.Out("out"))
-	prun.AddProcess(refFanOut)
+	wf.Add(refFanOut)
 
 	// --------------------------------------------------------------------------------
 	// Index Reference Genome
 	// --------------------------------------------------------------------------------
-	indexRef := prun.NewFromShell("index_ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
+	indexRef := wf.NewFromShell("index_ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
 	indexRef.SetPathExtend("index", "done", ".indexed")
 	indexRef.In("index").Connect(refFanOut.Out("index_ref"))
 
-	indexDoneFanOut := components.NewFanOut()
+	indexDoneFanOut := components.NewFanOut("indexdone_fanout")
 	indexDoneFanOut.InFile.Connect(indexRef.Out("done"))
-	prun.AddProcess(indexDoneFanOut)
+	wf.Add(indexDoneFanOut)
 
 	// Create (multi-level) maps where we can gather outports from processes
 	// for each for loop iteration and access them in the merge step later
-	outPorts := map[string]map[string]map[string]*sp.FilePort{}
+	outPorts := map[string]map[string]map[string]*FilePort{}
 	for _, indv := range individuals {
-		outPorts[indv] = map[string]map[string]*sp.FilePort{}
+		outPorts[indv] = map[string]map[string]*FilePort{}
 		for _, smpl := range samples {
-			outPorts[indv][smpl] = map[string]*sp.FilePort{}
+			outPorts[indv][smpl] = map[string]*FilePort{}
 
 			// --------------------------------------------------------------------------------
 			// Download FastQ component
 			// --------------------------------------------------------------------------------
 			file_name := fmt.Sprintf(fastq_file_pat, indv, smpl)
 			downloadFastQCmd := "wget -O {o:fastq} " + fastq_base_url + file_name
-			downloadFastQ := prun.NewFromShell("download_fastq_"+indv+"_"+smpl, downloadFastQCmd)
+			downloadFastQ := wf.NewFromShell("download_fastq_"+indv+"_"+smpl, downloadFastQCmd)
 			downloadFastQ.SetPathStatic("fastq", file_name)
 
-			fastQFanOut := components.NewFanOut()
+			fastQFanOut := components.NewFanOut("fastq_fanout")
 			fastQFanOut.InFile.Connect(downloadFastQ.Out("fastq"))
-			prun.AddProcess(fastQFanOut)
+			wf.Add(fastQFanOut)
 
 			// Save outPorts for later use
 			outPorts[indv][smpl]["fastq"] = fastQFanOut.Out("merg")
@@ -102,7 +104,7 @@ func main() {
 			// BWA Align
 			// --------------------------------------------------------------------------------
 			bwaAlignCmd := "bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}"
-			bwaAlign := prun.NewFromShell("bwa_aln", bwaAlignCmd)
+			bwaAlign := wf.NewFromShell("bwa_aln", bwaAlignCmd)
 			bwaAlign.SetPathExtend("fastq", "sai", ".sai")
 			bwaAlign.In("ref").Connect(refFanOut.Out("bwa_aln_" + indv + "_" + smpl))
 			bwaAlign.In("idxdone").Connect(indexDoneFanOut.Out("bwa_aln_" + indv + "_" + smpl))
@@ -118,12 +120,12 @@ func main() {
 		// This one is is needed so bwaMergecan take a proper parameter for
 		// individual, which it uses to generate output paths
 		indParamGen := components.NewStringGen(indv)
-		prun.AddProcess(indParamGen)
+		wf.Add(indParamGen)
 
 		// bwa sampe process
 		bwaMergeCmd := "bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}"
-		bwaMerge := prun.NewFromShell("merge_"+indv, bwaMergeCmd)
-		bwaMerge.SetPathCustom("merged", func(t *sp.SciTask) string { return fmt.Sprintf("%s.merged.sam", t.Params["indv"]) })
+		bwaMerge := wf.NewFromShell("merge_"+indv, bwaMergeCmd)
+		bwaMerge.SetPathCustom("merged", func(t *SciTask) string { return fmt.Sprintf("%s.merged.sam", t.Params["indv"]) })
 		bwaMerge.In("ref").Connect(refFanOut.Out("bwa_merge_" + indv))
 		bwaMerge.In("refdone").Connect(indexDoneFanOut.Out("bwa_merge_" + indv))
 		bwaMerge.In("sai1").Connect(outPorts[indv]["1"]["sai"])
@@ -139,6 +141,6 @@ func main() {
 	// Run pipeline
 	// --------------------------------------------------------------------------------
 
-	prun.AddProcess(sink)
-	prun.Run()
+	wf.SetDriver(sink)
+	wf.Run()
 }

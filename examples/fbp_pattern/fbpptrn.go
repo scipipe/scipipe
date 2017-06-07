@@ -19,15 +19,15 @@ func main() {
 	fmt.Println("Starting ", numThreads, " threads ...")
 	runtime.GOMAXPROCS(numThreads)
 
-	pipeline := sp.NewPipelineRunner()
+	wf := sp.NewWorkflow("fbpptrn_wf")
 
 	// Init processes
-	hisay := NewHiSayer()
-	split := NewStringSplitter()
-	lower := NewLowerCaser()
-	upper := NewUpperCaser()
-	zippr := NewZipper()
-	prntr := NewPrinter()
+	hisay := NewHiSayer("hisay")
+	split := NewStringSplitter("split")
+	lower := NewLowerCaser("lower")
+	upper := NewUpperCaser("upper")
+	zippr := NewZipper("zippr")
+	prntr := NewPrinter("printr")
 
 	// Network definition *** This is where to look! ***
 	split.In = hisay.Out
@@ -37,18 +37,27 @@ func main() {
 	zippr.In2 = upper.Out
 	prntr.In = zippr.Out
 
-	pipeline.AddProcesses(hisay, split, lower, upper, zippr, prntr)
-	pipeline.Run()
+	wf.AddProcs(hisay, split, lower, upper, zippr)
+	wf.SetDriver(prntr)
+	wf.Run()
 }
 
 // ======= HiSayer =======
 
 type hiSayer struct {
-	Out chan string
+	name string
+	Out  chan string
 }
 
-func NewHiSayer() *hiSayer {
-	return &hiSayer{Out: make(chan string, BUFSIZE)}
+func NewHiSayer(name string) *hiSayer {
+	return &hiSayer{
+		name: name,
+		Out:  make(chan string, BUFSIZE),
+	}
+}
+
+func (proc *hiSayer) Name() string {
+	return proc.name
 }
 
 func (proc *hiSayer) Run() {
@@ -63,16 +72,21 @@ func (proc *hiSayer) IsConnected() bool { return true }
 // ======= StringSplitter =======
 
 type stringSplitter struct {
+	name     string
 	In       chan string
 	OutLeft  chan string
 	OutRight chan string
 }
 
-func NewStringSplitter() *stringSplitter {
+func NewStringSplitter(name string) *stringSplitter {
 	return &stringSplitter{
+		name:     name,
 		OutLeft:  make(chan string, BUFSIZE),
 		OutRight: make(chan string, BUFSIZE),
 	}
+}
+func (proc *stringSplitter) Name() string {
+	return proc.name
 }
 
 func (proc *stringSplitter) Run() {
@@ -90,12 +104,16 @@ func (proc *stringSplitter) IsConnected() bool { return true }
 // ======= LowerCaser =======
 
 type lowerCaser struct {
-	In  chan string
-	Out chan string
+	name string
+	In   chan string
+	Out  chan string
 }
 
-func NewLowerCaser() *lowerCaser {
-	return &lowerCaser{Out: make(chan string, BUFSIZE)}
+func NewLowerCaser(name string) *lowerCaser {
+	return &lowerCaser{name: name, Out: make(chan string, BUFSIZE)}
+}
+func (proc *lowerCaser) Name() string {
+	return proc.name
 }
 
 func (proc *lowerCaser) Run() {
@@ -110,12 +128,16 @@ func (proc *lowerCaser) IsConnected() bool { return true }
 // ======= UpperCaser =======
 
 type upperCaser struct {
-	In  chan string
-	Out chan string
+	name string
+	In   chan string
+	Out  chan string
 }
 
-func NewUpperCaser() *upperCaser {
-	return &upperCaser{Out: make(chan string, BUFSIZE)}
+func NewUpperCaser(name string) *upperCaser {
+	return &upperCaser{name: name, Out: make(chan string, BUFSIZE)}
+}
+func (proc *upperCaser) Name() string {
+	return proc.name
 }
 
 func (proc *upperCaser) Run() {
@@ -130,13 +152,17 @@ func (proc *upperCaser) IsConnected() bool { return true }
 // ======= Merger =======
 
 type zipper struct {
-	In1 chan string
-	In2 chan string
-	Out chan string
+	name string
+	In1  chan string
+	In2  chan string
+	Out  chan string
 }
 
-func NewZipper() *zipper {
-	return &zipper{Out: make(chan string, BUFSIZE)}
+func NewZipper(name string) *zipper {
+	return &zipper{name: name, Out: make(chan string, BUFSIZE)}
+}
+func (proc *zipper) Name() string {
+	return proc.name
 }
 
 func (proc *zipper) Run() {
@@ -156,11 +182,15 @@ func (proc *zipper) IsConnected() bool { return true }
 // ======= Printer =======
 
 type printer struct {
-	In chan string
+	name string
+	In   chan string
 }
 
-func NewPrinter() *printer {
-	return &printer{}
+func NewPrinter(name string) *printer {
+	return &printer{name: name}
+}
+func (proc *printer) Name() string {
+	return proc.name
 }
 
 func (proc *printer) Run() {

@@ -8,7 +8,7 @@ import (
 
 func main() {
 	runtime.GOMAXPROCS(4)
-	cmb := NewCombinatoricsTask()
+	cmb := NewCombinatoricsGen("combgen")
 
 	// An abc file printer
 	abc := sci.NewFromShell("abc", "echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
@@ -32,40 +32,47 @@ func main() {
 	abc.ParamPort("c").Connect(cmb.C)
 	prt.In("in").Connect(abc.Out("out"))
 
-	pl := sci.NewPipelineRunner()
-	pl.AddProcesses(cmb, abc, prt)
-	pl.Run()
+	wf := sci.NewWorkflow("combwf")
+	wf.AddProcs(cmb, abc)
+	wf.SetDriver(prt)
+	wf.Run()
 }
 
-type CombinatoricsTask struct {
+type CombinatoricsGen struct {
 	sci.Process
-	A *sci.ParamPort
-	B *sci.ParamPort
-	C *sci.ParamPort
+	name string
+	A    *sci.ParamPort
+	B    *sci.ParamPort
+	C    *sci.ParamPort
 }
 
-func NewCombinatoricsTask() *CombinatoricsTask {
-	return &CombinatoricsTask{
-		A: sci.NewParamPort(),
-		B: sci.NewParamPort(),
-		C: sci.NewParamPort(),
+func NewCombinatoricsGen(name string) *CombinatoricsGen {
+	return &CombinatoricsGen{
+		name: name,
+		A:    sci.NewParamPort(),
+		B:    sci.NewParamPort(),
+		C:    sci.NewParamPort(),
 	}
 }
 
-func (proc *CombinatoricsTask) Run() {
-	defer proc.A.Close()
-	defer proc.B.Close()
-	defer proc.C.Close()
+func (p *CombinatoricsGen) Name() string {
+	return p.name
+}
+
+func (p *CombinatoricsGen) Run() {
+	defer p.A.Close()
+	defer p.B.Close()
+	defer p.C.Close()
 
 	for _, a := range []string{"a1", "a2", "a3"} {
 		for _, b := range []string{"b1", "b2", "b3"} {
 			for _, c := range []string{"c1", "c2", "c3"} {
-				proc.A.Chan <- a
-				proc.B.Chan <- b
-				proc.C.Chan <- c
+				p.A.Chan <- a
+				p.B.Chan <- b
+				p.C.Chan <- c
 			}
 		}
 	}
 }
 
-func (proc *CombinatoricsTask) IsConnected() bool { return true }
+func (p *CombinatoricsGen) IsConnected() bool { return true }

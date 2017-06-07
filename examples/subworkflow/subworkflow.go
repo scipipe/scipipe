@@ -5,15 +5,21 @@ package main
 import sp "github.com/scipipe/scipipe"
 
 func main() {
-	fbn := NewFooBarSubWorkflow()
-	snk := sp.NewSink()
+	// Main workflow
+	wfl := sp.NewWorkflow("foobar_wf")
 
-	run := sp.NewPipelineRunner()
-	run.AddProcesses(fbn, snk)
+	// Sub-workflow
+	fbn := NewFooBarSubWorkflow("foobar_subwf")
+	wfl.Add(fbn)
 
+	// Sink
+	snk := sp.NewSink("sink")
+	wfl.SetDriver(snk)
+
+	// Connect
 	snk.Connect(fbn.Out)
 
-	run.Run()
+	wfl.Run()
 }
 
 // ------------------------------------------------
@@ -22,12 +28,14 @@ func main() {
 
 type FooBarSubWorkflow struct {
 	sp.Process
+	name  string
 	Procs map[string]*sp.SciProcess
 	Out   *sp.FilePort
 }
 
-func NewFooBarSubWorkflow() *FooBarSubWorkflow {
+func NewFooBarSubWorkflow(name string) *FooBarSubWorkflow {
 	fbn := &FooBarSubWorkflow{
+		name:  name,
 		Procs: make(map[string]*sp.SciProcess),
 	}
 
@@ -44,6 +52,10 @@ func NewFooBarSubWorkflow() *FooBarSubWorkflow {
 	fbn.Out = fbn.Procs["f2b"].Out("bar")
 
 	return fbn
+}
+
+func (wf *FooBarSubWorkflow) Name() string {
+	return wf.name
 }
 
 func (wf *FooBarSubWorkflow) Run() {

@@ -16,7 +16,7 @@ func main() {
     helloWriter := sp.NewFromShell("helloWriter", "echo 'Hello ' > {o:hellofile}")
     worldAppender := sp.NewFromShell("worldAppender", "echo $(cat {i:infile}) World >> {o:worldfile}")
     // Create a sink, that will just receive the final outputs
-    sink := sp.NewSink()
+    sink := sp.NewSink("sink")
 
     // Configure output file path formatters for the processes created above
     helloWriter.SetPathStatic("hellofile", "hello.txt")
@@ -27,9 +27,10 @@ func main() {
     sink.Connect(worldAppender.Out("worldfile"))
 
     // Create a pipeline runner, add processes, and run
-    pipeline := sp.NewPipelineRunner()
-    pipeline.AddProcesses(helloWriter, worldAppender, sink)
-    pipeline.Run()
+    wf := sp.NewWorkflow("example_workflow")
+    wf.Add(helloWriter, worldAppender)
+    wf.SetDriver(sink)
+    wf.Run()
 }
 ```
 
@@ -43,7 +44,7 @@ actually doing.
 helloWriter := sp.NewFromShell("helloWriter", "echo 'Hello ' > {o:hellofile}")
 worldAppender := sp.NewFromShell("worldAppender", "echo $(cat {i:infile}) World >> {o:worldfile}")
 // Create a sink, that will just receive the final outputs
-sink := sp.NewSink()
+sink := sp.NewSink("sink")
 ```
 
 Here we are initializing three new processes, two of them based on a shell
@@ -147,16 +148,18 @@ any port).
 
 ## Running the pipeline
 
-So, the final part probably explains itself, but the pipeline runner component
-is a very simple one that will start each component except the last one in a
-separate go-routine, while the last process will be run in the main go-routine,
-so as to block until the pipeline has finished.
+So, the final part probably explains itself, but the workflow component is a
+relatively simple one that will start each component except the last one in a
+separate go-routine, except for the one set as "driver" (often a simple "sink"
+process), which will be run in the main go-routine, so as to block until the
+pipeline has finished.
 
 ```go
 // Create a pipeline runner, add processes, and run
-pipeline := sp.NewPipelineRunner()
-pipeline.AddProcesses(helloWriter, worldAppender, sink)
-pipeline.Run()
+wf := sp.NewWorkflow()
+wf.Add(helloWriter, worldAppender)
+wf.SetDriver(sink)
+wf.Run()
 ```
 ## Summary
 

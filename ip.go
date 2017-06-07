@@ -181,13 +181,15 @@ func (ip *InformationPacket) WriteAuditLogToFile() {
 // return instantiated (generated) InformationPacket on its Out-port, when run.
 type IPGen struct {
 	Process
+	name      string
 	Out       *FilePort
 	FilePaths []string
 }
 
 // Initialize a new IPGen component from a list of file paths
-func NewIPGen(filePaths ...string) (fq *IPGen) {
+func NewIPGen(name string, filePaths ...string) (fq *IPGen) {
 	fq = &IPGen{
+		name:      name,
 		Out:       NewFilePort(),
 		FilePaths: filePaths,
 	}
@@ -195,16 +197,20 @@ func NewIPGen(filePaths ...string) (fq *IPGen) {
 }
 
 // Execute the IPGen, returning instantiated InformationPacket
-func (ipq *IPGen) Run() {
-	defer ipq.Out.Close()
-	for _, fp := range ipq.FilePaths {
-		ipq.Out.Chan <- NewInformationPacket(fp)
+func (ipg *IPGen) Run() {
+	defer ipg.Out.Close()
+	for _, fp := range ipg.FilePaths {
+		ipg.Out.Chan <- NewInformationPacket(fp)
 	}
 }
 
+func (ipg *IPGen) Name() string {
+	return ipg.name
+}
+
 // Check if the IPGen outport is connected
-func (ipq *IPGen) IsConnected() bool {
-	return ipq.Out.IsConnected()
+func (ipg *IPGen) IsConnected() bool {
+	return ipg.Out.IsConnected()
 }
 
 func (snk *Sink) deleteInPortAtKey(i int) {
