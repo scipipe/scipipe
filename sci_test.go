@@ -256,7 +256,6 @@ func TestStreaming(t *t.T) {
 }
 
 func TestSubStreamReduceInPlaceHolder(t *t.T) {
-	InitLogWarning()
 
 	exec.Command("bash", "-c", "echo 1 > /tmp/file1.txt").CombinedOutput()
 	exec.Command("bash", "-c", "echo 2 > /tmp/file2.txt").CombinedOutput()
@@ -266,21 +265,20 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 
 	// Create some input files
 
-	ipq := NewIPGen("ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
-	wf.Add(ipq)
+	ipg := NewIPGen("ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
+	wf.Add(ipg)
 
 	sts := NewStreamToSubStream()
+	sts.In.Connect(ipg.Out)
 	wf.Add(sts)
-	Connect(sts.In, ipq.Out)
 
-	cat := NewProc("concatenate", "cat {i:infiles:r: } > {o:merged}")
+	cat := wf.NewProc("concatenate", "cat {i:infiles:r: } > {o:merged}")
 	cat.SetPathStatic("merged", "/tmp/substream_merged.txt")
-	wf.Add(cat)
-	Connect(cat.In("infiles"), sts.OutSubStream)
+	cat.In("infiles").Connect(sts.OutSubStream)
 
 	snk := NewSink("sink")
-	wf.SetSink(snk)
 	snk.Connect(cat.Out("merged"))
+	wf.SetSink(snk)
 
 	wf.Run()
 
@@ -395,7 +393,7 @@ func (proc *StreamToSubStream) Run() {
 	defer proc.OutSubStream.Close()
 
 	subStreamIP := NewInformationPacket("")
-	Connect(proc.In, subStreamIP.SubStream)
+	subStreamIP.SubStream = proc.In
 
 	proc.OutSubStream.Send(subStreamIP)
 }
