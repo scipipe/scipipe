@@ -160,6 +160,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 // spawned to work in parallel.
 func TestSendsOrderedOutputs(t *t.T) {
 	initTestLogs()
+	//InitLogDebug()
 
 	fnames := []string{}
 	for i := 1; i <= 10; i++ {
@@ -169,28 +170,40 @@ func TestSendsOrderedOutputs(t *t.T) {
 	ig := NewIPGen("ipgen", fnames...)
 
 	fc := NewProc("fc", "echo {i:in} > {o:out}")
-	sl := NewProc("sl", "cat {i:in} > {o:out}")
-
-	fc.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") }
-	sl.PathFormatters["out"] = func(task *SciTask) string { return task.GetInPath("in") + ".copy.txt" }
-
+	fc.SetPathExtend("in", "out", "")
 	fc.In("in").Connect(ig.Out)
+
+	sl := NewProc("sl", "cat {i:in} > {o:out}")
+	sl.SetPathExtend("in", "out", ".copy.txt")
 	sl.In("in").Connect(fc.Out("out"))
-	sl.Out("out").Chan = make(chan *InformationPacket, BUFSIZE)
+
+	//sl.Out("out").Chan = make(chan *InformationPacket, BUFSIZE)
+	assert.NotNil(t, sl.Out)
+
+	Debug.Println("TestSendsOrderedOutputs: Starting go-routines ...")
 
 	go ig.Run()
 	go fc.Run()
 	go sl.Run()
 
-	assert.NotEmpty(t, sl.Out)
+	Debug.Println("TestSendsOrderedOutputs: Starting main loop ...")
 
 	var expFname string
 	i := 1
-	for ft := range sl.Out("out").Chan {
+
+	tempPort := NewFilePort()
+	Connect(tempPort, sl.Out("out"))
+
+	for ft := range tempPort.Chan {
+		Debug.Printf("TestSendsOrderedOutputs: Looping over item %d ...\n", i)
 		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
 		assert.EqualValues(t, expFname, ft.GetPath())
+		Debug.Printf("TestSendsOrderedOutputs: Looping over item %d Done.\n", i)
 		i++
 	}
+
+	Debug.Println("TestSendsOrderedOutputs: Done with loop ...")
+
 	expFnames := []string{}
 	for i := 1; i <= 10; i++ {
 		expFnames = append(expFnames, fmt.Sprintf("/tmp/f%d.txt.copy.txt", i))

@@ -17,32 +17,33 @@ func Connect(port1 *FilePort, port2 *FilePort) {
 // FilePort
 type FilePort struct {
 	Port
-	Chan           chan *InformationPacket // TODO: Deprecated
-	connectedPorts []*FilePort
-	connected      bool
+	Chan        chan *InformationPacket // TODO: Deprecated
+	remoteChans []chan *InformationPacket
+	connected   bool
 }
 
 func NewFilePort() *FilePort {
 	return &FilePort{
-		Chan:           make(chan *InformationPacket, BUFSIZE),
-		connectedPorts: []*FilePort{},
-		connected:      false,
+		Chan:        make(chan *InformationPacket, BUFSIZE),
+		remoteChans: []chan *InformationPacket{},
+		connected:   false,
 	}
 
 }
 
 func (localPort *FilePort) Connect(remotePort *FilePort) {
-	localPort.AddConnectedPort(remotePort)
-	remotePort.AddConnectedPort(localPort)
-	// Needed in order to receive by ranging over chan
-	remotePort.Chan = localPort.Chan
+	// Needed to make this work as an in-port
+	localPort.Chan = remotePort.Chan
+
+	localPort.AddRemoteChan(remotePort.Chan)
+	remotePort.AddRemoteChan(localPort.Chan)
 
 	localPort.SetConnectedStatus(true)
 	remotePort.SetConnectedStatus(true)
 }
 
-func (pt *FilePort) AddConnectedPort(connPort *FilePort) {
-	pt.connectedPorts = append(pt.connectedPorts, connPort)
+func (pt *FilePort) AddRemoteChan(remoteChan chan *InformationPacket) {
+	pt.remoteChans = append(pt.remoteChans, remoteChan)
 }
 
 func (pt *FilePort) SetConnectedStatus(connected bool) {
@@ -54,18 +55,18 @@ func (pt *FilePort) IsConnected() bool {
 }
 
 func (pt *FilePort) Send(ip *InformationPacket) {
-	for _, remotePort := range pt.connectedPorts {
-		remotePort.Chan <- ip
+	for _, remoteChan := range pt.remoteChans {
+		remoteChan <- ip
 	}
 }
 
 func (pt *FilePort) Recv() *InformationPacket {
-	return <-pt.connectedPorts[0].Chan // TODO: Support more than one in-port too
+	return <-pt.Chan // TODO: Support more than one in-port too
 }
 
 func (pt *FilePort) Close() {
-	for _, remotePort := range pt.connectedPorts {
-		close(remotePort.Chan)
+	for _, remoteChan := range pt.remoteChans {
+		close(remoteChan)
 	}
 }
 
