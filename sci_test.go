@@ -47,6 +47,25 @@ func TestBasicRun(t *t.T) {
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
 }
 
+func TestConnectBackwards(t *t.T) {
+	initTestLogs()
+
+	wf := NewWorkflow("TestConnectBackwards")
+
+	t1 := wf.NewProc("t1", "echo foo > {o:foo}")
+	t1.SetPathCustom("foo", func(t *SciTask) string { return "foo.txt" })
+
+	t2 := wf.NewProc("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	t2.SetPathCustom("bar", func(t *SciTask) string { return t.GetInPath("foo") + ".bar.txt" })
+
+	t1.Out("foo").Connect(t2.In("foo"))
+	wf.ConnectLast(t2.Out("bar"))
+
+	wf.Run()
+
+	cleanFiles("foo.txt", "foo.txt.bar.txt")
+}
+
 func TestParameterCommand(t *t.T) {
 	initTestLogs()
 	wf := NewWorkflow("TestParameterCommandWf")
