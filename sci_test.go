@@ -199,19 +199,16 @@ func TestSendsOrderedOutputs(t *t.T) {
 	//sl.Out("out").Chan = make(chan *InformationPacket, BUFSIZE)
 	assert.NotNil(t, sl.Out)
 
-	Debug.Println("TestSendsOrderedOutputs: Starting go-routines ...")
-
-	go ig.Run()
-	go fc.Run()
-	go sl.Run()
-
-	Debug.Println("TestSendsOrderedOutputs: Starting main loop ...")
-
 	var expFname string
 	i := 1
 
 	tempPort := NewFilePort()
 	Connect(tempPort, sl.Out("out"))
+
+	// Should not start go-routines before connection stuff is done
+	go ig.Run()
+	go fc.Run()
+	go sl.Run()
 
 	for ft := range tempPort.Chan {
 		Debug.Printf("TestSendsOrderedOutputs: Looping over item %d ...\n", i)
