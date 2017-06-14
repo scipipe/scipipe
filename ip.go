@@ -218,7 +218,7 @@ func (snk *Sink) deleteInPortAtKey(i int) {
 		if len(snk.inPorts) > i {
 			snk.inPorts = append(snk.inPorts[:i], snk.inPorts[i+1:]...)
 		} else {
-			Warning.Println("Inport %d does not exist, in sink")
+			Warning.Printf("Inport %d does not exist, in sink", i)
 		}
 	} else {
 		Warning.Println("Inports array not initialized!")
