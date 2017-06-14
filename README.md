@@ -8,6 +8,8 @@
 
 <strong>Project links: [Documentation & Main Website](http://scipipe.org) | [Issue Tracker](https://github.com/scipipe/scipipe/issues) | [Mailing List](https://groups.google.com/forum/#!forum/scipipe)</strong>
 
+<strong>NEW:</strong> [Watch a screencast on how to write a Hello World workflow in SciPipe [15:28]](https://www.youtube.com/watch?v=kWqkGwDU-Hc)
+
 <img src="docs/images/fbp_factory.png" align="right">
 
 SciPipe is a library for writing [Scientific
