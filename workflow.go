@@ -95,21 +95,16 @@ func (wf *Workflow) Run() {
 		Error.Println(wf.name + ": sink is nil!")
 		os.Exit(1)
 	}
-	everythingConnected := true
 	for _, proc := range wf.procs {
 		if !proc.IsConnected() {
-			everythingConnected = false
+			Error.Println(wf.name + ": Not everything connected. Workflow shutting down.")
+			os.Exit(1)
 		}
 	}
-	if !everythingConnected {
-		Error.Println(wf.name + ": Not everything connected. Workflow shutting down.")
-		os.Exit(1)
-	} else {
-		for pname, proc := range wf.procs {
-			Debug.Printf(wf.name+": Starting process %s in new go-routine", pname)
-			go proc.Run()
-		}
-		Debug.Printf(wf.name + ": Starting sink in main go-routine")
-		wf.driver.Run()
+	for pname, proc := range wf.procs {
+		Debug.Printf(wf.name+": Starting process %s in new go-routine", pname)
+		go proc.Run()
 	}
+	Debug.Printf(wf.name + ": Starting sink in main go-routine")
+	wf.driver.Run()
 }
