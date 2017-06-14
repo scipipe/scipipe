@@ -21,11 +21,7 @@ func NewSink(name string) (s *Sink) {
 }
 
 func (p *Sink) IsConnected() bool {
-	if len(p.inPorts) > 0 {
-		return true
-	} else {
-		return false
-	}
+	return len(p.inPorts) > 0
 }
 
 func (p *Sink) Connect(outPort *FilePort) {
