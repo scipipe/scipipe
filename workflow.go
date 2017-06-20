@@ -1,6 +1,6 @@
-// SciPipe is a library for writing scientific workflows (sometimes also called
-// "pipelines") of shell commands that depend on each other, in the Go
-// programming languages. It was initially designed for problems in
+// Package scipipe is a library for writing scientific workflows (sometimes
+// also called "pipelines") of shell commands that depend on each other, in the
+// Go programming languages. It was initially designed for problems in
 // cheminformatics and bioinformatics, but should apply equally well to any
 // domain involving complex pipelines of interdependent shell commands.
 package scipipe
