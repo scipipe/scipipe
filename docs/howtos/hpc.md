@@ -12,5 +12,6 @@ wf := scipipe.NewWorkflow("Hello_World_Workflow")
 myProc := wf.NewProc("hello_world", "echo Hello World; sleep 10;")
 myProc.Prepend = "salloc -A projectABC123 -p core -t 1:00 -J HelloWorld"
 ...
+```
 
 You can find the updated GoDoc for the process struct [here](http://godoc.org/github.com/scipipe/scipipe#SciProcess).
