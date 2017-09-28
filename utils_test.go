@@ -5,11 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"strings"
 )
 
 func TestExecCmd_EchoFooBar(t *testing.T) {
 	output := ExecCmd("echo foo bar")
-	if output != "foo bar\n" {
+	output = strings.TrimSpace(strings.TrimSuffix(output, "\n"))
+	if output != "foo bar" {
 		t.Errorf("output = %swant: foo bar\n", output)
 	}
 }
