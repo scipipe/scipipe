@@ -9,10 +9,10 @@ func main() {
 	wf := NewWorkflow("FuncHookWf")
 
 	foo := NewFooer("foo")
-	wf.Add(foo)
+	wf.AddProc(foo)
 
 	f2b := NewFoo2Barer("f2b")
-	wf.Add(f2b)
+	wf.AddProc(f2b)
 
 	snk := NewSink("snk")
 	wf.SetDriver(snk)

@@ -25,7 +25,7 @@ func TestBasicRun(t *t.T) {
 	t1.PathFormatters["foo"] = func(t *SciTask) string {
 		return "foo.txt"
 	}
-	wf.Add(t1)
+	wf.AddProc(t1)
 
 	t2 := NewProc("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	assert.IsType(t, t2.In("foo"), NewFilePort())
@@ -33,7 +33,7 @@ func TestBasicRun(t *t.T) {
 	t2.PathFormatters["bar"] = func(t *SciTask) string {
 		return t.GetInPath("foo") + ".bar.txt"
 	}
-	wf.Add(t2)
+	wf.AddProc(t2)
 	snk := NewSink("sink")
 
 	t2.In("foo").Connect(t1.Out("foo"))
@@ -71,7 +71,7 @@ func TestParameterCommand(t *t.T) {
 	wf := NewWorkflow("TestParameterCommandWf")
 
 	cmb := NewCombinatoricsProcess("cmb")
-	wf.Add(cmb)
+	wf.AddProc(cmb)
 
 	// An abc file printer
 	abc := NewProc("abc", "echo {p:a} {p:b} {p:c} > {o:out}")
@@ -83,7 +83,7 @@ func TestParameterCommand(t *t.T) {
 			task.Params["c"],
 		)
 	}
-	wf.Add(abc)
+	wf.AddProc(abc)
 
 	// A printer process
 	prt := NewProc("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
@@ -130,7 +130,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	// Run pipeline a first time
 	tsk := NewProc("tsk", "echo hej > {o:hej1}")
 	tsk.PathFormatters["hej1"] = func(task *SciTask) string { return f }
-	wf.Add(tsk)
+	wf.AddProc(tsk)
 
 	prt := NewProc("prt", "echo {i:in1} Done!")
 	prt.In("in1").Connect(tsk.Out("hej1"))
@@ -154,7 +154,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	// Run again with different output
 	tsk = NewProc("tsk", "echo hej > {o:hej2}")
 	tsk.PathFormatters["hej2"] = func(task *SciTask) string { return f }
-	wf.Add(tsk)
+	wf.AddProc(tsk)
 
 	prt = NewProc("prt", "echo {i:in2} Done!")
 	prt.In("in2").Connect(tsk.Out("hej2"))
@@ -238,13 +238,13 @@ func TestStreaming(t *t.T) {
 	ls.PathFormatters["lsl"] = func(task *SciTask) string {
 		return "/tmp/lsl.txt"
 	}
-	wf.Add(ls)
+	wf.AddProc(ls)
 
 	grp := NewProc("grp", "grep etc {i:in} > {o:grepped}")
 	grp.PathFormatters["grepped"] = func(task *SciTask) string {
 		return task.GetInPath("in") + ".grepped.txt"
 	}
-	wf.Add(grp)
+	wf.AddProc(grp)
 
 	snk := NewSink("sink")
 	wf.SetSink(snk)
@@ -282,11 +282,11 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 	// Create some input files
 
 	ipg := NewIPGen("ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
-	wf.Add(ipg)
+	wf.AddProc(ipg)
 
 	sts := NewStreamToSubStream()
 	sts.In.Connect(ipg.Out)
-	wf.Add(sts)
+	wf.AddProc(sts)
 
 	cat := wf.NewProc("concatenate", "cat {i:infiles:r: } > {o:merged}")
 	cat.SetPathStatic("merged", "/tmp/substream_merged.txt")

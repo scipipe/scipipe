@@ -9,12 +9,12 @@ func main() {
 
 	// Fooer
 	foo := NewFooer("fooer")
-	wfl.Add(foo)
+	wfl.AddProc(foo)
 
 	// Foo2barer
 	f2b := NewFoo2Barer("foo2barer")
 	f2b.InFoo().Connect(foo.OutFoo())
-	wfl.Add(f2b)
+	wfl.AddProc(f2b)
 
 	// Sink
 	snk := sci.NewSink("sink")

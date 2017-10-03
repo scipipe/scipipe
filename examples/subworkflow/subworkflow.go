@@ -10,7 +10,7 @@ func main() {
 
 	// Sub-workflow
 	fbn := NewFooBarSubWorkflow("foobar_subwf")
-	wfl.Add(fbn)
+	wfl.AddProc(fbn)
 
 	// Sink
 	snk := sp.NewSink("sink")

@@ -33,7 +33,7 @@ func NewWorkflow(name string) *Workflow {
 	}
 }
 
-func (wf *Workflow) Add(proc Process) {
+func (wf *Workflow) AddProc(proc Process) {
 	if wf.procs[proc.Name()] != nil {
 		Error.Fatalf(wf.name+" workflow: A process with name '%s' already exists in the workflow! Use a more unique name!\n", proc.Name())
 	}
@@ -42,7 +42,7 @@ func (wf *Workflow) Add(proc Process) {
 
 func (wf *Workflow) NewProc(procName string, commandPattern string) *SciProcess {
 	proc := NewProc(procName, commandPattern)
-	wf.Add(proc)
+	wf.AddProc(proc)
 	return proc
 }
 

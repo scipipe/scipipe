@@ -6,14 +6,14 @@ import (
 	t "testing"
 )
 
-func TestAdd(t *t.T) {
+func TestAddProc(t *t.T) {
 	InitLogError()
 	wf := NewWorkflow("TestAddProcsWf")
 
 	proc1 := NewBogusProcess("bogusproc1")
-	wf.Add(proc1)
+	wf.AddProc(proc1)
 	proc2 := NewBogusProcess("bogusproc2")
-	wf.Add(proc2)
+	wf.AddProc(proc2)
 
 	assert.EqualValues(t, len(wf.procs), 2)
 
