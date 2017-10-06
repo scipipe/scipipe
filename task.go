@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	str "strings"
 	"time"
 )
@@ -64,6 +65,13 @@ func (t *SciTask) Execute() {
 
 	if !t.anyOutputExists() && !t.fifosInOutTargetsMissing() {
 		Debug.Printf("Task:%-12s Executing task. [%s]\n", t.Name, t.Command)
+
+		// Create directories for out-targets
+		for _, oip := range t.OutTargets {
+			oipDir := filepath.Dir(oip.GetPath())
+			err := os.MkdirAll(oipDir, 0777)
+			Check(err, "Could not create directory: "+oipDir)
+		}
 
 		startTime := time.Now()
 		if t.CustomExecute != nil {
