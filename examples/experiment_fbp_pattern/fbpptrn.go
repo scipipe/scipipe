@@ -19,7 +19,7 @@ func main() {
 	fmt.Println("Starting ", numThreads, " threads ...")
 	runtime.GOMAXPROCS(numThreads)
 
-	wf := sp.NewWorkflow("fbpptrn_wf")
+	wf := sp.NewWorkflow("fbpptrn_wf", 4)
 
 	// Init processes
 	hisay := NewHiSayer("hisay")

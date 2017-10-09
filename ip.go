@@ -187,12 +187,13 @@ type IPGen struct {
 }
 
 // Initialize a new IPGen component from a list of file paths
-func NewIPGen(name string, filePaths ...string) (fq *IPGen) {
+func NewIPGen(workflow *Workflow, name string, filePaths ...string) (fq *IPGen) {
 	fq = &IPGen{
 		name:      name,
 		Out:       NewFilePort(),
 		FilePaths: filePaths,
 	}
+	workflow.AddProc(fq)
 	return
 }
 

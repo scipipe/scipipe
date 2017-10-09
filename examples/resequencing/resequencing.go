@@ -16,6 +16,7 @@ import (
 	"fmt"
 
 	. "github.com/scipipe/scipipe"
+	c "github.com/scipipe/scipipe/components"
 )
 
 // ------------------------------------------------------------------------------------
@@ -43,7 +44,7 @@ func main() {
 	// --------------------------------------------------------------------------------
 	// Initialize Workflow
 	// --------------------------------------------------------------------------------
-	wf := NewWorkflow("resequencing_wf")
+	wf := NewWorkflow("resequencing_wf", 4)
 
 	// --------------------------------------------------------------------------------
 	// Download Reference Genome
@@ -60,12 +61,20 @@ func main() {
 	ungzipRef.SetPathReplace("in", "out", ".gz", "")
 	ungzipRef.In("in").Connect(downloadRef.Out("outfile"))
 
+	ungzipRefFanOut := c.NewFanOut("ungzip_ref_fanout")
+	ungzipRefFanOut.InFile.Connect(ungzipRef.Out("out"))
+	wf.AddProc(ungzipRefFanOut)
+
 	// --------------------------------------------------------------------------------
 	// Index Reference Genome
 	// --------------------------------------------------------------------------------
 	indexRef := wf.NewProc("index_ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
 	indexRef.SetPathExtend("index", "done", ".indexed")
-	indexRef.In("index").Connect(ungzipRef.Out("out"))
+	indexRef.In("index").Connect(ungzipRefFanOut.Out("for_indexref"))
+
+	indexRefFanOut := c.NewFanOut("indexref_fanout")
+	indexRefFanOut.InFile.Connect(indexRef.Out("done"))
+	wf.AddProc(indexRefFanOut)
 
 	// Create (multi-level) maps where we can gather outports from processes
 	// for each for loop iteration and access them in the merge step later
@@ -85,7 +94,10 @@ func main() {
 			downloadFastQ.SetPathStatic("fastq", file_name)
 
 			// Save outPorts for later use
-			outPorts[indv][smpl]["fastq"] = downloadFastQ.Out("fastq")
+			fastQFanOut := c.NewFanOut(indv_smpl + "fastq_fanout")
+			wf.AddProc(fastQFanOut)
+			fastQFanOut.InFile.Connect(downloadFastQ.Out("fastq"))
+			outPorts[indv][smpl]["fastq"] = fastQFanOut.Out("fastq_2")
 
 			// ------------------------------------------------------------------------
 			// BWA Align
@@ -93,9 +105,9 @@ func main() {
 			bwaAlignCmd := "bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}"
 			bwaAlign := wf.NewProc("bwa_aln"+indv_smpl, bwaAlignCmd)
 			bwaAlign.SetPathExtend("fastq", "sai", ".sai")
-			bwaAlign.In("ref").Connect(ungzipRef.Out("out"))
-			bwaAlign.In("idxdone").Connect(indexRef.Out("done"))
-			bwaAlign.In("fastq").Connect(downloadFastQ.Out("fastq"))
+			bwaAlign.In("ref").Connect(ungzipRefFanOut.Out("for_bwaalign" + indv_smpl))
+			bwaAlign.In("idxdone").Connect(indexRefFanOut.Out("for_bwaalign" + indv_smpl))
+			bwaAlign.In("fastq").Connect(fastQFanOut.Out("fastq_1"))
 
 			// Save outPorts for later use
 			outPorts[indv][smpl]["sai"] = bwaAlign.Out("sai")
@@ -104,14 +116,17 @@ func main() {
 		// ---------------------------------------------------------------------------
 		// Merge
 		// ---------------------------------------------------------------------------
-		bwaMergeCmd := "bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone}"
+		indvSender := c.NewStringGen("indv_sender_"+indv, indv)
+		wf.AddProc(indvSender)
+
+		bwaMergeCmd := "bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}"
 		bwaMerge := wf.NewProc("merge_"+indv, bwaMergeCmd)
 		bwaMerge.SetPathCustom("merged", func(t *SciTask) string {
-			indv := indv
-			return fmt.Sprintf("%s.merged.sam", indv)
+			return t.Params["indv"] + ".merged.sam"
 		})
-		bwaMerge.In("ref").Connect(ungzipRef.Out("out"))
-		bwaMerge.In("refdone").Connect(indexRef.Out("done"))
+		bwaMerge.ParamPort("indv").Connect(indvSender.Out)
+		bwaMerge.In("ref").Connect(ungzipRefFanOut.Out("for_bwamerge_" + indv))
+		bwaMerge.In("refdone").Connect(indexRefFanOut.Out("for_bwamerge_" + indv))
 		bwaMerge.In("sai1").Connect(outPorts[indv]["1"]["sai"])
 		bwaMerge.In("sai2").Connect(outPorts[indv]["2"]["sai"])
 		bwaMerge.In("fq1").Connect(outPorts[indv]["1"]["fastq"])

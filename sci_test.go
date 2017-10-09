@@ -18,22 +18,20 @@ func initTestLogs() {
 
 func TestBasicRun(t *t.T) {
 	initTestLogs()
-	wf := NewWorkflow("TestBasicRunWf")
+	wf := NewWorkflow("TestBasicRunWf", 16)
 
-	t1 := NewProc("t1", "echo foo > {o:foo}")
+	t1 := NewProc(wf, "t1", "echo foo > {o:foo}")
 	assert.IsType(t, t1.Out("foo"), NewFilePort())
 	t1.PathFormatters["foo"] = func(t *SciTask) string {
 		return "foo.txt"
 	}
-	wf.AddProc(t1)
 
-	t2 := NewProc("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	t2 := NewProc(wf, "t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	assert.IsType(t, t2.In("foo"), NewFilePort())
 	assert.IsType(t, t2.Out("bar"), NewFilePort())
 	t2.PathFormatters["bar"] = func(t *SciTask) string {
 		return t.GetInPath("foo") + ".bar.txt"
 	}
-	wf.AddProc(t2)
 	snk := NewSink("sink")
 
 	t2.In("foo").Connect(t1.Out("foo"))
@@ -50,7 +48,7 @@ func TestBasicRun(t *t.T) {
 func TestConnectBackwards(t *t.T) {
 	initTestLogs()
 
-	wf := NewWorkflow("TestConnectBackwards")
+	wf := NewWorkflow("TestConnectBackwards", 16)
 
 	t1 := wf.NewProc("t1", "echo foo > {o:foo}")
 	t1.SetPathCustom("foo", func(t *SciTask) string { return "foo.txt" })
@@ -68,13 +66,13 @@ func TestConnectBackwards(t *t.T) {
 
 func TestParameterCommand(t *t.T) {
 	initTestLogs()
-	wf := NewWorkflow("TestParameterCommandWf")
+	wf := NewWorkflow("TestParameterCommandWf", 16)
 
 	cmb := NewCombinatoricsProcess("cmb")
 	wf.AddProc(cmb)
 
 	// An abc file printer
-	abc := NewProc("abc", "echo {p:a} {p:b} {p:c} > {o:out}")
+	abc := NewProc(wf, "abc", "echo {p:a} {p:b} {p:c} > {o:out}")
 	abc.PathFormatters["out"] = func(task *SciTask) string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
@@ -83,10 +81,9 @@ func TestParameterCommand(t *t.T) {
 			task.Params["c"],
 		)
 	}
-	wf.AddProc(abc)
 
 	// A printer process
-	prt := NewProc("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
+	prt := NewProc(wf, "prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
 
 	// Connection info
 	abc.ParamPort("a").Connect(cmb.A)
@@ -105,11 +102,12 @@ func TestParameterCommand(t *t.T) {
 }
 
 func TestProcessWithoutInputsOutputs(t *t.T) {
+	wf := NewWorkflow("test_wf", 16)
 	initTestLogs()
 	Debug.Println("Starting test TestProcessWithoutInputsOutputs")
 
 	f := "/tmp/hej.txt"
-	tsk := NewProc("tsk", "echo hej > "+f)
+	tsk := NewProc(wf, "tsk", "echo hej > "+f)
 	tsk.Run()
 	_, err := os.Stat(f)
 	assert.Nil(t, err, fmt.Sprintf("File is missing: %s", f))
@@ -119,7 +117,7 @@ func TestProcessWithoutInputsOutputs(t *t.T) {
 func TestDontOverWriteExistingOutputs(t *t.T) {
 	InitLogError()
 	Debug.Println("Starting test TestDontOverWriteExistingOutputs")
-	wf := NewWorkflow("TestDontOverWriteExistingOutputsWf1")
+	wf := NewWorkflow("TestDontOverWriteExistingOutputsWf1", 16)
 
 	f := "/tmp/hej.txt"
 
@@ -128,11 +126,10 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	assert.NotNil(t, e1)
 
 	// Run pipeline a first time
-	tsk := NewProc("tsk", "echo hej > {o:hej1}")
+	tsk := NewProc(wf, "tsk", "echo hej > {o:hej1}")
 	tsk.PathFormatters["hej1"] = func(task *SciTask) string { return f }
-	wf.AddProc(tsk)
 
-	prt := NewProc("prt", "echo {i:in1} Done!")
+	prt := NewProc(wf, "prt", "echo {i:in1} Done!")
 	prt.In("in1").Connect(tsk.Out("hej1"))
 	wf.SetDriver(prt)
 
@@ -149,14 +146,13 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 	time.Sleep(1 * time.Millisecond)
 
 	Debug.Println("Try running the same workflow again ...")
-	wf = NewWorkflow("TestDontOverWriteExistingOutputsWf2")
+	wf = NewWorkflow("TestDontOverWriteExistingOutputsWf2", 16)
 
 	// Run again with different output
-	tsk = NewProc("tsk", "echo hej > {o:hej2}")
+	tsk = NewProc(wf, "tsk", "echo hej > {o:hej2}")
 	tsk.PathFormatters["hej2"] = func(task *SciTask) string { return f }
-	wf.AddProc(tsk)
 
-	prt = NewProc("prt", "echo {i:in2} Done!")
+	prt = NewProc(wf, "prt", "echo {i:in2} Done!")
 	prt.In("in2").Connect(tsk.Out("hej2"))
 	wf.SetDriver(prt)
 
@@ -186,13 +182,14 @@ func TestSendsOrderedOutputs(t *t.T) {
 		fnames = append(fnames, fmt.Sprintf("/tmp/f%d.txt", i))
 	}
 
-	ig := NewIPGen("ipgen", fnames...)
+	wf := NewWorkflow("test_wf", 16)
+	ig := NewIPGen(wf, "ipgen", fnames...)
 
-	fc := NewProc("fc", "echo {i:in} > {o:out}")
+	fc := NewProc(wf, "fc", "echo {i:in} > {o:out}")
 	fc.SetPathExtend("in", "out", "")
 	fc.In("in").Connect(ig.Out)
 
-	sl := NewProc("sl", "cat {i:in} > {o:out}")
+	sl := NewProc(wf, "sl", "cat {i:in} > {o:out}")
 	sl.SetPathExtend("in", "out", ".copy.txt")
 	sl.In("in").Connect(fc.Out("out"))
 
@@ -231,20 +228,18 @@ func TestSendsOrderedOutputs(t *t.T) {
 // Test that streaming works
 func TestStreaming(t *t.T) {
 	InitLogWarning()
-	wf := NewWorkflow("TestStreamingWf")
+	wf := NewWorkflow("TestStreamingWf", 16)
 
 	// Init processes
-	ls := NewProc("ls", "ls -l / > {os:lsl}")
+	ls := NewProc(wf, "ls", "ls -l / > {os:lsl}")
 	ls.PathFormatters["lsl"] = func(task *SciTask) string {
 		return "/tmp/lsl.txt"
 	}
-	wf.AddProc(ls)
 
-	grp := NewProc("grp", "grep etc {i:in} > {o:grepped}")
+	grp := NewProc(wf, "grp", "grep etc {i:in} > {o:grepped}")
 	grp.PathFormatters["grepped"] = func(task *SciTask) string {
 		return task.GetInPath("in") + ".grepped.txt"
 	}
-	wf.AddProc(grp)
 
 	snk := NewSink("sink")
 	wf.SetSink(snk)
@@ -277,12 +272,11 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 	exec.Command("bash", "-c", "echo 2 > /tmp/file2.txt").CombinedOutput()
 	exec.Command("bash", "-c", "echo 3 > /tmp/file3.txt").CombinedOutput()
 
-	wf := NewWorkflow("TestSubStreamReduceInPlaceHolderWf")
+	wf := NewWorkflow("TestSubStreamReduceInPlaceHolderWf", 16)
 
 	// Create some input files
 
-	ipg := NewIPGen("ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
-	wf.AddProc(ipg)
+	ipg := NewIPGen(wf, "ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
 
 	sts := NewStreamToSubStream()
 	sts.In.Connect(ipg.Out)
@@ -316,7 +310,7 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 func TestMultipleLastProcs(t *t.T) {
 	InitLogWarning()
 
-	wf := NewWorkflow("TestMultipleLastProcs_WF")
+	wf := NewWorkflow("TestMultipleLastProcs_WF", 16)
 	strs := []string{"hey", "how", "hoo"}
 
 	for _, str := range strs {

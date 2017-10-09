@@ -5,17 +5,15 @@ import (
 )
 
 func main() {
-	fq := sci.NewIPGen("hej1.txt", "hej2.txt", "hej3.txt")
-	fw := sci.NewProc("filewriter", "echo {i:in} > {o:out}")
+	wf := sci.NewWorkflow("filegenwf", 4)
+
+	fq := sci.NewIPGen(wf, "hej1.txt", "hej2.txt", "hej3.txt")
+
+	fw := sci.NewProc(wf, "filewriter", "echo {i:in} > {o:out}")
 	fw.SetPathCustom("out", func(t *sci.SciTask) string { return t.GetInPath("in") })
-	sn := sci.NewSink("sink")
-
 	fw.In("in").Connect(fq.Out)
-	sn.Connect(fw.Out("out"))
 
-	wf := sci.NewWorkflow("filegenwf")
-	wf.AddProcs(fq, fw)
-	wf.SetDriver(sn)
+	wf.ConnectLast(fw.Out("out"))
 
 	wf.Run()
 }

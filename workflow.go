@@ -14,22 +14,24 @@ import (
 // ----------------------------------------------------------------------------
 
 type Workflow struct {
-	name   string
-	procs  map[string]Process
-	sink   *Sink
-	driver Process
+	name            string
+	procs           map[string]Process
+	concurrentTasks chan struct{}
+	sink            *Sink
+	driver          Process
 }
 
-func NewWorkflow(name string) *Workflow {
+func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
 	if !LogExists {
 		InitLogInfo()
 	}
 	sink := NewSink(name + "_default_sink")
 	return &Workflow{
-		name:   name,
-		procs:  map[string]Process{},
-		sink:   sink,
-		driver: sink,
+		name:            name,
+		procs:           map[string]Process{},
+		concurrentTasks: make(chan struct{}, maxConcurrentTasks),
+		sink:            sink,
+		driver:          sink,
 	}
 }
 
@@ -41,8 +43,7 @@ func (wf *Workflow) AddProc(proc Process) {
 }
 
 func (wf *Workflow) NewProc(procName string, commandPattern string) *SciProcess {
-	proc := NewProc(procName, commandPattern)
-	wf.AddProc(proc)
+	proc := NewProc(wf, procName, commandPattern)
 	return proc
 }
 
@@ -81,6 +82,16 @@ func (wf *Workflow) SetDriver(driver Process) {
 	wf.driver = driver
 }
 
+func (wf *Workflow) IncConcurrentTasks() {
+	wf.concurrentTasks <- struct{}{}
+	Debug.Println("Increased concurrent tasks")
+}
+
+func (wf *Workflow) DecConcurrentTasks() {
+	<-wf.concurrentTasks
+	Debug.Println("Decreased concurrent tasks")
+}
+
 // ConnectLast connects the last (most downstream) out-ports in the workflow to
 // an implicit sink process which will be used to drive the workflow. This can
 // be used instead of manually creating a sink, connecting it, and setting it
@@ -107,8 +118,10 @@ func (wf *Workflow) Run() {
 		}
 	}
 	for pname, proc := range wf.procs {
-		Debug.Printf(wf.name+": Starting process %s in new go-routine", pname)
-		go proc.Run()
+		if proc != wf.driver { // Don't start the driver process in background
+			Debug.Printf(wf.name+": Starting process %s in new go-routine", pname)
+			go proc.Run()
+		}
 	}
 	Debug.Printf(wf.name + ": Starting sink in main go-routine")
 	wf.driver.Run()

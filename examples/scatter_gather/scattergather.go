@@ -8,49 +8,52 @@ import (
 )
 
 func main() {
+	wf := NewWorkflow("scattergather_wf", 4)
+
 	// === INITIALIZE TASKS =======================================================================
 
 	// Download a zipped Chromosome Y fasta file
 	fastaURL := "ftp://ftp.ensembl.org/pub/release-84/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.Y.fa.gz"
-	wget := NewProc("wget", "wget "+fastaURL+" -O {o:chry_zipped}")
+	wget := wf.NewProc("wget", "wget "+fastaURL+" -O {o:chry_zipped}")
 	wget.SetPathStatic("chry_zipped", "chry.fa.gz")
 
 	// Ungzip the fasta file
-	unzip := NewProc("ungzip", "gunzip -c {i:gzipped} > {o:ungzipped}")
+	unzip := wf.NewProc("ungzip", "gunzip -c {i:gzipped} > {o:ungzipped}")
 	unzip.SetPathReplace("gzipped", "ungzipped", ".gz", "")
 
 	// Split the fasta file in to parts with 100000 lines in each
 	linesPerSplit := 100000
 	split := comp.NewFileSplitter("file_splitter", linesPerSplit)
+	wf.AddProc(split)
 
 	// Create a 2-way multiplexer that can be used to provide the same
 	// file target to two downstream processes
 	dupl := comp.NewFanOut("line_duplicator")
+	wf.AddProc(dupl)
 
 	// Count GC & AT characters in the fasta file
 	charCountCommand := "cat {i:infile} | fold -w 1 | grep '[%s]' | wc -l | awk '{ print $1 }' > {o:%s}"
-	gccnt := NewProc("gccount", fmt.Sprintf(charCountCommand, "GC", "gccount"))
+	gccnt := wf.NewProc("gccount", fmt.Sprintf(charCountCommand, "GC", "gccount"))
 	gccnt.SetPathExtend("infile", "gccount", ".gccnt")
-	atcnt := NewProc("atcount", fmt.Sprintf(charCountCommand, "AT", "atcount"))
+	atcnt := wf.NewProc("atcount", fmt.Sprintf(charCountCommand, "AT", "atcount"))
 	atcnt.SetPathExtend("infile", "atcount", ".atcnt")
 
 	// Concatenate GC & AT counts
 	gccat := comp.NewConcatenator("gccat", "gccounts.txt")
+	wf.AddProc(gccat)
 	atcat := comp.NewConcatenator("atcat", "atcounts.txt")
+	wf.AddProc(atcat)
 
 	// Sum up the GC & AT counts on the concatenated file
 	sumCommand := "awk '{ SUM += $1 } END { print SUM }' {i:in} > {o:sum}"
-	gcsum := NewProc("gcsum", sumCommand)
+	gcsum := wf.NewProc("gcsum", sumCommand)
 	gcsum.SetPathExtend("in", "sum", ".sum")
-	atsum := NewProc("atsum", sumCommand)
+	atsum := wf.NewProc("atsum", sumCommand)
 	atsum.SetPathExtend("in", "sum", ".sum")
 
 	// Finally, calculate the ratio between GC chars, vs. GC+AT chars
-	gcrat := NewProc("gcratio", "gc=$(cat {i:gcsum}); at=$(cat {i:atsum}); calc \"$gc/($gc+$at)\" > {o:gcratio}")
+	gcrat := wf.NewProc("gcratio", "gc=$(cat {i:gcsum}); at=$(cat {i:atsum}); calc \"$gc/($gc+$at)\" > {o:gcratio}")
 	gcrat.SetPathStatic("gcratio", "gcratio.txt")
-
-	// A sink, to drive the network
-	asink := NewSink("sink")
 
 	// === CONNECT DEPENDENCIES ===================================================================
 
@@ -66,12 +69,9 @@ func main() {
 	gcrat.In("gcsum").Connect(gcsum.Out("sum"))
 	gcrat.In("atsum").Connect(atsum.Out("sum"))
 
-	asink.Connect(gcrat.Out("gcratio"))
+	wf.ConnectLast(gcrat.Out("gcratio"))
 
 	// === RUN PIPELINE ===========================================================================
 
-	wf := NewWorkflow("scattergather_wf")
-	wf.AddProcs(wget, unzip, split, dupl, gccnt, atcnt, gccat, atcat, gcsum, atsum, gcrat)
-	wf.SetDriver(asink)
 	wf.Run()
 }

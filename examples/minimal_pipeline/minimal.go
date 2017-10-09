@@ -3,7 +3,7 @@ package main
 import . "github.com/scipipe/scipipe"
 
 func main() {
-	wfl := NewWorkflow("minimal_wf")
+	wfl := NewWorkflow("minimal_wf", 4)
 
 	// --------------------------------
 	// Initialize processes and add to runner

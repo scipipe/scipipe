@@ -8,10 +8,13 @@ import (
 
 func main() {
 	runtime.GOMAXPROCS(4)
+	wf := sci.NewWorkflow("test_wf", 4)
+
 	cmb := NewCombinatoricsGen("combgen")
+	wf.AddProc(cmb)
 
 	// An abc file printer
-	abc := sci.NewProc("abc", "echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
+	abc := wf.NewProc("abc", "echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
 	abc.Spawn = true
 	abc.SetPathCustom("out", func(t *sci.SciTask) string {
 		return fmt.Sprintf(
@@ -23,7 +26,7 @@ func main() {
 	})
 
 	// A printer task
-	prt := sci.NewProc("printer", "cat {i:in} >> log.txt")
+	prt := wf.NewProc("printer", "cat {i:in} >> log.txt")
 	prt.Spawn = false
 
 	// Connection info
@@ -31,10 +34,8 @@ func main() {
 	abc.ParamPort("b").Connect(cmb.B)
 	abc.ParamPort("c").Connect(cmb.C)
 	prt.In("in").Connect(abc.Out("out"))
-
-	wf := sci.NewWorkflow("combwf")
-	wf.AddProcs(cmb, abc)
 	wf.SetDriver(prt)
+
 	wf.Run()
 }
 

@@ -57,10 +57,11 @@ type SciProcess struct {
 	PathFormatters   map[string]func(*SciTask) string
 	paramPorts       map[string]*ParamPort
 	CustomExecute    func(*SciTask)
+	workflow         *Workflow
 }
 
-func NewSciProcess(name string, command string) *SciProcess {
-	return &SciProcess{
+func NewSciProcess(workflow *Workflow, name string, command string) *SciProcess {
+	p := &SciProcess{
 		name:             name,
 		CommandPattern:   command,
 		inPorts:          make(map[string]*FilePort),
@@ -69,23 +70,26 @@ func NewSciProcess(name string, command string) *SciProcess {
 		PathFormatters:   make(map[string]func(*SciTask) string),
 		paramPorts:       make(map[string]*ParamPort),
 		Spawn:            true,
+		workflow:         workflow,
 	}
+	workflow.AddProc(p)
+	return p
 }
 
 // ----------- Main API init methods ------------
 
-func NewProc(name string, cmd string) *SciProcess {
+func NewProc(workflow *Workflow, name string, cmd string) *SciProcess {
 	if !LogExists {
 		InitLogInfo()
 	}
-	p := NewSciProcess(name, cmd)
+	p := NewSciProcess(workflow, name, cmd)
 	p.initPortsFromCmdPattern(cmd, nil)
 	return p
 }
 
-func ShellExpand(name string, cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *SciProcess {
+func ShellExpand(workflow *Workflow, name string, cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *SciProcess {
 	cmdExpr := expandCommandParamsAndPaths(cmd, params, inPaths, outPaths)
-	p := NewSciProcess(name, cmdExpr)
+	p := NewSciProcess(workflow, name, cmdExpr)
 	p.initPortsFromCmdPattern(cmdExpr, params)
 	return p
 }
@@ -343,6 +347,7 @@ func (p *SciProcess) Run() {
 	tasks := []*SciTask{}
 	Debug.Printf("Process %s: Starting to create and schedule tasks\n", p.name)
 	for t := range p.createTasks() {
+
 		// Collect created tasks, for the second round
 		// where tasks are waited for to finish, before
 		// sending their outputs.
@@ -452,7 +457,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 				Debug.Printf("Process.createTasks:%s Breaking: No params, and inPorts closed", p.name)
 				break
 			}
-			t := NewSciTask(p.name, p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode)
+			t := NewSciTask(p.workflow, p.name, p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode)
 			if p.CustomExecute != nil {
 				t.CustomExecute = p.CustomExecute
 			}

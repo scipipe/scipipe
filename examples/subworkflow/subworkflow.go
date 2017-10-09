@@ -6,19 +6,13 @@ import sp "github.com/scipipe/scipipe"
 
 func main() {
 	// Main workflow
-	wfl := sp.NewWorkflow("foobar_wf")
+	wfl := sp.NewWorkflow("foobar_wf", 4)
 
 	// Sub-workflow
-	fbn := NewFooBarSubWorkflow("foobar_subwf")
-	wfl.AddProc(fbn)
-
-	// Sink
-	snk := sp.NewSink("sink")
-	wfl.SetDriver(snk)
+	fbn := NewFooBarSubWorkflow(wfl, "foobar_subwf")
 
 	// Connect
-	snk.Connect(fbn.Out)
-
+	wfl.ConnectLast(fbn.Out)
 	wfl.Run()
 }
 
@@ -33,16 +27,16 @@ type FooBarSubWorkflow struct {
 	Out   *sp.FilePort
 }
 
-func NewFooBarSubWorkflow(name string) *FooBarSubWorkflow {
+func NewFooBarSubWorkflow(wf *sp.Workflow, name string) *FooBarSubWorkflow {
 	fbn := &FooBarSubWorkflow{
 		name:  name,
 		Procs: make(map[string]*sp.SciProcess),
 	}
 
-	fbn.Procs["foo"] = sp.NewProc("foo", "echo foo > {o:foo}")
+	fbn.Procs["foo"] = sp.NewProc(wf, "foo", "echo foo > {o:foo}")
 	fbn.Procs["foo"].SetPathStatic("foo", "foo.txt")
 
-	fbn.Procs["f2b"] = sp.NewProc("f2b", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	fbn.Procs["f2b"] = sp.NewProc(wf, "f2b", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	fbn.Procs["f2b"].SetPathReplace("foo", "bar", ".txt", ".bar.txt")
 
 	// Connect together inner processes
@@ -50,7 +44,6 @@ func NewFooBarSubWorkflow(name string) *FooBarSubWorkflow {
 
 	// Connect last port of inner process to subnetwork out-port
 	fbn.Out = fbn.Procs["f2b"].Out("bar")
-
 	return fbn
 }
 

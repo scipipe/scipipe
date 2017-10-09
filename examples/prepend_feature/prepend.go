@@ -5,7 +5,9 @@ import (
 )
 
 func main() {
-	p := sp.NewProc("ls", "ls -l > {o:out}")
+	wf := sp.NewWorkflow("test_wf", 4)
+
+	p := sp.NewProc(wf, "ls", "ls -l > {o:out}")
 	p.SetPathCustom("out", func(p *sp.SciTask) string {
 		return "hej.txt"
 	})

@@ -7,24 +7,25 @@ import (
 
 func main() {
 	// Init
-	wf := sci.NewWorkflow("staticparams_wf")
+	wf := sci.NewWorkflow("staticparams_wf", 4)
+
 	fls := NewFileSender("filesender")
+	wf.AddProc(fls)
 
 	params := map[string]string{"a": "a1", "b": "b1", "c": "c1"}
 
-	abc := sci.ShellExpand("abc", "echo {p:a} {p:b} {p:c} > {o:out} # {i:in}", nil, nil, params)
+	abc := sci.ShellExpand(wf, "abc", "echo {p:a} {p:b} {p:c} > {o:out} # {i:in}", nil, nil, params)
 	abc.SetPathCustom("out", func(task *sci.SciTask) string {
 		return task.GetInPath("in")
 	})
 
-	prt := sci.NewProc("prt", "echo {i:in} >> log.txt")
+	prt := wf.NewProc("prt", "echo {i:in} >> log.txt")
 
 	// Connect
 	abc.In("in").Connect(fls.Out)
 	prt.In("in").Connect(abc.Out("out"))
 
 	// Pipe it up
-	wf.AddProcs(fls, abc)
 	wf.SetDriver(prt)
 
 	// Run

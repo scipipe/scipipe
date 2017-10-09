@@ -23,9 +23,10 @@ type SciTask struct {
 	Done          chan int
 	Image         string
 	DataFolder    string
+	workflow      *Workflow
 }
 
-func NewSciTask(name string, cmdPat string, inTargets map[string]*InformationPacket, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode) *SciTask {
+func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[string]*InformationPacket, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode) *SciTask {
 	t := &SciTask{
 		Name:       name,
 		InTargets:  inTargets,
@@ -34,6 +35,7 @@ func NewSciTask(name string, cmdPat string, inTargets map[string]*InformationPac
 		Command:    "",
 		ExecMode:   execMode,
 		Done:       make(chan int),
+		workflow:   workflow,
 	}
 
 	// Create out targets
@@ -73,6 +75,7 @@ func (t *SciTask) Execute() {
 			Check(err, "Could not create directory: "+oipDir)
 		}
 
+		t.workflow.IncConcurrentTasks() // Will block if max concurrent tasks is reached
 		startTime := time.Now()
 		if t.CustomExecute != nil {
 			Audit.Printf("Task:%-12s Executing custom execution function.\n", t.Name)
@@ -86,6 +89,7 @@ func (t *SciTask) Execute() {
 			}
 		}
 		execTime := time.Since(startTime)
+		t.workflow.DecConcurrentTasks()
 
 		// Append audit info for the task to all its output targets
 		auditInfo := NewAuditInfo()
@@ -105,6 +109,7 @@ func (t *SciTask) Execute() {
 
 		Debug.Printf("Task:%-12s Atomizing targets. [%s]\n", t.Name, t.Command)
 		t.atomizeTargets()
+
 	}
 	Debug.Printf("Task:%s: Starting to send Done in t.Execute() ...) [%s]\n", t.Name, t.Command)
 	t.Done <- 1

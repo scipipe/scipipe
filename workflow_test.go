@@ -8,7 +8,7 @@ import (
 
 func TestAddProc(t *t.T) {
 	InitLogError()
-	wf := NewWorkflow("TestAddProcsWf")
+	wf := NewWorkflow("TestAddProcsWf", 16)
 
 	proc1 := NewBogusProcess("bogusproc1")
 	wf.AddProc(proc1)

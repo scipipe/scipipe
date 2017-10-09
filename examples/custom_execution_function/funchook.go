@@ -6,19 +6,15 @@ import (
 )
 
 func main() {
-	wf := NewWorkflow("FuncHookWf")
+	wf := NewWorkflow("FuncHookWf", 4)
 
-	foo := NewFooer("foo")
-	wf.AddProc(foo)
-
-	f2b := NewFoo2Barer("f2b")
-	wf.AddProc(f2b)
-
+	foo := NewFooer(wf, "foo")
+	f2b := NewFoo2Barer(wf, "f2b")
 	snk := NewSink("snk")
-	wf.SetDriver(snk)
 
 	foo.OutFoo().Connect(f2b.InFoo())
 	snk.Connect(f2b.OutBar())
+	wf.SetDriver(snk)
 
 	wf.Run()
 }
@@ -34,10 +30,10 @@ type Fooer struct {
 	name string
 }
 
-func NewFooer(name string) *Fooer {
+func NewFooer(wf *Workflow, name string) *Fooer {
 	// Initiate task from a "shell like" pattern, though here we
 	// just specify the out-port foo
-	innerFoo := NewProc("fooer", "{o:foo}")
+	innerFoo := NewProc(wf, "fooer", "{o:foo}")
 	// Set the output formatter to a static string
 	innerFoo.SetPathStatic("foo", "foo.txt")
 	// Create the custom execute function, with pure Go code
@@ -61,10 +57,10 @@ type Foo2Barer struct {
 	name string
 }
 
-func NewFoo2Barer(name string) *Foo2Barer {
+func NewFoo2Barer(wf *Workflow, name string) *Foo2Barer {
 	// Initiate task from a "shell like" pattern, though here we
 	// just specify the in-port foo and the out-port bar
-	innerProc := NewProc("foo2bar", "{i:foo}{o:bar}")
+	innerProc := NewProc(wf, "foo2bar", "{i:foo}{o:bar}")
 	// Set the output formatter to extend the path on the "bar"" in-port
 	innerProc.SetPathExtend("foo", "bar", ".bar.txt")
 	// Create the custom execute function, with pure Go code

@@ -5,21 +5,14 @@ import (
 )
 
 func main() {
-	wfl := sci.NewWorkflow("wrapperwf")
+	// Initiate
+	wfl := sci.NewWorkflow("wrapperwf", 4)
+	foo := NewFooer(wfl, "fooer")
+	f2b := NewFoo2Barer(wfl, "foo2barer")
 
-	// Fooer
-	foo := NewFooer("fooer")
-	wfl.AddProc(foo)
-
-	// Foo2barer
-	f2b := NewFoo2Barer("foo2barer")
+	// Connect
 	f2b.InFoo().Connect(foo.OutFoo())
-	wfl.AddProc(f2b)
-
-	// Sink
-	snk := sci.NewSink("sink")
-	snk.Connect(f2b.OutBar())
-	wfl.SetDriver(snk)
+	wfl.ConnectLast(f2b.OutBar())
 
 	// Run
 	wfl.Run()
@@ -37,8 +30,8 @@ type Fooer struct {
 	name string
 }
 
-func NewFooer(name string) *Fooer {
-	innerFoo := sci.NewProc("fooer", "echo foo > {o:foo}")
+func NewFooer(wf *sci.Workflow, name string) *Fooer {
+	innerFoo := sci.NewProc(wf, "fooer", "echo foo > {o:foo}")
 	innerFoo.SetPathStatic("foo", "foo.txt")
 	return &Fooer{innerFoo, name}
 }
@@ -57,8 +50,8 @@ type Foo2Barer struct {
 	name string
 }
 
-func NewFoo2Barer(name string) *Foo2Barer {
-	innerFoo2Bar := sci.NewProc("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+func NewFoo2Barer(wf *sci.Workflow, name string) *Foo2Barer {
+	innerFoo2Bar := sci.NewProc(wf, "foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	innerFoo2Bar.SetPathExtend("foo", "bar", ".bar.txt")
 	return &Foo2Barer{innerFoo2Bar, name}
 }
