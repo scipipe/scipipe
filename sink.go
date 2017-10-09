@@ -50,7 +50,6 @@ func (p *Sink) Run() {
 				}
 				Debug.Println(p.name+": Received file in sink: ", ft.GetPath())
 			default:
-				Debug.Printf(p.name+": No receive on inport %d, so continuing ...\n", i)
 				time.Sleep(100 * time.Millisecond)
 			}
 		}
