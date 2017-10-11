@@ -32,7 +32,7 @@ func (proc *Concatenator) Run() {
 	outFt := scipipe.NewInformationPacket(proc.OutPath)
 	outFh := outFt.OpenWriteTemp()
 	for ft := range proc.In.InChan {
-		fr := NewFileReader(proc.workflow)
+		fr := NewFileReader(proc.workflow, proc.Name()+"_filereader")
 		go func() {
 			defer close(fr.FilePath)
 			fr.FilePath <- ft.GetPath()

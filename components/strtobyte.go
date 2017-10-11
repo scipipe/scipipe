@@ -5,14 +5,20 @@ import "github.com/scipipe/scipipe"
 // SciPipe component that converts packets of string type to byte
 type strToByte struct {
 	scipipe.Process
-	In  chan string
-	Out chan []byte
+	name string
+	In   chan string
+	Out  chan []byte
 }
 
-func NewStrToByte(wf *scipipe.Workflow) *strToByte {
+func (p *strToByte) Name() string {
+	return p.name
+}
+
+func NewStrToByte(wf *scipipe.Workflow, name string) *strToByte {
 	stb := &strToByte{
-		In:  make(chan string, scipipe.BUFSIZE),
-		Out: make(chan []byte, scipipe.BUFSIZE),
+		name: name,
+		In:   make(chan string, scipipe.BUFSIZE),
+		Out:  make(chan []byte, scipipe.BUFSIZE),
 	}
 	wf.AddProc(stb)
 	return stb

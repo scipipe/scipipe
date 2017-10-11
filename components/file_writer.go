@@ -12,12 +12,18 @@ import (
 // and write the file contents to a file with the specified path.
 type FileWriter struct {
 	scipipe.Process
+	name     string
 	In       chan []byte
 	FilePath chan string
 }
 
-func NewFileWriter(wf *scipipe.Workflow) *FileWriter {
+func (p *FileWriter) Name() string {
+	return p.name
+}
+
+func NewFileWriter(wf *scipipe.Workflow, name string) *FileWriter {
 	fw := &FileWriter{
+		name:     name,
 		FilePath: make(chan string),
 	}
 	wf.AddProc(fw)

@@ -35,7 +35,7 @@ func (proc *FileSplitter) Name() string {
 func (proc *FileSplitter) Run() {
 	defer proc.OutSplitFile.Close()
 
-	fileReader := NewFileReader(proc.workflow)
+	fileReader := NewFileReader(proc.workflow, proc.Name()+"_file_reader")
 
 	for ft := range proc.InFile.InChan {
 		scipipe.Audit.Println("FileSplitter      Now processing input file ", ft.GetPath(), "...")

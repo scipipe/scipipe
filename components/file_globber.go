@@ -8,12 +8,18 @@ import (
 
 type FileGlobber struct {
 	scipipe.Process
+	name        string
 	Out         *scipipe.FilePort
 	globPattern string
 }
 
-func NewFileGlobber(wf *scipipe.Workflow, globPattern string) *FileGlobber {
+func (p *FileGlobber) Name() string {
+	return p.name
+}
+
+func NewFileGlobber(wf *scipipe.Workflow, name string, globPattern string) *FileGlobber {
 	fg := &FileGlobber{
+		name:        name,
 		Out:         scipipe.NewFilePort(),
 		globPattern: globPattern,
 	}
