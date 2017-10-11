@@ -12,12 +12,14 @@ type StringGen struct {
 }
 
 // Instantiate a new StringGen
-func NewStringGen(name string, strings ...string) *StringGen {
-	return &StringGen{
+func NewStringGen(wf *scipipe.Workflow, name string, strings ...string) *StringGen {
+	sg := &StringGen{
 		name:    name,
 		Out:     scipipe.NewParamPort(),
 		Strings: strings,
 	}
+	wf.AddProc(sg)
+	return sg
 }
 
 func (proc *StringGen) Name() string {

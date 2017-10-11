@@ -16,7 +16,7 @@ import (
 	"fmt"
 
 	. "github.com/scipipe/scipipe"
-	c "github.com/scipipe/scipipe/components"
+	comp "github.com/scipipe/scipipe/components"
 )
 
 // ------------------------------------------------------------------------------------
@@ -105,8 +105,7 @@ func main() {
 		// ---------------------------------------------------------------------------
 		// Merge
 		// ---------------------------------------------------------------------------
-		indvSender := c.NewStringGen("indv_sender_"+indv, indv)
-		wf.AddProc(indvSender)
+		indvSender := comp.NewStringGen(wf, "indv_sender_"+indv, indv)
 
 		bwaMergeCmd := "bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}"
 		bwaMerge := wf.NewProc("merge_"+indv, bwaMergeCmd)

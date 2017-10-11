@@ -13,15 +13,19 @@ type FileSplitter struct {
 	InFile        *scipipe.FilePort
 	OutSplitFile  *scipipe.FilePort
 	LinesPerSplit int
+	workflow      *scipipe.Workflow
 }
 
-func NewFileSplitter(name string, linesPerSplit int) *FileSplitter {
-	return &FileSplitter{
+func NewFileSplitter(wf *scipipe.Workflow, name string, linesPerSplit int) *FileSplitter {
+	fs := &FileSplitter{
 		name:          name,
 		InFile:        scipipe.NewFilePort(),
 		OutSplitFile:  scipipe.NewFilePort(),
 		LinesPerSplit: linesPerSplit,
+		workflow:      wf,
 	}
+	wf.AddProc(fs)
+	return fs
 }
 
 func (proc *FileSplitter) Name() string {
@@ -31,7 +35,7 @@ func (proc *FileSplitter) Name() string {
 func (proc *FileSplitter) Run() {
 	defer proc.OutSplitFile.Close()
 
-	fileReader := NewFileReader()
+	fileReader := NewFileReader(proc.workflow)
 
 	for ft := range proc.InFile.InChan {
 		scipipe.Audit.Println("FileSplitter      Now processing input file ", ft.GetPath(), "...")

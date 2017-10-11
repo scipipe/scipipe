@@ -16,20 +16,23 @@ type FileWriter struct {
 	FilePath chan string
 }
 
-func NewFileWriter() *FileWriter {
-	return &FileWriter{
+func NewFileWriter(wf *scipipe.Workflow) *FileWriter {
+	fw := &FileWriter{
 		FilePath: make(chan string),
 	}
+	wf.AddProc(fw)
+	return fw
 }
 
-func NewFileWriterFromPath(path string) *FileWriter {
-	t := &FileWriter{
+func NewFileWriterFromPath(wf *scipipe.Workflow, path string) *FileWriter {
+	fw := &FileWriter{
 		FilePath: make(chan string),
 	}
 	go func() {
-		t.FilePath <- path
+		fw.FilePath <- path
 	}()
-	return t
+	wf.AddProc(fw)
+	return fw
 }
 
 func (proc *FileWriter) Run() {

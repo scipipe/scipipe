@@ -12,11 +12,13 @@ type FileGlobber struct {
 	globPattern string
 }
 
-func NewFileGlobber(globPattern string) *FileGlobber {
-	return &FileGlobber{
+func NewFileGlobber(wf *scipipe.Workflow, globPattern string) *FileGlobber {
+	fg := &FileGlobber{
 		Out:         scipipe.NewFilePort(),
 		globPattern: globPattern,
 	}
+	wf.AddProc(fg)
+	return fg
 }
 
 func (p *FileGlobber) Run() {

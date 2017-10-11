@@ -4,19 +4,23 @@ import "github.com/scipipe/scipipe"
 
 type Concatenator struct {
 	scipipe.Process
-	name    string
-	In      *scipipe.FilePort
-	Out     *scipipe.FilePort
-	OutPath string
+	name     string
+	In       *scipipe.FilePort
+	Out      *scipipe.FilePort
+	OutPath  string
+	workflow *scipipe.Workflow
 }
 
-func NewConcatenator(name string, outPath string) *Concatenator {
-	return &Concatenator{
-		name:    name,
-		In:      scipipe.NewFilePort(),
-		Out:     scipipe.NewFilePort(),
-		OutPath: outPath,
+func NewConcatenator(wf *scipipe.Workflow, name string, outPath string) *Concatenator {
+	concat := &Concatenator{
+		name:     name,
+		In:       scipipe.NewFilePort(),
+		Out:      scipipe.NewFilePort(),
+		OutPath:  outPath,
+		workflow: wf,
 	}
+	wf.AddProc(concat)
+	return concat
 }
 
 func (proc *Concatenator) Name() string {
@@ -28,12 +32,11 @@ func (proc *Concatenator) Run() {
 	outFt := scipipe.NewInformationPacket(proc.OutPath)
 	outFh := outFt.OpenWriteTemp()
 	for ft := range proc.In.InChan {
-		fr := NewFileReader()
+		fr := NewFileReader(proc.workflow)
 		go func() {
 			defer close(fr.FilePath)
 			fr.FilePath <- ft.GetPath()
 		}()
-		go fr.Run()
 		for line := range fr.OutLine {
 			scipipe.Debug.Println("Processing ", line, "...")
 			outFh.Write([]byte(line))

@@ -15,12 +15,14 @@ type StreamToSubStream struct {
 }
 
 // Instantiate a new StreamToSubStream
-func NewStreamToSubStream(name string) *StreamToSubStream {
-	return &StreamToSubStream{
+func NewStreamToSubStream(wf *scipipe.Workflow, name string) *StreamToSubStream {
+	stss := &StreamToSubStream{
 		name:         name,
 		In:           scipipe.NewFilePort(),
 		OutSubStream: scipipe.NewFilePort(),
 	}
+	wf.AddProc(stss)
+	return stss
 }
 
 // Run the StreamToSubStream

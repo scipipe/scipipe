@@ -15,11 +15,13 @@ type AccumulatorInt struct {
 	OutPath     string
 }
 
-func NewAccumulatorInt(outPath string) *AccumulatorInt {
-	return &AccumulatorInt{
+func NewAccumulatorInt(wf *scipipe.Workflow, outPath string) *AccumulatorInt {
+	acc := &AccumulatorInt{
 		Accumulator: 0,
 		OutPath:     outPath,
 	}
+	wf.AddProc(acc)
+	return acc
 }
 
 func (proc *AccumulatorInt) Run() {

@@ -16,11 +16,13 @@ type FileReader struct {
 }
 
 // Instantiate a new FileReader
-func NewFileReader() *FileReader {
-	return &FileReader{
+func NewFileReader(wf *scipipe.Workflow) *FileReader {
+	fr := &FileReader{
 		FilePath: make(chan string),
 		OutLine:  make(chan []byte, scipipe.BUFSIZE),
 	}
+	wf.AddProc(fr)
+	return fr
 }
 
 // Run the FileReader

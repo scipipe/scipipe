@@ -9,11 +9,13 @@ type strToByte struct {
 	Out chan []byte
 }
 
-func NewStrToByte() *strToByte {
-	return &strToByte{
+func NewStrToByte(wf *scipipe.Workflow) *strToByte {
+	stb := &strToByte{
 		In:  make(chan string, scipipe.BUFSIZE),
 		Out: make(chan []byte, scipipe.BUFSIZE),
 	}
+	wf.AddProc(stb)
+	return stb
 }
 
 func (proc *strToByte) Run() {
