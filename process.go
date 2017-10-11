@@ -467,13 +467,14 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 				break
 			}
 		}
+		Debug.Printf("Process.createTasks:%s Did break", p.name)
 	}()
 	return ch
 }
 
 func (p *SciProcess) closeOutPorts() {
 	for oname, oport := range p.outPorts {
-		Debug.Printf("Process %s: Closing port %s ...\n", p.name, oname)
+		Debug.Printf("Process %s: Closing port(s) %s ...\n", p.name, oname)
 		oport.Close()
 	}
 }

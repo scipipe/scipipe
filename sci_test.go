@@ -207,7 +207,7 @@ func TestSendsOrderedOutputs(t *t.T) {
 	go fc.Run()
 	go sl.Run()
 
-	for ft := range tempPort.Chan {
+	for ft := range tempPort.InChan {
 		Debug.Printf("TestSendsOrderedOutputs: Looping over item %d ...\n", i)
 		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
 		assert.EqualValues(t, expFname, ft.GetPath())

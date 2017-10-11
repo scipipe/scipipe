@@ -32,11 +32,10 @@ func NewFilePort() *FilePort {
 }
 
 func (localPort *FilePort) Connect(remotePort *FilePort) {
-	// Needed to make this work as an in-port
-	localPort.InChan = remotePort.InChan
-
-	localPort.AddOutChan(remotePort.InChan)
+	// If localPort is an in-port
 	remotePort.AddOutChan(localPort.InChan)
+	// If localPort is an out-port
+	localPort.AddOutChan(remotePort.InChan)
 
 	localPort.SetConnectedStatus(true)
 	remotePort.SetConnectedStatus(true)
@@ -55,7 +54,8 @@ func (pt *FilePort) IsConnected() bool {
 }
 
 func (pt *FilePort) Send(ip *InformationPacket) {
-	for _, outChan := range pt.outChans {
+	for i, outChan := range pt.outChans {
+		Debug.Printf("Sending on outchan %d in port\n", i)
 		outChan <- ip
 	}
 }
@@ -65,7 +65,8 @@ func (pt *FilePort) Recv() *InformationPacket {
 }
 
 func (pt *FilePort) Close() {
-	for _, outChan := range pt.outChans {
+	for i, outChan := range pt.outChans {
+		Debug.Printf("Closing outchan %d in port\n", i)
 		close(outChan)
 	}
 }

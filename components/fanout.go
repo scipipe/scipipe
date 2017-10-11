@@ -34,7 +34,7 @@ func (proc *FanOut) Name() string {
 // Run runs the FanOut process
 func (proc *FanOut) Run() {
 	for _, outPort := range proc.outPorts {
-		defer close(outPort.InChan)
+		defer outPort.Close()
 	}
 
 	for ft := range proc.InFile.InChan {
