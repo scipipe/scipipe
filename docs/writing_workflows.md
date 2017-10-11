@@ -13,8 +13,10 @@ import (
 )
 
 func main() {
-    // Init workflow
-    wf := NewWorkflow("hello_world")
+    // Init workflow with a name, and a number for max concurrent tasks, so we
+    // don't overbook our CPU (it is recommended to set it to the number of CPU
+    // cores of your computer)
+    wf := NewWorkflow("hello_world", 4)
 
     // Initialize processes and set output file paths
     hello := wf.NewProc("hello", "echo 'Hello ' > {o:out}")

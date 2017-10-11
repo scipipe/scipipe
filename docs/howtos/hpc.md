@@ -7,7 +7,7 @@ SLURM), or any analogous blocking command to other resource managers.
 So, something like this (See on the third line how the salloc-line is added to the process):
 
 ```go
-wf := scipipe.NewWorkflow("Hello_World_Workflow")
+wf := scipipe.NewWorkflow("Hello_World_Workflow", 4)
 myProc := wf.NewProc("hello_world", "echo Hello World; sleep 10;")
 myProc.Prepend = "salloc -A projectABC123 -p core -t 1:00 -J HelloWorld"
 ```
