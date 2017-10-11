@@ -33,7 +33,7 @@ func (proc *FileSplitter) Run() {
 
 	fileReader := NewFileReader()
 
-	for ft := range proc.InFile.Chan {
+	for ft := range proc.InFile.InChan {
 		scipipe.Audit.Println("FileSplitter      Now processing input file ", ft.GetPath(), "...")
 
 		go func() {

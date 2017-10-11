@@ -23,7 +23,7 @@ func (proc *Merger) Run() {
 				proc.Out.Send(ft)
 			}
 			wg.Done()
-		}(inp.Chan)
+		}(inp.InChan)
 	}
 	wg.Wait()
 	proc.Out.Close()

@@ -34,10 +34,10 @@ func (proc *FanOut) Name() string {
 // Run runs the FanOut process
 func (proc *FanOut) Run() {
 	for _, outPort := range proc.outPorts {
-		defer close(outPort.Chan)
+		defer close(outPort.InChan)
 	}
 
-	for ft := range proc.InFile.Chan {
+	for ft := range proc.InFile.InChan {
 		for key, outPort := range proc.outPorts {
 			scipipe.Debug.Println("FanOut: Sending file ", ft.GetPath(), " on out-port ", key)
 			outPort.Send(ft)

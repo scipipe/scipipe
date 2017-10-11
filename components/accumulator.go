@@ -23,8 +23,8 @@ func NewAccumulatorInt(outPath string) *AccumulatorInt {
 }
 
 func (proc *AccumulatorInt) Run() {
-	defer close(proc.Out.Chan)
-	for ft := range proc.In.Chan {
+	defer close(proc.Out.InChan)
+	for ft := range proc.In.InChan {
 		scipipe.Audit.Printf("Accumulator:      Processing file target %s ...\n", ft.GetPath())
 		val, err := strconv.Atoi(strings.TrimSpace(string(ft.Read())))
 		Check(err)

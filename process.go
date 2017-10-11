@@ -409,7 +409,7 @@ func (p *SciProcess) receiveInputs() (inTargets map[string]*InformationPacket, i
 	// Read input targets on in-ports and set up path mappings
 	for inpName, inPort := range p.inPorts {
 		Debug.Printf("Process %s: Receieving on inPort %s ...", p.name, inpName)
-		inTarget, open := <-inPort.Chan
+		inTarget, open := <-inPort.InChan
 		if !open {
 			inPortsOpen = false
 			continue

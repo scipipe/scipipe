@@ -24,10 +24,10 @@ func (proc *Concatenator) Name() string {
 }
 
 func (proc *Concatenator) Run() {
-	defer close(proc.Out.Chan)
+	defer close(proc.Out.InChan)
 	outFt := scipipe.NewInformationPacket(proc.OutPath)
 	outFh := outFt.OpenWriteTemp()
-	for ft := range proc.In.Chan {
+	for ft := range proc.In.InChan {
 		fr := NewFileReader()
 		go func() {
 			defer close(fr.FilePath)

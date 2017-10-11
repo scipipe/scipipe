@@ -263,7 +263,7 @@ func formatCommand(cmd string, inTargets map[string]*InformationPacket, outTarge
 				Check(errors.New(msg), msg)
 			} else if inTargets[name].GetPath() == "" && reduceInputs {
 				ips := []*InformationPacket{}
-				for ip := range inTargets[name].SubStream.Chan {
+				for ip := range inTargets[name].SubStream.InChan {
 					Debug.Println("Got ip: ", ip)
 					ips = append(ips, ip)
 				}

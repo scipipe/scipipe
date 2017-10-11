@@ -42,7 +42,7 @@ func (p *Sink) Run() {
 	loop:
 		for i, inp := range p.inPorts {
 			select {
-			case ft, ok = <-inp.Chan:
+			case ft, ok = <-inp.InChan:
 				if !ok {
 					Debug.Println(p.name + ": Channel closed, so deleting, and restarting loop")
 					p.deleteInPortAtKey(i)

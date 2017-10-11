@@ -17,33 +17,33 @@ func Connect(port1 *FilePort, port2 *FilePort) {
 // FilePort
 type FilePort struct {
 	Port
-	Chan        chan *InformationPacket // TODO: Deprecated
-	remoteChans []chan *InformationPacket
-	connected   bool
+	InChan    chan *InformationPacket
+	outChans  []chan *InformationPacket
+	connected bool
 }
 
 func NewFilePort() *FilePort {
 	return &FilePort{
-		Chan:        make(chan *InformationPacket, BUFSIZE),
-		remoteChans: []chan *InformationPacket{},
-		connected:   false,
+		InChan:    make(chan *InformationPacket, BUFSIZE),
+		outChans:  []chan *InformationPacket{},
+		connected: false,
 	}
 
 }
 
 func (localPort *FilePort) Connect(remotePort *FilePort) {
 	// Needed to make this work as an in-port
-	localPort.Chan = remotePort.Chan
+	localPort.InChan = remotePort.InChan
 
-	localPort.AddRemoteChan(remotePort.Chan)
-	remotePort.AddRemoteChan(localPort.Chan)
+	localPort.AddOutChan(remotePort.InChan)
+	remotePort.AddOutChan(localPort.InChan)
 
 	localPort.SetConnectedStatus(true)
 	remotePort.SetConnectedStatus(true)
 }
 
-func (pt *FilePort) AddRemoteChan(remoteChan chan *InformationPacket) {
-	pt.remoteChans = append(pt.remoteChans, remoteChan)
+func (pt *FilePort) AddOutChan(outChan chan *InformationPacket) {
+	pt.outChans = append(pt.outChans, outChan)
 }
 
 func (pt *FilePort) SetConnectedStatus(connected bool) {
@@ -55,18 +55,18 @@ func (pt *FilePort) IsConnected() bool {
 }
 
 func (pt *FilePort) Send(ip *InformationPacket) {
-	for _, remoteChan := range pt.remoteChans {
-		remoteChan <- ip
+	for _, outChan := range pt.outChans {
+		outChan <- ip
 	}
 }
 
 func (pt *FilePort) Recv() *InformationPacket {
-	return <-pt.Chan // TODO: Support more than one in-port too
+	return <-pt.InChan
 }
 
 func (pt *FilePort) Close() {
-	for _, remoteChan := range pt.remoteChans {
-		close(remoteChan)
+	for _, outChan := range pt.outChans {
+		close(outChan)
 	}
 }
 
