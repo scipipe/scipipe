@@ -193,7 +193,6 @@ func TestSendsOrderedOutputs(t *t.T) {
 	sl.SetPathExtend("in", "out", ".copy.txt")
 	sl.In("in").Connect(fc.Out("out"))
 
-	//sl.Out("out").Chan = make(chan *InformationPacket, BUFSIZE)
 	assert.NotNil(t, sl.Out)
 
 	var expFname string

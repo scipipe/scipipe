@@ -61,20 +61,12 @@ func main() {
 	ungzipRef.SetPathReplace("in", "out", ".gz", "")
 	ungzipRef.In("in").Connect(downloadRef.Out("outfile"))
 
-	ungzipRefFanOut := c.NewFanOut("ungzip_ref_fanout")
-	ungzipRefFanOut.InFile.Connect(ungzipRef.Out("out"))
-	wf.AddProc(ungzipRefFanOut)
-
 	// --------------------------------------------------------------------------------
 	// Index Reference Genome
 	// --------------------------------------------------------------------------------
 	indexRef := wf.NewProc("index_ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
 	indexRef.SetPathExtend("index", "done", ".indexed")
-	indexRef.In("index").Connect(ungzipRefFanOut.Out("for_indexref"))
-
-	indexRefFanOut := c.NewFanOut("indexref_fanout")
-	indexRefFanOut.InFile.Connect(indexRef.Out("done"))
-	wf.AddProc(indexRefFanOut)
+	indexRef.In("index").Connect(ungzipRef.Out("out"))
 
 	// Create (multi-level) maps where we can gather outports from processes
 	// for each for loop iteration and access them in the merge step later
@@ -94,10 +86,7 @@ func main() {
 			downloadFastQ.SetPathStatic("fastq", file_name)
 
 			// Save outPorts for later use
-			fastQFanOut := c.NewFanOut(indv_smpl + "fastq_fanout")
-			wf.AddProc(fastQFanOut)
-			fastQFanOut.InFile.Connect(downloadFastQ.Out("fastq"))
-			outPorts[indv][smpl]["fastq"] = fastQFanOut.Out("fastq_2")
+			outPorts[indv][smpl]["fastq"] = downloadFastQ.Out("fastq")
 
 			// ------------------------------------------------------------------------
 			// BWA Align
@@ -105,9 +94,9 @@ func main() {
 			bwaAlignCmd := "bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}"
 			bwaAlign := wf.NewProc("bwa_aln"+indv_smpl, bwaAlignCmd)
 			bwaAlign.SetPathExtend("fastq", "sai", ".sai")
-			bwaAlign.In("ref").Connect(ungzipRefFanOut.Out("for_bwaalign" + indv_smpl))
-			bwaAlign.In("idxdone").Connect(indexRefFanOut.Out("for_bwaalign" + indv_smpl))
-			bwaAlign.In("fastq").Connect(fastQFanOut.Out("fastq_1"))
+			bwaAlign.In("ref").Connect(ungzipRef.Out("out"))
+			bwaAlign.In("idxdone").Connect(indexRef.Out("done"))
+			bwaAlign.In("fastq").Connect(downloadFastQ.Out("fastq"))
 
 			// Save outPorts for later use
 			outPorts[indv][smpl]["sai"] = bwaAlign.Out("sai")
@@ -125,8 +114,8 @@ func main() {
 			return t.Params["indv"] + ".merged.sam"
 		})
 		bwaMerge.ParamPort("indv").Connect(indvSender.Out)
-		bwaMerge.In("ref").Connect(ungzipRefFanOut.Out("for_bwamerge_" + indv))
-		bwaMerge.In("refdone").Connect(indexRefFanOut.Out("for_bwamerge_" + indv))
+		bwaMerge.In("ref").Connect(ungzipRef.Out("out"))
+		bwaMerge.In("refdone").Connect(indexRef.Out("done"))
 		bwaMerge.In("sai1").Connect(outPorts[indv]["1"]["sai"])
 		bwaMerge.In("sai2").Connect(outPorts[indv]["2"]["sai"])
 		bwaMerge.In("fq1").Connect(outPorts[indv]["1"]["fastq"])
