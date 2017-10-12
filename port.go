@@ -78,9 +78,7 @@ type ParamPort struct {
 }
 
 func NewParamPort() *ParamPort {
-	return &ParamPort{
-		Chan: make(chan string, BUFSIZE),
-	}
+	return &ParamPort{}
 }
 
 func (pp *ParamPort) Connect(otherParamPort *ParamPort) {
@@ -104,6 +102,7 @@ func (pp *ParamPort) Connect(otherParamPort *ParamPort) {
 }
 
 func (pp *ParamPort) ConnectStrings(strings ...string) {
+	pp.Chan = make(chan string, BUFSIZE)
 	pp.SetConnectedStatus(true)
 	go func() {
 		defer pp.Close()
