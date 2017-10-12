@@ -101,7 +101,7 @@ func (pp *ParamPort) Connect(otherParamPort *ParamPort) {
 	otherParamPort.SetConnectedStatus(true)
 }
 
-func (pp *ParamPort) ConnectStrings(strings ...string) {
+func (pp *ParamPort) ConnectStr(strings ...string) {
 	pp.Chan = make(chan string, BUFSIZE)
 	pp.SetConnectedStatus(true)
 	go func() {
