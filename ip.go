@@ -156,9 +156,19 @@ func (ip *InformationPacket) TempFileExists() bool {
 }
 
 func (ip *InformationPacket) GetAuditInfo() *AuditInfo {
-	defer ip.lock.Unlock()
-	ip.lock.Lock()
-	return ip.auditInfo
+	auditInfo := &AuditInfo{}
+	if ip.auditInfo != nil {
+		defer ip.lock.Unlock()
+		ip.lock.Lock()
+		auditInfo = ip.auditInfo
+	} else {
+		auditFileData, err := ioutil.ReadFile(ip.GetAuditFilePath())
+		if err == nil {
+			unmarshalErr := json.Unmarshal(auditFileData, auditInfo)
+			Check(unmarshalErr, "Could not unmarchal audit log file content: "+ip.GetAuditFilePath())
+		}
+	}
+	return auditInfo
 }
 
 func (ip *InformationPacket) SetAuditInfo(ai *AuditInfo) {
@@ -167,11 +177,15 @@ func (ip *InformationPacket) SetAuditInfo(ai *AuditInfo) {
 	ip.lock.Unlock()
 }
 
+func (ip *InformationPacket) GetAuditFilePath() string {
+	return ip.GetPath() + ".audit.json"
+}
+
 func (ip *InformationPacket) WriteAuditLogToFile() {
 	auditInfo := ip.GetAuditInfo()
 	auditInfoJson, jsonErr := json.MarshalIndent(auditInfo, "", "    ")
 	Check(jsonErr, "Could not marshall JSON")
-	writeErr := ioutil.WriteFile(ip.GetPath()+".audit.json", auditInfoJson, 0644)
+	writeErr := ioutil.WriteFile(ip.GetAuditFilePath(), auditInfoJson, 0644)
 	Check(writeErr, "Could not write audit file: "+ip.GetPath())
 }
 
