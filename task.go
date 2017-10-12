@@ -104,12 +104,12 @@ func (t *SciTask) Execute() {
 		auditInfo := NewAuditInfo()
 		auditInfo.Command = t.Command
 		auditInfo.Params = t.Params
-		execTimeMilliSeconds := execTime / time.Millisecond
-		auditInfo.ExecutionTimeMilliSeconds = execTimeMilliSeconds
+		execTimeMS := execTime / time.Millisecond
+		auditInfo.ExecTimeMS = execTimeMS
 
 		for _, iip := range t.InTargets {
 			iipPath := iip.GetPath()
-			auditInfo.UpstreamAuditInfos[iipPath] = iip.GetAuditInfo()
+			auditInfo.Upstream[iipPath] = iip.GetAuditInfo()
 		}
 		for _, oip := range t.OutTargets {
 			oip.SetAuditInfo(auditInfo)
