@@ -19,9 +19,9 @@ func main() {
 	abc.SetPathCustom("out", func(t *sci.SciTask) string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
-			t.Params["a"],
-			t.Params["b"],
-			t.Params["c"],
+			t.Param("a"),
+			t.Param("b"),
+			t.Param("c"),
 		)
 	})
 

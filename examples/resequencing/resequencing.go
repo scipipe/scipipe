@@ -107,7 +107,7 @@ func main() {
 		bwaMergeCmd := "bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}"
 		bwaMerge := wf.NewProc("merge_"+indv, bwaMergeCmd)
 		bwaMerge.SetPathCustom("merged", func(t *SciTask) string {
-			return t.Params["indv"] + ".merged.sam"
+			return t.Param("indv") + ".merged.sam"
 		})
 		bwaMerge.ParamPort("indv").ConnectStrings(indv)
 		bwaMerge.In("ref").Connect(ungzipRef.Out("out"))

@@ -76,9 +76,9 @@ func TestParameterCommand(t *t.T) {
 	abc.PathFormatters["out"] = func(task *SciTask) string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
-			task.Params["a"],
-			task.Params["b"],
-			task.Params["c"],
+			task.Param("a"),
+			task.Param("b"),
+			task.Param("c"),
 		)
 	}
 

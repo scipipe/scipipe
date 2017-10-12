@@ -62,6 +62,15 @@ func (t *SciTask) InPath(portName string) string {
 	return t.InTargets[portName].GetPath()
 }
 
+func (t *SciTask) Param(portName string) string {
+	if param, ok := t.Params[portName]; ok {
+		return param
+	} else {
+		Error.Fatalf("No such param port '%s' for task '%s'\n", portName, t.Name)
+	}
+	return "invalid"
+}
+
 func (t *SciTask) Execute() {
 	defer close(t.Done)
 
