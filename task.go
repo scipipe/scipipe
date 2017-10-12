@@ -58,8 +58,8 @@ func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[st
 
 // --------------- SciTask API methods ----------------
 
-func (t *SciTask) GetInPath(inPort string) string {
-	return t.InTargets[inPort].GetPath()
+func (t *SciTask) InPath(portName string) string {
+	return t.InTargets[portName].GetPath()
 }
 
 func (t *SciTask) Execute() {

@@ -16,7 +16,7 @@ func main() {
 
 	abc := sci.ShellExpand(wf, "abc", "echo {p:a} {p:b} {p:c} > {o:out} # {i:in}", nil, nil, params)
 	abc.SetPathCustom("out", func(task *sci.SciTask) string {
-		return task.GetInPath("in")
+		return task.InPath("in")
 	})
 
 	prt := wf.NewProc("prt", "echo {i:in} >> log.txt")

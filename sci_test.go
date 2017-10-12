@@ -30,7 +30,7 @@ func TestBasicRun(t *t.T) {
 	assert.IsType(t, t2.In("foo"), NewFilePort())
 	assert.IsType(t, t2.Out("bar"), NewFilePort())
 	t2.PathFormatters["bar"] = func(t *SciTask) string {
-		return t.GetInPath("foo") + ".bar.txt"
+		return t.InPath("foo") + ".bar.txt"
 	}
 	snk := NewSink("sink")
 
@@ -54,7 +54,7 @@ func TestConnectBackwards(t *t.T) {
 	t1.SetPathCustom("foo", func(t *SciTask) string { return "foo.txt" })
 
 	t2 := wf.NewProc("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	t2.SetPathCustom("bar", func(t *SciTask) string { return t.GetInPath("foo") + ".bar.txt" })
+	t2.SetPathCustom("bar", func(t *SciTask) string { return t.InPath("foo") + ".bar.txt" })
 
 	t1.Out("foo").Connect(t2.In("foo"))
 	wf.ConnectLast(t2.Out("bar"))
@@ -237,7 +237,7 @@ func TestStreaming(t *t.T) {
 
 	grp := NewProc(wf, "grp", "grep etc {i:in} > {o:grepped}")
 	grp.PathFormatters["grepped"] = func(task *SciTask) string {
-		return task.GetInPath("in") + ".grepped.txt"
+		return task.InPath("in") + ".grepped.txt"
 	}
 
 	snk := NewSink("sink")

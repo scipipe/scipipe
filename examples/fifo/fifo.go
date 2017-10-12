@@ -18,13 +18,13 @@ func main() {
 	// grep process
 	grp := sp.NewProc(wf, "grp", "grep etc {i:in} > {o:grep}")
 	grp.SetPathCustom("grep", func(tsk *sp.SciTask) string {
-		return tsk.GetInPath("in") + ".grepped.txt"
+		return tsk.InPath("in") + ".grepped.txt"
 	})
 
 	// cat process
 	cat := sp.NewProc(wf, "cat", "cat {i:in} > {o:out}")
 	cat.SetPathCustom("out", func(tsk *sp.SciTask) string {
-		return tsk.GetInPath("in") + ".out.txt"
+		return tsk.InPath("in") + ".out.txt"
 	})
 
 	// connect network
