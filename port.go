@@ -103,6 +103,16 @@ func (pp *ParamPort) Connect(otherParamPort *ParamPort) {
 	otherParamPort.SetConnectedStatus(true)
 }
 
+func (pp *ParamPort) ConnectStrings(strings ...string) {
+	pp.SetConnectedStatus(true)
+	go func() {
+		defer pp.Close()
+		for _, str := range strings {
+			pp.Chan <- str
+		}
+	}()
+}
+
 func (pp *ParamPort) SetConnectedStatus(connected bool) {
 	pp.connected = connected
 }

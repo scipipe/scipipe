@@ -16,7 +16,6 @@ import (
 	"fmt"
 
 	. "github.com/scipipe/scipipe"
-	comp "github.com/scipipe/scipipe/components"
 )
 
 // ------------------------------------------------------------------------------------
@@ -105,14 +104,12 @@ func main() {
 		// ---------------------------------------------------------------------------
 		// Merge
 		// ---------------------------------------------------------------------------
-		indvSender := comp.NewStringGen(wf, "indv_sender_"+indv, indv)
-
 		bwaMergeCmd := "bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}"
 		bwaMerge := wf.NewProc("merge_"+indv, bwaMergeCmd)
 		bwaMerge.SetPathCustom("merged", func(t *SciTask) string {
 			return t.Params["indv"] + ".merged.sam"
 		})
-		bwaMerge.ParamPort("indv").Connect(indvSender.Out)
+		bwaMerge.ParamPort("indv").ConnectStrings(indv)
 		bwaMerge.In("ref").Connect(ungzipRef.Out("out"))
 		bwaMerge.In("refdone").Connect(indexRef.Out("done"))
 		bwaMerge.In("sai1").Connect(outPorts[indv]["1"]["sai"])
