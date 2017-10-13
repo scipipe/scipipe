@@ -78,6 +78,13 @@ func (ip *InformationPacket) Read() []byte {
 	return dat
 }
 
+// Read the whole content of the file and return as a byte array ([]byte)
+func (ip *InformationPacket) ReadAuditFile() []byte {
+	dat, err := ioutil.ReadFile(ip.GetAuditFilePath())
+	Check(err, "Could not open file for reading: "+ip.GetAuditFilePath())
+	return dat
+}
+
 // Write a byte array ([]byte) to the file (first to its temp path, and then atomize)
 func (ip *InformationPacket) WriteTempFile(dat []byte) {
 	err := ioutil.WriteFile(ip.GetTempPath(), dat, 0644)
