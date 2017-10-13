@@ -234,15 +234,3 @@ func (ipg *IPGen) Name() string {
 func (ipg *IPGen) IsConnected() bool {
 	return ipg.Out.IsConnected()
 }
-
-func (snk *Sink) deleteInPortAtKey(i int) {
-	if snk.inPorts != nil {
-		if len(snk.inPorts) > i {
-			snk.inPorts = append(snk.inPorts[:i], snk.inPorts[i+1:]...)
-		} else {
-			Warning.Printf("Inport %d does not exist, in sink", i)
-		}
-	} else {
-		Warning.Println("Inports array not initialized!")
-	}
-}

@@ -29,6 +29,8 @@ func (proc *Concatenator) Name() string {
 
 func (proc *Concatenator) Run() {
 	defer proc.Out.Close()
+	go proc.In.RunMergeInputs()
+
 	outFt := scipipe.NewInformationPacket(proc.OutPath)
 	outFh := outFt.OpenWriteTemp()
 	for ft := range proc.In.InChan {

@@ -34,6 +34,7 @@ func (proc *FileSplitter) Name() string {
 
 func (proc *FileSplitter) Run() {
 	defer proc.OutSplitFile.Close()
+	go proc.InFile.RunMergeInputs()
 
 	fileReader := NewFileReader(proc.workflow, proc.Name()+"_file_reader")
 

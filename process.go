@@ -344,6 +344,10 @@ func (proc *SciProcess) IsConnected() (isConnected bool) {
 func (p *SciProcess) Run() {
 	defer p.closeOutPorts()
 
+	for _, inPort := range p.GetInPorts() {
+		go inPort.RunMergeInputs()
+	}
+
 	tasks := []*SciTask{}
 	Debug.Printf("Process %s: Starting to create and schedule tasks\n", p.name)
 	for t := range p.createTasks() {

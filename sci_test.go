@@ -173,7 +173,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 
 // Make sure that outputs are returned in order, even though they are
 // spawned to work in parallel.
-func TestSendsOrderedOutputs(t *t.T) {
+func TestSendOrderedOutputs(t *t.T) {
 	initTestLogs()
 	//InitLogDebug()
 
@@ -206,15 +206,16 @@ func TestSendsOrderedOutputs(t *t.T) {
 	go fc.Run()
 	go sl.Run()
 
+	go tempPort.RunMergeInputs()
 	for ft := range tempPort.InChan {
-		Debug.Printf("TestSendsOrderedOutputs: Looping over item %d ...\n", i)
+		Debug.Printf("TestSendOrderedOutputs: Looping over item %d ...\n", i)
 		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
 		assert.EqualValues(t, expFname, ft.GetPath())
-		Debug.Printf("TestSendsOrderedOutputs: Looping over item %d Done.\n", i)
+		Debug.Printf("TestSendOrderedOutputs: Looping over item %d Done.\n", i)
 		i++
 	}
 
-	Debug.Println("TestSendsOrderedOutputs: Done with loop ...")
+	Debug.Println("TestSendOrderedOutputs: Done with loop ...")
 
 	expFnames := []string{}
 	for i := 1; i <= 10; i++ {
@@ -285,9 +286,7 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 	cat.SetPathStatic("merged", "/tmp/substream_merged.txt")
 	cat.In("infiles").Connect(sts.OutSubStream)
 
-	snk := NewSink("sink")
-	snk.Connect(cat.Out("merged"))
-	wf.SetSink(snk)
+	wf.ConnectLast(cat.Out("merged"))
 
 	wf.Run()
 
@@ -400,6 +399,7 @@ func NewStreamToSubStream() *StreamToSubStream {
 // Run the StreamToSubStream
 func (proc *StreamToSubStream) Run() {
 	defer proc.OutSubStream.Close()
+	go proc.In.RunMergeInputs()
 
 	subStreamIP := NewInformationPacket("")
 	subStreamIP.SubStream = proc.In

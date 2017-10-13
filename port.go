@@ -18,31 +18,59 @@ func Connect(port1 *FilePort, port2 *FilePort) {
 type FilePort struct {
 	Port
 	InChan    chan *InformationPacket
+	inChans   []chan *InformationPacket
 	outChans  []chan *InformationPacket
 	connected bool
 }
 
 func NewFilePort() *FilePort {
-	return &FilePort{
-		InChan:    make(chan *InformationPacket, BUFSIZE),
+	fp := &FilePort{
+		InChan:    make(chan *InformationPacket, BUFSIZE), // This one will contain merged inputs from inChans
+		inChans:   []chan *InformationPacket{},
 		outChans:  []chan *InformationPacket{},
 		connected: false,
 	}
-
+	return fp
 }
 
 func (localPort *FilePort) Connect(remotePort *FilePort) {
 	// If localPort is an in-port
-	remotePort.AddOutChan(localPort.InChan)
+	inBoundChan := make(chan *InformationPacket, BUFSIZE)
+	localPort.AddInChan(inBoundChan)
+	remotePort.AddOutChan(inBoundChan)
+
 	// If localPort is an out-port
-	localPort.AddOutChan(remotePort.InChan)
+	outBoundChan := make(chan *InformationPacket, BUFSIZE)
+	localPort.AddOutChan(outBoundChan)
+	remotePort.AddInChan(outBoundChan)
 
 	localPort.SetConnectedStatus(true)
 	remotePort.SetConnectedStatus(true)
 }
 
+// RunMerge merges (multiple) inputs on pt.inChans into pt.InChan. This has to
+// start running when the owning process runs, in order to merge in-ports
+func (pt *FilePort) RunMergeInputs() {
+	defer close(pt.InChan)
+	for len(pt.inChans) > 0 {
+		for i, ich := range pt.inChans {
+			ip, ok := <-ich
+			if !ok {
+				// Delete in-channel at position i
+				pt.inChans = append(pt.inChans[:i], pt.inChans[i+1:]...)
+				break
+			}
+			pt.InChan <- ip
+		}
+	}
+}
+
 func (pt *FilePort) AddOutChan(outChan chan *InformationPacket) {
 	pt.outChans = append(pt.outChans, outChan)
+}
+
+func (pt *FilePort) AddInChan(inChan chan *InformationPacket) {
+	pt.inChans = append(pt.inChans, inChan)
 }
 
 func (pt *FilePort) SetConnectedStatus(connected bool) {
