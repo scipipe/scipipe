@@ -181,7 +181,7 @@ func (t *SciTask) executeCommand(cmd string) {
 	Audit.Printf("Task:%-12s Executing command: %s\n", t.Name, cmd)
 	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
 	if err != nil {
-		Error.Println("Command failed, with output:\n", string(out))
+		Error.Printf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\n\n", cmd, string(out))
 		os.Exit(126)
 	}
 }
