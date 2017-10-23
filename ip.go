@@ -50,6 +50,13 @@ func (ip *InformationPacket) GetFifoPath() string {
 	return ip.path + ".fifo"
 }
 
+// Get the size of an existing file, in bytes
+func (ip *InformationPacket) GetSize() int64 {
+	fi, err := os.Stat(ip.path)
+	CheckErr(err)
+	return fi.Size()
+}
+
 // Open the file and return a file handle (*os.File)
 func (ip *InformationPacket) Open() *os.File {
 	f, err := os.Open(ip.GetPath())
