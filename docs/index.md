@@ -9,7 +9,14 @@
 
 <strong><small>Project links: [GitHub repo](http://github.com/scipipe/scipipe) | [Issue Tracker](https://github.com/scipipe/scipipe/issues) | [Mailing List](https://groups.google.com/forum/#!forum/scipipe) | [Chat](https://gitter.im/scipipe/scipipe)</small></strong>
 
-<strong>NEW:</strong> [Watch a screencast on how to write a Hello World workflow in SciPipe [15:28]](https://www.youtube.com/watch?v=kWqkGwDU-Hc)
+
+## Project updates
+ 
+- <strong>NEW blog post:</strong> [Provenance reports in Scientific Workflows](http://bionics.it/posts/provenance-reports-in-scientific-workflows) - going into details about how SciPipe is addressing provenance
+- <strong>NEW blog post:</strong> [First production workflow run with SciPipe](http://bionics.it/posts/first-production-workflow-run-with-scipipe)
+- <strong>NEW video:</strong> [Watch a screencast on how to write a Hello World workflow in SciPipe [15:28]](https://www.youtube.com/watch?v=kWqkGwDU-Hc)
+
+## Introduction
 
 <img src="images/fbp_factory.png" style="float: right; margin: 0 .4em;">
 SciPipe is a library for writing [Scientific
