@@ -14,7 +14,7 @@ type AuditInfo struct {
 func NewAuditInfo() *AuditInfo {
 	return &AuditInfo{
 		Command:    "",
-		ExecTimeMS: 0,
+		ExecTimeMS: -1,
 		Params:     make(map[string]string),
 		Upstream:   make(map[string]*AuditInfo),
 	}
