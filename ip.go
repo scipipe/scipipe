@@ -170,12 +170,33 @@ func (ip *InformationPacket) TempFileExists() bool {
 }
 
 func (ip *InformationPacket) GetParam(key string) string {
-	ai := ip.GetAuditInfo()
-	val, ok := ai.Params[key]
+	val, ok := ip.GetAuditInfo().Params[key]
 	if !ok {
 		Error.Fatalf("Could not find parameter %s in ip with path: %s\n", key, ip.GetPath())
 	}
 	return val
+}
+
+func (ip *InformationPacket) GetKey(k string) string {
+	v, ok := ip.GetAuditInfo().Keys[k]
+	if !ok {
+		Error.Fatalf("Could not find key %s in ip with path: %s\n", k, ip.GetPath())
+	}
+	return v
+}
+
+func (ip *InformationPacket) GetKeys() map[string]string {
+	return ip.GetAuditInfo().Keys
+}
+
+func (ip *InformationPacket) AddKey(k string, v string) {
+	ip.GetAuditInfo().Keys[k] = v
+}
+
+func (ip *InformationPacket) AddKeys(keys map[string]string) {
+	for k, v := range keys {
+		ip.AddKey(k, v)
+	}
 }
 
 func (ip *InformationPacket) GetAuditInfo() *AuditInfo {
