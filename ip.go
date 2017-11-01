@@ -199,6 +199,12 @@ func (ip *InformationPacket) AddKeys(keys map[string]string) {
 	}
 }
 
+func (ip *InformationPacket) UnMarshalJson(v interface{}) {
+	d := ip.Read()
+	err := json.Unmarshal(d, v)
+	Check(err, "Could not unmarshal content of file: "+ip.GetPath())
+}
+
 func (ip *InformationPacket) GetAuditInfo() *AuditInfo {
 	defer ip.lock.Unlock()
 	ip.lock.Lock()
