@@ -169,20 +169,27 @@ func (ip *InformationPacket) TempFileExists() bool {
 	return tempFileExists
 }
 
+func (ip *InformationPacket) GetParam(key string) string {
+	ai := ip.GetAuditInfo()
+	val, ok := ai.Params[key]
+	if !ok {
+		Error.Fatalf("Could not find parameter %s in ip with path: %s\n", key, ip.GetPath())
+	}
+	return val
+}
+
 func (ip *InformationPacket) GetAuditInfo() *AuditInfo {
-	auditInfo := &AuditInfo{}
-	if ip.auditInfo != nil {
-		defer ip.lock.Unlock()
-		ip.lock.Lock()
-		auditInfo = ip.auditInfo
-	} else {
+	defer ip.lock.Unlock()
+	ip.lock.Lock()
+	if ip.auditInfo == nil {
+		ip.auditInfo = NewAuditInfo()
 		auditFileData, err := ioutil.ReadFile(ip.GetAuditFilePath())
 		if err == nil {
-			unmarshalErr := json.Unmarshal(auditFileData, auditInfo)
-			Check(unmarshalErr, "Could not unmarchal audit log file content: "+ip.GetAuditFilePath())
+			unmarshalErr := json.Unmarshal(auditFileData, ip.auditInfo)
+			Check(unmarshalErr, "Could not unmarshal audit log file content: "+ip.GetAuditFilePath())
 		}
 	}
-	return auditInfo
+	return ip.auditInfo
 }
 
 func (ip *InformationPacket) SetAuditInfo(ai *AuditInfo) {
