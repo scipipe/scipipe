@@ -36,6 +36,7 @@ func (p *MapToKeys) Run() {
 	for ip := range p.In.InChan {
 		newKeys := p.mapFunc(ip)
 		ip.AddKeys(newKeys)
+		ip.WriteAuditLogToFile()
 		p.Out.Send(ip)
 	}
 }
