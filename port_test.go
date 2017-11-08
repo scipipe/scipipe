@@ -32,5 +32,5 @@ func TestMultiInPort(t *testing.T) {
 		}
 	}
 
-	cleanFiles("/tmp/hello.txt", "/tmp/tjena.txt", resultFiles...)
+	cleanFiles(append(resultFiles, "/tmp/hello.txt", "/tmp/tjena.txt")...)
 }
