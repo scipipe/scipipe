@@ -262,8 +262,6 @@ func TestStreaming(t *testing.T) {
 
 	// Clean up
 	cleanFiles("/tmp/lsl.txt", "/tmp/lsl.txt.grepped.txt")
-	// cleanFiles("/tmp/lsl.txt.tmp")             // FIXME: Remove
-	// cleanFiles("/tmp/lsl.txt.grepped.txt.tmp") // FIXME: Remove
 	cleanFiles("/tmp/lsl.txt.fifo")
 }
 
@@ -367,6 +365,8 @@ func TestPassOnKeys(t *testing.T) {
 	CheckErr(err)
 
 	assert.EqualValues(t, "you", auditInfo.Keys["hey"], "Audit info does not contain passed on keys")
+
+	cleanFiles("/tmp/hey.txt", "/tmp/hey.txt.you.txt")
 }
 
 // --------------------------------------------------------------------------------
@@ -375,12 +375,14 @@ func TestPassOnKeys(t *testing.T) {
 func cleanFiles(fileNames ...string) {
 	Debug.Println("Starting to remove files:", fileNames)
 	for _, fileName := range fileNames {
+		auditFileName := fileName + ".audit.json"
 		if _, err := os.Stat(fileName); err == nil {
 			os.Remove(fileName)
 			Debug.Println("Successfully removed file", fileName)
-			// Remove any accompanying audit.json files ....
-			os.Remove(fileName + ".audit.json")
-			Debug.Println("Successfully removed audit.json file", fileName)
+		}
+		if _, err := os.Stat(auditFileName); err == nil {
+			os.Remove(auditFileName)
+			Debug.Println("Successfully removed audit.json file", auditFileName)
 		}
 	}
 }
