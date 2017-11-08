@@ -117,10 +117,7 @@ func (t *SciTask) Execute() {
 		for _, oip := range t.OutTargets {
 			oip.SetAuditInfo(auditInfo)
 			for _, iip := range t.InTargets {
-				iipAuditInfo := iip.GetAuditInfo()
-				for k, v := range iipAuditInfo.Keys {
-					oip.AddKey(k, v)
-				}
+				oip.AddKeys(iip.GetKeys())
 			}
 			oip.WriteAuditLogToFile()
 		}
