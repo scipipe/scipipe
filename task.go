@@ -101,16 +101,28 @@ func (t *SciTask) Execute() {
 		t.workflow.DecConcurrentTasks()
 
 		// Append audit info for the task to all its output targets
+
 		auditInfo := NewAuditInfo()
 		auditInfo.Command = t.Command
 		auditInfo.Params = t.Params
 		execTimeMS := execTime / time.Millisecond
 		auditInfo.ExecTimeMS = execTimeMS
-
+		// Set the audit infos from incoming IPs into the "Upstream" map
 		for _, iip := range t.InTargets {
 			iipPath := iip.GetPath()
-			auditInfo.Upstream[iipPath] = iip.GetAuditInfo()
+			iipAuditInfo := iip.GetAuditInfo()
+			auditInfo.Upstream[iipPath] = iipAuditInfo
+
+			// Pass on (merge) keys from incoming ips to current ones
+			for k, v := range iipAuditInfo.Keys {
+				if auditInfo.Keys[k] == "" {
+					auditInfo.Keys[k] = v
+				} else if auditInfo.Keys[k] != v {
+					Error.Fatalf("Cannot merge keys into existing keys map with different value! (Trying to add %s:%s but already has %s:%s)\n", k, v, k, auditInfo.Keys[k])
+				}
+			}
 		}
+		// Add to output ips and write to file
 		for _, oip := range t.OutTargets {
 			oip.SetAuditInfo(auditInfo)
 			oip.WriteAuditLogToFile()

@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"os/exec"
 
+	"encoding/json"
 	"github.com/stretchr/testify/assert"
-	//"os"
+	"io/ioutil"
 	"os"
-	t "testing"
+	"testing"
 	"time"
 )
 
@@ -16,7 +17,7 @@ func initTestLogs() {
 	InitLogWarning()
 }
 
-func TestBasicRun(t *t.T) {
+func TestBasicRun(t *testing.T) {
 	initTestLogs()
 	wf := NewWorkflow("TestBasicRunWf", 16)
 
@@ -45,7 +46,7 @@ func TestBasicRun(t *t.T) {
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
 }
 
-func TestConnectBackwards(t *t.T) {
+func TestConnectBackwards(t *testing.T) {
 	initTestLogs()
 
 	wf := NewWorkflow("TestConnectBackwards", 16)
@@ -64,7 +65,7 @@ func TestConnectBackwards(t *t.T) {
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
 }
 
-func TestParameterCommand(t *t.T) {
+func TestParameterCommand(t *testing.T) {
 	initTestLogs()
 	wf := NewWorkflow("TestParameterCommandWf", 16)
 
@@ -101,7 +102,7 @@ func TestParameterCommand(t *t.T) {
 	cleanFiles("/tmp/log.txt")
 }
 
-func TestProcessWithoutInputsOutputs(t *t.T) {
+func TestProcessWithoutInputsOutputs(t *testing.T) {
 	wf := NewWorkflow("test_wf", 16)
 	initTestLogs()
 	Debug.Println("Starting test TestProcessWithoutInputsOutputs")
@@ -114,7 +115,7 @@ func TestProcessWithoutInputsOutputs(t *t.T) {
 	cleanFiles(f)
 }
 
-func TestDontOverWriteExistingOutputs(t *t.T) {
+func TestDontOverWriteExistingOutputs(t *testing.T) {
 	InitLogError()
 	Debug.Println("Starting test TestDontOverWriteExistingOutputs")
 	wf := NewWorkflow("TestDontOverWriteExistingOutputsWf1", 16)
@@ -173,7 +174,7 @@ func TestDontOverWriteExistingOutputs(t *t.T) {
 
 // Make sure that outputs are returned in order, even though they are
 // spawned to work in parallel.
-func TestSendOrderedOutputs(t *t.T) {
+func TestSendOrderedOutputs(t *testing.T) {
 	initTestLogs()
 	//InitLogDebug()
 
@@ -226,7 +227,7 @@ func TestSendOrderedOutputs(t *t.T) {
 }
 
 // Test that streaming works
-func TestStreaming(t *t.T) {
+func TestStreaming(t *testing.T) {
 	InitLogWarning()
 	wf := NewWorkflow("TestStreamingWf", 16)
 
@@ -266,7 +267,7 @@ func TestStreaming(t *t.T) {
 	cleanFiles("/tmp/lsl.txt.fifo")
 }
 
-func TestSubStreamReduceInPlaceHolder(t *t.T) {
+func TestSubStreamReduceInPlaceHolder(t *testing.T) {
 
 	exec.Command("bash", "-c", "echo 1 > /tmp/file1.txt").CombinedOutput()
 	exec.Command("bash", "-c", "echo 2 > /tmp/file2.txt").CombinedOutput()
@@ -305,7 +306,7 @@ func TestSubStreamReduceInPlaceHolder(t *t.T) {
 	cleanFiles("/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt", "/tmp/substream_merged.txt")
 }
 
-func TestMultipleLastProcs(t *t.T) {
+func TestMultipleLastProcs(t *testing.T) {
 	InitLogWarning()
 
 	wf := NewWorkflow("TestMultipleLastProcs_WF", 16)
@@ -341,7 +342,52 @@ func TestMultipleLastProcs(t *t.T) {
 	cleanFiles("/tmp/hey.txt.cat.txt", "/tmp/how.txt.cat.txt", "/tmp/hoo.txt.cat.txt")
 }
 
-// Helper processes
+func TestPassOnKeys(t *testing.T) {
+	wf := NewWorkflow("TestPassOnKeys_WF", 4)
+
+	hey := wf.NewProc("create_file", "echo hey > {o:heyfile}")
+	hey.SetPathStatic("heyfile", "/tmp/hey.txt")
+
+	key := NewMapToKeys(wf, "add_key", func(ip *InformationPacket) map[string]string {
+		return map[string]string{"hey": "you"}
+	})
+	key.In.Connect(hey.Out("heyfile"))
+
+	you := wf.NewProc("add_you", "echo '$(cat {i:infile}) you' > {o:youfile}")
+	you.SetPathExtend("infile", "youfile", ".you.txt")
+	you.In("infile").Connect(key.Out)
+
+	wf.ConnectLast(you.Out("youfile"))
+	wf.Run()
+
+	dat, err := ioutil.ReadFile("/tmp/hey.txt.you.txt.audit.json")
+	CheckErr(err)
+	auditInfo := &AuditInfo{}
+	err = json.Unmarshal(dat, auditInfo)
+	CheckErr(err)
+
+	assert.EqualValues(t, "you", auditInfo.Keys["hey"], "Audit info does not contain passed on keys")
+}
+
+// --------------------------------------------------------------------------------
+// Helper functions
+// --------------------------------------------------------------------------------
+func cleanFiles(fileNames ...string) {
+	Debug.Println("Starting to remove files:", fileNames)
+	for _, fileName := range fileNames {
+		if _, err := os.Stat(fileName); err == nil {
+			os.Remove(fileName)
+			Debug.Println("Successfully removed file", fileName)
+			// Remove any accompanying audit.json files ....
+			os.Remove(fileName + ".audit.json")
+			Debug.Println("Successfully removed audit.json file", fileName)
+		}
+	}
+}
+
+// --------------------------------------------------------------------------------
+// CombinatoricsProcess helper process
+// --------------------------------------------------------------------------------
 type CombinatoricsProcess struct {
 	Process
 	name string
@@ -381,14 +427,14 @@ func (proc *CombinatoricsProcess) Name() string {
 
 func (proc *CombinatoricsProcess) IsConnected() bool { return true }
 
+// --------------------------------------------------------------------------------
 // StreamToSubstream helper process
-
+// --------------------------------------------------------------------------------
 type StreamToSubStream struct {
 	In           *FilePort
 	OutSubStream *FilePort
 }
 
-// Instantiate a new StreamToSubStream
 func NewStreamToSubStream() *StreamToSubStream {
 	return &StreamToSubStream{
 		In:           NewFilePort(),
@@ -396,7 +442,6 @@ func NewStreamToSubStream() *StreamToSubStream {
 	}
 }
 
-// Run the StreamToSubStream
 func (proc *StreamToSubStream) Run() {
 	defer proc.OutSubStream.Close()
 	go proc.In.RunMergeInputs()
@@ -415,16 +460,42 @@ func (proc *StreamToSubStream) IsConnected() bool {
 	return proc.In.IsConnected() && proc.OutSubStream.IsConnected()
 }
 
-// Helper functions
-func cleanFiles(fileNames ...string) {
-	Debug.Println("Starting to remove files:", fileNames)
-	for _, fileName := range fileNames {
-		if _, err := os.Stat(fileName); err == nil {
-			os.Remove(fileName)
-			Debug.Println("Successfully removed file", fileName)
-			// Remove any accompanying audit.json files ....
-			os.Remove(fileName + ".audit.json")
-			Debug.Println("Successfully removed audit.json file", fileName)
-		}
+// --------------------------------------------------------------------------------
+// MapToKey helper process
+// --------------------------------------------------------------------------------
+type MapToKeys struct {
+	In       *FilePort
+	Out      *FilePort
+	procName string
+	mapFunc  func(ip *InformationPacket) map[string]string
+}
+
+func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *InformationPacket) map[string]string) *MapToKeys {
+	mtp := &MapToKeys{
+		procName: name,
+		mapFunc:  mapFunc,
+		In:       NewFilePort(),
+		Out:      NewFilePort(),
+	}
+	wf.AddProc(mtp)
+	return mtp
+}
+
+func (p *MapToKeys) Name() string {
+	return p.procName
+}
+
+func (p *MapToKeys) IsConnected() bool {
+	return p.In.IsConnected() && p.Out.IsConnected()
+}
+
+func (p *MapToKeys) Run() {
+	defer p.Out.Close()
+	go p.In.RunMergeInputs()
+	for ip := range p.In.InChan {
+		newKeys := p.mapFunc(ip)
+		ip.AddKeys(newKeys)
+		ip.WriteAuditLogToFile()
+		p.Out.Send(ip)
 	}
 }
