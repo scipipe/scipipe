@@ -113,7 +113,7 @@ func (t *SciTask) Execute() {
 			iipAuditInfo := iip.GetAuditInfo()
 			auditInfo.Upstream[iipPath] = iipAuditInfo
 
-			// Pass on (merge) keys from incoming ips to current ones
+			// Pass on (merge) keys from incoming ips to the current one
 			for k, v := range iipAuditInfo.Keys {
 				if auditInfo.Keys[k] == "" {
 					auditInfo.Keys[k] = v
@@ -122,7 +122,7 @@ func (t *SciTask) Execute() {
 				}
 			}
 		}
-		// Add to output ips and write to file
+		// Add the current audit info to output ips and write them to file
 		for _, oip := range t.OutTargets {
 			oip.SetAuditInfo(auditInfo)
 			oip.WriteAuditLogToFile()
