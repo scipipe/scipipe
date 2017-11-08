@@ -190,7 +190,11 @@ func (ip *InformationPacket) GetKeys() map[string]string {
 }
 
 func (ip *InformationPacket) AddKey(k string, v string) {
-	ip.GetAuditInfo().Keys[k] = v
+	ai := ip.GetAuditInfo()
+	if ai.Keys[k] != "" && ai.Keys[k] != v {
+		Error.Fatalf("Can not add value %s to existing key %s with different value %s\n", v, k, ai.Keys[k])
+	}
+	ai.Keys[k] = v
 }
 
 func (ip *InformationPacket) AddKeys(keys map[string]string) {

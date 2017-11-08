@@ -112,19 +112,16 @@ func (t *SciTask) Execute() {
 			iipPath := iip.GetPath()
 			iipAuditInfo := iip.GetAuditInfo()
 			auditInfo.Upstream[iipPath] = iipAuditInfo
-
-			// Pass on (merge) keys from incoming ips to the current one
-			for k, v := range iipAuditInfo.Keys {
-				if auditInfo.Keys[k] == "" {
-					auditInfo.Keys[k] = v
-				} else if auditInfo.Keys[k] != v {
-					Error.Fatalf("Cannot merge keys into existing keys map with different value! (Trying to add %s:%s but already has %s:%s)\n", k, v, k, auditInfo.Keys[k])
-				}
-			}
 		}
 		// Add the current audit info to output ips and write them to file
 		for _, oip := range t.OutTargets {
 			oip.SetAuditInfo(auditInfo)
+			for _, iip := range t.InTargets {
+				iipAuditInfo := iip.GetAuditInfo()
+				for k, v := range iipAuditInfo.Keys {
+					oip.AddKey(k, v)
+				}
+			}
 			oip.WriteAuditLogToFile()
 		}
 
