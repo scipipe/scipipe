@@ -7,6 +7,7 @@ package scipipe
 
 import (
 	"os"
+	"sync"
 )
 
 // ----------------------------------------------------------------------------
@@ -14,11 +15,12 @@ import (
 // ----------------------------------------------------------------------------
 
 type Workflow struct {
-	name            string
-	procs           map[string]Process
-	concurrentTasks chan struct{}
-	sink            *Sink
-	driver          Process
+	name              string
+	procs             map[string]Process
+	concurrentTasks   chan struct{}
+	concurrentTasksMx sync.Mutex
+	sink              *Sink
+	driver            Process
 }
 
 func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
@@ -82,14 +84,21 @@ func (wf *Workflow) SetDriver(driver Process) {
 	wf.driver = driver
 }
 
-func (wf *Workflow) IncConcurrentTasks() {
-	wf.concurrentTasks <- struct{}{}
-	Debug.Println("Increased concurrent tasks")
+func (wf *Workflow) IncConcurrentTasks(slots int) {
+	// We must lock so that multiple processes don't end up with partially "filled slots"
+	wf.concurrentTasksMx.Lock()
+	for i := 0; i < slots; i++ {
+		wf.concurrentTasks <- struct{}{}
+		Debug.Println("Increased concurrent tasks")
+	}
+	wf.concurrentTasksMx.Unlock()
 }
 
-func (wf *Workflow) DecConcurrentTasks() {
-	<-wf.concurrentTasks
-	Debug.Println("Decreased concurrent tasks")
+func (wf *Workflow) DecConcurrentTasks(slots int) {
+	for i := 0; i < slots; i++ {
+		<-wf.concurrentTasks
+		Debug.Println("Decreased concurrent tasks")
+	}
 }
 
 // ConnectLast connects the last (most downstream) out-ports in the workflow to

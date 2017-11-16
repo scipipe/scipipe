@@ -86,9 +86,7 @@ func (t *SciTask) Execute() {
 			Check(err, "Could not create directory: "+oipDir)
 		}
 
-		for i := 0; i < t.cores; i++ {
-			t.workflow.IncConcurrentTasks() // Will block if max concurrent tasks is reached
-		}
+		t.workflow.IncConcurrentTasks(t.cores) // Will block if max concurrent tasks is reached
 		startTime := time.Now()
 		if t.CustomExecute != nil {
 			Audit.Printf("Task:%-12s Executing custom execution function.\n", t.Name)
@@ -102,9 +100,7 @@ func (t *SciTask) Execute() {
 			}
 		}
 		execTime := time.Since(startTime)
-		for i := 0; i < t.cores; i++ {
-			t.workflow.DecConcurrentTasks()
-		}
+		t.workflow.DecConcurrentTasks(t.cores)
 
 		// Append audit info for the task to all its output targets
 
