@@ -24,9 +24,10 @@ type SciTask struct {
 	Image         string
 	DataFolder    string
 	workflow      *Workflow
+	cores         int
 }
 
-func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[string]*InformationPacket, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode) *SciTask {
+func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[string]*InformationPacket, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, cores int) *SciTask {
 	t := &SciTask{
 		Name:       name,
 		InTargets:  inTargets,
@@ -36,6 +37,7 @@ func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[st
 		ExecMode:   execMode,
 		Done:       make(chan int),
 		workflow:   workflow,
+		cores:      cores,
 	}
 
 	// Create out targets
@@ -84,7 +86,9 @@ func (t *SciTask) Execute() {
 			Check(err, "Could not create directory: "+oipDir)
 		}
 
-		t.workflow.IncConcurrentTasks() // Will block if max concurrent tasks is reached
+		for i := 0; i < t.cores; i++ {
+			t.workflow.IncConcurrentTasks() // Will block if max concurrent tasks is reached
+		}
 		startTime := time.Now()
 		if t.CustomExecute != nil {
 			Audit.Printf("Task:%-12s Executing custom execution function.\n", t.Name)
@@ -98,7 +102,9 @@ func (t *SciTask) Execute() {
 			}
 		}
 		execTime := time.Since(startTime)
-		t.workflow.DecConcurrentTasks()
+		for i := 0; i < t.cores; i++ {
+			t.workflow.DecConcurrentTasks()
+		}
 
 		// Append audit info for the task to all its output targets
 

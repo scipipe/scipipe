@@ -58,6 +58,7 @@ type SciProcess struct {
 	paramPorts       map[string]*ParamPort
 	CustomExecute    func(*SciTask)
 	workflow         *Workflow
+	CoresPerTask     int
 }
 
 func NewSciProcess(workflow *Workflow, name string, command string) *SciProcess {
@@ -71,6 +72,7 @@ func NewSciProcess(workflow *Workflow, name string, command string) *SciProcess 
 		paramPorts:       make(map[string]*ParamPort),
 		Spawn:            true,
 		workflow:         workflow,
+		CoresPerTask:     1,
 	}
 	workflow.AddProc(p)
 	return p
@@ -342,6 +344,11 @@ func (proc *SciProcess) IsConnected() (isConnected bool) {
 // terminates. note that the actual execution of shell commands are done inside
 // SciTask.Execute, not here.
 func (p *SciProcess) Run() {
+	// Check that CoresPerTask is a sane number
+	if p.CoresPerTask > cap(p.workflow.concurrentTasks) {
+		Error.Fatalf("%s: CoresPerTask (%d) can't be greater than maxConcurrentTasks of workflow (%d)\n", p.Name(), p.CoresPerTask, cap(p.workflow.concurrentTasks))
+	}
+
 	defer p.closeOutPorts()
 
 	for _, inPort := range p.GetInPorts() {
@@ -461,7 +468,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 				Debug.Printf("Process.createTasks:%s Breaking: No params, and inPorts closed", p.name)
 				break
 			}
-			t := NewSciTask(p.workflow, p.name, p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode)
+			t := NewSciTask(p.workflow, p.name, p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode, p.CoresPerTask)
 			if p.CustomExecute != nil {
 				t.CustomExecute = p.CustomExecute
 			}
