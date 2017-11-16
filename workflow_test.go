@@ -3,10 +3,17 @@ package scipipe
 import (
 	"github.com/stretchr/testify/assert"
 	"sync"
-	t "testing"
+	"testing"
 )
 
-func TestAddProc(t *t.T) {
+func TestMaxConcurrentTasksCapacity(t *testing.T) {
+	InitLogError()
+	wf := NewWorkflow("TestWorkflow", 16)
+
+	assert.Equal(t, 16, cap(wf.concurrentTasks), "Wrong number of concurrent tasks")
+}
+
+func TestAddProc(t *testing.T) {
 	InitLogError()
 	wf := NewWorkflow("TestAddProcsWf", 16)
 
