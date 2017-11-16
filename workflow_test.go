@@ -6,6 +6,13 @@ import (
 	"testing"
 )
 
+func TestSetWfName(t *testing.T) {
+	InitLogError()
+	wf := NewWorkflow("TestWorkflow", 16)
+
+	assert.Equal(t, "TestWorkflow", wf.name, "Wrong name on workflow")
+}
+
 func TestMaxConcurrentTasksCapacity(t *testing.T) {
 	InitLogError()
 	wf := NewWorkflow("TestWorkflow", 16)
