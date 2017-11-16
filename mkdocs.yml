@@ -18,7 +18,7 @@ pages:
     - 'Creating sub-workflows': 'howtos/subworkflows.md'
     - 'Implement scatter/gather workflows': 'howtos/scatter_gather.md'
     - 'Interacting with an HPC resource manager': 'howtos/hpc.md'
-    - 'Contrain resource usage': 'howtos/constrain_resource_usage.md'
+    - 'Constrain resource usage': 'howtos/constrain_resource_usage.md'
   - 'Examples': 'examples.md'
   - 'Other Resources': 'other_resources.md'
   - 'Acknowledgements': 'acknowledgements.md'
