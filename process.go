@@ -385,10 +385,8 @@ func (p *SciProcess) Run() {
 			Debug.Printf("Process %s: Previous FIFOs existed, so not executing task [%s] ...\n", p.name, t.Command)
 			// Since t.Execute() is not run, that normally sends the Done signal, we
 			// have to send it manually here:
-			go func() {
-				defer close(t.Done)
-				t.Done <- 1
-			}()
+			defer close(t.Done)
+			t.Done <- 1
 		} else {
 			Debug.Printf("Process %s: Go-Executing task in separate go-routine: [%s] ...\n", p.name, t.Command)
 			// Run the task
