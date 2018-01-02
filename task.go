@@ -61,6 +61,9 @@ func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[st
 // --------------- SciTask API methods ----------------
 
 func (t *SciTask) InPath(portName string) string {
+	if t.InTargets[portName] == nil {
+		Error.Fatalf("No such portname (%s) in task (%s)\n", portName, t.Name)
+	}
 	return t.InTargets[portName].GetPath()
 }
 

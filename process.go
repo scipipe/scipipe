@@ -189,7 +189,7 @@ func (p *SciProcess) SetPathStatic(outPortName string, path string) {
 // an input InformationPacket
 func (p *SciProcess) SetPathExtend(inPortName string, outPortName string, extension string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
-		return t.InTargets[inPortName].GetPath() + extension
+		return t.InPath(inPortName) + extension
 	}
 }
 
@@ -197,7 +197,7 @@ func (p *SciProcess) SetPathExtend(inPortName string, outPortName string, extens
 // but replaces parts of it.
 func (p *SciProcess) SetPathReplace(inPortName string, outPortName string, old string, new string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
-		return str.Replace(t.InTargets[inPortName].GetPath(), old, new, -1)
+		return str.Replace(t.InPath(inPortName), old, new, -1)
 	}
 }
 
