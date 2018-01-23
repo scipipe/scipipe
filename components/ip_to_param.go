@@ -5,8 +5,9 @@ import (
 	"strings"
 )
 
-// FileReader takes a file path on its FilePath in-port, and returns the file
-// content as []byte on its out-port Out
+// IpToParamConverter takes a file target on its FilePath in-port, reads its
+// content (assuming a single value), removing any newlines, spaces or tabs,
+// and sends the value on the OutParam parameter port.
 type IpToParamConverter struct {
 	scipipe.Process
 	name     string
