@@ -169,6 +169,17 @@ func (ip *InformationPacket) TempFileExists() bool {
 	return tempFileExists
 }
 
+// FifoFileExists checks if the FIFO-file (named pipe file) exists
+func (ip *InformationPacket) FifoFileExists() bool {
+	fifoFileExists := false
+	ip.lock.Lock()
+	if _, err := os.Stat(ip.GetFifoPath()); err == nil {
+		fifoFileExists = true
+	}
+	ip.lock.Unlock()
+	return fifoFileExists
+}
+
 func (ip *InformationPacket) GetParam(key string) string {
 	val, ok := ip.GetAuditInfo().Params[key]
 	if !ok {

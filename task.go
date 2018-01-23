@@ -79,7 +79,7 @@ func (t *SciTask) Param(portName string) string {
 func (t *SciTask) Execute() {
 	defer close(t.Done)
 
-	if !t.anyOutputExists() && !t.fifosInOutTargetsMissing() {
+	if !t.anyOutputExists() && t.allFifosInOutTargetsExist() {
 		Debug.Printf("Task:%-12s Executing task. [%s]\n", t.Name, t.Command)
 
 		// Create directories for out-targets
@@ -174,18 +174,16 @@ func (t *SciTask) anyFifosExist() (anyFifosExist bool) {
 }
 
 // Make sure that FIFOs that are supposed to exist, really exists
-func (t *SciTask) fifosInOutTargetsMissing() (fifosInOutTargetsMissing bool) {
-	fifosInOutTargetsMissing = false
+func (t *SciTask) allFifosInOutTargetsExist() bool {
 	for _, tgt := range t.OutTargets {
 		if tgt.doStream {
-			ofifoPath := tgt.GetFifoPath()
-			if _, err := os.Stat(ofifoPath); err != nil {
-				Warning.Printf("Task:%-12s FIFO Output file missing, for streaming output: %s. Check your workflow for correctness! [%s]\n", t.Name, t.Command, ofifoPath)
-				fifosInOutTargetsMissing = true
+			if !tgt.FifoFileExists() {
+				Warning.Printf("Task:%-12s FIFO Output file missing, for streaming output: %s. Check your workflow for correctness! [%s]\n", t.Name, t.Command, tgt.GetFifoPath())
+				return false
 			}
 		}
 	}
-	return
+	return true
 }
 
 func (t *SciTask) executeCommand(cmd string) {
