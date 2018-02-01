@@ -51,7 +51,7 @@ func (wf *Workflow) NewProc(procName string, commandPattern string) *SciProcess 
 
 func (wf *Workflow) AddProcs(procs ...Process) {
 	for _, proc := range procs {
-		wf.procs[proc.Name()] = proc
+		wf.AddProc(proc)
 	}
 }
 
