@@ -55,8 +55,9 @@ configuring file naming strategies.
 
 In `Process` objects, in-ports are are accessed with
 `myProcess.In("my_port")`, and out-ports are similarly accessed with
-`myProcess.Out("my_other_port")`. Both are of type
-[`FilePort`](https://godoc.org/github.com/scipipe/scipipe#FilePort).
+`myProcess.Out("my_other_port")`. They are of type
+[`InPort`](https://godoc.org/github.com/scipipe/scipipe#InPort) and
+[`OutPort`](https://godoc.org/github.com/scipipe/scipipe#OutPort) respectively.
 
 Some pre-made components might have ports bound to custom field names though,
 such as `myFastaReader.InFastaFile`, or `myZipComponent.OutZipFile`.
@@ -69,8 +70,8 @@ On `Process` objects, there is also a third port type, `ParamPorts`, which
 is used when it is needed to send a stream of parameter values (in string
 format) to be supplied to as arguments to shell commands.
 
-* See [GoDoc for the Port interface](https://godoc.org/github.com/scipipe/scipipe#Port)
-* See [GoDoc for the FilePort struct type](https://godoc.org/github.com/scipipe/scipipe#FilePort)
+* See [GoDoc for the InPort struct type](https://godoc.org/github.com/scipipe/scipipe#InPort)
+* See [GoDoc for the OutPort struct type](https://godoc.org/github.com/scipipe/scipipe#OutPort)
 * See [GoDoc for the ParamPort struct type](https://godoc.org/github.com/scipipe/scipipe#ParamPort)
 
 ## Channels

@@ -44,7 +44,7 @@ func NewHiWriter() *HiWriter {
 
 // OutHiFile provides a static version of the "hifile" port in the inner
 // (embedded) process
-func (p *HiWriter) OutHiFile() *sci.FilePort {
+func (p *HiWriter) OutHiFile() *sci.OutPort {
     // Return the inner process' port named "hifile"
     return p.Out("hifile")
 }
