@@ -114,20 +114,27 @@ func (wf *Workflow) ConnectLast(outPort *FilePort) {
 	wf.driver = wf.sink
 }
 
-func (wf *Workflow) Run() {
-	if len(wf.procs) == 0 {
+func (wf *Workflow) readyToRun(procs map[string]Process) bool {
+	if len(procs) == 0 {
 		Error.Println(wf.name + ": The workflow is empty. Did you forget to add the processes to it?")
-		os.Exit(1)
+		return false
 	}
 	if wf.sink == nil {
 		Error.Println(wf.name + ": sink is nil!")
-		os.Exit(1)
+		return false
 	}
-	for _, proc := range wf.procs {
+	for _, proc := range procs {
 		if !proc.IsConnected() {
 			Error.Println(wf.name + ": Not everything connected. Workflow shutting down.")
-			os.Exit(1)
+			return false
 		}
+	}
+	return true
+}
+
+func (wf *Workflow) Run() {
+	if !wf.readyToRun(wf.procs) {
+		Error.Fatalln("Workflow not ready to run, due to previously reported errors, so exiting.")
 	}
 	for pname, proc := range wf.procs {
 		if proc != wf.driver { // Don't start the driver process in background
