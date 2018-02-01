@@ -27,21 +27,6 @@ type Process interface {
 	Run()
 }
 
-type ShellProcess interface {
-	Process
-
-	In(string) *Port
-	GetInPorts() map[string]*Port
-
-	Out(string) *Port
-	GetOutPorts() map[string]*Port
-
-	SetPathStatic(outPortName string, path string)
-	SetPathExtend(inPortName string, outPortName string, extension string)
-	SetPathReplace(inPortName string, outPortName string, old string, new string)
-	SetPathCustom(outPortName string, pathFmtFunc func(task *SciTask) (path string))
-}
-
 // ================== SciProcess ==================
 
 type SciProcess struct {
