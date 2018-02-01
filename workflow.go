@@ -37,6 +37,7 @@ func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
 	}
 }
 
+// AddProc adds a Process to the workflow, to be run when the workflow runs.
 func (wf *Workflow) AddProc(proc Process) {
 	if wf.procs[proc.Name()] != nil {
 		Error.Fatalf(wf.name+" workflow: A process with name '%s' already exists in the workflow! Use a more unique name!\n", proc.Name())
@@ -44,15 +45,17 @@ func (wf *Workflow) AddProc(proc Process) {
 	wf.procs[proc.Name()] = proc
 }
 
-func (wf *Workflow) NewProc(procName string, commandPattern string) *SciProcess {
-	proc := NewProc(wf, procName, commandPattern)
-	return proc
-}
-
+// AddProcs takes one or many Processes and adds them to the workflow, to be run
+// when the workflow runs.
 func (wf *Workflow) AddProcs(procs ...Process) {
 	for _, proc := range procs {
 		wf.AddProc(proc)
 	}
+}
+
+func (wf *Workflow) NewProc(procName string, commandPattern string) *SciProcess {
+	proc := NewProc(wf, procName, commandPattern)
+	return proc
 }
 
 func (wf *Workflow) Proc(procName string) Process {
