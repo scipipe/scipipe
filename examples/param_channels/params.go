@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	sci "github.com/scipipe/scipipe"
 	"runtime"
+
+	sci "github.com/scipipe/scipipe"
 )
 
 func main() {
@@ -40,7 +41,6 @@ func main() {
 }
 
 type CombinatoricsGen struct {
-	sci.Process
 	name string
 	A    *sci.ParamPort
 	B    *sci.ParamPort

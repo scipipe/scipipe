@@ -2,15 +2,16 @@ package components
 
 import (
 	"bufio"
-	"github.com/scipipe/scipipe"
 	"log"
 	"os"
+
+	"github.com/scipipe/scipipe"
 )
 
 // FileReader takes a file path on its FilePath in-port, and returns the file
 // content as []byte on its out-port Out
 type FileReader struct {
-	scipipe.Process
+	scipipe.WorkflowProcess
 	name     string
 	FilePath chan string
 	OutLine  chan []byte

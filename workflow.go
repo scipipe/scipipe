@@ -16,11 +16,11 @@ import (
 
 type Workflow struct {
 	name              string
-	procs             map[string]Process
+	procs             map[string]WorkflowProcess
 	concurrentTasks   chan struct{}
 	concurrentTasksMx sync.Mutex
 	sink              *Sink
-	driver            Process
+	driver            WorkflowProcess
 }
 
 func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
@@ -30,15 +30,23 @@ func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
 	sink := NewSink(name + "_default_sink")
 	return &Workflow{
 		name:            name,
-		procs:           map[string]Process{},
+		procs:           map[string]WorkflowProcess{},
 		concurrentTasks: make(chan struct{}, maxConcurrentTasks),
 		sink:            sink,
 		driver:          sink,
 	}
 }
 
+// WorkflowProcess is an interface for processes, specifying the fields that the
+// Workflow component requires.
+type WorkflowProcess interface {
+	Name() string
+	IsConnected() bool
+	Run()
+}
+
 // AddProc adds a Process to the workflow, to be run when the workflow runs.
-func (wf *Workflow) AddProc(proc Process) {
+func (wf *Workflow) AddProc(proc WorkflowProcess) {
 	if wf.procs[proc.Name()] != nil {
 		Error.Fatalf(wf.name+" workflow: A process with name '%s' already exists in the workflow! Use a more unique name!\n", proc.Name())
 	}
@@ -47,7 +55,7 @@ func (wf *Workflow) AddProc(proc Process) {
 
 // AddProcs takes one or many Processes and adds them to the workflow, to be run
 // when the workflow runs.
-func (wf *Workflow) AddProcs(procs ...Process) {
+func (wf *Workflow) AddProcs(procs ...WorkflowProcess) {
 	for _, proc := range procs {
 		wf.AddProc(proc)
 	}
@@ -58,11 +66,11 @@ func (wf *Workflow) NewProc(procName string, commandPattern string) *SciProcess 
 	return proc
 }
 
-func (wf *Workflow) Proc(procName string) Process {
+func (wf *Workflow) Proc(procName string) WorkflowProcess {
 	return wf.procs[procName]
 }
 
-func (wf *Workflow) Procs() map[string]Process {
+func (wf *Workflow) Procs() map[string]WorkflowProcess {
 	return wf.procs
 }
 
@@ -79,11 +87,11 @@ func (wf *Workflow) SetSink(sink *Sink) {
 	wf.driver = sink
 }
 
-func (wf *Workflow) Driver() Process {
+func (wf *Workflow) Driver() WorkflowProcess {
 	return wf.driver
 }
 
-func (wf *Workflow) SetDriver(driver Process) {
+func (wf *Workflow) SetDriver(driver WorkflowProcess) {
 	wf.driver = driver
 }
 
@@ -114,7 +122,7 @@ func (wf *Workflow) ConnectLast(outPort *Port) {
 	wf.driver = wf.sink
 }
 
-func (wf *Workflow) readyToRun(procs map[string]Process) bool {
+func (wf *Workflow) readyToRun(procs map[string]WorkflowProcess) bool {
 	if len(procs) == 0 {
 		Error.Println(wf.name + ": The workflow is empty. Did you forget to add the processes to it?")
 		return false

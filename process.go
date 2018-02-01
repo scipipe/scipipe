@@ -18,19 +18,9 @@ const (
 	ExecModeSLURM ExecMode = iota
 )
 
-// ================== Process ==================
-
-// Base interface for all processes
-type Process interface {
-	Name() string
-	IsConnected() bool // Sanity check, to see whether all ports are connected
-	Run()
-}
-
 // ================== SciProcess ==================
 
 type SciProcess struct {
-	Process
 	name             string
 	CommandPattern   string
 	ExecMode         ExecMode

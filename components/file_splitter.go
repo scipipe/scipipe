@@ -9,7 +9,6 @@ import (
 // File splitter component
 
 type FileSplitter struct {
-	scipipe.Process
 	name          string
 	InFile        *scipipe.Port
 	OutSplitFile  *scipipe.Port

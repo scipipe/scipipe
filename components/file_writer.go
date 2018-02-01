@@ -3,15 +3,15 @@ package components
 import (
 	"bufio"
 	"fmt"
-	"github.com/scipipe/scipipe"
 	"log"
 	"os"
+
+	"github.com/scipipe/scipipe"
 )
 
 // FileWriter takes a file path on its FilePath in-port, file contents on its In in-port
 // and write the file contents to a file with the specified path.
 type FileWriter struct {
-	scipipe.Process
 	name     string
 	In       chan []byte
 	FilePath chan string

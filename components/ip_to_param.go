@@ -10,7 +10,6 @@ import (
 // content (assuming a single value), removing any newlines, spaces or tabs,
 // and sends the value on the OutParam parameter port.
 type IpToParamConverter struct {
-	scipipe.Process
 	name     string
 	InFile   *scipipe.Port
 	OutParam *scipipe.ParamPort

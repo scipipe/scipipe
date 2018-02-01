@@ -3,7 +3,6 @@ package scipipe
 // Sink is a simple component that just receives IP on its In-port
 // without doing anything with them
 type Sink struct {
-	Process
 	name   string
 	inPort *Port
 }

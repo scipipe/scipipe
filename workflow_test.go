@@ -1,9 +1,10 @@
 package scipipe
 
 import (
-	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSetWfName(t *testing.T) {
@@ -42,7 +43,6 @@ func TestAddProc(t *testing.T) {
 // A process with does just satisfy the Process interface, without doing any
 // actual work.
 type BogusProcess struct {
-	Process
 	name       string
 	WasRun     bool
 	WasRunLock sync.Mutex

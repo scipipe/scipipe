@@ -257,7 +257,6 @@ func (ip *IP) WriteAuditLogToFile() {
 // IPGen is initialized by a set of strings with file paths, and from that will
 // return instantiated (generated) IP on its Out-port, when run.
 type IPGen struct {
-	Process
 	name      string
 	Out       *Port
 	FilePaths []string

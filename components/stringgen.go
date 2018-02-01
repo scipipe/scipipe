@@ -5,7 +5,6 @@ import "github.com/scipipe/scipipe"
 // StringGen takes a number of strings and returns a generator process
 // which sends the strings, one by one, on its `Out` port
 type StringGen struct {
-	scipipe.Process
 	name    string
 	Strings []string
 	Out     *scipipe.ParamPort

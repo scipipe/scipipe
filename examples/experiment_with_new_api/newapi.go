@@ -21,8 +21,7 @@ func main() {
 // -------------------------------------------
 
 type FooToBarReplacer struct {
-	sci.Process
-	InnerProcess *sci.Process
+	InnerProcess *sci.WorkflowProcess
 	Run          func(p *FooToBarReplacer)
 	InFoo        chan *sci.IP
 	OutBar       chan *sci.IP

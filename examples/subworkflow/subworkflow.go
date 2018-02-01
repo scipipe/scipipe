@@ -21,7 +21,6 @@ func main() {
 // ------------------------------------------------
 
 type FooBarSubWorkflow struct {
-	sp.Process
 	name  string
 	Procs map[string]*sp.SciProcess
 	Out   *sp.Port

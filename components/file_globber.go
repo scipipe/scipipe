@@ -7,7 +7,6 @@ import (
 )
 
 type FileGlobber struct {
-	scipipe.Process
 	name        string
 	Out         *scipipe.Port
 	globPattern string

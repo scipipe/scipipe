@@ -8,7 +8,6 @@ import (
 // individual files, and returns one IP where the incoming IPs
 // are sent on its substream.
 type StreamToSubStream struct {
-	scipipe.Process
 	name         string
 	In           *scipipe.Port
 	OutSubStream *scipipe.Port

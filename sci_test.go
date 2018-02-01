@@ -392,7 +392,6 @@ func cleanFiles(fileNames ...string) {
 // CombinatoricsProcess helper process
 // --------------------------------------------------------------------------------
 type CombinatoricsProcess struct {
-	Process
 	name string
 	A    *ParamPort
 	B    *ParamPort

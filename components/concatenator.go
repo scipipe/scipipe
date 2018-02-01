@@ -3,7 +3,6 @@ package components
 import "github.com/scipipe/scipipe"
 
 type Concatenator struct {
-	scipipe.Process
 	name     string
 	In       *scipipe.Port
 	Out      *scipipe.Port

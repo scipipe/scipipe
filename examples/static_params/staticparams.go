@@ -37,7 +37,6 @@ func main() {
 // --------------------------------
 
 type FileSender struct {
-	sci.Process
 	name string
 	Out  *sci.Port
 }
