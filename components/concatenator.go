@@ -4,8 +4,8 @@ import "github.com/scipipe/scipipe"
 
 type Concatenator struct {
 	name     string
-	In       *scipipe.Port
-	Out      *scipipe.Port
+	In       *scipipe.InPort
+	Out      *scipipe.OutPort
 	OutPath  string
 	workflow *scipipe.Workflow
 }
@@ -13,8 +13,8 @@ type Concatenator struct {
 func NewConcatenator(wf *scipipe.Workflow, name string, outPath string) *Concatenator {
 	concat := &Concatenator{
 		name:     name,
-		In:       scipipe.NewPort(),
-		Out:      scipipe.NewPort(),
+		In:       scipipe.NewInPort(),
+		Out:      scipipe.NewOutPort(),
 		OutPath:  outPath,
 		workflow: wf,
 	}
@@ -32,7 +32,7 @@ func (proc *Concatenator) Run() {
 
 	outFt := scipipe.NewIP(proc.OutPath)
 	outFh := outFt.OpenWriteTemp()
-	for ft := range proc.In.InChan {
+	for ft := range proc.In.MergedInChan {
 		fr := NewFileReader(proc.workflow, proc.Name()+"_filereader")
 		go func() {
 			defer close(fr.FilePath)

@@ -38,13 +38,13 @@ func main() {
 
 type FileSender struct {
 	name string
-	Out  *sci.Port
+	Out  *sci.OutPort
 }
 
 func NewFileSender(name string) *FileSender {
 	return &FileSender{
 		name: name,
-		Out:  sci.NewPort(),
+		Out:  sci.NewOutPort(),
 	}
 }
 

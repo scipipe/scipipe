@@ -69,11 +69,11 @@ func main() {
 
 	// Create (multi-level) maps where we can gather outports from processes
 	// for each for loop iteration and access them in the merge step later
-	outPorts := map[string]map[string]map[string]*Port{}
+	outPorts := map[string]map[string]map[string]*OutPort{}
 	for _, indv := range individuals {
-		outPorts[indv] = map[string]map[string]*Port{}
+		outPorts[indv] = map[string]map[string]*OutPort{}
 		for _, smpl := range samples {
-			outPorts[indv][smpl] = map[string]*Port{}
+			outPorts[indv][smpl] = map[string]*OutPort{}
 			indv_smpl := "_" + indv + "_" + smpl
 
 			// ------------------------------------------------------------------------

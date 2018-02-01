@@ -1,46 +1,55 @@
 package scipipe
 
-func Connect(port1 *Port, port2 *Port) {
-	port1.Connect(port2)
+func ConnectTo(outPort *OutPort, inPort *InPort) {
+	outPort.Connect(inPort)
 }
 
-// Port
-type Port struct {
-	InChan    chan *IP
-	inChans   []chan *IP
-	outChans  []chan *IP
-	connected bool
+func ConnectFrom(inPort *InPort, outPort *OutPort) {
+	outPort.Connect(inPort)
 }
 
-func NewPort() *Port {
-	fp := &Port{
-		InChan:    make(chan *IP, BUFSIZE), // This one will contain merged inputs from inChans
-		inChans:   []chan *IP{},
-		outChans:  []chan *IP{},
-		connected: false,
+// Port is a struct that contains channels, together with some other meta data
+// for keeping track of connection information between processes.
+type InPort struct {
+	MergedInChan chan *IP
+	inChans      []chan *IP
+	connected    bool
+}
+
+func NewInPort() *InPort {
+	inp := &InPort{
+		MergedInChan: make(chan *IP, BUFSIZE), // This one will contain merged inputs from inChans
+		inChans:      []chan *IP{},
+		connected:    false,
 	}
-	return fp
+	return inp
 }
 
-func (localPort *Port) Connect(remotePort *Port) {
-	// If localPort is an in-port
+func (localPort *InPort) Connect(remotePort *OutPort) {
 	inBoundChan := make(chan *IP, BUFSIZE)
 	localPort.AddInChan(inBoundChan)
 	remotePort.AddOutChan(inBoundChan)
-
-	// If localPort is an out-port
-	outBoundChan := make(chan *IP, BUFSIZE)
-	localPort.AddOutChan(outBoundChan)
-	remotePort.AddInChan(outBoundChan)
 
 	localPort.SetConnectedStatus(true)
 	remotePort.SetConnectedStatus(true)
 }
 
-// RunMerge merges (multiple) inputs on pt.inChans into pt.InChan. This has to
+func (pt *InPort) AddInChan(inChan chan *IP) {
+	pt.inChans = append(pt.inChans, inChan)
+}
+
+func (pt *InPort) SetConnectedStatus(connected bool) {
+	pt.connected = connected
+}
+
+func (pt *InPort) IsConnected() bool {
+	return pt.connected
+}
+
+// RunMerge merges (multiple) inputs on pt.inChans into pt.MergedInChan. This has to
 // start running when the owning process runs, in order to merge in-ports
-func (pt *Port) RunMergeInputs() {
-	defer close(pt.InChan)
+func (pt *InPort) RunMergeInputs() {
+	defer close(pt.MergedInChan)
 	for len(pt.inChans) > 0 {
 		for i, ich := range pt.inChans {
 			ip, ok := <-ich
@@ -49,39 +58,58 @@ func (pt *Port) RunMergeInputs() {
 				pt.inChans = append(pt.inChans[:i], pt.inChans[i+1:]...)
 				break
 			}
-			pt.InChan <- ip
+			pt.MergedInChan <- ip
 		}
 	}
 }
 
-func (pt *Port) AddOutChan(outChan chan *IP) {
+func (pt *InPort) Recv() *IP {
+	return <-pt.MergedInChan
+}
+
+// OutPort represents an output connection point on Processes
+type OutPort struct {
+	outChans  []chan *IP
+	connected bool
+}
+
+func NewOutPort() *OutPort {
+	outp := &OutPort{
+		outChans:  []chan *IP{},
+		connected: false,
+	}
+	return outp
+}
+
+func (localPort *OutPort) Connect(remotePort *InPort) {
+	outBoundChan := make(chan *IP, BUFSIZE)
+	localPort.AddOutChan(outBoundChan)
+	remotePort.AddInChan(outBoundChan)
+
+	localPort.SetConnectedStatus(true)
+	remotePort.SetConnectedStatus(true)
+}
+
+func (pt *OutPort) AddOutChan(outChan chan *IP) {
 	pt.outChans = append(pt.outChans, outChan)
 }
 
-func (pt *Port) AddInChan(inChan chan *IP) {
-	pt.inChans = append(pt.inChans, inChan)
-}
-
-func (pt *Port) SetConnectedStatus(connected bool) {
+func (pt *OutPort) SetConnectedStatus(connected bool) {
 	pt.connected = connected
 }
 
-func (pt *Port) IsConnected() bool {
+func (pt *OutPort) IsConnected() bool {
 	return pt.connected
 }
 
-func (pt *Port) Send(ip *IP) {
+func (pt *OutPort) Send(ip *IP) {
 	for i, outChan := range pt.outChans {
 		Debug.Printf("Sending on outchan %d in port\n", i)
 		outChan <- ip
 	}
 }
 
-func (pt *Port) Recv() *IP {
-	return <-pt.InChan
-}
-
-func (pt *Port) Close() {
+func (pt *OutPort) Close() {
 	for i, outChan := range pt.outChans {
 		Debug.Printf("Closing outchan %d in port\n", i)
 		close(outChan)

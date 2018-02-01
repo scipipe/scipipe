@@ -11,7 +11,7 @@ import (
 // and sends the value on the OutParam parameter port.
 type IpToParamConverter struct {
 	name     string
-	InFile   *scipipe.Port
+	InFile   *scipipe.InPort
 	OutParam *scipipe.ParamPort
 }
 
@@ -19,7 +19,7 @@ type IpToParamConverter struct {
 func NewIpToParamConverter(wf *scipipe.Workflow, name string) *IpToParamConverter {
 	p := &IpToParamConverter{
 		name:     name,
-		InFile:   scipipe.NewPort(),
+		InFile:   scipipe.NewInPort(),
 		OutParam: scipipe.NewParamPort(),
 	}
 	wf.AddProc(p)
@@ -39,7 +39,7 @@ func (p *IpToParamConverter) Run() {
 	defer p.OutParam.Close()
 	go p.InFile.RunMergeInputs()
 
-	for ip := range p.InFile.InChan {
+	for ip := range p.InFile.MergedInChan {
 		s := string(ip.Read())
 		s = strings.Trim(s, " \r\n\t")
 		p.OutParam.Send(s)

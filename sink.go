@@ -4,14 +4,14 @@ package scipipe
 // without doing anything with them
 type Sink struct {
 	name   string
-	inPort *Port
+	inPort *InPort
 }
 
 // Instantiate a Sink component
 func NewSink(name string) (s *Sink) {
 	return &Sink{
 		name:   name,
-		inPort: NewPort(),
+		inPort: NewInPort(),
 	}
 }
 
@@ -19,7 +19,7 @@ func (p *Sink) IsConnected() bool {
 	return p.inPort.IsConnected()
 }
 
-func (p *Sink) Connect(outPort *Port) {
+func (p *Sink) Connect(outPort *OutPort) {
 	p.inPort.Connect(outPort)
 }
 
@@ -30,7 +30,7 @@ func (p *Sink) Name() string {
 // Execute the Sink component
 func (p *Sink) Run() {
 	go p.inPort.RunMergeInputs()
-	for ip := range p.inPort.InChan {
+	for ip := range p.inPort.MergedInChan {
 		Debug.Printf("Got file in sink: %s\n", ip.GetPath())
 	}
 }

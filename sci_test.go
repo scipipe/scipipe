@@ -23,14 +23,14 @@ func TestBasicRun(t *testing.T) {
 	wf := NewWorkflow("TestBasicRunWf", 16)
 
 	t1 := NewProc(wf, "t1", "echo foo > {o:foo}")
-	assert.IsType(t, t1.Out("foo"), NewPort())
+	assert.IsType(t, t1.Out("foo"), NewOutPort())
 	t1.PathFormatters["foo"] = func(t *SciTask) string {
 		return "foo.txt"
 	}
 
 	t2 := NewProc(wf, "t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	assert.IsType(t, t2.In("foo"), NewPort())
-	assert.IsType(t, t2.Out("bar"), NewPort())
+	assert.IsType(t, t2.In("foo"), NewInPort())
+	assert.IsType(t, t2.Out("bar"), NewOutPort())
 	t2.PathFormatters["bar"] = func(t *SciTask) string {
 		return t.InPath("foo") + ".bar.txt"
 	}
@@ -40,8 +40,8 @@ func TestBasicRun(t *testing.T) {
 	snk.Connect(t2.Out("bar"))
 	wf.SetSink(snk)
 
-	assert.IsType(t, t2.In("foo"), NewPort())
-	assert.IsType(t, t2.Out("bar"), NewPort())
+	assert.IsType(t, t2.In("foo"), NewInPort())
+	assert.IsType(t, t2.Out("bar"), NewOutPort())
 
 	wf.Run()
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
@@ -200,8 +200,8 @@ func TestSendOrderedOutputs(t *testing.T) {
 	var expFname string
 	i := 1
 
-	tempPort := NewPort()
-	Connect(tempPort, sl.Out("out"))
+	tempPort := NewInPort()
+	ConnectFrom(tempPort, sl.Out("out"))
 
 	// Should not start go-routines before connection stuff is done
 	go ig.Run()
@@ -209,7 +209,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 	go sl.Run()
 
 	go tempPort.RunMergeInputs()
-	for ft := range tempPort.InChan {
+	for ft := range tempPort.MergedInChan {
 		Debug.Printf("TestSendOrderedOutputs: Looping over item %d ...\n", i)
 		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
 		assert.EqualValues(t, expFname, ft.GetPath())
@@ -433,14 +433,14 @@ func (proc *CombinatoricsProcess) IsConnected() bool { return true }
 // StreamToSubstream helper process
 // --------------------------------------------------------------------------------
 type StreamToSubStream struct {
-	In           *Port
-	OutSubStream *Port
+	In           *InPort
+	OutSubStream *OutPort
 }
 
 func NewStreamToSubStream() *StreamToSubStream {
 	return &StreamToSubStream{
-		In:           NewPort(),
-		OutSubStream: NewPort(),
+		In:           NewInPort(),
+		OutSubStream: NewOutPort(),
 	}
 }
 
@@ -466,8 +466,8 @@ func (proc *StreamToSubStream) IsConnected() bool {
 // MapToKey helper process
 // --------------------------------------------------------------------------------
 type MapToKeys struct {
-	In       *Port
-	Out      *Port
+	In       *InPort
+	Out      *OutPort
 	procName string
 	mapFunc  func(ip *IP) map[string]string
 }
@@ -476,8 +476,8 @@ func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *IP) map[string]str
 	mtp := &MapToKeys{
 		procName: name,
 		mapFunc:  mapFunc,
-		In:       NewPort(),
-		Out:      NewPort(),
+		In:       NewInPort(),
+		Out:      NewOutPort(),
 	}
 	wf.AddProc(mtp)
 	return mtp
@@ -494,7 +494,7 @@ func (p *MapToKeys) IsConnected() bool {
 func (p *MapToKeys) Run() {
 	defer p.Out.Close()
 	go p.In.RunMergeInputs()
-	for ip := range p.In.InChan {
+	for ip := range p.In.MergedInChan {
 		newKeys := p.mapFunc(ip)
 		ip.AddKeys(newKeys)
 		ip.WriteAuditLogToFile()

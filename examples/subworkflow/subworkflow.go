@@ -23,7 +23,7 @@ func main() {
 type FooBarSubWorkflow struct {
 	name  string
 	Procs map[string]*sp.Process
-	Out   *sp.Port
+	Out   *sp.OutPort
 }
 
 func NewFooBarSubWorkflow(wf *sp.Workflow, name string) *FooBarSubWorkflow {

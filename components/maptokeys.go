@@ -5,8 +5,8 @@ import (
 )
 
 type MapToKeys struct {
-	In       *scipipe.Port
-	Out      *scipipe.Port
+	In       *scipipe.InPort
+	Out      *scipipe.OutPort
 	procName string
 	mapFunc  func(ip *scipipe.IP) map[string]string
 }
@@ -15,8 +15,8 @@ func NewMapToKeys(wf *scipipe.Workflow, name string, mapFunc func(ip *scipipe.IP
 	mtp := &MapToKeys{
 		procName: name,
 		mapFunc:  mapFunc,
-		In:       scipipe.NewPort(),
-		Out:      scipipe.NewPort(),
+		In:       scipipe.NewInPort(),
+		Out:      scipipe.NewOutPort(),
 	}
 	wf.AddProc(mtp)
 	return mtp
@@ -33,7 +33,7 @@ func (p *MapToKeys) IsConnected() bool {
 func (p *MapToKeys) Run() {
 	defer p.Out.Close()
 	go p.In.RunMergeInputs()
-	for ip := range p.In.InChan {
+	for ip := range p.In.MergedInChan {
 		newKeys := p.mapFunc(ip)
 		ip.AddKeys(newKeys)
 		ip.WriteAuditLogToFile()

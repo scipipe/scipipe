@@ -9,16 +9,16 @@ import (
 // are sent on its substream.
 type StreamToSubStream struct {
 	name         string
-	In           *scipipe.Port
-	OutSubStream *scipipe.Port
+	In           *scipipe.InPort
+	OutSubStream *scipipe.OutPort
 }
 
 // Instantiate a new StreamToSubStream
 func NewStreamToSubStream(wf *scipipe.Workflow, name string) *StreamToSubStream {
 	stss := &StreamToSubStream{
 		name:         name,
-		In:           scipipe.NewPort(),
-		OutSubStream: scipipe.NewPort(),
+		In:           scipipe.NewInPort(),
+		OutSubStream: scipipe.NewOutPort(),
 	}
 	wf.AddProc(stss)
 	return stss

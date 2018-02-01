@@ -10,8 +10,8 @@ import (
 
 type FileSplitter struct {
 	name          string
-	InFile        *scipipe.Port
-	OutSplitFile  *scipipe.Port
+	InFile        *scipipe.InPort
+	OutSplitFile  *scipipe.OutPort
 	LinesPerSplit int
 	workflow      *scipipe.Workflow
 }
@@ -19,8 +19,8 @@ type FileSplitter struct {
 func NewFileSplitter(wf *scipipe.Workflow, name string, linesPerSplit int) *FileSplitter {
 	fs := &FileSplitter{
 		name:          name,
-		InFile:        scipipe.NewPort(),
-		OutSplitFile:  scipipe.NewPort(),
+		InFile:        scipipe.NewInPort(),
+		OutSplitFile:  scipipe.NewOutPort(),
 		LinesPerSplit: linesPerSplit,
 		workflow:      wf,
 	}
@@ -38,7 +38,7 @@ func (proc *FileSplitter) Run() {
 
 	fileReader := NewFileReader(proc.workflow, proc.Name()+"_file_reader")
 
-	for ft := range proc.InFile.InChan {
+	for ft := range proc.InFile.MergedInChan {
 		scipipe.Audit.Println("FileSplitter      Now processing input file ", ft.GetPath(), "...")
 
 		go func() {

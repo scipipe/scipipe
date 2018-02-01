@@ -25,8 +25,8 @@ type Process struct {
 	ExecMode         ExecMode
 	Prepend          string
 	Spawn            bool
-	inPorts          map[string]*Port
-	outPorts         map[string]*Port
+	inPorts          map[string]*InPort
+	outPorts         map[string]*OutPort
 	OutPortsDoStream map[string]bool
 	PathFormatters   map[string]func(*SciTask) string
 	paramPorts       map[string]*ParamPort
@@ -39,8 +39,8 @@ func NewProcess(workflow *Workflow, name string, command string) *Process {
 	p := &Process{
 		name:             name,
 		CommandPattern:   command,
-		inPorts:          make(map[string]*Port),
-		outPorts:         make(map[string]*Port),
+		inPorts:          make(map[string]*InPort),
+		outPorts:         make(map[string]*OutPort),
 		OutPortsDoStream: make(map[string]bool),
 		PathFormatters:   make(map[string]func(*SciTask) string),
 		paramPorts:       make(map[string]*ParamPort),
@@ -82,7 +82,7 @@ func (p *Process) Name() string {
 // In-port stuff
 // ------------------------------------------------
 
-func (p *Process) In(portName string) *Port {
+func (p *Process) In(portName string) *InPort {
 	if p.inPorts[portName] != nil {
 		return p.inPorts[portName]
 	} else {
@@ -91,11 +91,11 @@ func (p *Process) In(portName string) *Port {
 	return nil
 }
 
-func (p *Process) SetInPort(portName string, port *Port) {
+func (p *Process) SetInPort(portName string, port *InPort) {
 	p.inPorts[portName] = port
 }
 
-func (p *Process) GetInPorts() map[string]*Port {
+func (p *Process) GetInPorts() map[string]*InPort {
 	return p.inPorts
 }
 
@@ -103,7 +103,7 @@ func (p *Process) GetInPorts() map[string]*Port {
 // Out-port stuff
 // ------------------------------------------------
 
-func (p *Process) Out(portName string) *Port {
+func (p *Process) Out(portName string) *OutPort {
 	if p.outPorts[portName] != nil {
 		return p.outPorts[portName]
 	} else {
@@ -112,11 +112,11 @@ func (p *Process) Out(portName string) *Port {
 	return nil
 }
 
-func (p *Process) SetOutPort(portName string, port *Port) {
+func (p *Process) SetOutPort(portName string, port *OutPort) {
 	p.outPorts[portName] = port
 }
 
-func (p *Process) GetOutPorts() map[string]*Port {
+func (p *Process) GetOutPorts() map[string]*OutPort {
 	return p.outPorts
 }
 
@@ -261,7 +261,7 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 		typ := m[1]
 		name := m[2]
 		if typ == "o" || typ == "os" {
-			p.outPorts[name] = NewPort()
+			p.outPorts[name] = NewOutPort()
 			if typ == "os" {
 				p.OutPortsDoStream[name] = true
 			}
@@ -271,7 +271,7 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 			// It might be nice to have it init'ed with a channel
 			// anyways, for use cases when we want to send IP
 			// on the inport manually.
-			p.inPorts[name] = NewPort()
+			p.inPorts[name] = NewInPort()
 		} else if typ == "p" {
 			if params == nil || params[name] == "" {
 				p.paramPorts[name] = NewParamPort()
@@ -388,7 +388,7 @@ func (p *Process) receiveInputs() (inTargets map[string]*IP, inPortsOpen bool) {
 	// Read input targets on in-ports and set up path mappings
 	for inpName, inPort := range p.inPorts {
 		Debug.Printf("Process %s: Receieving on inPort %s ...", p.name, inpName)
-		inTarget, open := <-inPort.InChan
+		inTarget, open := <-inPort.MergedInChan
 		if !open {
 			inPortsOpen = false
 			continue
