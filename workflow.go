@@ -120,7 +120,7 @@ func (wf *Workflow) ConnectLast(outPort *OutPort) {
 	wf.driver = wf.sink
 }
 
-func (wf *Workflow) readyToRun(procs map[string]WorkflowProcess) bool {
+func (wf *Workflow) readyToRun(procs ...WorkflowProcess) bool {
 	if len(procs) == 0 {
 		Error.Println(wf.name + ": The workflow is empty. Did you forget to add the processes to it?")
 		return false
@@ -138,16 +138,24 @@ func (wf *Workflow) readyToRun(procs map[string]WorkflowProcess) bool {
 	return true
 }
 
-func (wf *Workflow) Run() {
-	if !wf.readyToRun(wf.procs) {
+func (wf *Workflow) RunProcs(driverProc WorkflowProcess, procs ...WorkflowProcess) {
+	if !wf.readyToRun(procs...) {
 		Error.Fatalln("Workflow not ready to run, due to previously reported errors, so exiting.")
 	}
-	for pname, proc := range wf.procs {
-		if proc != wf.driver { // Don't start the driver process in background
-			Debug.Printf(wf.name+": Starting process %s in new go-routine", pname)
+	for _, proc := range procs {
+		if proc != driverProc { // Don't start the driver process in background
+			Debug.Printf(wf.name+": Starting process %s in new go-routine", proc.Name())
 			go proc.Run()
 		}
 	}
 	Debug.Printf(wf.name + ": Starting sink in main go-routine")
-	wf.driver.Run()
+	driverProc.Run()
+}
+
+func (wf *Workflow) Run() {
+	procs := []WorkflowProcess{}
+	for _, p := range wf.procs {
+		procs = append(procs, p)
+	}
+	wf.RunProcs(wf.driver, procs...)
 }
