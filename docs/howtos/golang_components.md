@@ -2,9 +2,9 @@
 
 If you want to write a component with Go code, but would like to have it work
 seamlessly with other workflow processes in SciPipe, without reimplementing the
-whole [SciProcess](https://godoc.org/github.com/scipipe/scipipe#SciProcess)
+whole [Process](https://godoc.org/github.com/scipipe/scipipe#Process)
 functionality yourself, there is a way to do it: By using the `CustomExecute`
-field of SciProcess.
+field of Process.
 
 In short, it can be done like this:
 

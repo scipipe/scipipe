@@ -22,14 +22,14 @@ func main() {
 
 type FooBarSubWorkflow struct {
 	name  string
-	Procs map[string]*sp.SciProcess
+	Procs map[string]*sp.Process
 	Out   *sp.Port
 }
 
 func NewFooBarSubWorkflow(wf *sp.Workflow, name string) *FooBarSubWorkflow {
 	fbn := &FooBarSubWorkflow{
 		name:  name,
-		Procs: make(map[string]*sp.SciProcess),
+		Procs: make(map[string]*sp.Process),
 	}
 
 	fbn.Procs["foo"] = sp.NewProc(wf, "foo", "echo foo > {o:foo}")

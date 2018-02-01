@@ -11,18 +11,18 @@ asynchronously running component that is typically defined as a static,
 typically fixed for a workflow during its execution.
 
 One can create customized types of processes, but for most basic workflows, the
-[`scipipe.SciProcess`](https://godoc.org/github.com/scipipe/scipipe#SciProcess)
+[`scipipe.Process`](https://godoc.org/github.com/scipipe/scipipe#Process)
 will be used, which is specialized for executing commandline applications. New
-`SciProcess`-es are typically created using the `scipipe.NewProc(procName,
+`Process`-es are typically created using the `scipipe.NewProc(procName,
 shellPattern)` command.
 
-* See [GoDoc for SciProcess](https://godoc.org/github.com/scipipe/scipipe#SciProcess)
+* See [GoDoc for Process](https://godoc.org/github.com/scipipe/scipipe#Process)
 
 ## Tasks
 
 The "long-running" processes mentioned above, will receive input files on its
 in-ports, and for each complete set of input files it receives, it will create
-a new **task**. Specifically, `scipipe.SciProcess` will create
+a new **task**. Specifically, `scipipe.Process` will create
 [`scipipe.SciTask`](https://godoc.org/github.com/scipipe/scipipe#SciTask) objects, and populate it with all data needed for one
 particular shell command execution.  `SciTask` objects are executed via their
 [`Execute()`](https://godoc.org/github.com/scipipe/scipipe#SciTask.Execute)
@@ -53,7 +53,7 @@ be an in-port and out-port named the same), and this name will be used in shell
 command patterns, when connecting dependencies / dataflow networks, and when
 configuring file naming strategies.
 
-In `SciProcess` objects, in-ports are are accessed with
+In `Process` objects, in-ports are are accessed with
 `myProcess.In("my_port")`, and out-ports are similarly accessed with
 `myProcess.Out("my_other_port")`. Both are of type
 [`FilePort`](https://godoc.org/github.com/scipipe/scipipe#FilePort).
@@ -65,7 +65,7 @@ Port objects have some methods bound to them, most importantly the `Connect()`
 method, which takes another port, and connects to it, by stitching a channel
 between the ports.
 
-On `SciProcess` objects, there is also a third port type, `ParamPorts`, which
+On `Process` objects, there is also a third port type, `ParamPorts`, which
 is used when it is needed to send a stream of parameter values (in string
 format) to be supplied to as arguments to shell commands.
 
@@ -97,7 +97,7 @@ tutorials.
 
 ## Shell command pattern
 
-The `SciProcess` has the speciality that it can be configured using a special
+The `Process` has the speciality that it can be configured using a special
 shell command pattern, supplied to the [`NewProc()`](https://godoc.org/github.com/scipipe/scipipe#NewProc)
 factory function. It is already explained in the section "writing workflows",
 but in brief, it is a normal shell command, with placeholders for in-ports,

@@ -26,7 +26,7 @@ func main() {
 // -----
 
 type Fooer struct {
-	*sci.SciProcess
+	*sci.Process
 	name string
 }
 
@@ -46,7 +46,7 @@ func (p *Fooer) OutFoo() *sci.Port {
 // ---------
 
 type Foo2Barer struct {
-	*sci.SciProcess
+	*sci.Process
 	name string
 }
 

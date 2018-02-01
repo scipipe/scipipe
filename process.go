@@ -5,7 +5,7 @@ import (
 	str "strings"
 )
 
-// ExecMode specifies which execution mode should be used for a SciProcess and
+// ExecMode specifies which execution mode should be used for a Process and
 // its corresponding SciTasks
 type ExecMode int
 
@@ -17,9 +17,9 @@ const (
 	ExecModeSLURM ExecMode = iota
 )
 
-// ================== SciProcess ==================
+// ================== Process ==================
 
-type SciProcess struct {
+type Process struct {
 	name             string
 	CommandPattern   string
 	ExecMode         ExecMode
@@ -35,8 +35,8 @@ type SciProcess struct {
 	CoresPerTask     int
 }
 
-func NewSciProcess(workflow *Workflow, name string, command string) *SciProcess {
-	p := &SciProcess{
+func NewProcess(workflow *Workflow, name string, command string) *Process {
+	p := &Process{
 		name:             name,
 		CommandPattern:   command,
 		inPorts:          make(map[string]*Port),
@@ -54,18 +54,18 @@ func NewSciProcess(workflow *Workflow, name string, command string) *SciProcess 
 
 // ----------- Main API init methods ------------
 
-func NewProc(workflow *Workflow, name string, cmd string) *SciProcess {
+func NewProc(workflow *Workflow, name string, cmd string) *Process {
 	if !LogExists {
 		InitLogInfo()
 	}
-	p := NewSciProcess(workflow, name, cmd)
+	p := NewProcess(workflow, name, cmd)
 	p.initPortsFromCmdPattern(cmd, nil)
 	return p
 }
 
-func ShellExpand(workflow *Workflow, name string, cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *SciProcess {
+func ShellExpand(workflow *Workflow, name string, cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *Process {
 	cmdExpr := expandCommandParamsAndPaths(cmd, params, inPaths, outPaths)
-	p := NewSciProcess(workflow, name, cmdExpr)
+	p := NewProcess(workflow, name, cmdExpr)
 	p.initPortsFromCmdPattern(cmdExpr, params)
 	return p
 }
@@ -74,7 +74,7 @@ func ShellExpand(workflow *Workflow, name string, cmd string, inPaths map[string
 // Main API methods
 // ------------------------------------------------
 
-func (p *SciProcess) Name() string {
+func (p *Process) Name() string {
 	return p.name
 }
 
@@ -82,7 +82,7 @@ func (p *SciProcess) Name() string {
 // In-port stuff
 // ------------------------------------------------
 
-func (p *SciProcess) In(portName string) *Port {
+func (p *Process) In(portName string) *Port {
 	if p.inPorts[portName] != nil {
 		return p.inPorts[portName]
 	} else {
@@ -91,11 +91,11 @@ func (p *SciProcess) In(portName string) *Port {
 	return nil
 }
 
-func (p *SciProcess) SetInPort(portName string, port *Port) {
+func (p *Process) SetInPort(portName string, port *Port) {
 	p.inPorts[portName] = port
 }
 
-func (p *SciProcess) GetInPorts() map[string]*Port {
+func (p *Process) GetInPorts() map[string]*Port {
 	return p.inPorts
 }
 
@@ -103,7 +103,7 @@ func (p *SciProcess) GetInPorts() map[string]*Port {
 // Out-port stuff
 // ------------------------------------------------
 
-func (p *SciProcess) Out(portName string) *Port {
+func (p *Process) Out(portName string) *Port {
 	if p.outPorts[portName] != nil {
 		return p.outPorts[portName]
 	} else {
@@ -112,11 +112,11 @@ func (p *SciProcess) Out(portName string) *Port {
 	return nil
 }
 
-func (p *SciProcess) SetOutPort(portName string, port *Port) {
+func (p *Process) SetOutPort(portName string, port *Port) {
 	p.outPorts[portName] = port
 }
 
-func (p *SciProcess) GetOutPorts() map[string]*Port {
+func (p *Process) GetOutPorts() map[string]*Port {
 	return p.outPorts
 }
 
@@ -124,7 +124,7 @@ func (p *SciProcess) GetOutPorts() map[string]*Port {
 // Param-port stuff
 // ------------------------------------------------
 
-func (p *SciProcess) ParamPort(paramPortName string) *ParamPort {
+func (p *Process) ParamPort(paramPortName string) *ParamPort {
 	if p.paramPorts[paramPortName] != nil {
 		return p.paramPorts[paramPortName]
 	} else {
@@ -133,11 +133,11 @@ func (p *SciProcess) ParamPort(paramPortName string) *ParamPort {
 	return nil
 }
 
-func (p *SciProcess) GetParamPorts() map[string]*ParamPort {
+func (p *Process) GetParamPorts() map[string]*ParamPort {
 	return p.paramPorts
 }
 
-func (p *SciProcess) SetParamPort(paramPortName string, paramPort *ParamPort) {
+func (p *Process) SetParamPort(paramPortName string, paramPort *ParamPort) {
 	p.paramPorts[paramPortName] = paramPort
 }
 
@@ -146,7 +146,7 @@ func (p *SciProcess) SetParamPort(paramPortName string, paramPort *ParamPort) {
 // ------------------------------------------------
 
 // SetPathStatic creates an (output) path formatter returning a static string file name
-func (p *SciProcess) SetPathStatic(outPortName string, path string) {
+func (p *Process) SetPathStatic(outPortName string, path string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
 		return path
 	}
@@ -154,7 +154,7 @@ func (p *SciProcess) SetPathStatic(outPortName string, path string) {
 
 // SetPathExtend creates an (output) path formatter that extends the path of
 // an input IP
-func (p *SciProcess) SetPathExtend(inPortName string, outPortName string,
+func (p *Process) SetPathExtend(inPortName string, outPortName string,
 	extension string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
 		return t.InPath(inPortName) + extension
@@ -163,7 +163,7 @@ func (p *SciProcess) SetPathExtend(inPortName string, outPortName string,
 
 // SetPathReplace creates an (output) path formatter that uses an input's path
 // but replaces parts of it.
-func (p *SciProcess) SetPathReplace(inPortName string, outPortName string, old string, new string) {
+func (p *Process) SetPathReplace(inPortName string, outPortName string, old string, new string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
 		return str.Replace(t.InPath(inPortName), old, new, -1)
 	}
@@ -171,7 +171,7 @@ func (p *SciProcess) SetPathReplace(inPortName string, outPortName string, old s
 
 // SetPathCustom takes a function which produces a file path based on data
 // available in *SciTask, such as concrete file paths and parameter values,
-func (p *SciProcess) SetPathCustom(outPortName string, pathFmtFunc func(task *SciTask) (path string)) {
+func (p *Process) SetPathCustom(outPortName string, pathFmtFunc func(task *SciTask) (path string)) {
 	p.PathFormatters[outPortName] = pathFmtFunc
 }
 
@@ -240,12 +240,12 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 }
 
 // Set up in- and out-ports based on the shell command pattern used to create the
-// SciProcess. Ports are set up in this way:
+// Process. Ports are set up in this way:
 // `{i:PORTNAME}` specifies an in-port
 // `{o:PORTNAME}` specifies an out-port
 // `{os:PORTNAME}` specifies an out-port that streams via a FIFO file
 // `{p:PORTNAME}` a "parameter-port", which means a port where parameters can be "streamed"
-func (p *SciProcess) initPortsFromCmdPattern(cmd string, params map[string]string) {
+func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) {
 
 	// Find in/out port names and Params and set up in struct fields
 	r := getShellCommandPlaceHolderRegex()
@@ -281,7 +281,7 @@ func (p *SciProcess) initPortsFromCmdPattern(cmd string, params map[string]strin
 }
 
 // ------- Sanity checks -------
-func (proc *SciProcess) IsConnected() (isConnected bool) {
+func (proc *Process) IsConnected() (isConnected bool) {
 	isConnected = true
 	for portName, port := range proc.inPorts {
 		if !port.IsConnected() {
@@ -304,14 +304,14 @@ func (proc *SciProcess) IsConnected() (isConnected bool) {
 	return isConnected
 }
 
-// ============== SciProcess Run Method ===============
+// ============== Process Run Method ===============
 
 // Run runs the process by instantiating and executing SciTasks for all inputs
 // and parameter values on its in-ports. in the case when there are no inputs
 // or parameter values on the in-ports, it will run just once before it
 // terminates. note that the actual execution of shell commands are done inside
 // SciTask.Execute, not here.
-func (p *SciProcess) Run() {
+func (p *Process) Run() {
 	// Check that CoresPerTask is a sane number
 	if p.CoresPerTask > cap(p.workflow.concurrentTasks) {
 		Error.Fatalf("%s: CoresPerTask (%d) can't be greater than maxConcurrentTasks of workflow (%d)\n", p.Name(), p.CoresPerTask, cap(p.workflow.concurrentTasks))
@@ -382,7 +382,7 @@ func (p *SciProcess) Run() {
 
 // -------- Helper methods for the Run method ---------
 
-func (p *SciProcess) receiveInputs() (inTargets map[string]*IP, inPortsOpen bool) {
+func (p *Process) receiveInputs() (inTargets map[string]*IP, inPortsOpen bool) {
 	inPortsOpen = true
 	inTargets = make(map[string]*IP)
 	// Read input targets on in-ports and set up path mappings
@@ -399,7 +399,7 @@ func (p *SciProcess) receiveInputs() (inTargets map[string]*IP, inPortsOpen bool
 	return
 }
 
-func (p *SciProcess) receiveParams() (params map[string]string, paramPortsOpen bool) {
+func (p *Process) receiveParams() (params map[string]string, paramPortsOpen bool) {
 	paramPortsOpen = true
 	params = make(map[string]string)
 	// Read input targets on in-ports and set up path mappings
@@ -415,7 +415,7 @@ func (p *SciProcess) receiveParams() (params map[string]string, paramPortsOpen b
 	return
 }
 
-func (p *SciProcess) createTasks() (ch chan *SciTask) {
+func (p *Process) createTasks() (ch chan *SciTask) {
 	ch = make(chan *SciTask)
 	go func() {
 		defer close(ch)
@@ -451,7 +451,7 @@ func (p *SciProcess) createTasks() (ch chan *SciTask) {
 	return ch
 }
 
-func (p *SciProcess) closeOutPorts() {
+func (p *Process) closeOutPorts() {
 	for oname, oport := range p.outPorts {
 		Debug.Printf("Process %s: Closing port(s) %s ...\n", p.name, oname)
 		oport.Close()

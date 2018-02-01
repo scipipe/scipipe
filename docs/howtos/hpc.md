@@ -14,4 +14,4 @@ myProc.Prepend = "salloc -A projectABC123 -p core -t 1:00 -J HelloWorld"
 
 *(Beware: This is not a full code example, and won't compile without some more boilerplate, which you can find in the introductory examples)*
 
-You can find the updated GoDoc for the process struct [here](http://godoc.org/github.com/scipipe/scipipe#SciProcess).
+You can find the updated GoDoc for the process struct [here](http://godoc.org/github.com/scipipe/scipipe#Process).

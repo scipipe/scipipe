@@ -3,24 +3,24 @@
 With re-usable components, we mean components that can be stored in a Go
 package and imported and used later.
 
-In order for components in such a library to be easy to use, the ports need to
-be static methods bound to the process struct, rather than just stored by a
-string ID in a generic port map, like the `In()` and `Out()` methods on
-`SciProcess` processes.  This is so that the methods can show up in the
+In order for components in such a library to be easy to use, the ports need
+to be static methods bound to the process struct, rather than just stored by
+a string ID in a generic port map, like the `In()` and `Out()` methods on
+`Process` processes. This is so that the methods can show up in the
 auto-completion / intellisense function in code editors removing the need to
 look up the name of the ports manually in the library code all the time.
 
 ## How to create re-usable components in SciPipe
 
-SciProcess processes created with the `scipipe.NewProc()` command, can be
-turned into such "re-usable" component by using a wrapping strategy, that is
+Process processes created with the `scipipe.NewProc()` command, can be turned
+into such "re-usable" component by using a wrapping strategy, that is
 demonstrated in an [example on GitHub](https://github.com/scipipe/scipipe/blob/master/examples/wrapper_procs/wrap.go).
 
-The idea is to create a new struct type for the re-usable component, and then,
-in the factory method for the process, create an "inner" process of type
-SciProcess, using `NewProc()` as in the normal case, embedding that in the
+The idea is to create a new struct type for the re-usable component, and
+then, in the factory method for the process, create an "inner" process of
+type Process, using `NewProc()` as in the normal case, embedding that in the
 outer struct and then adding statically defined accessor methods for each of
-the ports in the inner process, with a similar name.  So, if the inner process
+the ports in the inner process, with a similar name. So, if the inner process
 has an outport named "foo", you would define an accessor method named
 `myproc.OutFoo()` that returns this port from the inner process.
 
@@ -29,12 +29,12 @@ writes "hi" to a file:
 
 ```go
 type HiWriter struct {
-    // Embedd a SciProcess struct
-	*sci.SciProcess
+    // Embedd a Process struct
+	*sci.Process
 }
 
 func NewHiWriter() *HiWriter {
-    // Initialize a normal "SciProcess" to use as an "inner" process
+    // Initialize a normal "Process" to use as an "inner" process
 	innerHiWriter := sci.NewProc("hiwriter", "echo hi > {o:hifile}")
 	innerHiWriter.SetPathStatic("hifile", "hi.txt")
 

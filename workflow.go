@@ -60,7 +60,7 @@ func (wf *Workflow) AddProcs(procs ...WorkflowProcess) {
 	}
 }
 
-func (wf *Workflow) NewProc(procName string, commandPattern string) *SciProcess {
+func (wf *Workflow) NewProc(procName string, commandPattern string) *Process {
 	proc := NewProc(wf, procName, commandPattern)
 	return proc
 }
