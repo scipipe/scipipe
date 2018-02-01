@@ -9,7 +9,7 @@ import (
 type FileGlobber struct {
 	scipipe.Process
 	name        string
-	Out         *scipipe.FilePort
+	Out         *scipipe.Port
 	globPattern string
 }
 
@@ -20,7 +20,7 @@ func (p *FileGlobber) Name() string {
 func NewFileGlobber(wf *scipipe.Workflow, name string, globPattern string) *FileGlobber {
 	fg := &FileGlobber{
 		name:        name,
-		Out:         scipipe.NewFilePort(),
+		Out:         scipipe.NewPort(),
 		globPattern: globPattern,
 	}
 	wf.AddProc(fg)

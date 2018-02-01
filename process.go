@@ -30,11 +30,11 @@ type Process interface {
 type ShellProcess interface {
 	Process
 
-	In(string) *FilePort
-	GetInPorts() map[string]*FilePort
+	In(string) *Port
+	GetInPorts() map[string]*Port
 
-	Out(string) *FilePort
-	GetOutPorts() map[string]*FilePort
+	Out(string) *Port
+	GetOutPorts() map[string]*Port
 
 	SetPathStatic(outPortName string, path string)
 	SetPathExtend(inPortName string, outPortName string, extension string)
@@ -51,8 +51,8 @@ type SciProcess struct {
 	ExecMode         ExecMode
 	Prepend          string
 	Spawn            bool
-	inPorts          map[string]*FilePort
-	outPorts         map[string]*FilePort
+	inPorts          map[string]*Port
+	outPorts         map[string]*Port
 	OutPortsDoStream map[string]bool
 	PathFormatters   map[string]func(*SciTask) string
 	paramPorts       map[string]*ParamPort
@@ -65,8 +65,8 @@ func NewSciProcess(workflow *Workflow, name string, command string) *SciProcess 
 	p := &SciProcess{
 		name:             name,
 		CommandPattern:   command,
-		inPorts:          make(map[string]*FilePort),
-		outPorts:         make(map[string]*FilePort),
+		inPorts:          make(map[string]*Port),
+		outPorts:         make(map[string]*Port),
 		OutPortsDoStream: make(map[string]bool),
 		PathFormatters:   make(map[string]func(*SciTask) string),
 		paramPorts:       make(map[string]*ParamPort),
@@ -108,7 +108,7 @@ func (p *SciProcess) Name() string {
 // In-port stuff
 // ------------------------------------------------
 
-func (p *SciProcess) In(portName string) *FilePort {
+func (p *SciProcess) In(portName string) *Port {
 	if p.inPorts[portName] != nil {
 		return p.inPorts[portName]
 	} else {
@@ -118,11 +118,11 @@ func (p *SciProcess) In(portName string) *FilePort {
 	return nil
 }
 
-func (p *SciProcess) SetInPort(portName string, port *FilePort) {
+func (p *SciProcess) SetInPort(portName string, port *Port) {
 	p.inPorts[portName] = port
 }
 
-func (p *SciProcess) GetInPorts() map[string]*FilePort {
+func (p *SciProcess) GetInPorts() map[string]*Port {
 	return p.inPorts
 }
 
@@ -130,7 +130,7 @@ func (p *SciProcess) GetInPorts() map[string]*FilePort {
 // Out-port stuff
 // ------------------------------------------------
 
-func (p *SciProcess) Out(portName string) *FilePort {
+func (p *SciProcess) Out(portName string) *Port {
 	if p.outPorts[portName] != nil {
 		return p.outPorts[portName]
 	} else {
@@ -140,11 +140,11 @@ func (p *SciProcess) Out(portName string) *FilePort {
 	return nil
 }
 
-func (p *SciProcess) SetOutPort(portName string, port *FilePort) {
+func (p *SciProcess) SetOutPort(portName string, port *Port) {
 	p.outPorts[portName] = port
 }
 
-func (p *SciProcess) GetOutPorts() map[string]*FilePort {
+func (p *SciProcess) GetOutPorts() map[string]*Port {
 	return p.outPorts
 }
 
@@ -290,7 +290,7 @@ func (p *SciProcess) initPortsFromCmdPattern(cmd string, params map[string]strin
 		typ := m[1]
 		name := m[2]
 		if typ == "o" || typ == "os" {
-			p.outPorts[name] = NewFilePort()
+			p.outPorts[name] = NewPort()
 			if typ == "os" {
 				p.OutPortsDoStream[name] = true
 			}
@@ -300,7 +300,7 @@ func (p *SciProcess) initPortsFromCmdPattern(cmd string, params map[string]strin
 			// It might be nice to have it init'ed with a channel
 			// anyways, for use cases when we want to send IP
 			// on the inport manually.
-			p.inPorts[name] = NewFilePort()
+			p.inPorts[name] = NewPort()
 		} else if typ == "p" {
 			if params == nil || params[name] == "" {
 				p.paramPorts[name] = NewParamPort()

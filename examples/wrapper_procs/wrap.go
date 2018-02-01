@@ -38,7 +38,7 @@ func NewFooer(wf *sci.Workflow, name string) *Fooer {
 
 // Define static ports
 
-func (p *Fooer) OutFoo() *sci.FilePort {
+func (p *Fooer) OutFoo() *sci.Port {
 	return p.Out("foo")
 }
 
@@ -58,10 +58,10 @@ func NewFoo2Barer(wf *sci.Workflow, name string) *Foo2Barer {
 
 // Define static ports
 
-func (p *Foo2Barer) InFoo() *sci.FilePort {
+func (p *Foo2Barer) InFoo() *sci.Port {
 	return p.In("foo")
 }
 
-func (p *Foo2Barer) OutBar() *sci.FilePort {
+func (p *Foo2Barer) OutBar() *sci.Port {
 	return p.Out("bar")
 }

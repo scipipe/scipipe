@@ -10,16 +10,16 @@ import (
 type StreamToSubStream struct {
 	scipipe.Process
 	name         string
-	In           *scipipe.FilePort
-	OutSubStream *scipipe.FilePort
+	In           *scipipe.Port
+	OutSubStream *scipipe.Port
 }
 
 // Instantiate a new StreamToSubStream
 func NewStreamToSubStream(wf *scipipe.Workflow, name string) *StreamToSubStream {
 	stss := &StreamToSubStream{
 		name:         name,
-		In:           scipipe.NewFilePort(),
-		OutSubStream: scipipe.NewFilePort(),
+		In:           scipipe.NewPort(),
+		OutSubStream: scipipe.NewPort(),
 	}
 	wf.AddProc(stss)
 	return stss

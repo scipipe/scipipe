@@ -1,8 +1,9 @@
 package components
 
 import (
-	"github.com/scipipe/scipipe"
 	"strings"
+
+	"github.com/scipipe/scipipe"
 )
 
 // IpToParamConverter takes a file target on its FilePath in-port, reads its
@@ -11,7 +12,7 @@ import (
 type IpToParamConverter struct {
 	scipipe.Process
 	name     string
-	InFile   *scipipe.FilePort
+	InFile   *scipipe.Port
 	OutParam *scipipe.ParamPort
 }
 
@@ -19,7 +20,7 @@ type IpToParamConverter struct {
 func NewIpToParamConverter(wf *scipipe.Workflow, name string) *IpToParamConverter {
 	p := &IpToParamConverter{
 		name:     name,
-		InFile:   scipipe.NewFilePort(),
+		InFile:   scipipe.NewPort(),
 		OutParam: scipipe.NewParamPort(),
 	}
 	wf.AddProc(p)

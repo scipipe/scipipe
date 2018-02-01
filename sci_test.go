@@ -23,14 +23,14 @@ func TestBasicRun(t *testing.T) {
 	wf := NewWorkflow("TestBasicRunWf", 16)
 
 	t1 := NewProc(wf, "t1", "echo foo > {o:foo}")
-	assert.IsType(t, t1.Out("foo"), NewFilePort())
+	assert.IsType(t, t1.Out("foo"), NewPort())
 	t1.PathFormatters["foo"] = func(t *SciTask) string {
 		return "foo.txt"
 	}
 
 	t2 := NewProc(wf, "t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	assert.IsType(t, t2.In("foo"), NewFilePort())
-	assert.IsType(t, t2.Out("bar"), NewFilePort())
+	assert.IsType(t, t2.In("foo"), NewPort())
+	assert.IsType(t, t2.Out("bar"), NewPort())
 	t2.PathFormatters["bar"] = func(t *SciTask) string {
 		return t.InPath("foo") + ".bar.txt"
 	}
@@ -40,8 +40,8 @@ func TestBasicRun(t *testing.T) {
 	snk.Connect(t2.Out("bar"))
 	wf.SetSink(snk)
 
-	assert.IsType(t, t2.In("foo"), NewFilePort())
-	assert.IsType(t, t2.Out("bar"), NewFilePort())
+	assert.IsType(t, t2.In("foo"), NewPort())
+	assert.IsType(t, t2.Out("bar"), NewPort())
 
 	wf.Run()
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
@@ -200,7 +200,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 	var expFname string
 	i := 1
 
-	tempPort := NewFilePort()
+	tempPort := NewPort()
 	Connect(tempPort, sl.Out("out"))
 
 	// Should not start go-routines before connection stuff is done
@@ -434,14 +434,14 @@ func (proc *CombinatoricsProcess) IsConnected() bool { return true }
 // StreamToSubstream helper process
 // --------------------------------------------------------------------------------
 type StreamToSubStream struct {
-	In           *FilePort
-	OutSubStream *FilePort
+	In           *Port
+	OutSubStream *Port
 }
 
 func NewStreamToSubStream() *StreamToSubStream {
 	return &StreamToSubStream{
-		In:           NewFilePort(),
-		OutSubStream: NewFilePort(),
+		In:           NewPort(),
+		OutSubStream: NewPort(),
 	}
 }
 
@@ -467,8 +467,8 @@ func (proc *StreamToSubStream) IsConnected() bool {
 // MapToKey helper process
 // --------------------------------------------------------------------------------
 type MapToKeys struct {
-	In       *FilePort
-	Out      *FilePort
+	In       *Port
+	Out      *Port
 	procName string
 	mapFunc  func(ip *IP) map[string]string
 }
@@ -477,8 +477,8 @@ func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *IP) map[string]str
 	mtp := &MapToKeys{
 		procName: name,
 		mapFunc:  mapFunc,
-		In:       NewFilePort(),
-		Out:      NewFilePort(),
+		In:       NewPort(),
+		Out:      NewPort(),
 	}
 	wf.AddProc(mtp)
 	return mtp

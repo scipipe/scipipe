@@ -20,7 +20,7 @@ type IP struct {
 	doStream  bool
 	lock      *sync.Mutex
 	auditInfo *AuditInfo
-	SubStream *FilePort
+	SubStream *Port
 }
 
 // Create new IP "object"
@@ -28,7 +28,7 @@ func NewIP(path string) *IP {
 	ip := new(IP)
 	ip.path = path
 	ip.lock = new(sync.Mutex)
-	ip.SubStream = NewFilePort()
+	ip.SubStream = NewPort()
 	//Don't init buffer if not needed?
 	//buf := make([]byte, 0, 128)
 	//ip.buffer = bytes.NewBuffer(buf)
@@ -259,7 +259,7 @@ func (ip *IP) WriteAuditLogToFile() {
 type IPGen struct {
 	Process
 	name      string
-	Out       *FilePort
+	Out       *Port
 	FilePaths []string
 }
 
@@ -267,7 +267,7 @@ type IPGen struct {
 func NewIPGen(workflow *Workflow, name string, filePaths ...string) (fq *IPGen) {
 	fq = &IPGen{
 		name:      name,
-		Out:       NewFilePort(),
+		Out:       NewPort(),
 		FilePaths: filePaths,
 	}
 	workflow.AddProc(fq)

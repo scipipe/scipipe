@@ -4,27 +4,20 @@ import (
 	"os"
 )
 
-type Port interface {
-	Connect(Port)
-	IsConnected() bool
-	SetConnectedStatus(bool)
-}
-
-func Connect(port1 *FilePort, port2 *FilePort) {
+func Connect(port1 *Port, port2 *Port) {
 	port1.Connect(port2)
 }
 
-// FilePort
-type FilePort struct {
-	Port
+// Port
+type Port struct {
 	InChan    chan *IP
 	inChans   []chan *IP
 	outChans  []chan *IP
 	connected bool
 }
 
-func NewFilePort() *FilePort {
-	fp := &FilePort{
+func NewPort() *Port {
+	fp := &Port{
 		InChan:    make(chan *IP, BUFSIZE), // This one will contain merged inputs from inChans
 		inChans:   []chan *IP{},
 		outChans:  []chan *IP{},
@@ -33,7 +26,7 @@ func NewFilePort() *FilePort {
 	return fp
 }
 
-func (localPort *FilePort) Connect(remotePort *FilePort) {
+func (localPort *Port) Connect(remotePort *Port) {
 	// If localPort is an in-port
 	inBoundChan := make(chan *IP, BUFSIZE)
 	localPort.AddInChan(inBoundChan)
@@ -50,7 +43,7 @@ func (localPort *FilePort) Connect(remotePort *FilePort) {
 
 // RunMerge merges (multiple) inputs on pt.inChans into pt.InChan. This has to
 // start running when the owning process runs, in order to merge in-ports
-func (pt *FilePort) RunMergeInputs() {
+func (pt *Port) RunMergeInputs() {
 	defer close(pt.InChan)
 	for len(pt.inChans) > 0 {
 		for i, ich := range pt.inChans {
@@ -65,34 +58,34 @@ func (pt *FilePort) RunMergeInputs() {
 	}
 }
 
-func (pt *FilePort) AddOutChan(outChan chan *IP) {
+func (pt *Port) AddOutChan(outChan chan *IP) {
 	pt.outChans = append(pt.outChans, outChan)
 }
 
-func (pt *FilePort) AddInChan(inChan chan *IP) {
+func (pt *Port) AddInChan(inChan chan *IP) {
 	pt.inChans = append(pt.inChans, inChan)
 }
 
-func (pt *FilePort) SetConnectedStatus(connected bool) {
+func (pt *Port) SetConnectedStatus(connected bool) {
 	pt.connected = connected
 }
 
-func (pt *FilePort) IsConnected() bool {
+func (pt *Port) IsConnected() bool {
 	return pt.connected
 }
 
-func (pt *FilePort) Send(ip *IP) {
+func (pt *Port) Send(ip *IP) {
 	for i, outChan := range pt.outChans {
 		Debug.Printf("Sending on outchan %d in port\n", i)
 		outChan <- ip
 	}
 }
 
-func (pt *FilePort) Recv() *IP {
+func (pt *Port) Recv() *IP {
 	return <-pt.InChan
 }
 
-func (pt *FilePort) Close() {
+func (pt *Port) Close() {
 	for i, outChan := range pt.outChans {
 		Debug.Printf("Closing outchan %d in port\n", i)
 		close(outChan)

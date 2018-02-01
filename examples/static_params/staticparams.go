@@ -39,13 +39,13 @@ func main() {
 type FileSender struct {
 	sci.Process
 	name string
-	Out  *sci.FilePort
+	Out  *sci.Port
 }
 
 func NewFileSender(name string) *FileSender {
 	return &FileSender{
 		name: name,
-		Out:  sci.NewFilePort(),
+		Out:  sci.NewPort(),
 	}
 }
 

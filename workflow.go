@@ -108,7 +108,7 @@ func (wf *Workflow) DecConcurrentTasks(slots int) {
 // an implicit sink process which will be used to drive the workflow. This can
 // be used instead of manually creating a sink, connecting it, and setting it
 // as the driver process of the workflow.
-func (wf *Workflow) ConnectLast(outPort *FilePort) {
+func (wf *Workflow) ConnectLast(outPort *Port) {
 	wf.sink.Connect(outPort)
 	// Make sure the sink is also the driver
 	wf.driver = wf.sink

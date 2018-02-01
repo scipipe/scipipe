@@ -24,7 +24,7 @@ type FooBarSubWorkflow struct {
 	sp.Process
 	name  string
 	Procs map[string]*sp.SciProcess
-	Out   *sp.FilePort
+	Out   *sp.Port
 }
 
 func NewFooBarSubWorkflow(wf *sp.Workflow, name string) *FooBarSubWorkflow {

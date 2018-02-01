@@ -5,14 +5,14 @@ package scipipe
 type Sink struct {
 	Process
 	name   string
-	inPort *FilePort
+	inPort *Port
 }
 
 // Instantiate a Sink component
 func NewSink(name string) (s *Sink) {
 	return &Sink{
 		name:   name,
-		inPort: NewFilePort(),
+		inPort: NewPort(),
 	}
 }
 
@@ -20,7 +20,7 @@ func (p *Sink) IsConnected() bool {
 	return p.inPort.IsConnected()
 }
 
-func (p *Sink) Connect(outPort *FilePort) {
+func (p *Sink) Connect(outPort *Port) {
 	p.inPort.Connect(outPort)
 }
 

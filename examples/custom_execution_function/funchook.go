@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+
 	. "github.com/scipipe/scipipe"
 )
 
@@ -48,7 +49,7 @@ func NewFooer(wf *Workflow, name string) *Fooer {
 	return fooer
 }
 
-func (p *Fooer) OutFoo() *FilePort { return p.Out("foo") }
+func (p *Fooer) OutFoo() *Port { return p.Out("foo") }
 
 // Foo2Barer
 
@@ -75,5 +76,5 @@ func NewFoo2Barer(wf *Workflow, name string) *Foo2Barer {
 	}
 }
 
-func (p *Foo2Barer) InFoo() *FilePort  { return p.In("foo") }
-func (p *Foo2Barer) OutBar() *FilePort { return p.Out("bar") }
+func (p *Foo2Barer) InFoo() *Port  { return p.In("foo") }
+func (p *Foo2Barer) OutBar() *Port { return p.Out("bar") }

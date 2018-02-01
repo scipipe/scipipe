@@ -5,8 +5,8 @@ import (
 )
 
 type MapToKeys struct {
-	In       *scipipe.FilePort
-	Out      *scipipe.FilePort
+	In       *scipipe.Port
+	Out      *scipipe.Port
 	procName string
 	mapFunc  func(ip *scipipe.IP) map[string]string
 }
@@ -15,8 +15,8 @@ func NewMapToKeys(wf *scipipe.Workflow, name string, mapFunc func(ip *scipipe.IP
 	mtp := &MapToKeys{
 		procName: name,
 		mapFunc:  mapFunc,
-		In:       scipipe.NewFilePort(),
-		Out:      scipipe.NewFilePort(),
+		In:       scipipe.NewPort(),
+		Out:      scipipe.NewPort(),
 	}
 	wf.AddProc(mtp)
 	return mtp

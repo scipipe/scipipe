@@ -5,8 +5,8 @@ import "github.com/scipipe/scipipe"
 type Concatenator struct {
 	scipipe.Process
 	name     string
-	In       *scipipe.FilePort
-	Out      *scipipe.FilePort
+	In       *scipipe.Port
+	Out      *scipipe.Port
 	OutPath  string
 	workflow *scipipe.Workflow
 }
@@ -14,8 +14,8 @@ type Concatenator struct {
 func NewConcatenator(wf *scipipe.Workflow, name string, outPath string) *Concatenator {
 	concat := &Concatenator{
 		name:     name,
-		In:       scipipe.NewFilePort(),
-		Out:      scipipe.NewFilePort(),
+		In:       scipipe.NewPort(),
+		Out:      scipipe.NewPort(),
 		OutPath:  outPath,
 		workflow: wf,
 	}
