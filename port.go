@@ -17,17 +17,17 @@ func Connect(port1 *FilePort, port2 *FilePort) {
 // FilePort
 type FilePort struct {
 	Port
-	InChan    chan *InformationPacket
-	inChans   []chan *InformationPacket
-	outChans  []chan *InformationPacket
+	InChan    chan *IP
+	inChans   []chan *IP
+	outChans  []chan *IP
 	connected bool
 }
 
 func NewFilePort() *FilePort {
 	fp := &FilePort{
-		InChan:    make(chan *InformationPacket, BUFSIZE), // This one will contain merged inputs from inChans
-		inChans:   []chan *InformationPacket{},
-		outChans:  []chan *InformationPacket{},
+		InChan:    make(chan *IP, BUFSIZE), // This one will contain merged inputs from inChans
+		inChans:   []chan *IP{},
+		outChans:  []chan *IP{},
 		connected: false,
 	}
 	return fp
@@ -35,12 +35,12 @@ func NewFilePort() *FilePort {
 
 func (localPort *FilePort) Connect(remotePort *FilePort) {
 	// If localPort is an in-port
-	inBoundChan := make(chan *InformationPacket, BUFSIZE)
+	inBoundChan := make(chan *IP, BUFSIZE)
 	localPort.AddInChan(inBoundChan)
 	remotePort.AddOutChan(inBoundChan)
 
 	// If localPort is an out-port
-	outBoundChan := make(chan *InformationPacket, BUFSIZE)
+	outBoundChan := make(chan *IP, BUFSIZE)
 	localPort.AddOutChan(outBoundChan)
 	remotePort.AddInChan(outBoundChan)
 
@@ -65,11 +65,11 @@ func (pt *FilePort) RunMergeInputs() {
 	}
 }
 
-func (pt *FilePort) AddOutChan(outChan chan *InformationPacket) {
+func (pt *FilePort) AddOutChan(outChan chan *IP) {
 	pt.outChans = append(pt.outChans, outChan)
 }
 
-func (pt *FilePort) AddInChan(inChan chan *InformationPacket) {
+func (pt *FilePort) AddInChan(inChan chan *IP) {
 	pt.inChans = append(pt.inChans, inChan)
 }
 
@@ -81,14 +81,14 @@ func (pt *FilePort) IsConnected() bool {
 	return pt.connected
 }
 
-func (pt *FilePort) Send(ip *InformationPacket) {
+func (pt *FilePort) Send(ip *IP) {
 	for i, outChan := range pt.outChans {
 		Debug.Printf("Sending on outchan %d in port\n", i)
 		outChan <- ip
 	}
 }
 
-func (pt *FilePort) Recv() *InformationPacket {
+func (pt *FilePort) Recv() *IP {
 	return <-pt.InChan
 }
 

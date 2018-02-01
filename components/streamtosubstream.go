@@ -4,8 +4,8 @@ import (
 	"github.com/scipipe/scipipe"
 )
 
-// StreamToSubStream takes a normal stream of InformationPacket's representing
-// individual files, and returns one InformationPacket where the incoming IPs
+// StreamToSubStream takes a normal stream of IP's representing
+// individual files, and returns one IP where the incoming IPs
 // are sent on its substream.
 type StreamToSubStream struct {
 	scipipe.Process
@@ -31,7 +31,7 @@ func (p *StreamToSubStream) Run() {
 	go p.In.RunMergeInputs()
 
 	scipipe.Debug.Println("Creating new information packet for the substream...")
-	subStreamIP := scipipe.NewInformationPacket("")
+	subStreamIP := scipipe.NewIP("")
 	scipipe.Debug.Printf("Setting in-port of process %s to IP substream field\n", p.Name())
 	subStreamIP.SubStream = p.In
 

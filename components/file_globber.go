@@ -34,7 +34,7 @@ func (p *FileGlobber) Run() {
 	scipipe.CheckErr(err)
 
 	for _, m := range matches {
-		ip := scipipe.NewInformationPacket(m)
+		ip := scipipe.NewIP(m)
 		p.Out.Send(ip)
 	}
 }

@@ -5,11 +5,12 @@ import (
 	"os/exec"
 
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func initTestLogs() {
@@ -346,7 +347,7 @@ func TestPassOnKeys(t *testing.T) {
 	hey := wf.NewProc("create_file", "echo hey > {o:heyfile}")
 	hey.SetPathStatic("heyfile", "/tmp/hey.txt")
 
-	key := NewMapToKeys(wf, "add_key", func(ip *InformationPacket) map[string]string {
+	key := NewMapToKeys(wf, "add_key", func(ip *IP) map[string]string {
 		return map[string]string{"hey": "you"}
 	})
 	key.In.Connect(hey.Out("heyfile"))
@@ -448,7 +449,7 @@ func (proc *StreamToSubStream) Run() {
 	defer proc.OutSubStream.Close()
 	go proc.In.RunMergeInputs()
 
-	subStreamIP := NewInformationPacket("")
+	subStreamIP := NewIP("")
 	subStreamIP.SubStream = proc.In
 
 	proc.OutSubStream.Send(subStreamIP)
@@ -469,10 +470,10 @@ type MapToKeys struct {
 	In       *FilePort
 	Out      *FilePort
 	procName string
-	mapFunc  func(ip *InformationPacket) map[string]string
+	mapFunc  func(ip *IP) map[string]string
 }
 
-func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *InformationPacket) map[string]string) *MapToKeys {
+func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *IP) map[string]string) *MapToKeys {
 	mtp := &MapToKeys{
 		procName: name,
 		mapFunc:  mapFunc,

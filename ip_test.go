@@ -1,16 +1,17 @@
 package scipipe
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
 	TESTPATH = "somepath.txt"
 )
 
-func TestInformationPacketPaths(t *testing.T) {
-	ip := NewInformationPacket(TESTPATH)
+func TestIPPaths(t *testing.T) {
+	ip := NewIP(TESTPATH)
 	assertPathsEqual(t, ip.GetPath(), TESTPATH)
 	assertPathsEqual(t, ip.GetTempPath(), TESTPATH+".tmp")
 	assertPathsEqual(t, ip.GetFifoPath(), TESTPATH+".fifo")

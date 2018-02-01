@@ -17,8 +17,8 @@ type SciTask struct {
 	Command       string
 	ExecMode      ExecMode
 	CustomExecute func(*SciTask)
-	InTargets     map[string]*InformationPacket
-	OutTargets    map[string]*InformationPacket
+	InTargets     map[string]*IP
+	OutTargets    map[string]*IP
 	Params        map[string]string
 	Done          chan int
 	Image         string
@@ -27,11 +27,11 @@ type SciTask struct {
 	cores         int
 }
 
-func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[string]*InformationPacket, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, cores int) *SciTask {
+func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[string]*IP, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, cores int) *SciTask {
 	t := &SciTask{
 		Name:       name,
 		InTargets:  inTargets,
-		OutTargets: make(map[string]*InformationPacket),
+		OutTargets: make(map[string]*IP),
 		Params:     params,
 		Command:    "",
 		ExecMode:   execMode,
@@ -42,10 +42,10 @@ func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[st
 
 	// Create out targets
 	Debug.Printf("Task:%s: Creating outTargets now ... [%s]", name, cmdPat)
-	outTargets := make(map[string]*InformationPacket)
+	outTargets := make(map[string]*IP)
 	for oname, ofun := range outPathFuncs {
 		opath := ofun(t)
-		otgt := NewInformationPacket(opath)
+		otgt := NewIP(opath)
 		if outPortsDoStream[oname] {
 			otgt.doStream = true
 		}
@@ -238,7 +238,7 @@ var (
 
 // ================== Helper functions==================
 
-func formatCommand(cmd string, inTargets map[string]*InformationPacket, outTargets map[string]*InformationPacket, params map[string]string, prepend string) string {
+func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*IP, params map[string]string, prepend string) string {
 
 	// Debug.Println("Formatting command with the following data:")
 	// Debug.Println("prepend:", prepend)
@@ -280,7 +280,7 @@ func formatCommand(cmd string, inTargets map[string]*InformationPacket, outTarge
 				msg := fmt.Sprint("Missing intarget for inport '", name, "' for command '", cmd, "'")
 				Check(errors.New(msg), msg)
 			} else if inTargets[name].GetPath() == "" && reduceInputs {
-				ips := []*InformationPacket{}
+				ips := []*IP{}
 				for ip := range inTargets[name].SubStream.InChan {
 					Debug.Println("Got ip: ", ip)
 					ips = append(ips, ip)

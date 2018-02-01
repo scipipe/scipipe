@@ -10,11 +10,11 @@ import (
 	"time"
 )
 
-// ======= InformationPacket ========
+// ======= IP ========
 
-// InformationPacket contains information and helper methods for a physical file on a
-// normal disk.
-type InformationPacket struct {
+// IP (Short for "Information Packet" in Flow-Based Programming terminology)
+// contains information and helper methods for a physical file on a normal disk.
+type IP struct {
 	path      string
 	buffer    *bytes.Buffer
 	doStream  bool
@@ -23,9 +23,9 @@ type InformationPacket struct {
 	SubStream *FilePort
 }
 
-// Create new InformationPacket "object"
-func NewInformationPacket(path string) *InformationPacket {
-	ip := new(InformationPacket)
+// Create new IP "object"
+func NewIP(path string) *IP {
+	ip := new(IP)
 	ip.path = path
 	ip.lock = new(sync.Mutex)
 	ip.SubStream = NewFilePort()
@@ -36,64 +36,64 @@ func NewInformationPacket(path string) *InformationPacket {
 }
 
 // Get the (final) path of the physical file
-func (ip *InformationPacket) GetPath() string {
+func (ip *IP) GetPath() string {
 	return ip.path
 }
 
 // Get the temporary path of the physical file
-func (ip *InformationPacket) GetTempPath() string {
+func (ip *IP) GetTempPath() string {
 	return ip.path + ".tmp"
 }
 
 // Get the path to use when a FIFO file is used instead of a normal file
-func (ip *InformationPacket) GetFifoPath() string {
+func (ip *IP) GetFifoPath() string {
 	return ip.path + ".fifo"
 }
 
 // Get the size of an existing file, in bytes
-func (ip *InformationPacket) GetSize() int64 {
+func (ip *IP) GetSize() int64 {
 	fi, err := os.Stat(ip.path)
 	CheckErr(err)
 	return fi.Size()
 }
 
 // Open the file and return a file handle (*os.File)
-func (ip *InformationPacket) Open() *os.File {
+func (ip *IP) Open() *os.File {
 	f, err := os.Open(ip.GetPath())
 	Check(err, "Could not open file: "+ip.GetPath())
 	return f
 }
 
 // Open the temp file and return a file handle (*os.File)
-func (ip *InformationPacket) OpenTemp() *os.File {
+func (ip *IP) OpenTemp() *os.File {
 	f, err := os.Open(ip.GetTempPath())
 	Check(err, "Could not open temp file: "+ip.GetTempPath())
 	return f
 }
 
 // Open the file for writing return a file handle (*os.File)
-func (ip *InformationPacket) OpenWriteTemp() *os.File {
+func (ip *IP) OpenWriteTemp() *os.File {
 	f, err := os.Create(ip.GetTempPath())
 	Check(err, "Could not open temp file for writing: "+ip.GetTempPath())
 	return f
 }
 
 // Read the whole content of the file and return as a byte array ([]byte)
-func (ip *InformationPacket) Read() []byte {
+func (ip *IP) Read() []byte {
 	dat, err := ioutil.ReadFile(ip.GetPath())
 	Check(err, "Could not open file for reading: "+ip.GetPath())
 	return dat
 }
 
 // Read the whole content of the file and return as a byte array ([]byte)
-func (ip *InformationPacket) ReadAuditFile() []byte {
+func (ip *IP) ReadAuditFile() []byte {
 	dat, err := ioutil.ReadFile(ip.GetAuditFilePath())
 	Check(err, "Could not open file for reading: "+ip.GetAuditFilePath())
 	return dat
 }
 
 // Write a byte array ([]byte) to the file (first to its temp path, and then atomize)
-func (ip *InformationPacket) WriteTempFile(dat []byte) {
+func (ip *IP) WriteTempFile(dat []byte) {
 	err := ioutil.WriteFile(ip.GetTempPath(), dat, 0644)
 	Check(err, "Could not write to temp file: "+ip.GetTempPath())
 }
@@ -103,8 +103,8 @@ const (
 )
 
 // Change from the temporary file name to the final file name
-func (ip *InformationPacket) Atomize() {
-	Debug.Println("InformationPacket: Atomizing", ip.GetTempPath(), "->", ip.GetPath())
+func (ip *IP) Atomize() {
+	Debug.Println("IP: Atomizing", ip.GetTempPath(), "->", ip.GetPath())
 	doneAtomizing := false
 	for !doneAtomizing {
 		if ip.TempFileExists() {
@@ -113,7 +113,7 @@ func (ip *InformationPacket) Atomize() {
 			Check(err, "Could not rename file: "+ip.GetTempPath())
 			ip.lock.Unlock()
 			doneAtomizing = true
-			Debug.Println("InformationPacket: Done atomizing", ip.GetTempPath(), "->", ip.GetPath())
+			Debug.Println("IP: Done atomizing", ip.GetTempPath(), "->", ip.GetPath())
 		} else {
 			Debug.Printf("Sleeping for %d seconds before atomizing ...\n", sleepDurationSec)
 			time.Sleep(time.Duration(sleepDurationSec) * time.Second)
@@ -121,8 +121,8 @@ func (ip *InformationPacket) Atomize() {
 	}
 }
 
-// Create FIFO file for the InformationPacket
-func (ip *InformationPacket) CreateFifo() {
+// Create FIFO file for the IP
+func (ip *IP) CreateFifo() {
 	ip.lock.Lock()
 	cmd := "mkfifo " + ip.GetFifoPath()
 	Debug.Println("Now creating FIFO with command:", cmd)
@@ -138,7 +138,7 @@ func (ip *InformationPacket) CreateFifo() {
 }
 
 // Remove the FIFO file, if it exists
-func (ip *InformationPacket) RemoveFifo() {
+func (ip *IP) RemoveFifo() {
 	// FIXME: Shouldn't we check first whether the fifo exists?
 	ip.lock.Lock()
 	output, err := exec.Command("bash", "-c", "rm "+ip.GetFifoPath()).Output()
@@ -148,7 +148,7 @@ func (ip *InformationPacket) RemoveFifo() {
 }
 
 // Check if the file exists (at its final file name)
-func (ip *InformationPacket) Exists() bool {
+func (ip *IP) Exists() bool {
 	exists := false
 	ip.lock.Lock()
 	if _, err := os.Stat(ip.GetPath()); err == nil {
@@ -159,7 +159,7 @@ func (ip *InformationPacket) Exists() bool {
 }
 
 // Check if the temp-file exists
-func (ip *InformationPacket) TempFileExists() bool {
+func (ip *IP) TempFileExists() bool {
 	tempFileExists := false
 	ip.lock.Lock()
 	if _, err := os.Stat(ip.GetTempPath()); err == nil {
@@ -170,7 +170,7 @@ func (ip *InformationPacket) TempFileExists() bool {
 }
 
 // FifoFileExists checks if the FIFO-file (named pipe file) exists
-func (ip *InformationPacket) FifoFileExists() bool {
+func (ip *IP) FifoFileExists() bool {
 	fifoFileExists := false
 	ip.lock.Lock()
 	if _, err := os.Stat(ip.GetFifoPath()); err == nil {
@@ -180,7 +180,7 @@ func (ip *InformationPacket) FifoFileExists() bool {
 	return fifoFileExists
 }
 
-func (ip *InformationPacket) GetParam(key string) string {
+func (ip *IP) GetParam(key string) string {
 	val, ok := ip.GetAuditInfo().Params[key]
 	if !ok {
 		Error.Fatalf("Could not find parameter %s in ip with path: %s\n", key, ip.GetPath())
@@ -188,7 +188,7 @@ func (ip *InformationPacket) GetParam(key string) string {
 	return val
 }
 
-func (ip *InformationPacket) GetKey(k string) string {
+func (ip *IP) GetKey(k string) string {
 	v, ok := ip.GetAuditInfo().Keys[k]
 	if !ok {
 		Error.Fatalf("Could not find key %s in ip with path: %s\n", k, ip.GetPath())
@@ -196,11 +196,11 @@ func (ip *InformationPacket) GetKey(k string) string {
 	return v
 }
 
-func (ip *InformationPacket) GetKeys() map[string]string {
+func (ip *IP) GetKeys() map[string]string {
 	return ip.GetAuditInfo().Keys
 }
 
-func (ip *InformationPacket) AddKey(k string, v string) {
+func (ip *IP) AddKey(k string, v string) {
 	ai := ip.GetAuditInfo()
 	if ai.Keys[k] != "" && ai.Keys[k] != v {
 		Error.Fatalf("Can not add value %s to existing key %s with different value %s\n", v, k, ai.Keys[k])
@@ -208,19 +208,19 @@ func (ip *InformationPacket) AddKey(k string, v string) {
 	ai.Keys[k] = v
 }
 
-func (ip *InformationPacket) AddKeys(keys map[string]string) {
+func (ip *IP) AddKeys(keys map[string]string) {
 	for k, v := range keys {
 		ip.AddKey(k, v)
 	}
 }
 
-func (ip *InformationPacket) UnMarshalJson(v interface{}) {
+func (ip *IP) UnMarshalJson(v interface{}) {
 	d := ip.Read()
 	err := json.Unmarshal(d, v)
 	Check(err, "Could not unmarshal content of file: "+ip.GetPath())
 }
 
-func (ip *InformationPacket) GetAuditInfo() *AuditInfo {
+func (ip *IP) GetAuditInfo() *AuditInfo {
 	defer ip.lock.Unlock()
 	ip.lock.Lock()
 	if ip.auditInfo == nil {
@@ -234,17 +234,17 @@ func (ip *InformationPacket) GetAuditInfo() *AuditInfo {
 	return ip.auditInfo
 }
 
-func (ip *InformationPacket) SetAuditInfo(ai *AuditInfo) {
+func (ip *IP) SetAuditInfo(ai *AuditInfo) {
 	ip.lock.Lock()
 	ip.auditInfo = ai
 	ip.lock.Unlock()
 }
 
-func (ip *InformationPacket) GetAuditFilePath() string {
+func (ip *IP) GetAuditFilePath() string {
 	return ip.GetPath() + ".audit.json"
 }
 
-func (ip *InformationPacket) WriteAuditLogToFile() {
+func (ip *IP) WriteAuditLogToFile() {
 	auditInfo := ip.GetAuditInfo()
 	auditInfoJson, jsonErr := json.MarshalIndent(auditInfo, "", "    ")
 	Check(jsonErr, "Could not marshall JSON")
@@ -252,10 +252,10 @@ func (ip *InformationPacket) WriteAuditLogToFile() {
 	Check(writeErr, "Could not write audit file: "+ip.GetPath())
 }
 
-// ======= IPGen=======
+// ======= IPGen =======
 
 // IPGen is initialized by a set of strings with file paths, and from that will
-// return instantiated (generated) InformationPacket on its Out-port, when run.
+// return instantiated (generated) IP on its Out-port, when run.
 type IPGen struct {
 	Process
 	name      string
@@ -274,11 +274,11 @@ func NewIPGen(workflow *Workflow, name string, filePaths ...string) (fq *IPGen) 
 	return
 }
 
-// Execute the IPGen, returning instantiated InformationPacket
+// Execute the IPGen, returning instantiated IP
 func (ipg *IPGen) Run() {
 	defer ipg.Out.Close()
 	for _, fp := range ipg.FilePaths {
-		ipg.Out.Send(NewInformationPacket(fp))
+		ipg.Out.Send(NewIP(fp))
 	}
 }
 

@@ -8,10 +8,10 @@ type MapToKeys struct {
 	In       *scipipe.FilePort
 	Out      *scipipe.FilePort
 	procName string
-	mapFunc  func(ip *scipipe.InformationPacket) map[string]string
+	mapFunc  func(ip *scipipe.IP) map[string]string
 }
 
-func NewMapToKeys(wf *scipipe.Workflow, name string, mapFunc func(ip *scipipe.InformationPacket) map[string]string) *MapToKeys {
+func NewMapToKeys(wf *scipipe.Workflow, name string, mapFunc func(ip *scipipe.IP) map[string]string) *MapToKeys {
 	mtp := &MapToKeys{
 		procName: name,
 		mapFunc:  mapFunc,

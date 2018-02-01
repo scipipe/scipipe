@@ -186,8 +186,9 @@ func (p *SciProcess) SetPathStatic(outPortName string, path string) {
 }
 
 // SetPathExtend creates an (output) path formatter that extends the path of
-// an input InformationPacket
-func (p *SciProcess) SetPathExtend(inPortName string, outPortName string, extension string) {
+// an input IP
+func (p *SciProcess) SetPathExtend(inPortName string, outPortName string,
+	extension string) {
 	p.PathFormatters[outPortName] = func(t *SciTask) string {
 		return t.InPath(inPortName) + extension
 	}
@@ -301,7 +302,7 @@ func (p *SciProcess) initPortsFromCmdPattern(cmd string, params map[string]strin
 			// Set up a channel on the inports, even though this is
 			// often replaced by another processes output port channel.
 			// It might be nice to have it init'ed with a channel
-			// anyways, for use cases when we want to send InformationPacket
+			// anyways, for use cases when we want to send IP
 			// on the inport manually.
 			p.inPorts[name] = NewFilePort()
 		} else if typ == "p" {
@@ -414,9 +415,9 @@ func (p *SciProcess) Run() {
 
 // -------- Helper methods for the Run method ---------
 
-func (p *SciProcess) receiveInputs() (inTargets map[string]*InformationPacket, inPortsOpen bool) {
+func (p *SciProcess) receiveInputs() (inTargets map[string]*IP, inPortsOpen bool) {
 	inPortsOpen = true
-	inTargets = make(map[string]*InformationPacket)
+	inTargets = make(map[string]*IP)
 	// Read input targets on in-ports and set up path mappings
 	for inpName, inPort := range p.inPorts {
 		Debug.Printf("Process %s: Receieving on inPort %s ...", p.name, inpName)

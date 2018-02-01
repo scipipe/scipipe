@@ -31,7 +31,7 @@ func (proc *Concatenator) Run() {
 	defer proc.Out.Close()
 	go proc.In.RunMergeInputs()
 
-	outFt := scipipe.NewInformationPacket(proc.OutPath)
+	outFt := scipipe.NewIP(proc.OutPath)
 	outFh := outFt.OpenWriteTemp()
 	for ft := range proc.In.InChan {
 		fr := NewFileReader(proc.workflow, proc.Name()+"_filereader")

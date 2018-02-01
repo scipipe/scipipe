@@ -2,6 +2,7 @@ package components
 
 import (
 	"fmt"
+
 	"github.com/scipipe/scipipe"
 )
 
@@ -50,7 +51,7 @@ func (proc *FileSplitter) Run() {
 
 		i := 1
 		splitIdx := 1
-		splitFt := newSplitInformationPacketFromIndex(ft.GetPath(), splitIdx)
+		splitFt := newSplitIPFromIndex(ft.GetPath(), splitIdx)
 		if !splitFt.Exists() {
 			splitfile := splitFt.OpenWriteTemp()
 			for line := range fileReader.OutLine {
@@ -66,7 +67,7 @@ func (proc *FileSplitter) Run() {
 					proc.OutSplitFile.Send(splitFt)
 					splitIdx++
 
-					splitFt = newSplitInformationPacketFromIndex(ft.GetPath(), splitIdx)
+					splitFt = newSplitIPFromIndex(ft.GetPath(), splitIdx)
 					splitfile = splitFt.OpenWriteTemp()
 				}
 			}
@@ -85,6 +86,6 @@ func (proc *FileSplitter) IsConnected() bool {
 		proc.OutSplitFile.IsConnected()
 }
 
-func newSplitInformationPacketFromIndex(basePath string, splitIdx int) *scipipe.InformationPacket {
-	return scipipe.NewInformationPacket(basePath + fmt.Sprintf(".split_%v", splitIdx))
+func newSplitIPFromIndex(basePath string, splitIdx int) *scipipe.IP {
+	return scipipe.NewIP(basePath + fmt.Sprintf(".split_%v", splitIdx))
 }
