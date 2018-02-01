@@ -4,7 +4,6 @@ import (
 	// "github.com/go-errors/errors"
 	//"os"
 	"math/rand"
-	"os"
 	"os/exec"
 	re "regexp"
 	"time"
@@ -14,8 +13,7 @@ func ExecCmd(cmd string) string {
 	Info.Println("Executing command: ", cmd)
 	combOutput, err := exec.Command("bash", "-lc", cmd).CombinedOutput()
 	if err != nil {
-		Error.Println("Could not execute command `" + cmd + "`: " + string(combOutput))
-		os.Exit(1)
+		Error.Fatalln("Could not execute command `" + cmd + "`: " + string(combOutput))
 	}
 	return string(combOutput)
 }

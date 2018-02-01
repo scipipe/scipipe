@@ -1,9 +1,5 @@
 package scipipe
 
-import (
-	"os"
-)
-
 func Connect(port1 *Port, port2 *Port) {
 	port1.Connect(port2)
 }
@@ -104,8 +100,7 @@ func NewParamPort() *ParamPort {
 
 func (pp *ParamPort) Connect(otherParamPort *ParamPort) {
 	if pp.Chan != nil && otherParamPort.Chan != nil {
-		Error.Println("Both paramports already have initialized channels, so can't choose which to use!")
-		os.Exit(1)
+		Error.Fatalln("Both paramports already have initialized channels, so can't choose which to use!")
 	} else if pp.Chan != nil && otherParamPort.Chan == nil {
 		Debug.Println("Local param port, but not the other one, initialized, so connecting local to other")
 		otherParamPort.Chan = pp.Chan

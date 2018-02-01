@@ -6,7 +6,6 @@
 package scipipe
 
 import (
-	"os"
 	"sync"
 )
 
@@ -80,8 +79,7 @@ func (wf *Workflow) Sink() *Sink {
 
 func (wf *Workflow) SetSink(sink *Sink) {
 	if wf.sink.IsConnected() {
-		Error.Println("Trying to replace a sink which is already connected. Are you combining SetSink() with ConnectFinalOutPort()? That is not allowed!")
-		os.Exit(1)
+		Error.Fatalln("Trying to replace a sink which is already connected. Are you combining SetSink() with ConnectFinalOutPort()? That is not allowed!")
 	}
 	wf.sink = sink
 	wf.driver = sink

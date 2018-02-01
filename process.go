@@ -2,7 +2,6 @@ package scipipe
 
 import (
 	"errors"
-	"os"
 	str "strings"
 )
 
@@ -87,8 +86,7 @@ func (p *SciProcess) In(portName string) *Port {
 	if p.inPorts[portName] != nil {
 		return p.inPorts[portName]
 	} else {
-		Error.Printf("No such in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
-		os.Exit(1)
+		Error.Fatalf("No such in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return nil
 }
@@ -109,8 +107,7 @@ func (p *SciProcess) Out(portName string) *Port {
 	if p.outPorts[portName] != nil {
 		return p.outPorts[portName]
 	} else {
-		Error.Printf("No such out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
-		os.Exit(1)
+		Error.Fatalf("No such out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return nil
 }
@@ -131,8 +128,7 @@ func (p *SciProcess) ParamPort(paramPortName string) *ParamPort {
 	if p.paramPorts[paramPortName] != nil {
 		return p.paramPorts[paramPortName]
 	} else {
-		Error.Printf("No such param-port ('%s') for process '%s'. Please check your workflow code!\n", paramPortName, p.name)
-		os.Exit(1)
+		Error.Fatalf("No such param-port ('%s') for process '%s'. Please check your workflow code!\n", paramPortName, p.name)
 	}
 	return nil
 }

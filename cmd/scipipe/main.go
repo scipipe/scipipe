@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/urfave/cli"
 	"log"
 	"os"
+
+	"github.com/urfave/cli"
 )
 
 func main() {
@@ -70,15 +71,13 @@ func main() {
 
 				f, err := os.Create(fileName)
 				if err != nil {
-					errLog.Println("Could not create file:", fileName)
-					os.Exit(1)
+					errLog.Fatalln("Could not create file:", fileName)
 				}
 				defer f.Close()
 
 				_, err = f.Write([]byte(wfcode))
 				if err != nil {
-					errLog.Println("Could not write to file:", fileName)
-					os.Exit(1)
+					errLog.Fatalln("Could not write to file:", fileName)
 				}
 
 				fmt.Println("Successfully wrote new workflow file to:", fileName)
