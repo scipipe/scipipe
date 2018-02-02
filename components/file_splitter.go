@@ -34,11 +34,10 @@ func (proc *FileSplitter) Name() string {
 
 func (proc *FileSplitter) Run() {
 	defer proc.OutSplitFile.Close()
-	go proc.InFile.RunMergeInputs()
 
 	fileReader := NewFileReader(proc.workflow, proc.Name()+"_file_reader")
 
-	for ft := range proc.InFile.MergedInChan {
+	for ft := range proc.InFile.Chan {
 		scipipe.Audit.Println("FileSplitter      Now processing input file ", ft.GetPath(), "...")
 
 		go func() {

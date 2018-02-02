@@ -29,8 +29,7 @@ func (p *Sink) Name() string {
 
 // Execute the Sink component
 func (p *Sink) Run() {
-	go p.inPort.RunMergeInputs()
-	for ip := range p.inPort.MergedInChan {
+	for ip := range p.inPort.Chan {
 		Debug.Printf("Got file in sink: %s\n", ip.GetPath())
 	}
 }

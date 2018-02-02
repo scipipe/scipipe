@@ -1,5 +1,9 @@
 package scipipe
 
+import (
+	"sync"
+)
+
 func ConnectTo(outPort *OutPort, inPort *InPort) {
 	outPort.Connect(inPort)
 }
@@ -11,37 +15,44 @@ func ConnectFrom(inPort *InPort, outPort *OutPort) {
 // Port is a struct that contains channels, together with some other meta data
 // for keeping track of connection information between processes.
 type InPort struct {
-	name         string
-	MergedInChan chan *IP
-	inChans      []chan *IP
-	connected    bool
+	Chan        chan *IP
+	name        string
+	Process     WorkflowProcess
+	RemotePorts map[string]*OutPort
+	connected   bool
+	closeLock   sync.Mutex
 }
 
 func NewInPort(name string) *InPort {
 	inp := &InPort{
-		name:         name,
-		MergedInChan: make(chan *IP, BUFSIZE), // This one will contain merged inputs from inChans
-		inChans:      []chan *IP{},
-		connected:    false,
+		name:        name,
+		RemotePorts: map[string]*OutPort{},
+		Chan:        make(chan *IP, BUFSIZE), // This one will contain merged inputs from inChans
+		connected:   false,
 	}
 	return inp
 }
 
 func (pt *InPort) Name() string {
+	if pt.Process != nil {
+		return pt.Process.Name() + "." + pt.name
+	}
 	return pt.name
 }
 
-func (localPort *InPort) Connect(remotePort *OutPort) {
-	inBoundChan := make(chan *IP, BUFSIZE)
-	localPort.AddInChan(inBoundChan)
-	remotePort.AddOutChan(inBoundChan)
-
-	localPort.SetConnectedStatus(true)
-	remotePort.SetConnectedStatus(true)
+func (pt *InPort) AddRemotePort(rpt *OutPort) {
+	if pt.RemotePorts[rpt.Name()] != nil {
+		Error.Fatalf("A remote port with name %s already exists, for in-port %s\n", rpt.Name(), pt.Name())
+	}
+	pt.RemotePorts[rpt.Name()] = rpt
 }
 
-func (pt *InPort) AddInChan(inChan chan *IP) {
-	pt.inChans = append(pt.inChans, inChan)
+func (pt *InPort) Connect(rpt *OutPort) {
+	pt.AddRemotePort(rpt)
+	rpt.AddRemotePort(pt)
+
+	pt.SetConnectedStatus(true)
+	rpt.SetConnectedStatus(true)
 }
 
 func (pt *InPort) SetConnectedStatus(connected bool) {
@@ -52,54 +63,64 @@ func (pt *InPort) IsConnected() bool {
 	return pt.connected
 }
 
-// RunMerge merges (multiple) inputs on pt.inChans into pt.MergedInChan. This has to
-// start running when the owning process runs, in order to merge in-ports
-func (pt *InPort) RunMergeInputs() {
-	defer close(pt.MergedInChan)
-	for len(pt.inChans) > 0 {
-		for i, ich := range pt.inChans {
-			ip, ok := <-ich
-			if !ok {
-				// Delete in-channel at position i
-				pt.inChans = append(pt.inChans[:i], pt.inChans[i+1:]...)
-				break
-			}
-			pt.MergedInChan <- ip
-		}
-	}
+// Send sends IPs to the in-port, and is supposed to be called from the remote
+// (out-) port, to send to this in-port
+func (pt *InPort) Send(ip *IP) {
+	pt.Chan <- ip
 }
 
+// Recv receives IPs from the port
 func (pt *InPort) Recv() *IP {
-	return <-pt.MergedInChan
+	return <-pt.Chan
+}
+
+func (pt *InPort) CloseConnection(rptName string) {
+	pt.closeLock.Lock()
+	delete(pt.RemotePorts, rptName)
+	if len(pt.RemotePorts) == 0 {
+		close(pt.Chan)
+	}
+	pt.closeLock.Unlock()
 }
 
 // OutPort represents an output connection point on Processes
 type OutPort struct {
-	name      string
-	outChans  []chan *IP
-	connected bool
+	name        string
+	Process     WorkflowProcess
+	RemotePorts map[string]*InPort
+	connected   bool
 }
 
 func NewOutPort(name string) *OutPort {
 	outp := &OutPort{
-		name:      name,
-		outChans:  []chan *IP{},
-		connected: false,
+		name:        name,
+		RemotePorts: map[string]*InPort{},
+		connected:   false,
 	}
 	return outp
 }
 
-func (localPort *OutPort) Connect(remotePort *InPort) {
-	outBoundChan := make(chan *IP, BUFSIZE)
-	localPort.AddOutChan(outBoundChan)
-	remotePort.AddInChan(outBoundChan)
-
-	localPort.SetConnectedStatus(true)
-	remotePort.SetConnectedStatus(true)
+func (pt *OutPort) Name() string {
+	if pt.Process != nil {
+		return pt.Process.Name() + "." + pt.name
+	}
+	return pt.name
 }
 
-func (pt *OutPort) AddOutChan(outChan chan *IP) {
-	pt.outChans = append(pt.outChans, outChan)
+func (pt *OutPort) AddRemotePort(rpt *InPort) {
+	pt.RemotePorts[rpt.Name()] = rpt
+}
+
+func (pt *OutPort) RemoveRemotePort(rptName string) {
+	delete(pt.RemotePorts, rptName)
+}
+
+func (pt *OutPort) Connect(rpt *InPort) {
+	pt.AddRemotePort(rpt)
+	rpt.AddRemotePort(pt)
+
+	pt.SetConnectedStatus(true)
+	rpt.SetConnectedStatus(true)
 }
 
 func (pt *OutPort) SetConnectedStatus(connected bool) {
@@ -111,16 +132,17 @@ func (pt *OutPort) IsConnected() bool {
 }
 
 func (pt *OutPort) Send(ip *IP) {
-	for i, outChan := range pt.outChans {
-		Debug.Printf("Sending on outchan %d in port\n", i)
-		outChan <- ip
+	for _, rpt := range pt.RemotePorts {
+		Debug.Printf("Sending on out-port %s connected to in-port %s", pt.Name(), rpt.Name())
+		rpt.Send(ip)
 	}
 }
 
 func (pt *OutPort) Close() {
-	for i, outChan := range pt.outChans {
-		Debug.Printf("Closing outchan %d in port\n", i)
-		close(outChan)
+	for _, rpt := range pt.RemotePorts {
+		Debug.Printf("Closing out-port %s connected to in-port %s", pt.Name(), rpt.Name())
+		rpt.CloseConnection(pt.Name())
+		pt.RemoveRemotePort(rpt.Name())
 	}
 }
 

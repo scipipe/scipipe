@@ -27,7 +27,6 @@ func NewStreamToSubStream(wf *scipipe.Workflow, name string) *StreamToSubStream 
 // Run the StreamToSubStream
 func (p *StreamToSubStream) Run() {
 	defer p.OutSubStream.Close()
-	go p.In.RunMergeInputs()
 
 	scipipe.Debug.Println("Creating new information packet for the substream...")
 	subStreamIP := scipipe.NewIP("")

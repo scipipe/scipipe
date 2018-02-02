@@ -28,11 +28,10 @@ func (proc *Concatenator) Name() string {
 
 func (proc *Concatenator) Run() {
 	defer proc.Out.Close()
-	go proc.In.RunMergeInputs()
 
 	outFt := scipipe.NewIP(proc.OutPath)
 	outFh := outFt.OpenWriteTemp()
-	for ft := range proc.In.MergedInChan {
+	for ft := range proc.In.Chan {
 		fr := NewFileReader(proc.workflow, proc.Name()+"_filereader")
 		go func() {
 			defer close(fr.FilePath)

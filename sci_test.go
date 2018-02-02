@@ -3,6 +3,7 @@ package scipipe
 import (
 	"fmt"
 	"os/exec"
+	"sync"
 
 	"encoding/json"
 	"io/ioutil"
@@ -13,9 +14,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var initTestLogsLock sync.Mutex
+
 func initTestLogs() {
-	//InitLogDebug()
-	InitLogWarning()
+	if Warning == nil {
+		//InitLogDebug()
+		InitLogWarning()
+	}
 }
 
 func TestBasicRun(t *testing.T) {
@@ -208,8 +213,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 	go fc.Run()
 	go sl.Run()
 
-	go tempPort.RunMergeInputs()
-	for ft := range tempPort.MergedInChan {
+	for ft := range tempPort.Chan {
 		Debug.Printf("TestSendOrderedOutputs: Looping over item %d ...\n", i)
 		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
 		assert.EqualValues(t, expFname, ft.GetPath())
@@ -446,7 +450,6 @@ func NewStreamToSubStream() *StreamToSubStream {
 
 func (proc *StreamToSubStream) Run() {
 	defer proc.OutSubStream.Close()
-	go proc.In.RunMergeInputs()
 
 	subStreamIP := NewIP("")
 	subStreamIP.SubStream = proc.In
@@ -493,8 +496,7 @@ func (p *MapToKeys) IsConnected() bool {
 
 func (p *MapToKeys) Run() {
 	defer p.Out.Close()
-	go p.In.RunMergeInputs()
-	for ip := range p.In.MergedInChan {
+	for ip := range p.In.Chan {
 		newKeys := p.mapFunc(ip)
 		ip.AddKeys(newKeys)
 		ip.WriteAuditLogToFile()

@@ -32,8 +32,7 @@ func (p *MapToKeys) IsConnected() bool {
 
 func (p *MapToKeys) Run() {
 	defer p.Out.Close()
-	go p.In.RunMergeInputs()
-	for ip := range p.In.MergedInChan {
+	for ip := range p.In.Chan {
 		newKeys := p.mapFunc(ip)
 		ip.AddKeys(newKeys)
 		ip.WriteAuditLogToFile()

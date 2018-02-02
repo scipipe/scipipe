@@ -26,33 +26,35 @@ func InitLog(
 	warningHandle io.Writer,
 	errorHandle io.Writer) {
 
-	Trace = log.New(traceHandle,
-		"TRACE   ",
-		log.Ldate|log.Ltime|log.Lshortfile)
+	if !LogExists {
+		Trace = log.New(traceHandle,
+			"TRACE   ",
+			log.Ldate|log.Ltime|log.Lshortfile)
 
-	Debug = log.New(debugHandle,
-		"DEBUG   ",
-		log.Ldate|log.Ltime|log.Lshortfile)
+		Debug = log.New(debugHandle,
+			"DEBUG   ",
+			log.Ldate|log.Ltime|log.Lshortfile)
 
-	Info = log.New(infoHandle,
-		"INFO    ",
-		log.Ldate|log.Ltime)
+		Info = log.New(infoHandle,
+			"INFO    ",
+			log.Ldate|log.Ltime)
 
-	// This level is the one suggested to use when running scientific workflows, to retain audit
-	// information
-	Audit = log.New(auditHandle,
-		"AUDIT   ",
-		log.Ldate|log.Ltime)
+		// This level is the one suggested to use when running scientific workflows, to retain audit
+		// information
+		Audit = log.New(auditHandle,
+			"AUDIT   ",
+			log.Ldate|log.Ltime)
 
-	Warning = log.New(warningHandle,
-		"WARNING ",
-		log.Ldate|log.Ltime)
+		Warning = log.New(warningHandle,
+			"WARNING ",
+			log.Ldate|log.Ltime)
 
-	Error = log.New(errorHandle,
-		"ERROR   ",
-		log.Ldate|log.Ltime)
+		Error = log.New(errorHandle,
+			"ERROR   ",
+			log.Ldate|log.Ltime)
 
-	LogExists = true
+		LogExists = true
+	}
 }
 
 // Initiate logging with level=DEBUG

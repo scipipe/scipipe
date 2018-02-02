@@ -37,9 +37,8 @@ func (p *IpToParamConverter) IsConnected() bool {
 // Run the IpToParamConverter
 func (p *IpToParamConverter) Run() {
 	defer p.OutParam.Close()
-	go p.InFile.RunMergeInputs()
 
-	for ip := range p.InFile.MergedInChan {
+	for ip := range p.InFile.Chan {
 		s := string(ip.Read())
 		s = strings.Trim(s, " \r\n\t")
 		p.OutParam.Send(s)
