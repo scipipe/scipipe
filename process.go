@@ -95,7 +95,7 @@ func (p *Process) SetInPort(portName string, port *InPort) {
 	p.inPorts[portName] = port
 }
 
-func (p *Process) GetInPorts() map[string]*InPort {
+func (p *Process) InPorts() map[string]*InPort {
 	return p.inPorts
 }
 
@@ -116,7 +116,7 @@ func (p *Process) SetOutPort(portName string, port *OutPort) {
 	p.outPorts[portName] = port
 }
 
-func (p *Process) GetOutPorts() map[string]*OutPort {
+func (p *Process) OutPorts() map[string]*OutPort {
 	return p.outPorts
 }
 
@@ -319,7 +319,7 @@ func (p *Process) Run() {
 
 	defer p.closeOutPorts()
 
-	for _, inPort := range p.GetInPorts() {
+	for _, inPort := range p.InPorts() {
 		go inPort.RunMergeInputs()
 	}
 
