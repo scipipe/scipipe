@@ -152,6 +152,15 @@ func (wf *Workflow) RunProcs(driverProc WorkflowProcess, procs ...WorkflowProces
 	driverProc.Run()
 }
 
+func (wf *Workflow) RunProcsByName(driverProcName string, procNames ...string) {
+	procs := []WorkflowProcess{}
+	for _, procName := range procNames {
+		procs = append(procs, wf.Proc(procName))
+	}
+	driverProc := wf.Proc(driverProcName)
+	wf.RunProcs(driverProc, procs...)
+}
+
 func (wf *Workflow) Run() {
 	procs := []WorkflowProcess{}
 	for _, p := range wf.procs {
