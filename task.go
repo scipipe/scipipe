@@ -12,6 +12,8 @@ import (
 
 // ================== SciTask ==================
 
+// SciTask represents a single static shell command, or go function, to be
+// executed, and are scheduled and managed by a corresponding Process
 type SciTask struct {
 	Name          string
 	Command       string
@@ -27,6 +29,7 @@ type SciTask struct {
 	cores         int
 }
 
+// NewSciTask instantiates and initializes a new SciTask
 func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[string]*IP, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, cores int) *SciTask {
 	t := &SciTask{
 		Name:       name,
@@ -60,6 +63,7 @@ func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[st
 
 // --------------- SciTask API methods ----------------
 
+// InPath returns the path name of an input file for the task
 func (t *SciTask) InPath(portName string) string {
 	if t.InTargets[portName] == nil {
 		Error.Fatalf("No such portname (%s) in task (%s)\n", portName, t.Name)
@@ -67,15 +71,17 @@ func (t *SciTask) InPath(portName string) string {
 	return t.InTargets[portName].GetPath()
 }
 
+// Param returns the value of a param, for the task
 func (t *SciTask) Param(portName string) string {
 	if param, ok := t.Params[portName]; ok {
 		return param
-	} else {
-		Error.Fatalf("No such param port '%s' for task '%s'\n", portName, t.Name)
 	}
+	Error.Fatalf("No such param port '%s' for task '%s'\n", portName, t.Name)
 	return "invalid"
 }
 
+// Execute executes the task (the shell command or go function configured for
+// this task)
 func (t *SciTask) Execute() {
 	defer close(t.Done)
 
@@ -250,7 +256,7 @@ func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
-		var reduceInputs bool = false
+		reduceInputs := false
 
 		placeHolderStr := m[0]
 		typ := m[1]

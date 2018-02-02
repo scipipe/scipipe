@@ -10,7 +10,7 @@ type StringGen struct {
 	Out     *scipipe.ParamPort
 }
 
-// Instantiate a new StringGen
+// NewStringGen instantiate a new StringGen
 func NewStringGen(wf *scipipe.Workflow, name string, strings ...string) *StringGen {
 	sg := &StringGen{
 		name:    name,
@@ -21,11 +21,12 @@ func NewStringGen(wf *scipipe.Workflow, name string, strings ...string) *StringG
 	return sg
 }
 
+// Name returns the name of the StringGen process
 func (proc *StringGen) Name() string {
 	return proc.name
 }
 
-// Run the StringGen
+// Run runs the StringGen
 func (proc *StringGen) Run() {
 	defer proc.Out.Close()
 	for _, str := range proc.Strings {
@@ -33,6 +34,7 @@ func (proc *StringGen) Run() {
 	}
 }
 
+// IsConnected tells whether all ports of the StringGen process are connected
 func (proc *StringGen) IsConnected() bool {
 	return proc.Out.IsConnected()
 }

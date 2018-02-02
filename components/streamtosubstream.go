@@ -13,7 +13,7 @@ type StreamToSubStream struct {
 	OutSubStream *scipipe.OutPort
 }
 
-// Instantiate a new StreamToSubStream
+// NewStreamToSubStream instantiates a new StreamToSubStream process
 func NewStreamToSubStream(wf *scipipe.Workflow, name string) *StreamToSubStream {
 	stss := &StreamToSubStream{
 		name:         name,
@@ -24,7 +24,7 @@ func NewStreamToSubStream(wf *scipipe.Workflow, name string) *StreamToSubStream 
 	return stss
 }
 
-// Run the StreamToSubStream
+// Run runs the StreamToSubStream
 func (p *StreamToSubStream) Run() {
 	defer p.OutSubStream.Close()
 
@@ -38,10 +38,12 @@ func (p *StreamToSubStream) Run() {
 	scipipe.Debug.Printf("Done sending sub-stream IP in process %s.\n", p.Name())
 }
 
+// Name returns the name of the StreamToSubStream process
 func (p *StreamToSubStream) Name() string {
 	return p.name
 }
 
+// IsConnected tells whether all the ports of the process are connected
 func (p *StreamToSubStream) IsConnected() bool {
 	return p.In.IsConnected() && p.OutSubStream.IsConnected()
 }

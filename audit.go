@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// AuditInfo contains structured audit/provenance logging information to go with an IP
 type AuditInfo struct {
 	Command    string
 	Params     map[string]string
@@ -12,6 +13,7 @@ type AuditInfo struct {
 	Upstream   map[string]*AuditInfo
 }
 
+// NewAuditInfo returns a new AuditInfo struct
 func NewAuditInfo() *AuditInfo {
 	return &AuditInfo{
 		Command:    "",

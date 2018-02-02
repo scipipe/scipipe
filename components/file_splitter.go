@@ -6,8 +6,8 @@ import (
 	"github.com/scipipe/scipipe"
 )
 
-// File splitter component
-
+// FileSplitter is a process that will split a file into multiple files, each
+// with LinesPerSplit number of lines per file
 type FileSplitter struct {
 	name          string
 	InFile        *scipipe.InPort
@@ -16,6 +16,8 @@ type FileSplitter struct {
 	workflow      *scipipe.Workflow
 }
 
+// NewFileSplitter returns an initialized FileSplitter process that will split a
+// file into multiple files, each with linesPerSplit number of lines per file
 func NewFileSplitter(wf *scipipe.Workflow, name string, linesPerSplit int) *FileSplitter {
 	fs := &FileSplitter{
 		name:          name,
@@ -28,10 +30,12 @@ func NewFileSplitter(wf *scipipe.Workflow, name string, linesPerSplit int) *File
 	return fs
 }
 
+// Name returns the name of the FileSplitter process
 func (proc *FileSplitter) Name() string {
 	return proc.name
 }
 
+// Run runs the FileSplitter process
 func (proc *FileSplitter) Run() {
 	defer proc.OutSplitFile.Close()
 
@@ -79,6 +83,7 @@ func (proc *FileSplitter) Run() {
 	}
 }
 
+// IsConnected tells whether all the ports of the FileSplitter process are connected
 func (proc *FileSplitter) IsConnected() bool {
 	return proc.InFile.IsConnected() &&
 		proc.OutSplitFile.IsConnected()

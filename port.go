@@ -4,16 +4,19 @@ import (
 	"sync"
 )
 
+// ConnectTo connects an OutPort to an InPort
 func ConnectTo(outPort *OutPort, inPort *InPort) {
 	outPort.Connect(inPort)
 }
 
+// ConnectFrom connects from an InPort to an OutPort
 func ConnectFrom(inPort *InPort, outPort *OutPort) {
 	outPort.Connect(inPort)
 }
 
-// Port is a struct that contains channels, together with some other meta data
-// for keeping track of connection information between processes.
+// InPort represents a pluggable connection to multiple out-ports from other
+// processes, from its own process, and with which it is communicating via
+// channels under the hood
 type InPort struct {
 	Chan        chan *IP
 	name        string
@@ -23,6 +26,7 @@ type InPort struct {
 	closeLock   sync.Mutex
 }
 
+// NewInPort returns a new InPort struct
 func NewInPort(name string) *InPort {
 	inp := &InPort{
 		name:        name,
@@ -33,6 +37,7 @@ func NewInPort(name string) *InPort {
 	return inp
 }
 
+// Name returns the name of the InPort
 func (pt *InPort) Name() string {
 	if pt.Process != nil {
 		return pt.Process.Name() + "." + pt.name
@@ -40,6 +45,7 @@ func (pt *InPort) Name() string {
 	return pt.name
 }
 
+// AddRemotePort adds a remote OutPort to the InPort
 func (pt *InPort) AddRemotePort(rpt *OutPort) {
 	if pt.RemotePorts[rpt.Name()] != nil {
 		Error.Fatalf("A remote port with name %s already exists, for in-port %s\n", rpt.Name(), pt.Name())
@@ -47,6 +53,7 @@ func (pt *InPort) AddRemotePort(rpt *OutPort) {
 	pt.RemotePorts[rpt.Name()] = rpt
 }
 
+// Connect connects an OutPort to the InPort
 func (pt *InPort) Connect(rpt *OutPort) {
 	pt.AddRemotePort(rpt)
 	rpt.AddRemotePort(pt)
@@ -55,10 +62,12 @@ func (pt *InPort) Connect(rpt *OutPort) {
 	rpt.SetConnectedStatus(true)
 }
 
+// SetConnectedStatus sets the connected status of the InPort
 func (pt *InPort) SetConnectedStatus(connected bool) {
 	pt.connected = connected
 }
 
+// IsConnected tells whether the port is connected or not
 func (pt *InPort) IsConnected() bool {
 	return pt.connected
 }
@@ -74,6 +83,8 @@ func (pt *InPort) Recv() *IP {
 	return <-pt.Chan
 }
 
+// CloseConnection closes the connection to the remote out-port with name
+// rptName, on the InPort
 func (pt *InPort) CloseConnection(rptName string) {
 	pt.closeLock.Lock()
 	delete(pt.RemotePorts, rptName)
@@ -83,7 +94,9 @@ func (pt *InPort) CloseConnection(rptName string) {
 	pt.closeLock.Unlock()
 }
 
-// OutPort represents an output connection point on Processes
+// OutPort represents a pluggable connection to multiple in-ports from other
+// processes, from its own process, and with which it is communicating via
+// channels under the hood
 type OutPort struct {
 	name        string
 	Process     WorkflowProcess
@@ -91,6 +104,7 @@ type OutPort struct {
 	connected   bool
 }
 
+// NewOutPort returns a new OutPort struct
 func NewOutPort(name string) *OutPort {
 	outp := &OutPort{
 		name:        name,
@@ -100,6 +114,7 @@ func NewOutPort(name string) *OutPort {
 	return outp
 }
 
+// Name returns the name of the OutPort
 func (pt *OutPort) Name() string {
 	if pt.Process != nil {
 		return pt.Process.Name() + "." + pt.name
@@ -107,14 +122,20 @@ func (pt *OutPort) Name() string {
 	return pt.name
 }
 
+// AddRemotePort adds a remote InPort to the OutPort
 func (pt *OutPort) AddRemotePort(rpt *InPort) {
+	if pt.RemotePorts[rpt.Name()] != nil {
+		Error.Fatalf("A remote port with name %s already exists, for out-port %s\n", rpt.Name(), pt.Name())
+	}
 	pt.RemotePorts[rpt.Name()] = rpt
 }
 
+// RemoveRemotePort removes the (in-)port with name rptName, from the OutPort
 func (pt *OutPort) RemoveRemotePort(rptName string) {
 	delete(pt.RemotePorts, rptName)
 }
 
+// Connect connects an InPort to the OutPort
 func (pt *OutPort) Connect(rpt *InPort) {
 	pt.AddRemotePort(rpt)
 	rpt.AddRemotePort(pt)
@@ -123,14 +144,17 @@ func (pt *OutPort) Connect(rpt *InPort) {
 	rpt.SetConnectedStatus(true)
 }
 
+// SetConnectedStatus sets the connected status of the OutPort
 func (pt *OutPort) SetConnectedStatus(connected bool) {
 	pt.connected = connected
 }
 
+// IsConnected tells whether the port is connected or not
 func (pt *OutPort) IsConnected() bool {
 	return pt.connected
 }
 
+// Send sends an IP to all the in-ports connected to the OutPort
 func (pt *OutPort) Send(ip *IP) {
 	for _, rpt := range pt.RemotePorts {
 		Debug.Printf("Sending on out-port %s connected to in-port %s", pt.Name(), rpt.Name())
@@ -138,6 +162,9 @@ func (pt *OutPort) Send(ip *IP) {
 	}
 }
 
+// Close closes the connection between this port and all the ports it is
+// connected to. If this port is the last connected port to an in-port, that
+// in-ports channel will also be closed.
 func (pt *OutPort) Close() {
 	for _, rpt := range pt.RemotePorts {
 		Debug.Printf("Closing out-port %s connected to in-port %s", pt.Name(), rpt.Name())
@@ -146,16 +173,18 @@ func (pt *OutPort) Close() {
 	}
 }
 
-// ParamPort
+// ParamPort is a port for parameter values of string type
 type ParamPort struct {
 	Chan      chan string
 	connected bool
 }
 
+// NewParamPort returns a new ParamPort
 func NewParamPort() *ParamPort {
 	return &ParamPort{}
 }
 
+// Connect connects one parameter port with another one
 func (pp *ParamPort) Connect(otherParamPort *ParamPort) {
 	if pp.Chan != nil && otherParamPort.Chan != nil {
 		Error.Fatalln("Both paramports already have initialized channels, so can't choose which to use!")
@@ -175,6 +204,8 @@ func (pp *ParamPort) Connect(otherParamPort *ParamPort) {
 	otherParamPort.SetConnectedStatus(true)
 }
 
+// ConnectStr connects a parameter port with a new go-routine feeding the
+// strings in strings, on the fly, to the parameter port
 func (pp *ParamPort) ConnectStr(strings ...string) {
 	pp.Chan = make(chan string, BUFSIZE)
 	pp.SetConnectedStatus(true)
@@ -186,22 +217,27 @@ func (pp *ParamPort) ConnectStr(strings ...string) {
 	}()
 }
 
+// SetConnectedStatus sets the connected status of the ParamPort
 func (pp *ParamPort) SetConnectedStatus(connected bool) {
 	pp.connected = connected
 }
 
+// IsConnected tells whether the port is connected or not
 func (pp *ParamPort) IsConnected() bool {
 	return pp.connected
 }
 
+// Send sends the param value over the ports connection
 func (pp *ParamPort) Send(param string) {
 	pp.Chan <- param
 }
 
+// Recv receiveds a param value over the ports connection
 func (pp *ParamPort) Recv() string {
 	return <-pp.Chan
 }
 
+// Close closes the port (and its channel)
 func (pp *ParamPort) Close() {
 	close(pp.Chan)
 }

@@ -2,6 +2,8 @@ package components
 
 import "github.com/scipipe/scipipe"
 
+// Concatenator is a process that concatenates the content of multiple files
+// received in the in-port In, into one file returned on its out-port, Out
 type Concatenator struct {
 	name     string
 	In       *scipipe.InPort
@@ -10,6 +12,7 @@ type Concatenator struct {
 	workflow *scipipe.Workflow
 }
 
+// NewConcatenator returns a new, initialized Concatenator process
 func NewConcatenator(wf *scipipe.Workflow, name string, outPath string) *Concatenator {
 	concat := &Concatenator{
 		name:     name,
@@ -22,10 +25,12 @@ func NewConcatenator(wf *scipipe.Workflow, name string, outPath string) *Concate
 	return concat
 }
 
+// Name returns the name of the Concatenator process
 func (proc *Concatenator) Name() string {
 	return proc.name
 }
 
+// Run runs the Concatenator process
 func (proc *Concatenator) Run() {
 	defer proc.Out.Close()
 
@@ -47,6 +52,7 @@ func (proc *Concatenator) Run() {
 	proc.Out.Send(outFt)
 }
 
+// IsConnected tells whether all ports of the Concatenator process are connected
 func (proc *Concatenator) IsConnected() bool {
 	isConnected := true
 	if !proc.In.IsConnected() {

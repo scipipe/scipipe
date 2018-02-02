@@ -17,7 +17,7 @@ type FileReader struct {
 	OutLine  chan []byte
 }
 
-// Instantiate a new FileReader
+// NewFileReader returns an initialized new FileReader
 func NewFileReader(wf *scipipe.Workflow, name string) *FileReader {
 	fr := &FileReader{
 		name:     name,
@@ -28,6 +28,7 @@ func NewFileReader(wf *scipipe.Workflow, name string) *FileReader {
 	return fr
 }
 
+// Name returns the name of the FileReader process
 func (proc *FileReader) Name() string {
 	return proc.name
 }

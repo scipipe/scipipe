@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// ExecCmd executes the command cmd, as a shell command via bash
 func ExecCmd(cmd string) string {
 	Info.Println("Executing command: ", cmd)
 	combOutput, err := exec.Command("bash", "-lc", cmd).CombinedOutput()
@@ -18,6 +19,8 @@ func ExecCmd(cmd string) string {
 	return string(combOutput)
 }
 
+// Check checks the error err, and prints both the original error message, and a
+// custom one provided in errMsg
 func Check(err error, errMsg string) {
 	if err != nil {
 		Error.Println("Custom Error Message: " + errMsg)
@@ -26,6 +29,7 @@ func Check(err error, errMsg string) {
 	}
 }
 
+// CheckErr checks the error err, and prints the message in the error
 func CheckErr(err error) {
 	if err != nil {
 		Error.Println(err)

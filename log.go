@@ -8,16 +8,23 @@ import (
 )
 
 var (
-	Trace     *log.Logger
-	Debug     *log.Logger
-	Info      *log.Logger
-	Audit     *log.Logger
-	Warning   *log.Logger
+	// Trace is a log handler for extremely detailed level logs. It is so far
+	// sparely used in scipipe.
+	Trace *log.Logger
+	// Debug is a log handler for debugging level logs
+	Debug *log.Logger
+	// Info is a log handler for information level logs
+	Info *log.Logger
+	// Audit is a log handler for audit level logs
+	Audit *log.Logger
+	// Warning is a log handler for warning level logs
+	Warning *log.Logger
+	// Error is a log handler for error level logs
 	Error     *log.Logger
-	LogExists bool
+	logExists bool
 )
 
-// Initiate logging
+// InitLog initiates logging handlers
 func InitLog(
 	traceHandle io.Writer,
 	debugHandle io.Writer,
@@ -26,7 +33,7 @@ func InitLog(
 	warningHandle io.Writer,
 	errorHandle io.Writer) {
 
-	if !LogExists {
+	if !logExists {
 		Trace = log.New(traceHandle,
 			"TRACE   ",
 			log.Ldate|log.Ltime|log.Lshortfile)
@@ -53,11 +60,11 @@ func InitLog(
 			"ERROR   ",
 			log.Ldate|log.Ltime)
 
-		LogExists = true
+		logExists = true
 	}
 }
 
-// Initiate logging with level=DEBUG
+// InitLogDebug initiates logging with level=DEBUG
 func InitLogDebug() {
 	InitLog(
 		ioutil.Discard,
@@ -69,7 +76,7 @@ func InitLogDebug() {
 	)
 }
 
-// Initiate logging with level=INFO
+// InitLogInfo initiates logging with level=INFO
 func InitLogInfo() {
 	InitLog(
 		ioutil.Discard,
@@ -81,7 +88,7 @@ func InitLogInfo() {
 	)
 }
 
-// Initiate logging with level=AUDIT
+// InitLogAudit initiate logging with level=AUDIT
 func InitLogAudit() {
 	InitLog(
 		ioutil.Discard,
@@ -93,7 +100,7 @@ func InitLogAudit() {
 	)
 }
 
-// Initiate logging with level=WARNING
+// InitLogWarning initiates logging with level=WARNING
 func InitLogWarning() {
 	InitLog(
 		ioutil.Discard,
@@ -105,7 +112,7 @@ func InitLogWarning() {
 	)
 }
 
-// Initiate logging with level=ERROR
+// InitLogError initiates logging with level=ERROR
 func InitLogError() {
 	InitLog(
 		ioutil.Discard,
