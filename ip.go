@@ -28,7 +28,7 @@ func NewIP(path string) *IP {
 	ip := new(IP)
 	ip.path = path
 	ip.lock = new(sync.Mutex)
-	ip.SubStream = NewInPort()
+	ip.SubStream = NewInPort("in_substream")
 	//Don't init buffer if not needed?
 	//buf := make([]byte, 0, 128)
 	//ip.buffer = bytes.NewBuffer(buf)
@@ -266,7 +266,7 @@ type IPGen struct {
 func NewIPGen(workflow *Workflow, name string, filePaths ...string) (fq *IPGen) {
 	fq = &IPGen{
 		name:      name,
-		Out:       NewOutPort(),
+		Out:       NewOutPort("out"),
 		FilePaths: filePaths,
 	}
 	workflow.AddProc(fq)

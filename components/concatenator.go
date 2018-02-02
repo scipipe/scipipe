@@ -13,8 +13,8 @@ type Concatenator struct {
 func NewConcatenator(wf *scipipe.Workflow, name string, outPath string) *Concatenator {
 	concat := &Concatenator{
 		name:     name,
-		In:       scipipe.NewInPort(),
-		Out:      scipipe.NewOutPort(),
+		In:       scipipe.NewInPort("in"),
+		Out:      scipipe.NewOutPort("out"),
 		OutPath:  outPath,
 		workflow: wf,
 	}

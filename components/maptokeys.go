@@ -15,8 +15,8 @@ func NewMapToKeys(wf *scipipe.Workflow, name string, mapFunc func(ip *scipipe.IP
 	mtp := &MapToKeys{
 		procName: name,
 		mapFunc:  mapFunc,
-		In:       scipipe.NewInPort(),
-		Out:      scipipe.NewOutPort(),
+		In:       scipipe.NewInPort("in"),
+		Out:      scipipe.NewOutPort("out"),
 	}
 	wf.AddProc(mtp)
 	return mtp

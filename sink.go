@@ -11,7 +11,7 @@ type Sink struct {
 func NewSink(name string) (s *Sink) {
 	return &Sink{
 		name:   name,
-		inPort: NewInPort(),
+		inPort: NewInPort("in"),
 	}
 }
 

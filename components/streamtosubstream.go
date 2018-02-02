@@ -17,8 +17,8 @@ type StreamToSubStream struct {
 func NewStreamToSubStream(wf *scipipe.Workflow, name string) *StreamToSubStream {
 	stss := &StreamToSubStream{
 		name:         name,
-		In:           scipipe.NewInPort(),
-		OutSubStream: scipipe.NewOutPort(),
+		In:           scipipe.NewInPort("in"),
+		OutSubStream: scipipe.NewOutPort("out_substream"),
 	}
 	wf.AddProc(stss)
 	return stss

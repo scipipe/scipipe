@@ -11,18 +11,24 @@ func ConnectFrom(inPort *InPort, outPort *OutPort) {
 // Port is a struct that contains channels, together with some other meta data
 // for keeping track of connection information between processes.
 type InPort struct {
+	name         string
 	MergedInChan chan *IP
 	inChans      []chan *IP
 	connected    bool
 }
 
-func NewInPort() *InPort {
+func NewInPort(name string) *InPort {
 	inp := &InPort{
+		name:         name,
 		MergedInChan: make(chan *IP, BUFSIZE), // This one will contain merged inputs from inChans
 		inChans:      []chan *IP{},
 		connected:    false,
 	}
 	return inp
+}
+
+func (pt *InPort) Name() string {
+	return pt.name
 }
 
 func (localPort *InPort) Connect(remotePort *OutPort) {
@@ -69,12 +75,14 @@ func (pt *InPort) Recv() *IP {
 
 // OutPort represents an output connection point on Processes
 type OutPort struct {
+	name      string
 	outChans  []chan *IP
 	connected bool
 }
 
-func NewOutPort() *OutPort {
+func NewOutPort(name string) *OutPort {
 	outp := &OutPort{
+		name:      name,
 		outChans:  []chan *IP{},
 		connected: false,
 	}

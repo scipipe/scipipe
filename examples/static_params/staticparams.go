@@ -44,7 +44,7 @@ type FileSender struct {
 func NewFileSender(name string) *FileSender {
 	return &FileSender{
 		name: name,
-		Out:  sci.NewOutPort(),
+		Out:  sci.NewOutPort("out"),
 	}
 }
 

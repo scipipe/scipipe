@@ -19,7 +19,7 @@ func (p *FileGlobber) Name() string {
 func NewFileGlobber(wf *scipipe.Workflow, name string, globPattern string) *FileGlobber {
 	fg := &FileGlobber{
 		name:        name,
-		Out:         scipipe.NewOutPort(),
+		Out:         scipipe.NewOutPort("out"),
 		globPattern: globPattern,
 	}
 	wf.AddProc(fg)

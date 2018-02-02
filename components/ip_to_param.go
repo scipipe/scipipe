@@ -19,7 +19,7 @@ type IpToParamConverter struct {
 func NewIpToParamConverter(wf *scipipe.Workflow, name string) *IpToParamConverter {
 	p := &IpToParamConverter{
 		name:     name,
-		InFile:   scipipe.NewInPort(),
+		InFile:   scipipe.NewInPort("in_file"),
 		OutParam: scipipe.NewParamPort(),
 	}
 	wf.AddProc(p)

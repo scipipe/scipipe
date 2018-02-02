@@ -23,14 +23,14 @@ func TestBasicRun(t *testing.T) {
 	wf := NewWorkflow("TestBasicRunWf", 16)
 
 	t1 := NewProc(wf, "t1", "echo foo > {o:foo}")
-	assert.IsType(t, t1.Out("foo"), NewOutPort())
+	assert.IsType(t, t1.Out("foo"), NewOutPort("foo"))
 	t1.PathFormatters["foo"] = func(t *SciTask) string {
 		return "foo.txt"
 	}
 
 	t2 := NewProc(wf, "t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	assert.IsType(t, t2.In("foo"), NewInPort())
-	assert.IsType(t, t2.Out("bar"), NewOutPort())
+	assert.IsType(t, t2.In("foo"), NewInPort("foo"))
+	assert.IsType(t, t2.Out("bar"), NewOutPort("bar"))
 	t2.PathFormatters["bar"] = func(t *SciTask) string {
 		return t.InPath("foo") + ".bar.txt"
 	}
@@ -40,8 +40,8 @@ func TestBasicRun(t *testing.T) {
 	snk.Connect(t2.Out("bar"))
 	wf.SetSink(snk)
 
-	assert.IsType(t, t2.In("foo"), NewInPort())
-	assert.IsType(t, t2.Out("bar"), NewOutPort())
+	assert.IsType(t, t2.In("foo"), NewInPort("foo"))
+	assert.IsType(t, t2.Out("bar"), NewOutPort("bar"))
 
 	wf.Run()
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
@@ -200,7 +200,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 	var expFname string
 	i := 1
 
-	tempPort := NewInPort()
+	tempPort := NewInPort("temp")
 	ConnectFrom(tempPort, sl.Out("out"))
 
 	// Should not start go-routines before connection stuff is done
@@ -439,8 +439,8 @@ type StreamToSubStream struct {
 
 func NewStreamToSubStream() *StreamToSubStream {
 	return &StreamToSubStream{
-		In:           NewInPort(),
-		OutSubStream: NewOutPort(),
+		In:           NewInPort("in"),
+		OutSubStream: NewOutPort("out_substream"),
 	}
 }
 
@@ -476,8 +476,8 @@ func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *IP) map[string]str
 	mtp := &MapToKeys{
 		procName: name,
 		mapFunc:  mapFunc,
-		In:       NewInPort(),
-		Out:      NewOutPort(),
+		In:       NewInPort("in"),
+		Out:      NewOutPort("out"),
 	}
 	wf.AddProc(mtp)
 	return mtp
