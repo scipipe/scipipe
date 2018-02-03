@@ -292,6 +292,7 @@ func NewIPGen(workflow *Workflow, name string, filePaths ...string) (ipg *IPGen)
 	return
 }
 
+// OutPorts returns the out-ports for the process
 func (ipg *IPGen) OutPorts() map[string]*OutPort {
 	return map[string]*OutPort{
 		ipg.Out.Name(): ipg.Out,
