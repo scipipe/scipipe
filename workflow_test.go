@@ -49,8 +49,6 @@ type BogusProcess struct {
 	WasRunLock sync.Mutex
 }
 
-var bogusWg sync.WaitGroup
-
 func NewBogusProcess(name string) *BogusProcess {
 	return &BogusProcess{WasRun: false, name: name}
 }
