@@ -32,7 +32,7 @@ type Process struct {
 	outPorts         map[string]*OutPort
 	OutPortsDoStream map[string]bool
 	PathFormatters   map[string]func(*Task) string
-	paramPorts       map[string]*ParamPort
+	paramInPorts     map[string]*ParamInPort
 	CustomExecute    func(*Task)
 	workflow         *Workflow
 	CoresPerTask     int
@@ -48,7 +48,7 @@ func NewProcess(workflow *Workflow, name string, command string) *Process {
 		outPorts:         make(map[string]*OutPort),
 		OutPortsDoStream: make(map[string]bool),
 		PathFormatters:   make(map[string]func(*Task) string),
-		paramPorts:       make(map[string]*ParamPort),
+		paramInPorts:     make(map[string]*ParamInPort),
 		Spawn:            true,
 		workflow:         workflow,
 		CoresPerTask:     1,
@@ -142,22 +142,22 @@ func (p *Process) OutPorts() map[string]*OutPort {
 // Param-port stuff
 // ------------------------------------------------
 
-// ParamPort returns the parameter port with name paramPortName
-func (p *Process) ParamPort(paramPortName string) *ParamPort {
-	if p.paramPorts[paramPortName] == nil {
+// ParamInPort returns the parameter port with name paramPortName
+func (p *Process) ParamInPort(paramPortName string) *ParamInPort {
+	if p.paramInPorts[paramPortName] == nil {
 		Error.Fatalf("No such param-port ('%s') for process '%s'. Please check your workflow code!\n", paramPortName, p.name)
 	}
-	return p.paramPorts[paramPortName]
+	return p.paramInPorts[paramPortName]
 }
 
-// ParamPorts returns all parameter ports of the process
-func (p *Process) ParamPorts() map[string]*ParamPort {
-	return p.paramPorts
+// ParamInPorts returns all parameter ports of the process
+func (p *Process) ParamInPorts() map[string]*ParamInPort {
+	return p.paramInPorts
 }
 
-// SetParamPort adds the parameter port paramPort with name paramPortName
-func (p *Process) SetParamPort(paramPortName string, paramPort *ParamPort) {
-	p.paramPorts[paramPortName] = paramPort
+// SetParamInPort adds the parameter port paramPort with name paramPortName
+func (p *Process) SetParamInPort(paramPortName string, paramPort *ParamInPort) {
+	p.paramInPorts[paramPortName] = paramPort
 }
 
 // ------------------------------------------------
@@ -295,7 +295,7 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 			p.inPorts[name].Process = p
 		} else if typ == "p" {
 			if params == nil || params[name] == "" {
-				p.paramPorts[name] = NewParamPort()
+				p.paramInPorts[name] = NewParamInPort()
 			}
 		}
 	}
@@ -318,9 +318,9 @@ func (p *Process) IsConnected() (isConnected bool) {
 			isConnected = false
 		}
 	}
-	for portName, port := range p.paramPorts {
+	for portName, port := range p.paramInPorts {
 		if !port.IsConnected() {
-			Error.Printf("ParamPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
+			Error.Printf("ParamInPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
 			isConnected = false
 		}
 	}
@@ -422,7 +422,7 @@ func (p *Process) receiveParams() (params map[string]string, paramPortsOpen bool
 	paramPortsOpen = true
 	params = make(map[string]string)
 	// Read input targets on in-ports and set up path mappings
-	for pname, pport := range p.paramPorts {
+	for pname, pport := range p.paramInPorts {
 		pval, open := <-pport.Chan
 		if !open {
 			paramPortsOpen = false
@@ -444,14 +444,14 @@ func (p *Process) createTasks() (ch chan *Task) {
 			params, paramPortsOpen := p.receiveParams()
 			Debug.Printf("Process.createTasks:%s Got params: %s", p.name, params)
 			if !inPortsOpen && !paramPortsOpen {
-				Debug.Printf("Process.createTasks:%s Breaking: Both inPorts and paramPorts closed", p.name)
+				Debug.Printf("Process.createTasks:%s Breaking: Both inPorts and paramInPorts closed", p.name)
 				break
 			}
 			if len(p.inPorts) == 0 && !paramPortsOpen {
 				Debug.Printf("Process.createTasks:%s Breaking: No inports, and params closed", p.name)
 				break
 			}
-			if len(p.paramPorts) == 0 && !inPortsOpen {
+			if len(p.paramInPorts) == 0 && !inPortsOpen {
 				Debug.Printf("Process.createTasks:%s Breaking: No params, and inPorts closed", p.name)
 				break
 			}
@@ -460,7 +460,7 @@ func (p *Process) createTasks() (ch chan *Task) {
 				t.CustomExecute = p.CustomExecute
 			}
 			ch <- t
-			if len(p.inPorts) == 0 && len(p.paramPorts) == 0 {
+			if len(p.inPorts) == 0 && len(p.paramInPorts) == 0 {
 				Debug.Printf("Process.createTasks:%s Breaking: No inports nor params", p.name)
 				break
 			}

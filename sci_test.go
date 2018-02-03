@@ -93,9 +93,9 @@ func TestParameterCommand(t *testing.T) {
 	prt := NewProc(wf, "prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
 
 	// Connection info
-	abc.ParamPort("a").Connect(cmb.A)
-	abc.ParamPort("b").Connect(cmb.B)
-	abc.ParamPort("c").Connect(cmb.C)
+	abc.ParamInPort("a").Connect(cmb.A)
+	abc.ParamInPort("b").Connect(cmb.B)
+	abc.ParamInPort("c").Connect(cmb.C)
 	prt.In("in").Connect(abc.Out("out"))
 	wf.SetDriver(prt)
 
@@ -397,16 +397,16 @@ func cleanFiles(fileNames ...string) {
 // --------------------------------------------------------------------------------
 type CombinatoricsProcess struct {
 	name string
-	A    *ParamPort
-	B    *ParamPort
-	C    *ParamPort
+	A    *ParamOutPort
+	B    *ParamOutPort
+	C    *ParamOutPort
 }
 
 func NewCombinatoricsProcess(name string) *CombinatoricsProcess {
 	return &CombinatoricsProcess{
-		A:    NewParamPort(),
-		B:    NewParamPort(),
-		C:    NewParamPort(),
+		A:    NewParamOutPort(),
+		B:    NewParamOutPort(),
+		C:    NewParamOutPort(),
 		name: name,
 	}
 }

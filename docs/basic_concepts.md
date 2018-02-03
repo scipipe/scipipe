@@ -66,13 +66,15 @@ Port objects have some methods bound to them, most importantly the `Connect()`
 method, which takes another port, and connects to it, by stitching a channel
 between the ports.
 
-On `Process` objects, there is also a third port type, `ParamPorts`, which
-is used when it is needed to send a stream of parameter values (in string
-format) to be supplied to as arguments to shell commands.
+On `Process` objects, there is also a third port type, `ParamInPort` (and the
+accompanying `ParamOutPort`), which is used when it is needed to send a
+stream of parameter values (in string format) to be supplied to as arguments
+to shell commands.
 
 * See [GoDoc for the InPort struct type](https://godoc.org/github.com/scipipe/scipipe#InPort)
 * See [GoDoc for the OutPort struct type](https://godoc.org/github.com/scipipe/scipipe#OutPort)
-* See [GoDoc for the ParamPort struct type](https://godoc.org/github.com/scipipe/scipipe#ParamPort)
+* See [GoDoc for the ParamInPort struct type](https://godoc.org/github.com/scipipe/scipipe#ParamInPort)
+* See [GoDoc for the ParamOutPort struct type](https://godoc.org/github.com/scipipe/scipipe#ParamOutPort)
 
 ## Channels
 

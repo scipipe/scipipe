@@ -12,7 +12,7 @@ import (
 type IPToParamConverter struct {
 	name     string
 	InFile   *scipipe.InPort
-	OutParam *scipipe.ParamPort
+	OutParam *scipipe.ParamOutPort
 }
 
 // NewIPToParamConverter instantiates a new IPToParamConverter
@@ -20,7 +20,7 @@ func NewIPToParamConverter(wf *scipipe.Workflow, name string) *IPToParamConverte
 	p := &IPToParamConverter{
 		name:     name,
 		InFile:   scipipe.NewInPort("in_file"),
-		OutParam: scipipe.NewParamPort(),
+		OutParam: scipipe.NewParamOutPort(),
 	}
 	wf.AddProc(p)
 	return p

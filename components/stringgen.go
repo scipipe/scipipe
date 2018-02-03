@@ -7,14 +7,14 @@ import "github.com/scipipe/scipipe"
 type StringGen struct {
 	name    string
 	Strings []string
-	Out     *scipipe.ParamPort
+	Out     *scipipe.ParamOutPort
 }
 
 // NewStringGen instantiate a new StringGen
 func NewStringGen(wf *scipipe.Workflow, name string, strings ...string) *StringGen {
 	sg := &StringGen{
 		name:    name,
-		Out:     scipipe.NewParamPort(),
+		Out:     scipipe.NewParamOutPort(),
 		Strings: strings,
 	}
 	wf.AddProc(sg)

@@ -14,6 +14,10 @@ func ConnectFrom(inPort *InPort, outPort *OutPort) {
 	outPort.Connect(inPort)
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// InPort
+////////////////////////////////////////////////////////////////////////////////
+
 // InPort represents a pluggable connection to multiple out-ports from other
 // processes, from its own process, and with which it is communicating via
 // channels under the hood
@@ -94,6 +98,10 @@ func (pt *InPort) CloseConnection(rptName string) {
 	pt.closeLock.Unlock()
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// OutPort
+////////////////////////////////////////////////////////////////////////////////
+
 // OutPort represents a pluggable connection to multiple in-ports from other
 // processes, from its own process, and with which it is communicating via
 // channels under the hood
@@ -173,71 +181,172 @@ func (pt *OutPort) Close() {
 	}
 }
 
-// ParamPort is a port for parameter values of string type
-type ParamPort struct {
-	Chan      chan string
-	connected bool
+////////////////////////////////////////////////////////////////////////////////
+// ParamInPort
+////////////////////////////////////////////////////////////////////////////////
+
+// ParamInPort is an in-port for parameter values of string type
+type ParamInPort struct {
+	Chan        chan string
+	name        string
+	Process     WorkflowProcess
+	RemotePorts map[string]*ParamOutPort
+	connected   bool
+	closeLock   sync.Mutex
 }
 
-// NewParamPort returns a new ParamPort
-func NewParamPort() *ParamPort {
-	return &ParamPort{}
+// NewParamInPort returns a new ParamInPort
+func NewParamInPort() *ParamInPort {
+	return &ParamInPort{
+		Chan:        make(chan string, BUFSIZE),
+		RemotePorts: map[string]*ParamOutPort{},
+	}
+}
+
+// Name returns the name of the ParamInPort
+func (pip *ParamInPort) Name() string {
+	if pip.Process != nil {
+		return pip.Process.Name() + "." + pip.name
+	}
+	return pip.name
+}
+
+// AddRemotePort adds a remote ParamOutPort to the ParamInPort
+func (pip *ParamInPort) AddRemotePort(pop *ParamOutPort) {
+	if pip.RemotePorts[pop.Name()] != nil {
+		Error.Fatalf("A remote param port with name %s already exists, for in-param-port %s\n", pop.Name(), pip.Name())
+	}
+	pip.RemotePorts[pop.Name()] = pop
 }
 
 // Connect connects one parameter port with another one
-func (pp *ParamPort) Connect(otherParamPort *ParamPort) {
-	if pp.Chan != nil && otherParamPort.Chan != nil {
-		Error.Fatalln("Both paramports already have initialized channels, so can't choose which to use!")
-	} else if pp.Chan != nil && otherParamPort.Chan == nil {
-		Debug.Println("Local param port, but not the other one, initialized, so connecting local to other")
-		otherParamPort.Chan = pp.Chan
-	} else if otherParamPort.Chan != nil && pp.Chan == nil {
-		Debug.Println("The other, but not the local param port initialized, so connecting other to local")
-		pp.Chan = otherParamPort.Chan
-	} else if pp.Chan == nil && otherParamPort.Chan == nil {
-		Debug.Println("Neither local nor other param port initialized, so creating new channel and connecting both")
-		ch := make(chan string, BUFSIZE)
-		pp.Chan = ch
-		otherParamPort.Chan = ch
-	}
-	pp.SetConnectedStatus(true)
-	otherParamPort.SetConnectedStatus(true)
+func (pip *ParamInPort) Connect(pop *ParamOutPort) {
+	pip.AddRemotePort(pop)
+	pop.AddRemotePort(pip)
+
+	pip.SetConnectedStatus(true)
+	pop.SetConnectedStatus(true)
 }
 
 // ConnectStr connects a parameter port with a new go-routine feeding the
 // strings in strings, on the fly, to the parameter port
-func (pp *ParamPort) ConnectStr(strings ...string) {
-	pp.Chan = make(chan string, BUFSIZE)
-	pp.SetConnectedStatus(true)
+func (pip *ParamInPort) ConnectStr(strings ...string) {
+	pop := NewParamOutPort()
+	pip.Connect(pop)
 	go func() {
-		defer pp.Close()
+		defer pop.Close()
 		for _, str := range strings {
-			pp.Chan <- str
+			pop.Send(str)
 		}
 	}()
 }
 
-// SetConnectedStatus sets the connected status of the ParamPort
-func (pp *ParamPort) SetConnectedStatus(connected bool) {
-	pp.connected = connected
+// SetConnectedStatus sets the connected status of the ParamInPort
+func (pip *ParamInPort) SetConnectedStatus(connected bool) {
+	pip.connected = connected
 }
 
 // IsConnected tells whether the port is connected or not
-func (pp *ParamPort) IsConnected() bool {
-	return pp.connected
+func (pip *ParamInPort) IsConnected() bool {
+	return pip.connected
 }
 
-// Send sends the param value over the ports connection
-func (pp *ParamPort) Send(param string) {
-	pp.Chan <- param
+// Send sends IPs to the in-port, and is supposed to be called from the remote
+// (out-) port, to send to this in-port
+func (pip *ParamInPort) Send(param string) {
+	pip.Chan <- param
 }
 
 // Recv receiveds a param value over the ports connection
-func (pp *ParamPort) Recv() string {
-	return <-pp.Chan
+func (pip *ParamInPort) Recv() string {
+	return <-pip.Chan
 }
 
-// Close closes the port (and its channel)
-func (pp *ParamPort) Close() {
-	close(pp.Chan)
+// CloseConnection closes the connection to the remote out-port with name
+// popName, on the ParamInPort
+func (pip *ParamInPort) CloseConnection(popName string) {
+	pip.closeLock.Lock()
+	delete(pip.RemotePorts, popName)
+	if len(pip.RemotePorts) == 0 {
+		close(pip.Chan)
+	}
+	pip.closeLock.Unlock()
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// ParamOutPort
+////////////////////////////////////////////////////////////////////////////////
+
+// ParamOutPort is an out-port for parameter values of string type
+type ParamOutPort struct {
+	name        string
+	Process     WorkflowProcess
+	RemotePorts map[string]*ParamInPort
+	connected   bool
+}
+
+// NewParamOutPort returns a new ParamOutPort
+func NewParamOutPort() *ParamOutPort {
+	return &ParamOutPort{
+		RemotePorts: map[string]*ParamInPort{},
+	}
+}
+
+// Name returns the name of the ParamOutPort
+func (pop *ParamOutPort) Name() string {
+	if pop.Process != nil {
+		return pop.Process.Name() + "." + pop.name
+	}
+	return pop.name
+}
+
+// AddRemotePort adds a remote ParamInPort to the ParamOutPort
+func (pop *ParamOutPort) AddRemotePort(pip *ParamInPort) {
+	if pop.RemotePorts[pip.Name()] != nil {
+		Error.Fatalf("A remote param port with name %s already exists, for out-port %s\n", pip.Name(), pop.Name())
+	}
+	pop.RemotePorts[pip.Name()] = pip
+}
+
+// RemoveRemotePort removes the (in-)port with name rptName, from the ParamOutPort
+func (pop *ParamOutPort) RemoveRemotePort(pipName string) {
+	delete(pop.RemotePorts, pipName)
+}
+
+// Connect connects an ParamInPort to the ParamOutPort
+func (pop *ParamOutPort) Connect(pip *ParamInPort) {
+	pop.AddRemotePort(pip)
+	pip.AddRemotePort(pop)
+
+	pop.SetConnectedStatus(true)
+	pip.SetConnectedStatus(true)
+}
+
+// SetConnectedStatus sets the connected status of the ParamOutPort
+func (pop *ParamOutPort) SetConnectedStatus(connected bool) {
+	pop.connected = connected
+}
+
+// IsConnected tells whether the port is connected or not
+func (pop *ParamOutPort) IsConnected() bool {
+	return pop.connected
+}
+
+// Send sends an IP to all the in-ports connected to the ParamOutPort
+func (pop *ParamOutPort) Send(param string) {
+	for _, pip := range pop.RemotePorts {
+		Debug.Printf("Sending on out-param-port %s connected to in-param-port %s", pop.Name(), pip.Name())
+		pip.Send(param)
+	}
+}
+
+// Close closes the connection between this port and all the ports it is
+// connected to. If this port is the last connected port to an in-port, that
+// in-ports channel will also be closed.
+func (pop *ParamOutPort) Close() {
+	for _, pip := range pop.RemotePorts {
+		Debug.Printf("Closing out-param-port %s connected to in-param-port %s", pop.Name(), pip.Name())
+		pip.CloseConnection(pop.Name())
+		pop.RemoveRemotePort(pip.Name())
+	}
 }

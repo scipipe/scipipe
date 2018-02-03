@@ -31,9 +31,9 @@ func main() {
 	prt.Spawn = false
 
 	// Connection info
-	abc.ParamPort("a").Connect(cmb.A)
-	abc.ParamPort("b").Connect(cmb.B)
-	abc.ParamPort("c").Connect(cmb.C)
+	abc.ParamInPort("a").Connect(cmb.A)
+	abc.ParamInPort("b").Connect(cmb.B)
+	abc.ParamInPort("c").Connect(cmb.C)
 	prt.In("in").Connect(abc.Out("out"))
 	wf.SetDriver(prt)
 
@@ -42,17 +42,17 @@ func main() {
 
 type CombinatoricsGen struct {
 	name string
-	A    *sci.ParamPort
-	B    *sci.ParamPort
-	C    *sci.ParamPort
+	A    *sci.ParamOutPort
+	B    *sci.ParamOutPort
+	C    *sci.ParamOutPort
 }
 
 func NewCombinatoricsGen(name string) *CombinatoricsGen {
 	return &CombinatoricsGen{
 		name: name,
-		A:    sci.NewParamPort(),
-		B:    sci.NewParamPort(),
-		C:    sci.NewParamPort(),
+		A:    sci.NewParamOutPort(),
+		B:    sci.NewParamOutPort(),
+		C:    sci.NewParamOutPort(),
 	}
 }
 
