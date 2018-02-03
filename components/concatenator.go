@@ -27,43 +27,43 @@ func NewConcatenator(wf *scipipe.Workflow, name string, outPath string) *Concate
 }
 
 // Name returns the name of the Concatenator process
-func (proc *Concatenator) Name() string {
-	return proc.name
+func (p *Concatenator) Name() string {
+	return p.name
 }
 
 // InPorts returns all the in-ports for the process
-func (proc *Concatenator) InPorts() map[string]*scipipe.InPort {
+func (p *Concatenator) InPorts() map[string]*scipipe.InPort {
 	return map[string]*scipipe.InPort{
-		proc.In.Name(): proc.In,
+		p.In.Name(): p.In,
 	}
 }
 
 // OutPorts returns all the out-ports for the process
-func (proc *Concatenator) OutPorts() map[string]*scipipe.OutPort {
+func (p *Concatenator) OutPorts() map[string]*scipipe.OutPort {
 	return map[string]*scipipe.OutPort{
-		proc.Out.Name(): proc.Out,
+		p.Out.Name(): p.Out,
 	}
 }
 
 // Run runs the Concatenator process
-func (proc *Concatenator) Run() {
-	defer proc.Out.Close()
+func (p *Concatenator) Run() {
+	defer p.Out.Close()
 
-	outFt := scipipe.NewIP(proc.OutPath)
+	outFt := scipipe.NewIP(p.OutPath)
 	outFh := outFt.OpenWriteTemp()
-	for ft := range proc.In.Chan {
+	for ft := range p.In.Chan {
 
-		fr := NewFileReader(proc.workflow, proc.Name()+"_filereader")
+		fr := NewFileReader(p.workflow, p.Name()+"_filereader")
 		pop := scipipe.NewParamOutPort("temp_filepath_feeder")
-		pop.Process = proc
+		pop.Process = p
 		fr.FilePath.Connect(pop)
 		go func() {
 			defer pop.Close()
 			pop.Send(ft.Path())
 		}()
 
-		pip := scipipe.NewParamInPort(proc.Name() + "temp_line_reader")
-		pip.Process = proc
+		pip := scipipe.NewParamInPort(p.Name() + "temp_line_reader")
+		pip.Process = p
 		pip.Connect(fr.OutLine)
 
 		go fr.Run()
@@ -74,17 +74,17 @@ func (proc *Concatenator) Run() {
 	}
 	outFh.Close()
 	outFt.Atomize()
-	proc.Out.Send(outFt)
+	p.Out.Send(outFt)
 }
 
 // IsConnected tells whether all ports of the Concatenator process are connected
-func (proc *Concatenator) IsConnected() bool {
+func (p *Concatenator) IsConnected() bool {
 	isConnected := true
-	if !proc.In.IsConnected() {
+	if !p.In.IsConnected() {
 		scipipe.Error.Println("Concatenator: Port 'In' is not connected!")
 		isConnected = false
 	}
-	if !proc.Out.IsConnected() {
+	if !p.Out.IsConnected() {
 		scipipe.Error.Println("Concatenator: Port 'Out' is not connected!")
 		isConnected = false
 	}

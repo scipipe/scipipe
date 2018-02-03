@@ -36,22 +36,36 @@ func NewFileSplitter(wf *scipipe.Workflow, name string, linesPerSplit int) *File
 }
 
 // Name returns the name of the FileSplitter process
-func (proc *FileSplitter) Name() string {
-	return proc.name
+func (p *FileSplitter) Name() string {
+	return p.name
+}
+
+// InPorts returns all the in-ports for the process
+func (p *FileSplitter) InPorts() map[string]*scipipe.InPort {
+	return map[string]*scipipe.InPort{
+		p.InFile.Name(): p.InFile,
+	}
+}
+
+// OutPorts returns all the out-ports for the process
+func (p *FileSplitter) OutPorts() map[string]*scipipe.OutPort {
+	return map[string]*scipipe.OutPort{
+		p.OutSplitFile.Name(): p.OutSplitFile,
+	}
 }
 
 // Run runs the FileSplitter process
-func (proc *FileSplitter) Run() {
-	defer proc.OutSplitFile.Close()
+func (p *FileSplitter) Run() {
+	defer p.OutSplitFile.Close()
 
 	rand.Seed(time.Now().UnixNano())
 
-	fileReader := NewFileReader(proc.workflow, proc.Name()+"_file_reader"+getRandString(2))
-	pop := scipipe.NewParamOutPort(proc.Name() + "_temp_filepath_feeder")
-	pop.Process = proc
+	fileReader := NewFileReader(p.workflow, p.Name()+"_file_reader"+getRandString(2))
+	pop := scipipe.NewParamOutPort(p.Name() + "_temp_filepath_feeder")
+	pop.Process = p
 	fileReader.FilePath.Connect(pop)
 
-	for ft := range proc.InFile.Chan {
+	for ft := range p.InFile.Chan {
 		scipipe.Audit.Println("FileSplitter      Now processing input file ", ft.Path(), "...")
 
 		go func() {
@@ -59,8 +73,8 @@ func (proc *FileSplitter) Run() {
 			pop.Send(ft.Path())
 		}()
 
-		pip := scipipe.NewParamInPort(proc.Name() + "temp_line_reader")
-		pip.Process = proc
+		pip := scipipe.NewParamInPort(p.Name() + "temp_line_reader")
+		pip.Process = p
 		pip.Connect(fileReader.OutLine)
 
 		go fileReader.Run()
@@ -73,14 +87,14 @@ func (proc *FileSplitter) Run() {
 			for line := range pip.Chan {
 				// If we have not yet reached the number of lines per split ...
 				/// ... then just continue to write ...
-				if i < splitIdx*proc.LinesPerSplit {
+				if i < splitIdx*p.LinesPerSplit {
 					splitfile.Write([]byte(line))
 					i++
 				} else {
 					splitfile.Close()
 					splitFt.Atomize()
 					scipipe.Audit.Println("FileSplitter      Created split file", splitFt.Path())
-					proc.OutSplitFile.Send(splitFt)
+					p.OutSplitFile.Send(splitFt)
 					splitIdx++
 
 					splitFt = newSplitIPFromIndex(ft.Path(), splitIdx)
@@ -90,7 +104,7 @@ func (proc *FileSplitter) Run() {
 			splitfile.Close()
 			splitFt.Atomize()
 			scipipe.Audit.Println("FileSplitter      Created split file", splitFt.Path())
-			proc.OutSplitFile.Send(splitFt)
+			p.OutSplitFile.Send(splitFt)
 		} else {
 			scipipe.Audit.Printf("Split file already exists: %s, so skipping.\n", splitFt.Path())
 		}
@@ -108,9 +122,9 @@ func getRandString(n int) string {
 }
 
 // IsConnected tells whether all the ports of the FileSplitter process are connected
-func (proc *FileSplitter) IsConnected() bool {
-	return proc.InFile.IsConnected() &&
-		proc.OutSplitFile.IsConnected()
+func (p *FileSplitter) IsConnected() bool {
+	return p.InFile.IsConnected() &&
+		p.OutSplitFile.IsConnected()
 }
 
 func newSplitIPFromIndex(basePath string, splitIdx int) *scipipe.IP {
