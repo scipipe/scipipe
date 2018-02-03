@@ -121,10 +121,10 @@ func getRandString(n int) string {
 	return string(b)
 }
 
-// IsConnected tells whether all the ports of the FileSplitter process are connected
-func (p *FileSplitter) IsConnected() bool {
-	return p.InFile.IsConnected() &&
-		p.OutSplitFile.IsConnected()
+// Connected tells whether all the ports of the FileSplitter process are connected
+func (p *FileSplitter) Connected() bool {
+	return p.InFile.Connected() &&
+		p.OutSplitFile.Connected()
 }
 
 func newSplitIPFromIndex(basePath string, splitIdx int) *scipipe.IP {

@@ -89,4 +89,4 @@ func (p *CombinatoricsGen) Run() {
 	}
 }
 
-func (p *CombinatoricsGen) IsConnected() bool { return true }
+func (p *CombinatoricsGen) Connected() bool { return true }

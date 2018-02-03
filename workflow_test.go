@@ -115,6 +115,6 @@ func (p *BogusProcess) Name() string {
 	return p.name
 }
 
-func (p *BogusProcess) IsConnected() bool {
+func (p *BogusProcess) Connected() bool {
 	return true
 }

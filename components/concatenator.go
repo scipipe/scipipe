@@ -77,14 +77,14 @@ func (p *Concatenator) Run() {
 	p.Out.Send(outFt)
 }
 
-// IsConnected tells whether all ports of the Concatenator process are connected
-func (p *Concatenator) IsConnected() bool {
+// Connected tells whether all ports of the Concatenator process are connected
+func (p *Concatenator) Connected() bool {
 	isConnected := true
-	if !p.In.IsConnected() {
+	if !p.In.Connected() {
 		scipipe.Error.Println("Concatenator: Port 'In' is not connected!")
 		isConnected = false
 	}
-	if !p.Out.IsConnected() {
+	if !p.Out.Connected() {
 		scipipe.Error.Println("Concatenator: Port 'Out' is not connected!")
 		isConnected = false
 	}

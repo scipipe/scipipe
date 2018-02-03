@@ -312,7 +312,7 @@ func (ipg *IPGen) Name() string {
 	return ipg.name
 }
 
-// IsConnected check if the IPGen outport is connected
-func (ipg *IPGen) IsConnected() bool {
-	return ipg.Out.IsConnected()
+// Connected check if the IPGen outport is connected
+func (ipg *IPGen) Connected() bool {
+	return ipg.Out.Connected()
 }

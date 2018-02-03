@@ -15,10 +15,10 @@ func TestConnectTo(t *testing.T) {
 	inp := NewInPort(inpName)
 
 	ConnectTo(outp, inp)
-	if !outp.IsConnected() {
+	if !outp.Connected() {
 		t.Error("Out-port not connected")
 	}
-	if !inp.IsConnected() {
+	if !inp.Connected() {
 		t.Error("In-port not connected")
 	}
 }
@@ -32,10 +32,10 @@ func TestConnectFrom(t *testing.T) {
 	inp := NewInPort(inpName)
 
 	ConnectFrom(inp, outp)
-	if !outp.IsConnected() {
+	if !outp.Connected() {
 		t.Error("Out-port not connected")
 	}
-	if !inp.IsConnected() {
+	if !inp.Connected() {
 		t.Error("In-port not connected")
 	}
 }
@@ -202,10 +202,10 @@ func TestParamOutPortConnect(t *testing.T) {
 
 	pop.Connect(pip)
 
-	if !pop.IsConnected() {
+	if !pop.Connected() {
 		t.Errorf("Param out port '%s' not having connected status = true", pop.Name())
 	}
-	if !pip.IsConnected() {
+	if !pip.Connected() {
 		t.Errorf("Param out port '%s' not having connected status = true", pip.Name())
 	}
 

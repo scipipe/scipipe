@@ -34,9 +34,9 @@ func (p *MapToKeys) Name() string {
 	return p.procName
 }
 
-// IsConnected tells whether all ports of the MapToKeys process are connected
-func (p *MapToKeys) IsConnected() bool {
-	return p.In.IsConnected() && p.Out.IsConnected()
+// Connected tells whether all ports of the MapToKeys process are connected
+func (p *MapToKeys) Connected() bool {
+	return p.In.Connected() && p.Out.Connected()
 }
 
 // InPorts returns all the in-ports for the process

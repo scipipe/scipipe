@@ -84,8 +84,8 @@ func (pt *InPort) SetConnectedStatus(connected bool) {
 	pt.connected = connected
 }
 
-// IsConnected tells whether the port is connected or not
-func (pt *InPort) IsConnected() bool {
+// Connected tells whether the port is connected or not
+func (pt *InPort) Connected() bool {
 	return pt.connected
 }
 
@@ -178,8 +178,8 @@ func (pt *OutPort) SetConnectedStatus(connected bool) {
 	pt.connected = connected
 }
 
-// IsConnected tells whether the port is connected or not
-func (pt *OutPort) IsConnected() bool {
+// Connected tells whether the port is connected or not
+func (pt *OutPort) Connected() bool {
 	return pt.connected
 }
 
@@ -268,8 +268,8 @@ func (pip *ParamInPort) SetConnectedStatus(connected bool) {
 	pip.connected = connected
 }
 
-// IsConnected tells whether the port is connected or not
-func (pip *ParamInPort) IsConnected() bool {
+// Connected tells whether the port is connected or not
+func (pip *ParamInPort) Connected() bool {
 	return pip.connected
 }
 
@@ -358,8 +358,8 @@ func (pop *ParamOutPort) SetConnectedStatus(connected bool) {
 	pop.connected = connected
 }
 
-// IsConnected tells whether the port is connected or not
-func (pop *ParamOutPort) IsConnected() bool {
+// Connected tells whether the port is connected or not
+func (pop *ParamOutPort) Connected() bool {
 	return pop.connected
 }
 

@@ -65,6 +65,6 @@ func (p *FileSender) Name() string {
 	return p.name
 }
 
-func (p *FileSender) IsConnected() bool {
-	return p.Out.IsConnected()
+func (p *FileSender) Connected() bool {
+	return p.Out.Connected()
 }

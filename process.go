@@ -315,23 +315,23 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 
 // ------- Sanity checks -------
 
-// IsConnected checks whether all the process' ports are connected
-func (p *Process) IsConnected() (isConnected bool) {
+// Connected checks whether all the process' ports are connected
+func (p *Process) Connected() (isConnected bool) {
 	isConnected = true
 	for portName, port := range p.inPorts {
-		if !port.IsConnected() {
+		if !port.Connected() {
 			Error.Printf("InPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
 			isConnected = false
 		}
 	}
 	for portName, port := range p.outPorts {
-		if !port.IsConnected() {
+		if !port.Connected() {
 			Error.Printf("OutPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
 			isConnected = false
 		}
 	}
 	for portName, port := range p.paramInPorts {
-		if !port.IsConnected() {
+		if !port.Connected() {
 			Error.Printf("ParamInPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
 			isConnected = false
 		}

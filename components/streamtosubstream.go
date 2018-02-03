@@ -30,9 +30,9 @@ func (p *StreamToSubStream) Name() string {
 	return p.name
 }
 
-// IsConnected tells whether all the ports of the process are connected
-func (p *StreamToSubStream) IsConnected() bool {
-	return p.In.IsConnected() && p.OutSubStream.IsConnected()
+// Connected tells whether all the ports of the process are connected
+func (p *StreamToSubStream) Connected() bool {
+	return p.In.Connected() && p.OutSubStream.Connected()
 }
 
 // InPorts returns all the in-ports for the process

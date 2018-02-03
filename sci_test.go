@@ -436,7 +436,7 @@ func (p *CombinatoricsProcess) Name() string {
 	return p.name
 }
 
-func (p *CombinatoricsProcess) IsConnected() bool { return true }
+func (p *CombinatoricsProcess) Connected() bool { return true }
 
 // --------------------------------------------------------------------------------
 // StreamToSubstream helper process
@@ -484,8 +484,8 @@ func (p *StreamToSubStream) Name() string {
 	return "StreamToSubstream"
 }
 
-func (p *StreamToSubStream) IsConnected() bool {
-	return p.In.IsConnected() && p.OutSubStream.IsConnected()
+func (p *StreamToSubStream) Connected() bool {
+	return p.In.Connected() && p.OutSubStream.Connected()
 }
 
 // --------------------------------------------------------------------------------
@@ -528,8 +528,8 @@ func (p *MapToKeys) OutPorts() map[string]*OutPort {
 	}
 }
 
-func (p *MapToKeys) IsConnected() bool {
-	return p.In.IsConnected() && p.Out.IsConnected()
+func (p *MapToKeys) Connected() bool {
+	return p.In.Connected() && p.Out.Connected()
 }
 
 func (p *MapToKeys) Run() {

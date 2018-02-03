@@ -48,7 +48,7 @@ type WorkflowProcess interface {
 	OutPorts() map[string]*OutPort
 	ParamInPorts() map[string]*ParamInPort
 	ParamOutPorts() map[string]*ParamOutPort
-	IsConnected() bool
+	Connected() bool
 	Run()
 }
 
@@ -119,7 +119,7 @@ func (wf *Workflow) Sink() *Sink {
 
 // SetSink sets the sink of the workflow to the provided sink process
 func (wf *Workflow) SetSink(sink *Sink) {
-	if wf.sink.IsConnected() {
+	if wf.sink.Connected() {
 		Error.Fatalln("Trying to replace a sink which is already connected. Are you combining SetSink() with ConnectFinalOutPort()? That is not allowed!")
 	}
 	wf.sink = sink
@@ -156,7 +156,7 @@ func (wf *Workflow) readyToRun(procs map[string]WorkflowProcess) bool {
 		return false
 	}
 	for _, proc := range procs {
-		if !proc.IsConnected() {
+		if !proc.Connected() {
 			Error.Println(wf.name + ": Not everything connected. Workflow shutting down.")
 			return false
 		}
@@ -200,7 +200,7 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 					opt.Disconnect(iptName)
 				}
 			}
-			if !opt.IsConnected() {
+			if !opt.Connected() {
 				Debug.Printf("Connecting disconnected out-port %s of process %s to workflow sink", opt.Name(), opt.Process.Name())
 				wf.sink.Connect(opt)
 			}
@@ -218,7 +218,7 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 					pop.Disconnect(rppName)
 				}
 			}
-			if !pop.IsConnected() {
+			if !pop.Connected() {
 				Debug.Printf("Connecting disconnected out-port %s of process %s to workflow sink", pop.Name(), pop.Process.Name())
 				wf.sink.ConnectParam(pop)
 			}

@@ -23,9 +23,9 @@ func NewSink(name string) (s *Sink) {
 	return snk
 }
 
-// IsConnected checks whether the sinks in-port is connected
-func (p *Sink) IsConnected() bool {
-	return p.inPort.IsConnected() || p.paramInPort.IsConnected()
+// Connected checks whether the sinks in-port is connected
+func (p *Sink) Connected() bool {
+	return p.inPort.Connected() || p.paramInPort.Connected()
 }
 
 // Connect connects an out-port to the sinks in-port
@@ -46,7 +46,7 @@ func (p *Sink) Name() string {
 // Run runs the Sink process
 func (p *Sink) Run() {
 	merged := make(chan int)
-	if p.inPort.IsConnected() {
+	if p.inPort.Connected() {
 		go func() {
 			for ip := range p.inPort.Chan {
 				Debug.Printf("Got file in sink: %s\n", ip.Path())
@@ -54,7 +54,7 @@ func (p *Sink) Run() {
 			merged <- 1
 		}()
 	}
-	if p.paramInPort.IsConnected() {
+	if p.paramInPort.Connected() {
 		go func() {
 			for param := range p.paramInPort.Chan {
 				Debug.Printf("Got param in sink: %s\n", param)
@@ -62,10 +62,10 @@ func (p *Sink) Run() {
 			merged <- 1
 		}()
 	}
-	if p.inPort.IsConnected() {
+	if p.inPort.Connected() {
 		<-merged
 	}
-	if p.paramInPort.IsConnected() {
+	if p.paramInPort.Connected() {
 		<-merged
 	}
 	close(merged)
