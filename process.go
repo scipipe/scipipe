@@ -424,7 +424,7 @@ func (p *Process) receiveInputs() (inTargets map[string]*IP, inPortsOpen bool) {
 			inPortsOpen = false
 			continue
 		}
-		Debug.Printf("Process %s: Got inTarget %s ...", p.name, inTarget.GetPath())
+		Debug.Printf("Process %s: Got inTarget %s ...", p.name, inTarget.Path())
 		inTargets[inpName] = inTarget
 	}
 	return

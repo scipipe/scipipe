@@ -206,7 +206,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 	for ft := range tempPort.Chan {
 		Debug.Printf("TestSendOrderedOutputs: Looping over item %d ...\n", i)
 		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
-		assert.EqualValues(t, expFname, ft.GetPath())
+		assert.EqualValues(t, expFname, ft.Path())
 		Debug.Printf("TestSendOrderedOutputs: Looping over item %d Done.\n", i)
 		i++
 	}

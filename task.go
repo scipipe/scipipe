@@ -50,7 +50,7 @@ func NewTask(workflow *Workflow, name string, cmdPat string, inTargets map[strin
 		if outPortsDoStream[oname] {
 			otgt.doStream = true
 		}
-		Debug.Printf("Task:%s: Creating outTarget with path %s ...\n", name, otgt.GetPath())
+		Debug.Printf("Task:%s: Creating outTarget with path %s ...\n", name, otgt.Path())
 		outTargets[oname] = otgt
 	}
 	t.OutTargets = outTargets
@@ -64,7 +64,7 @@ func (t *Task) InPath(portName string) string {
 	if t.InTargets[portName] == nil {
 		Error.Fatalf("No such portname (%s) in task (%s)\n", portName, t.Name)
 	}
-	return t.InTargets[portName].GetPath()
+	return t.InTargets[portName].Path()
 }
 
 // Param returns the value of a param, for the task
@@ -86,7 +86,7 @@ func (t *Task) Execute() {
 
 		// Create directories for out-targets
 		for _, oip := range t.OutTargets {
-			oipDir := filepath.Dir(oip.GetPath())
+			oipDir := filepath.Dir(oip.Path())
 			err := os.MkdirAll(oipDir, 0777)
 			Check(err, "Could not create directory: "+oipDir)
 		}
@@ -116,15 +116,15 @@ func (t *Task) Execute() {
 		auditInfo.ExecTimeMS = execTimeMS
 		// Set the audit infos from incoming IPs into the "Upstream" map
 		for _, iip := range t.InTargets {
-			iipPath := iip.GetPath()
-			iipAuditInfo := iip.GetAuditInfo()
+			iipPath := iip.Path()
+			iipAuditInfo := iip.AuditInfo()
 			auditInfo.Upstream[iipPath] = iipAuditInfo
 		}
 		// Add the current audit info to output ips and write them to file
 		for _, oip := range t.OutTargets {
 			oip.SetAuditInfo(auditInfo)
 			for _, iip := range t.InTargets {
-				oip.AddKeys(iip.GetKeys())
+				oip.AddKeys(iip.Keys())
 			}
 			oip.WriteAuditLogToFile()
 		}
@@ -142,8 +142,8 @@ func (t *Task) Execute() {
 func (t *Task) anyOutputExists() (anyFileExists bool) {
 	anyFileExists = false
 	for _, tgt := range t.OutTargets {
-		opath := tgt.GetPath()
-		otmpPath := tgt.GetTempPath()
+		opath := tgt.Path()
+		otmpPath := tgt.TempPath()
 		if !tgt.doStream {
 			if _, err := os.Stat(opath); err == nil {
 				Info.Printf("Task:%-12s Output file already exists, so skipping: %s\n", t.Name, opath)
@@ -162,7 +162,7 @@ func (t *Task) anyOutputExists() (anyFileExists bool) {
 func (t *Task) anyFifosExist() (anyFifosExist bool) {
 	anyFifosExist = false
 	for _, tgt := range t.OutTargets {
-		ofifoPath := tgt.GetFifoPath()
+		ofifoPath := tgt.FifoPath()
 		if tgt.doStream {
 			if _, err := os.Stat(ofifoPath); err == nil {
 				Warning.Printf("Task:%-12s Output FIFO already exists, so skipping: %s (Note: If resuming from a failed run, clean up .fifo files first).\n", t.Name, ofifoPath)
@@ -178,7 +178,7 @@ func (t *Task) allFifosInOutTargetsExist() bool {
 	for _, tgt := range t.OutTargets {
 		if tgt.doStream {
 			if !tgt.FifoFileExists() {
-				Warning.Printf("Task:%-12s FIFO Output file missing, for streaming output: %s. Check your workflow for correctness! [%s]\n", t.Name, t.Command, tgt.GetFifoPath())
+				Warning.Printf("Task:%-12s FIFO Output file missing, for streaming output: %s. Check your workflow for correctness! [%s]\n", t.Name, t.Command, tgt.FifoPath())
 				return false
 			}
 		}
@@ -209,11 +209,11 @@ func (t *Task) createFifos() {
 func (t *Task) atomizeTargets() {
 	for _, tgt := range t.OutTargets {
 		if !tgt.doStream {
-			Debug.Printf("Atomizing file: %s -> %s", tgt.GetTempPath(), tgt.GetPath())
+			Debug.Printf("Atomizing file: %s -> %s", tgt.TempPath(), tgt.Path())
 			tgt.Atomize()
-			Debug.Printf("Done atomizing file: %s -> %s", tgt.GetTempPath(), tgt.GetPath())
+			Debug.Printf("Done atomizing file: %s -> %s", tgt.TempPath(), tgt.Path())
 		} else {
-			Debug.Printf("Target is streaming, so not atomizing: %s", tgt.GetPath())
+			Debug.Printf("Target is streaming, so not atomizing: %s", tgt.Path())
 		}
 	}
 }
@@ -223,10 +223,10 @@ func (t *Task) atomizeTargets() {
 func (t *Task) cleanUpFifos() {
 	for _, tgt := range t.OutTargets {
 		if tgt.doStream {
-			Debug.Printf("Task:%s: Cleaning up FIFO for output target: %s [%s]\n", t.Name, tgt.GetFifoPath(), t.Command)
+			Debug.Printf("Task:%s: Cleaning up FIFO for output target: %s [%s]\n", t.Name, tgt.FifoPath(), t.Command)
 			tgt.RemoveFifo()
 		} else {
-			Debug.Printf("Task:%s: output target is not FIFO, so not removing any FIFO: %s [%s]\n", t.Name, tgt.GetPath(), t.Command)
+			Debug.Printf("Task:%s: output target is not FIFO, so not removing any FIFO: %s [%s]\n", t.Name, tgt.Path(), t.Command)
 		}
 	}
 }
@@ -267,9 +267,9 @@ func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*
 				Check(errors.New(msg), msg)
 			} else {
 				if typ == "o" {
-					filePath = outTargets[name].GetTempPath() // Means important to Atomize afterwards!
+					filePath = outTargets[name].TempPath() // Means important to Atomize afterwards!
 				} else if typ == "os" {
-					filePath = outTargets[name].GetFifoPath()
+					filePath = outTargets[name].FifoPath()
 				}
 			}
 		} else if typ == "i" {
@@ -277,7 +277,7 @@ func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*
 			if inTargets[name] == nil {
 				msg := fmt.Sprint("Missing intarget for inport '", name, "' for command '", cmd, "'")
 				Check(errors.New(msg), msg)
-			} else if inTargets[name].GetPath() == "" && reduceInputs {
+			} else if inTargets[name].Path() == "" && reduceInputs {
 				ips := []*IP{}
 				for ip := range inTargets[name].SubStream.Chan {
 					Debug.Println("Got ip: ", ip)
@@ -287,19 +287,19 @@ func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*
 				paths := []string{}
 				Debug.Println("Got paths: ", paths)
 				for _, ip := range ips {
-					paths = append(paths, ip.GetPath())
+					paths = append(paths, ip.Path())
 				}
 				Debug.Println("Got paths: ", paths)
 				filePath = str.Join(paths, sep)
 				Debug.Println("Got filePath: ", filePath)
-			} else if inTargets[name].GetPath() == "" {
+			} else if inTargets[name].Path() == "" {
 				msg := fmt.Sprint("Missing inpath for inport '", name, "', and no substream, for command '", cmd, "'")
 				Check(errors.New(msg), msg)
 			} else {
 				if inTargets[name].doStream {
-					filePath = inTargets[name].GetFifoPath()
+					filePath = inTargets[name].FifoPath()
 				} else {
-					filePath = inTargets[name].GetPath()
+					filePath = inTargets[name].Path()
 				}
 			}
 			Debug.Printf("filePath determined to: %s, for command '%s'\n", filePath, cmd)

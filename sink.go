@@ -49,7 +49,7 @@ func (p *Sink) Run() {
 	if p.inPort.IsConnected() {
 		go func() {
 			for ip := range p.inPort.Chan {
-				Debug.Printf("Got file in sink: %s\n", ip.GetPath())
+				Debug.Printf("Got file in sink: %s\n", ip.Path())
 			}
 			merged <- 1
 		}()

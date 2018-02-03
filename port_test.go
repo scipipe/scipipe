@@ -97,7 +97,7 @@ func TestInPortSendRecv(t *testing.T) {
 	}()
 	oip := inp.Recv()
 	if ip != oip {
-		t.Errorf("Received ip (with path %s) was not the same as the one sent (with path %s)", oip.GetPath(), ip.GetPath())
+		t.Errorf("Received ip (with path %s) was not the same as the one sent (with path %s)", oip.Path(), ip.Path())
 	}
 }
 

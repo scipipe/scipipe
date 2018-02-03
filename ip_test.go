@@ -12,9 +12,9 @@ const (
 
 func TestIPPaths(t *testing.T) {
 	ip := NewIP(TESTPATH)
-	assertPathsEqual(t, ip.GetPath(), TESTPATH)
-	assertPathsEqual(t, ip.GetTempPath(), TESTPATH+".tmp")
-	assertPathsEqual(t, ip.GetFifoPath(), TESTPATH+".fifo")
+	assertPathsEqual(t, ip.Path(), TESTPATH)
+	assertPathsEqual(t, ip.TempPath(), TESTPATH+".tmp")
+	assertPathsEqual(t, ip.FifoPath(), TESTPATH+".fifo")
 }
 
 func assertPathsEqual(t *testing.T, path1 string, path2 string) {

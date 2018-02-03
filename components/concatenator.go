@@ -59,7 +59,7 @@ func (proc *Concatenator) Run() {
 		fr.FilePath.Connect(pop)
 		go func() {
 			defer pop.Close()
-			pop.Send(ft.GetPath())
+			pop.Send(ft.Path())
 		}()
 
 		pip := scipipe.NewParamInPort(proc.Name() + "temp_line_reader")

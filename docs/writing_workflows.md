@@ -103,7 +103,7 @@ hello.SetPathCustom("out", func(t *sp.Task) string {
 return "hello.txt"
 })
 world.SetPathCustom("out", func(t *sp.Task) string {
-return strings.Replace(t.InTargets["in"].GetPath(), ".txt", "_world.txt", -1)
+return strings.Replace(t.InTargets["in"].Path(), ".txt", "_world.txt", -1)
 })
 ```
 

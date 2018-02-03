@@ -34,7 +34,7 @@ func NewFooToBarReplacer() interface{} {
 		task.OutTargets["bar"].WriteTempFile(indataReplaced)
 	}
 	pathFuncs := map[string]func(*sci.Task) string{
-		"bar": func(t *sci.Task) string { return t.InTargets["foo"].GetPath() + ".bar.txt" },
+		"bar": func(t *sci.Task) string { return t.InTargets["foo"].Path() + ".bar.txt" },
 	}
 	return NewProcessFromStruct(&FooToBarReplacer{}, execFunc, pathFuncs)
 }
