@@ -164,8 +164,9 @@ func (p *Process) SetParamInPort(paramPortName string, paramPort *ParamInPort) {
 // Param-out-port stuff
 // ------------------------------------------------
 
-// ParamOutPorts returns an empty map of ParamOutPorts, to compy with the
-// WorkflowProcess interface
+// ParamOutPorts returns an empty map of ParamOutPorts, to comlpy with the
+// WorkflowProcess interface (since param-out-ports are not applicable for
+// normal processes)
 func (p *Process) ParamOutPorts() map[string]*ParamOutPort {
 	return map[string]*ParamOutPort{}
 }
