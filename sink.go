@@ -3,6 +3,7 @@ package scipipe
 // Sink is a simple component that just receives IPs on its In-port without
 // doing anything with them. It is used to drive pipelines of processes
 type Sink struct {
+	EmptyWorkflowProcess
 	name   string
 	inPort *InPort
 }

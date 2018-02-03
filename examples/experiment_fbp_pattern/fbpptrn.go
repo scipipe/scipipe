@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	sp "github.com/scipipe/scipipe"
 	"math"
 	"runtime"
 	"strings"
+
+	sp "github.com/scipipe/scipipe"
 )
 
 const (
@@ -45,6 +46,7 @@ func main() {
 // ======= HiSayer =======
 
 type hiSayer struct {
+	sp.EmptyWorkflowProcess
 	name string
 	Out  chan string
 }
@@ -72,6 +74,7 @@ func (proc *hiSayer) IsConnected() bool { return true }
 // ======= StringSplitter =======
 
 type stringSplitter struct {
+	sp.EmptyWorkflowProcess
 	name     string
 	In       chan string
 	OutLeft  chan string
@@ -104,6 +107,7 @@ func (proc *stringSplitter) IsConnected() bool { return true }
 // ======= LowerCaser =======
 
 type lowerCaser struct {
+	sp.EmptyWorkflowProcess
 	name string
 	In   chan string
 	Out  chan string
@@ -128,6 +132,7 @@ func (proc *lowerCaser) IsConnected() bool { return true }
 // ======= UpperCaser =======
 
 type upperCaser struct {
+	sp.EmptyWorkflowProcess
 	name string
 	In   chan string
 	Out  chan string
@@ -152,6 +157,7 @@ func (proc *upperCaser) IsConnected() bool { return true }
 // ======= Merger =======
 
 type zipper struct {
+	sp.EmptyWorkflowProcess
 	name string
 	In1  chan string
 	In2  chan string
@@ -182,6 +188,7 @@ func (proc *zipper) IsConnected() bool { return true }
 // ======= Printer =======
 
 type printer struct {
+	sp.EmptyWorkflowProcess
 	name string
 	In   chan string
 }

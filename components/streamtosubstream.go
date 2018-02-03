@@ -8,6 +8,7 @@ import (
 // individual files, and returns one IP where the incoming IPs
 // are sent on its substream.
 type StreamToSubStream struct {
+	scipipe.EmptyWorkflowProcess
 	name         string
 	In           *scipipe.InPort
 	OutSubStream *scipipe.OutPort

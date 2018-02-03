@@ -10,6 +10,7 @@ import (
 // Out, based on the glob pattern in globPattern, which is set through the
 // factory method NewFileGlobber
 type FileGlobber struct {
+	scipipe.EmptyWorkflowProcess
 	name        string
 	Out         *scipipe.OutPort
 	globPattern string

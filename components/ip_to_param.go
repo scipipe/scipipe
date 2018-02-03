@@ -10,6 +10,7 @@ import (
 // content (assuming a single value), removing any newlines, spaces or tabs,
 // and sends the value on the OutParam parameter port.
 type IPToParamConverter struct {
+	scipipe.EmptyWorkflowProcess
 	name     string
 	InFile   *scipipe.InPort
 	OutParam *scipipe.ParamOutPort
@@ -29,6 +30,11 @@ func NewIPToParamConverter(wf *scipipe.Workflow, name string) *IPToParamConverte
 // Name returns the name of the IPToParamConverter process
 func (p *IPToParamConverter) Name() string {
 	return p.name
+}
+
+// OutParamPorts returns the out-param-ports of the IPToParamConverter process
+func (p *IPToParamConverter) OutParamPorts() map[string]*scipipe.ParamOutPort {
+	return map[string]*scipipe.ParamOutPort{"out_param": p.OutParam}
 }
 
 // IsConnected tells whether all the ports of the IPToParamConverter process are

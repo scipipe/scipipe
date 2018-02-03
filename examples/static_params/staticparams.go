@@ -37,6 +37,7 @@ func main() {
 // --------------------------------
 
 type FileSender struct {
+	sci.EmptyWorkflowProcess
 	name string
 	Out  *sci.OutPort
 }

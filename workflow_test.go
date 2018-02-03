@@ -43,6 +43,7 @@ func TestAddProc(t *testing.T) {
 // A process with does just satisfy the Process interface, without doing any
 // actual work.
 type BogusProcess struct {
+	EmptyWorkflowProcess
 	name       string
 	WasRun     bool
 	WasRunLock sync.Mutex

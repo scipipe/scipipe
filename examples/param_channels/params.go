@@ -41,6 +41,7 @@ func main() {
 }
 
 type CombinatoricsGen struct {
+	sci.EmptyWorkflowProcess
 	name string
 	A    *sci.ParamOutPort
 	B    *sci.ParamOutPort

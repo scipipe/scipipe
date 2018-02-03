@@ -44,8 +44,38 @@ func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
 // WorkflowProcess is an interface for processes to be handled by Workflow
 type WorkflowProcess interface {
 	Name() string
+	InPorts() map[string]*InPort
+	OutPorts() map[string]*OutPort
+	ParamInPorts() map[string]*ParamInPort
+	ParamOutPorts() map[string]*ParamOutPort
 	IsConnected() bool
 	Run()
+}
+
+// EmptyWorkflowProcess implements the WorkflowProcess interface in the simplest
+// possible way, by just returning default values. It is supposed to be used to
+// avoid re-implementing such "default" behaviour where needed, in new
+// components
+type EmptyWorkflowProcess struct{}
+
+// InPorts returns an empty map of InPorts
+func (ep *EmptyWorkflowProcess) InPorts() map[string]*InPort {
+	return map[string]*InPort{}
+}
+
+// OutPorts returns an empty map of OutPorts
+func (ep *EmptyWorkflowProcess) OutPorts() map[string]*OutPort {
+	return map[string]*OutPort{}
+}
+
+// ParamInPorts returns an empty map of ParamInPorts
+func (ep *EmptyWorkflowProcess) ParamInPorts() map[string]*ParamInPort {
+	return map[string]*ParamInPort{}
+}
+
+// ParamOutPorts returns an empty map of ParamOutPorts
+func (ep *EmptyWorkflowProcess) ParamOutPorts() map[string]*ParamOutPort {
+	return map[string]*ParamOutPort{}
 }
 
 // AddProc adds a Process to the workflow, to be run when the workflow runs

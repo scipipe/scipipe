@@ -5,6 +5,7 @@ import "github.com/scipipe/scipipe"
 // Concatenator is a process that concatenates the content of multiple files
 // received in the in-port In, into one file returned on its out-port, Out
 type Concatenator struct {
+	scipipe.EmptyWorkflowProcess
 	name     string
 	In       *scipipe.InPort
 	Out      *scipipe.OutPort

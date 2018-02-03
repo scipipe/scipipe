@@ -139,7 +139,7 @@ func (p *Process) OutPorts() map[string]*OutPort {
 }
 
 // ------------------------------------------------
-// Param-port stuff
+// Param-in-port stuff
 // ------------------------------------------------
 
 // ParamInPort returns the parameter port with name paramPortName
@@ -158,6 +158,16 @@ func (p *Process) ParamInPorts() map[string]*ParamInPort {
 // SetParamInPort adds the parameter port paramPort with name paramPortName
 func (p *Process) SetParamInPort(paramPortName string, paramPort *ParamInPort) {
 	p.paramInPorts[paramPortName] = paramPort
+}
+
+// ------------------------------------------------
+// Param-out-port stuff
+// ------------------------------------------------
+
+// ParamOutPorts returns an empty map of ParamOutPorts, to compy with the
+// WorkflowProcess interface
+func (p *Process) ParamOutPorts() map[string]*ParamOutPort {
+	return map[string]*ParamOutPort{}
 }
 
 // ------------------------------------------------

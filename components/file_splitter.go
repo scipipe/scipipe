@@ -9,6 +9,7 @@ import (
 // FileSplitter is a process that will split a file into multiple files, each
 // with LinesPerSplit number of lines per file
 type FileSplitter struct {
+	scipipe.EmptyWorkflowProcess
 	name          string
 	InFile        *scipipe.InPort
 	OutSplitFile  *scipipe.OutPort

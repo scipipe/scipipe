@@ -5,6 +5,7 @@ import "github.com/scipipe/scipipe"
 // StringGen takes a number of strings and returns a generator process
 // which sends the strings, one by one, on its `Out` port
 type StringGen struct {
+	scipipe.EmptyWorkflowProcess
 	name    string
 	Strings []string
 	Out     *scipipe.ParamOutPort
@@ -24,6 +25,11 @@ func NewStringGen(wf *scipipe.Workflow, name string, strings ...string) *StringG
 // Name returns the name of the StringGen process
 func (proc *StringGen) Name() string {
 	return proc.name
+}
+
+// OutParamPorts returns the out-param-ports of the StringGen process
+func (proc *StringGen) OutParamPorts() map[string]*scipipe.ParamOutPort {
+	return map[string]*scipipe.ParamOutPort{"out": proc.Out}
 }
 
 // Run runs the StringGen

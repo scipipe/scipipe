@@ -10,6 +10,7 @@ import (
 // out-port, which are identical to the incoming IPs, except for the new
 // key:value map
 type MapToKeys struct {
+	scipipe.EmptyWorkflowProcess
 	In       *scipipe.InPort
 	Out      *scipipe.OutPort
 	procName string

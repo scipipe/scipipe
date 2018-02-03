@@ -396,6 +396,7 @@ func cleanFiles(fileNames ...string) {
 // CombinatoricsProcess helper process
 // --------------------------------------------------------------------------------
 type CombinatoricsProcess struct {
+	EmptyWorkflowProcess
 	name string
 	A    *ParamOutPort
 	B    *ParamOutPort
@@ -437,6 +438,7 @@ func (proc *CombinatoricsProcess) IsConnected() bool { return true }
 // StreamToSubstream helper process
 // --------------------------------------------------------------------------------
 type StreamToSubStream struct {
+	EmptyWorkflowProcess
 	In           *InPort
 	OutSubStream *OutPort
 }
@@ -469,6 +471,7 @@ func (proc *StreamToSubStream) IsConnected() bool {
 // MapToKey helper process
 // --------------------------------------------------------------------------------
 type MapToKeys struct {
+	EmptyWorkflowProcess
 	In       *InPort
 	Out      *OutPort
 	procName string
