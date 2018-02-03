@@ -10,15 +10,13 @@ import (
 	"time"
 )
 
-// ================== SciTask ==================
-
-// SciTask represents a single static shell command, or go function, to be
+// Task represents a single static shell command, or go function, to be
 // executed, and are scheduled and managed by a corresponding Process
-type SciTask struct {
+type Task struct {
 	Name          string
 	Command       string
 	ExecMode      ExecMode
-	CustomExecute func(*SciTask)
+	CustomExecute func(*Task)
 	InTargets     map[string]*IP
 	OutTargets    map[string]*IP
 	Params        map[string]string
@@ -29,9 +27,9 @@ type SciTask struct {
 	cores         int
 }
 
-// NewSciTask instantiates and initializes a new SciTask
-func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[string]*IP, outPathFuncs map[string]func(*SciTask) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, cores int) *SciTask {
-	t := &SciTask{
+// NewTask instantiates and initializes a new Task
+func NewTask(workflow *Workflow, name string, cmdPat string, inTargets map[string]*IP, outPathFuncs map[string]func(*Task) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, cores int) *Task {
+	t := &Task{
 		Name:       name,
 		InTargets:  inTargets,
 		OutTargets: make(map[string]*IP),
@@ -61,10 +59,8 @@ func NewSciTask(workflow *Workflow, name string, cmdPat string, inTargets map[st
 	return t
 }
 
-// --------------- SciTask API methods ----------------
-
 // InPath returns the path name of an input file for the task
-func (t *SciTask) InPath(portName string) string {
+func (t *Task) InPath(portName string) string {
 	if t.InTargets[portName] == nil {
 		Error.Fatalf("No such portname (%s) in task (%s)\n", portName, t.Name)
 	}
@@ -72,7 +68,7 @@ func (t *SciTask) InPath(portName string) string {
 }
 
 // Param returns the value of a param, for the task
-func (t *SciTask) Param(portName string) string {
+func (t *Task) Param(portName string) string {
 	if param, ok := t.Params[portName]; ok {
 		return param
 	}
@@ -82,7 +78,7 @@ func (t *SciTask) Param(portName string) string {
 
 // Execute executes the task (the shell command or go function configured for
 // this task)
-func (t *SciTask) Execute() {
+func (t *Task) Execute() {
 	defer close(t.Done)
 
 	if !t.anyOutputExists() && t.allFifosInOutTargetsExist() {
@@ -142,10 +138,8 @@ func (t *SciTask) Execute() {
 	Debug.Printf("Task:%s: Done sending Done, in t.Execute() [%s]\n", t.Name, t.Command)
 }
 
-// --------------- SciTask Helper methods ----------------
-
 // Check if any output file target, or temporary file targets, exist
-func (t *SciTask) anyOutputExists() (anyFileExists bool) {
+func (t *Task) anyOutputExists() (anyFileExists bool) {
 	anyFileExists = false
 	for _, tgt := range t.OutTargets {
 		opath := tgt.GetPath()
@@ -165,7 +159,7 @@ func (t *SciTask) anyOutputExists() (anyFileExists bool) {
 }
 
 // Check if any FIFO files for this tasks exist, for out-ports specified to support streaming
-func (t *SciTask) anyFifosExist() (anyFifosExist bool) {
+func (t *Task) anyFifosExist() (anyFifosExist bool) {
 	anyFifosExist = false
 	for _, tgt := range t.OutTargets {
 		ofifoPath := tgt.GetFifoPath()
@@ -180,7 +174,7 @@ func (t *SciTask) anyFifosExist() (anyFifosExist bool) {
 }
 
 // Make sure that FIFOs that are supposed to exist, really exists
-func (t *SciTask) allFifosInOutTargetsExist() bool {
+func (t *Task) allFifosInOutTargetsExist() bool {
 	for _, tgt := range t.OutTargets {
 		if tgt.doStream {
 			if !tgt.FifoFileExists() {
@@ -192,7 +186,7 @@ func (t *SciTask) allFifosInOutTargetsExist() bool {
 	return true
 }
 
-func (t *SciTask) executeCommand(cmd string) {
+func (t *Task) executeCommand(cmd string) {
 	Audit.Printf("Task:%-12s Executing command: %s\n", t.Name, cmd)
 	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
 	if err != nil {
@@ -202,7 +196,7 @@ func (t *SciTask) executeCommand(cmd string) {
 }
 
 // Create FIFO files for all out-ports that are specified to support streaming
-func (t *SciTask) createFifos() {
+func (t *Task) createFifos() {
 	Debug.Printf("Task:%s: Now creating fifos for task [%s]\n", t.Name, t.Command)
 	for _, otgt := range t.OutTargets {
 		if otgt.doStream {
@@ -212,7 +206,7 @@ func (t *SciTask) createFifos() {
 }
 
 // Rename temporary output files to their proper file names
-func (t *SciTask) atomizeTargets() {
+func (t *Task) atomizeTargets() {
 	for _, tgt := range t.OutTargets {
 		if !tgt.doStream {
 			Debug.Printf("Atomizing file: %s -> %s", tgt.GetTempPath(), tgt.GetPath())
@@ -226,7 +220,7 @@ func (t *SciTask) atomizeTargets() {
 
 // Clean up any remaining FIFOs
 // TODO: this is actually not really used anymore ...
-func (t *SciTask) cleanUpFifos() {
+func (t *Task) cleanUpFifos() {
 	for _, tgt := range t.OutTargets {
 		if tgt.doStream {
 			Debug.Printf("Task:%s: Cleaning up FIFO for output target: %s [%s]\n", t.Name, tgt.GetFifoPath(), t.Command)
@@ -241,8 +235,6 @@ var (
 	trueVal  = true
 	falseVal = false
 )
-
-// ================== Helper functions==================
 
 func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*IP, params map[string]string, prepend string) string {
 

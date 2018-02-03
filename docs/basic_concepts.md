@@ -23,15 +23,15 @@ shellPattern)` command.
 The "long-running" processes mentioned above, will receive input files on its
 in-ports, and for each complete set of input files it receives, it will create
 a new **task**. Specifically, `scipipe.Process` will create
-[`scipipe.SciTask`](https://godoc.org/github.com/scipipe/scipipe#SciTask) objects, and populate it with all data needed for one
-particular shell command execution.  `SciTask` objects are executed via their
-[`Execute()`](https://godoc.org/github.com/scipipe/scipipe#SciTask.Execute)
+[`scipipe.Task`](https://godoc.org/github.com/scipipe/scipipe#Task) objects, and populate it with all data needed for one
+particular shell command execution.  `Task` objects are executed via their
+[`Execute()`](https://godoc.org/github.com/scipipe/scipipe#Task.Execute)
 method, or `CustomExecute()`, if custom Go code is supposed to be
 executed instead of a shell command.
 
 The distinction between processes and tasks is important to understand, for
 example when doing more advanced configuration of file naming strategies, since
-the custom anonymous functions used to format paths are taking a `SciTask` as
+the custom anonymous functions used to format paths are taking a `Task` as
 input, even though these functions are saved on the process object.
 
 To understand the difference between processes and tasks, it is helpful to
@@ -40,7 +40,7 @@ of a workflow, while tasks are transient objects, created temporarily as a
 container for all data and code needed for each execution of a concrete shell
 command.
 
-* See [GoDoc for SciTask](https://godoc.org/github.com/scipipe/scipipe#SciTask)
+* See [GoDoc for Task](https://godoc.org/github.com/scipipe/scipipe#Task)
 
 ## Ports
 

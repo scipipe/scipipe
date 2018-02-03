@@ -29,14 +29,14 @@ func TestBasicRun(t *testing.T) {
 
 	t1 := NewProc(wf, "t1", "echo foo > {o:foo}")
 	assert.IsType(t, t1.Out("foo"), NewOutPort("foo"))
-	t1.PathFormatters["foo"] = func(t *SciTask) string {
+	t1.PathFormatters["foo"] = func(t *Task) string {
 		return "foo.txt"
 	}
 
 	t2 := NewProc(wf, "t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	assert.IsType(t, t2.In("foo"), NewInPort("foo"))
 	assert.IsType(t, t2.Out("bar"), NewOutPort("bar"))
-	t2.PathFormatters["bar"] = func(t *SciTask) string {
+	t2.PathFormatters["bar"] = func(t *Task) string {
 		return t.InPath("foo") + ".bar.txt"
 	}
 	snk := NewSink("sink")
@@ -58,10 +58,10 @@ func TestConnectBackwards(t *testing.T) {
 	wf := NewWorkflow("TestConnectBackwards", 16)
 
 	t1 := wf.NewProc("t1", "echo foo > {o:foo}")
-	t1.SetPathCustom("foo", func(t *SciTask) string { return "foo.txt" })
+	t1.SetPathCustom("foo", func(t *Task) string { return "foo.txt" })
 
 	t2 := wf.NewProc("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	t2.SetPathCustom("bar", func(t *SciTask) string { return t.InPath("foo") + ".bar.txt" })
+	t2.SetPathCustom("bar", func(t *Task) string { return t.InPath("foo") + ".bar.txt" })
 
 	t1.Out("foo").Connect(t2.In("foo"))
 	wf.ConnectLast(t2.Out("bar"))
@@ -80,7 +80,7 @@ func TestParameterCommand(t *testing.T) {
 
 	// An abc file printer
 	abc := NewProc(wf, "abc", "echo {p:a} {p:b} {p:c} > {o:out}")
-	abc.PathFormatters["out"] = func(task *SciTask) string {
+	abc.PathFormatters["out"] = func(task *Task) string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
 			task.Param("a"),
@@ -134,7 +134,7 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 
 	// Run pipeline a first time
 	tsk := NewProc(wf, "tsk", "echo hej > {o:hej1}")
-	tsk.PathFormatters["hej1"] = func(task *SciTask) string { return f }
+	tsk.PathFormatters["hej1"] = func(task *Task) string { return f }
 
 	prt := NewProc(wf, "prt", "echo {i:in1} Done!")
 	prt.In("in1").Connect(tsk.Out("hej1"))
@@ -157,7 +157,7 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 
 	// Run again with different output
 	tsk = NewProc(wf, "tsk", "echo hej > {o:hej2}")
-	tsk.PathFormatters["hej2"] = func(task *SciTask) string { return f }
+	tsk.PathFormatters["hej2"] = func(task *Task) string { return f }
 
 	prt = NewProc(wf, "prt", "echo {i:in2} Done!")
 	prt.In("in2").Connect(tsk.Out("hej2"))
@@ -238,12 +238,12 @@ func TestStreaming(t *testing.T) {
 
 	// Init processes
 	ls := NewProc(wf, "ls", "ls -l / > {os:lsl}")
-	ls.PathFormatters["lsl"] = func(task *SciTask) string {
+	ls.PathFormatters["lsl"] = func(task *Task) string {
 		return "/tmp/lsl.txt"
 	}
 
 	grp := NewProc(wf, "grp", "grep etc {i:in} > {o:grepped}")
-	grp.PathFormatters["grepped"] = func(task *SciTask) string {
+	grp.PathFormatters["grepped"] = func(task *Task) string {
 		return task.InPath("in") + ".grepped.txt"
 	}
 

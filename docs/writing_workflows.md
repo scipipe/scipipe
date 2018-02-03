@@ -92,7 +92,7 @@ pattern.
 
 We can actually get even more control over how file names are produced than
 this, by manually supplying each process with an anonymous function that
-returns file paths given a `scipipe.SciTask` object, which will be produced for
+returns file paths given a `scipipe.Task` object, which will be produced for
 each command execution.
 
 In order to implement the same path patterns as above, using this method, we
@@ -100,10 +100,10 @@ would write like this:
 
 ```go
 // Configure output file path formatters for the processes created above
-hello.SetPathCustom("out", func(t *sp.SciTask) string {
+hello.SetPathCustom("out", func(t *sp.Task) string {
 return "hello.txt"
 })
-world.SetPathCustom("out", func(t *sp.SciTask) string {
+world.SetPathCustom("out", func(t *sp.Task) string {
 return strings.Replace(t.InTargets["in"].GetPath(), ".txt", "_world.txt", -1)
 })
 ```

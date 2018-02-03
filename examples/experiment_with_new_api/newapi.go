@@ -28,13 +28,13 @@ type FooToBarReplacer struct {
 }
 
 func NewFooToBarReplacer() interface{} {
-	execFunc := func(task *sci.SciTask) {
+	execFunc := func(task *sci.Task) {
 		indata := task.InTargets["foo"].Read()
 		indataReplaced := bytes.Replace(indata, []byte("foo"), []byte("bar"), -1)
 		task.OutTargets["bar"].WriteTempFile(indataReplaced)
 	}
-	pathFuncs := map[string]func(*sci.SciTask) string{
-		"bar": func(t *sci.SciTask) string { return t.InTargets["foo"].GetPath() + ".bar.txt" },
+	pathFuncs := map[string]func(*sci.Task) string{
+		"bar": func(t *sci.Task) string { return t.InTargets["foo"].GetPath() + ".bar.txt" },
 	}
 	return NewProcessFromStruct(&FooToBarReplacer{}, execFunc, pathFuncs)
 }
@@ -43,7 +43,7 @@ func NewFooToBarReplacer() interface{} {
 //  New helper methods
 // -------------------------------------------
 
-func NewProcessFromStruct(procStruct interface{}, execFunc func(*sci.SciTask), pathFuncs map[string]func(*sci.SciTask) string) interface{} {
+func NewProcessFromStruct(procStruct interface{}, execFunc func(*sci.Task), pathFuncs map[string]func(*sci.Task) string) interface{} {
 	// Get in-ports of struct
 	inPorts := map[string]chan *sci.IP{}
 	outPorts := map[string]chan *sci.IP{}

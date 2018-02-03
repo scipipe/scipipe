@@ -17,7 +17,7 @@ func main() {
 	// An abc file printer
 	abc := wf.NewProc("abc", "echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
 	abc.Spawn = true
-	abc.SetPathCustom("out", func(t *sci.SciTask) string {
+	abc.SetPathCustom("out", func(t *sci.Task) string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
 			t.Param("a"),

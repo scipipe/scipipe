@@ -20,7 +20,7 @@ fooWriter.SetPathStatic("foo", "foo.txt")
 
 // Create the custom execute function, with pure Go code and
 // add it to the CustomExecute field of the fooWriter process
-fooWriter.CustomExecute = func(task *sci.SciTask) {
+fooWriter.CustomExecute = func(task *sci.Task) {
     task.OutTargets["foo"].WriteTempFile([]byte("foo\n"))
 }
 ```

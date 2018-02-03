@@ -6,7 +6,7 @@ import (
 )
 
 // ExecMode specifies which execution mode should be used for a Process and
-// its corresponding SciTasks
+// its corresponding Tasks
 type ExecMode int
 
 const (
@@ -31,9 +31,9 @@ type Process struct {
 	inPorts          map[string]*InPort
 	outPorts         map[string]*OutPort
 	OutPortsDoStream map[string]bool
-	PathFormatters   map[string]func(*SciTask) string
+	PathFormatters   map[string]func(*Task) string
 	paramPorts       map[string]*ParamPort
-	CustomExecute    func(*SciTask)
+	CustomExecute    func(*Task)
 	workflow         *Workflow
 	CoresPerTask     int
 }
@@ -47,7 +47,7 @@ func NewProcess(workflow *Workflow, name string, command string) *Process {
 		inPorts:          make(map[string]*InPort),
 		outPorts:         make(map[string]*OutPort),
 		OutPortsDoStream: make(map[string]bool),
-		PathFormatters:   make(map[string]func(*SciTask) string),
+		PathFormatters:   make(map[string]func(*Task) string),
 		paramPorts:       make(map[string]*ParamPort),
 		Spawn:            true,
 		workflow:         workflow,
@@ -166,7 +166,7 @@ func (p *Process) SetParamPort(paramPortName string, paramPort *ParamPort) {
 
 // SetPathStatic creates an (output) path formatter returning a static string file name
 func (p *Process) SetPathStatic(outPortName string, path string) {
-	p.PathFormatters[outPortName] = func(t *SciTask) string {
+	p.PathFormatters[outPortName] = func(t *Task) string {
 		return path
 	}
 }
@@ -175,7 +175,7 @@ func (p *Process) SetPathStatic(outPortName string, path string) {
 // an input IP
 func (p *Process) SetPathExtend(inPortName string, outPortName string,
 	extension string) {
-	p.PathFormatters[outPortName] = func(t *SciTask) string {
+	p.PathFormatters[outPortName] = func(t *Task) string {
 		return t.InPath(inPortName) + extension
 	}
 }
@@ -183,14 +183,14 @@ func (p *Process) SetPathExtend(inPortName string, outPortName string,
 // SetPathReplace creates an (output) path formatter that uses an input's path
 // but replaces parts of it.
 func (p *Process) SetPathReplace(inPortName string, outPortName string, old string, new string) {
-	p.PathFormatters[outPortName] = func(t *SciTask) string {
+	p.PathFormatters[outPortName] = func(t *Task) string {
 		return str.Replace(t.InPath(inPortName), old, new, -1)
 	}
 }
 
 // SetPathCustom takes a function which produces a file path based on data
-// available in *SciTask, such as concrete file paths and parameter values,
-func (p *Process) SetPathCustom(outPortName string, pathFmtFunc func(task *SciTask) (path string)) {
+// available in *Task, such as concrete file paths and parameter values,
+func (p *Process) SetPathCustom(outPortName string, pathFmtFunc func(task *Task) (path string)) {
 	p.PathFormatters[outPortName] = pathFmtFunc
 }
 
@@ -329,11 +329,11 @@ func (p *Process) IsConnected() (isConnected bool) {
 
 // ============== Process Run Method ===============
 
-// Run runs the process by instantiating and executing SciTasks for all inputs
+// Run runs the process by instantiating and executing Tasks for all inputs
 // and parameter values on its in-ports. in the case when there are no inputs
 // or parameter values on the in-ports, it will run just once before it
 // terminates. note that the actual execution of shell commands are done inside
-// SciTask.Execute, not here.
+// Task.Execute, not here.
 func (p *Process) Run() {
 	// Check that CoresPerTask is a sane number
 	if p.CoresPerTask > cap(p.workflow.concurrentTasks) {
@@ -342,7 +342,7 @@ func (p *Process) Run() {
 
 	defer p.closeOutPorts()
 
-	tasks := []*SciTask{}
+	tasks := []*Task{}
 	Debug.Printf("Process %s: Starting to create and schedule tasks\n", p.name)
 	for t := range p.createTasks() {
 
@@ -434,8 +434,8 @@ func (p *Process) receiveParams() (params map[string]string, paramPortsOpen bool
 	return
 }
 
-func (p *Process) createTasks() (ch chan *SciTask) {
-	ch = make(chan *SciTask)
+func (p *Process) createTasks() (ch chan *Task) {
+	ch = make(chan *Task)
 	go func() {
 		defer close(ch)
 		for {
@@ -455,7 +455,7 @@ func (p *Process) createTasks() (ch chan *SciTask) {
 				Debug.Printf("Process.createTasks:%s Breaking: No params, and inPorts closed", p.name)
 				break
 			}
-			t := NewSciTask(p.workflow, p.name, p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode, p.CoresPerTask)
+			t := NewTask(p.workflow, p.name, p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode, p.CoresPerTask)
 			if p.CustomExecute != nil {
 				t.CustomExecute = p.CustomExecute
 			}
