@@ -39,6 +39,20 @@ func (p *MapToKeys) IsConnected() bool {
 	return p.In.IsConnected() && p.Out.IsConnected()
 }
 
+// InPorts returns all the in-ports for the process
+func (p *MapToKeys) InPorts() map[string]*scipipe.InPort {
+	return map[string]*scipipe.InPort{
+		p.In.Name(): p.In,
+	}
+}
+
+// OutPorts returns all the out-ports for the process
+func (p *MapToKeys) OutPorts() map[string]*scipipe.OutPort {
+	return map[string]*scipipe.OutPort{
+		p.Out.Name(): p.Out,
+	}
+}
+
 // Run runs the MapToKeys process
 func (p *MapToKeys) Run() {
 	defer p.Out.Close()

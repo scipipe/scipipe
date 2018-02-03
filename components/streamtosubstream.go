@@ -25,6 +25,30 @@ func NewStreamToSubStream(wf *scipipe.Workflow, name string) *StreamToSubStream 
 	return stss
 }
 
+// Name returns the name of the StreamToSubStream process
+func (p *StreamToSubStream) Name() string {
+	return p.name
+}
+
+// IsConnected tells whether all the ports of the process are connected
+func (p *StreamToSubStream) IsConnected() bool {
+	return p.In.IsConnected() && p.OutSubStream.IsConnected()
+}
+
+// InPorts returns all the in-ports for the process
+func (p *StreamToSubStream) InPorts() map[string]*scipipe.InPort {
+	return map[string]*scipipe.InPort{
+		p.In.Name(): p.In,
+	}
+}
+
+// OutPorts returns all the out-ports for the process
+func (p *StreamToSubStream) OutPorts() map[string]*scipipe.OutPort {
+	return map[string]*scipipe.OutPort{
+		p.OutSubStream.Name(): p.OutSubStream,
+	}
+}
+
 // Run runs the StreamToSubStream
 func (p *StreamToSubStream) Run() {
 	defer p.OutSubStream.Close()
@@ -37,14 +61,4 @@ func (p *StreamToSubStream) Run() {
 	scipipe.Debug.Printf("Sending sub-stream IP in process %s...\n", p.Name())
 	p.OutSubStream.Send(subStreamIP)
 	scipipe.Debug.Printf("Done sending sub-stream IP in process %s.\n", p.Name())
-}
-
-// Name returns the name of the StreamToSubStream process
-func (p *StreamToSubStream) Name() string {
-	return p.name
-}
-
-// IsConnected tells whether all the ports of the process are connected
-func (p *StreamToSubStream) IsConnected() bool {
-	return p.In.IsConnected() && p.OutSubStream.IsConnected()
 }
