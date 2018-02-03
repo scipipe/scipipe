@@ -13,7 +13,5 @@ func main() {
 	fw.SetPathCustom("out", func(t *sci.Task) string { return t.InPath("in") })
 	fw.In("in").Connect(fq.Out)
 
-	wf.ConnectLast(fw.Out("out"))
-
 	wf.Run()
 }

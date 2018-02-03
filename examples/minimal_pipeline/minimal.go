@@ -20,7 +20,6 @@ func main() {
 	// --------------------------------
 
 	f2b.In("foo").Connect(foo.Out("foo"))
-	wfl.ConnectLast(f2b.Out("bar"))
 
 	// --------------------------------
 	// Run the workflow!

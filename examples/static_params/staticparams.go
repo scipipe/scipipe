@@ -25,9 +25,6 @@ func main() {
 	abc.In("in").Connect(fls.Out)
 	prt.In("in").Connect(abc.Out("out"))
 
-	// Pipe it up
-	wf.SetDriver(prt)
-
 	// Run
 	wf.Run()
 }
@@ -43,9 +40,17 @@ type FileSender struct {
 }
 
 func NewFileSender(name string) *FileSender {
-	return &FileSender{
+	fsd := &FileSender{
 		name: name,
 		Out:  sci.NewOutPort("out"),
+	}
+	fsd.Out.Process = fsd
+	return fsd
+}
+
+func (p *FileSender) OutPorts() map[string]*sci.OutPort {
+	return map[string]*sci.OutPort{
+		p.Out.Name(): p.Out,
 	}
 }
 

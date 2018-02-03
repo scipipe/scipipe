@@ -55,7 +55,6 @@ func TestMultiInPort(t *testing.T) {
 	world.In("infile").Connect(hello.Out("hellofile"))
 	world.In("infile").Connect(tjena.Out("tjenafile"))
 
-	wf.ConnectLast(world.Out("worldfile"))
 	wf.Run()
 
 	resultFiles := []string{"/tmp/hello_world.txt", "/tmp/tjena_world.txt"}

@@ -12,7 +12,6 @@ func main() {
 
 	// Connect
 	f2b.InFoo().Connect(foo.OutFoo())
-	wfl.ConnectLast(f2b.OutBar())
 
 	// Run
 	wfl.Run()

@@ -123,17 +123,6 @@ func (wf *Workflow) SetSink(sink *Sink) {
 		Error.Fatalln("Trying to replace a sink which is already connected. Are you combining SetSink() with ConnectFinalOutPort()? That is not allowed!")
 	}
 	wf.sink = sink
-	wf.driver = sink
-}
-
-// Driver returns the driver process of the workflow
-func (wf *Workflow) Driver() WorkflowProcess {
-	return wf.driver
-}
-
-// SetDriver sets the driver process of the workflow to the provided process
-func (wf *Workflow) SetDriver(driver WorkflowProcess) {
-	wf.driver = driver
 }
 
 // IncConcurrentTasks increases the conter for how many concurrent tasks are
@@ -157,17 +146,7 @@ func (wf *Workflow) DecConcurrentTasks(slots int) {
 	}
 }
 
-// ConnectLast connects the last (most downstream) out-ports in the workflow to
-// an implicit sink process which will be used to drive the workflow. This can
-// be used instead of manually creating a sink, connecting it, and setting it
-// as the driver process of the workflow.
-func (wf *Workflow) ConnectLast(outPort *OutPort) {
-	wf.sink.Connect(outPort)
-	// Make sure the sink is also the driver
-	wf.driver = wf.sink
-}
-
-func (wf *Workflow) readyToRun(procs ...WorkflowProcess) bool {
+func (wf *Workflow) readyToRun(procs map[string]WorkflowProcess) bool {
 	if len(procs) == 0 {
 		Error.Println(wf.name + ": The workflow is empty. Did you forget to add the processes to it?")
 		return false
@@ -185,38 +164,126 @@ func (wf *Workflow) readyToRun(procs ...WorkflowProcess) bool {
 	return true
 }
 
-// RunProcs runs a specified set of processes only, with driverProc as the
-// driver process
-func (wf *Workflow) RunProcs(driverProc WorkflowProcess, procs ...WorkflowProcess) {
-	if !wf.readyToRun(procs...) {
+// runProcs runs a specified set of processes only
+func (wf *Workflow) runProcs(procs map[string]WorkflowProcess) {
+	wf.reconnectDeadEndConnections(procs)
+
+	if !wf.readyToRun(procs) {
 		Error.Fatalln("Workflow not ready to run, due to previously reported errors, so exiting.")
 	}
+
 	for _, proc := range procs {
-		if proc != driverProc { // Don't start the driver process in background
-			Debug.Printf(wf.name+": Starting process %s in new go-routine", proc.Name())
-			go proc.Run()
+		Debug.Printf(wf.name+": Starting process %s in new go-routine", proc.Name())
+		go proc.Run()
+	}
+
+	Debug.Printf(wf.name + ": Starting driver process in main go-routine")
+	wf.driver.Run()
+}
+
+// reconnectDeadEndConnections disonnects connections to processes which are not
+// in the set of processes to be run, and, if an out-port for a process that is supposed to be
+// run becomes disconnected, it is connected to the sink instead
+func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess) {
+	foundNewDriverProc := false
+
+	for _, proc := range procs {
+		// OutPorts
+		for _, opt := range proc.OutPorts() {
+			for iptName, ipt := range opt.RemotePorts {
+				// If the remotely connected process is not among the ones to run ...
+				if ipt.Process == nil {
+					Debug.Printf("Disconnecting in-port %s from out-port %s", ipt.Name(), opt.Name())
+					opt.Disconnect(iptName)
+				} else if _, ok := procs[ipt.Process.Name()]; !ok {
+					Debug.Printf("Disconnecting in-port %s from out-port %s", ipt.Name(), opt.Name())
+					opt.Disconnect(iptName)
+				}
+			}
+			if !opt.IsConnected() {
+				Debug.Printf("Connecting disconnected out-port %s of process %s to workflow sink", opt.Name(), opt.Process.Name())
+				wf.sink.Connect(opt)
+			}
+		}
+
+		// ParamOutPorts
+		for _, pop := range proc.ParamOutPorts() {
+			for rppName, rpp := range pop.RemotePorts {
+				// If the remotely connected process is not among the ones to run ...
+				if rpp.Process == nil {
+					Debug.Printf("Disconnecting in-port %s from out-port %s", rpp.Name(), pop.Name())
+					pop.Disconnect(rppName)
+				} else if _, ok := procs[rpp.Process.Name()]; !ok {
+					Debug.Printf("Disconnecting in-port %s from out-port %s", rpp.Name(), pop.Name())
+					pop.Disconnect(rppName)
+				}
+			}
+			if !pop.IsConnected() {
+				Debug.Printf("Connecting disconnected out-port %s of process %s to workflow sink", pop.Name(), pop.Process.Name())
+				wf.sink.ConnectParam(pop)
+			}
+		}
+
+		if len(proc.OutPorts()) == 0 && len(proc.ParamOutPorts()) == 0 {
+			if foundNewDriverProc {
+				Error.Fatalf("Found more than one process without out-ports nor out-param ports. Cannot use both as drivers (One of them being '%s'). Adapt your workflow accordingly.", proc.Name())
+			}
+			foundNewDriverProc = true
+			wf.driver = proc
 		}
 	}
-	Debug.Printf(wf.name + ": Starting sink in main go-routine")
-	driverProc.Run()
 }
 
 // RunProcsByName runs a specified set of processes only, specified by their
-// names as strings, with driverProcName as the name for the driver process
-func (wf *Workflow) RunProcsByName(driverProcName string, procNames ...string) {
-	procs := []WorkflowProcess{}
+// names as strings
+func (wf *Workflow) RunProcsByName(procNames ...string) {
+	procs := map[string]WorkflowProcess{}
 	for _, procName := range procNames {
-		procs = append(procs, wf.Proc(procName))
+		procs[procName] = wf.Proc(procName)
 	}
-	driverProc := wf.Proc(driverProcName)
-	wf.RunProcs(driverProc, procs...)
+	wf.runProcs(procs)
+}
+
+// RunToProcName runs all processes upstream of, and including, the process with
+// name finalProcName
+func (wf *Workflow) RunToProcName(finalProcName string) {
+	wf.RunToProc(wf.Proc(finalProcName))
+}
+
+// RunToProc runs all processes upstream of, and including, the finalProc
+func (wf *Workflow) RunToProc(finalProc WorkflowProcess) {
+	procsToRun := upstreamProcsForProc(finalProc)
+	procsToRun[finalProc.Name()] = finalProc
+	wf.runProcs(procsToRun)
+}
+
+// upstreamProcsForProc returns all processes it is connected to, either
+// directly or indirectly, via its in-ports and param-in-ports
+func upstreamProcsForProc(proc WorkflowProcess) map[string]WorkflowProcess {
+	procs := map[string]WorkflowProcess{}
+	for _, inp := range proc.InPorts() {
+		for _, rpt := range inp.RemotePorts {
+			procs[rpt.Process.Name()] = rpt.Process
+			mergeWFMaps(procs, upstreamProcsForProc(rpt.Process))
+		}
+	}
+	for _, pip := range proc.ParamInPorts() {
+		for _, rpp := range pip.RemotePorts {
+			procs[rpp.Process.Name()] = rpp.Process
+			mergeWFMaps(procs, upstreamProcsForProc(rpp.Process))
+		}
+	}
+	return procs
+}
+
+func mergeWFMaps(a map[string]WorkflowProcess, b map[string]WorkflowProcess) map[string]WorkflowProcess {
+	for k, v := range b {
+		a[k] = v
+	}
+	return a
 }
 
 // Run runs the workflow
 func (wf *Workflow) Run() {
-	procs := []WorkflowProcess{}
-	for _, p := range wf.procs {
-		procs = append(procs, p)
-	}
-	wf.RunProcs(wf.driver, procs...)
+	wf.runProcs(wf.procs)
 }

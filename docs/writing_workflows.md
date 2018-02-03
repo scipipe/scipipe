@@ -27,7 +27,6 @@ func main() {
 
     // Connect network
     world.In("in").Connect(hello.Out("out"))
-    wf.ConnectLast(world.Out("out"))
 
     // Run workflow
     wf.Run()
@@ -124,18 +123,6 @@ to drive the workflow.
 ```go
 // Connect network
 world.In("in").Connect(helloWriter.Out("out"))
-wf.ConnectLast(world.Out("out"))
-```
-
-Note: If your "last" process does not have any outputs, you can instead set it
-as the driver process of the workflow, which will replace the default driver
-process which is of type [Sink](https://godoc.org/github.com/scipipe/scipipe#Sink).
-So, for example, given that our `world` process did not have an output, but
-maybe for example just wrote something to a web service, without producing any
-files, we could do:
-
-```go
-wf.SetDriver(world)
 ```
 
 ## Running the pipeline
@@ -144,12 +131,12 @@ So, the final part probably explains itself, but the workflow component is a
 relatively simple one that will start each component in a separate go-routine.
 
 For technical reasons, one final process has to be run in the main go-routine
-(that where the program's `main()` function runs), but as long as you have used
-the `wf.ConnectLast()` method to connect the final output in your workflow as
-mentioned above, you don't need to think about this, as the workflow will then
-use an in-built [sink](https://godoc.org/github.com/scipipe/scipipe#Sink)
-process for this purpose. Only if you need to customize things heavily, you
-might want to change this.
+(that where the program's `main()` function runs), but generally you don't
+need to think about this, as the workflow will then use an in-built
+[sink](https://godoc.org/github.com/scipipe/scipipe#Sink) process for this
+purpose. If you for any reason need to customize which process to use as the
+"driver" process, instead of the in-built sink. see the [`SetDriver` section](https://godoc.org/github.com/scipipe/scipipe#Workflow.SetDriver)
+in the docs.
 
 ```go
 wf.Run()

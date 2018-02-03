@@ -13,31 +13,47 @@ import (
 type FileReader struct {
 	scipipe.WorkflowProcess
 	name     string
-	FilePath chan string
-	OutLine  chan []byte
+	FilePath *scipipe.ParamInPort
+	OutLine  *scipipe.ParamOutPort
 }
 
 // NewFileReader returns an initialized new FileReader
 func NewFileReader(wf *scipipe.Workflow, name string) *FileReader {
 	fr := &FileReader{
 		name:     name,
-		FilePath: make(chan string),
-		OutLine:  make(chan []byte, scipipe.BUFSIZE),
+		FilePath: scipipe.NewParamInPort("filepath"),
+		OutLine:  scipipe.NewParamOutPort("line"),
 	}
+	fr.FilePath.Process = fr
+	fr.OutLine.Process = fr
 	wf.AddProc(fr)
 	return fr
 }
 
 // Name returns the name of the FileReader process
-func (proc *FileReader) Name() string {
-	return proc.name
+func (p *FileReader) Name() string {
+	return p.name
+}
+
+// ParamInPorts returns all parameter in-ports for the process
+func (p *FileReader) ParamInPorts() map[string]*scipipe.ParamInPort {
+	return map[string]*scipipe.ParamInPort{
+		p.FilePath.Name(): p.FilePath,
+	}
+}
+
+// ParamOutPorts returns all parameter out-ports for the process
+func (p *FileReader) ParamOutPorts() map[string]*scipipe.ParamOutPort {
+	return map[string]*scipipe.ParamOutPort{
+		p.OutLine.Name(): p.OutLine,
+	}
 }
 
 // Run the FileReader
-func (proc *FileReader) Run() {
-	defer close(proc.OutLine)
+func (p *FileReader) Run() {
+	defer p.OutLine.Close()
 
-	file, err := os.Open(<-proc.FilePath)
+	file, err := os.Open(<-p.FilePath.Chan) // Read a single file name right now
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,7 +61,7 @@ func (proc *FileReader) Run() {
 
 	scan := bufio.NewScanner(file)
 	for scan.Scan() {
-		proc.OutLine <- append(append([]byte(nil), scan.Bytes()...), []byte("\n")...)
+		p.OutLine.Send(scan.Text() + "\n")
 	}
 	if scan.Err() != nil {
 		log.Fatal(scan.Err())

@@ -11,11 +11,8 @@ func main() {
 
 	foo := NewFooer(wf, "foo")
 	f2b := NewFoo2Barer(wf, "f2b")
-	snk := NewSink("snk")
 
 	foo.OutFoo().Connect(f2b.InFoo())
-	snk.Connect(f2b.OutBar())
-	wf.SetDriver(snk)
 
 	wf.Run()
 }

@@ -39,11 +39,8 @@ func TestBasicRun(t *testing.T) {
 	t2.PathFormatters["bar"] = func(t *Task) string {
 		return t.InPath("foo") + ".bar.txt"
 	}
-	snk := NewSink("sink")
 
 	t2.In("foo").Connect(t1.Out("foo"))
-	snk.Connect(t2.Out("bar"))
-	wf.SetSink(snk)
 
 	assert.IsType(t, t2.In("foo"), NewInPort("foo"))
 	assert.IsType(t, t2.Out("bar"), NewOutPort("bar"))
@@ -64,7 +61,6 @@ func TestConnectBackwards(t *testing.T) {
 	t2.SetPathCustom("bar", func(t *Task) string { return t.InPath("foo") + ".bar.txt" })
 
 	t1.Out("foo").Connect(t2.In("foo"))
-	wf.ConnectLast(t2.Out("bar"))
 
 	wf.Run()
 
@@ -80,24 +76,21 @@ func TestParameterCommand(t *testing.T) {
 
 	// An abc file printer
 	abc := NewProc(wf, "abc", "echo {p:a} {p:b} {p:c} > {o:out}")
-	abc.PathFormatters["out"] = func(task *Task) string {
+	abc.SetPathCustom("out", func(task *Task) string {
 		return fmt.Sprintf(
 			"%s_%s_%s.txt",
 			task.Param("a"),
 			task.Param("b"),
 			task.Param("c"),
 		)
-	}
-
-	// A printer process
-	prt := NewProc(wf, "prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
-
-	// Connection info
+	})
 	abc.ParamInPort("a").Connect(cmb.A)
 	abc.ParamInPort("b").Connect(cmb.B)
 	abc.ParamInPort("c").Connect(cmb.C)
+
+	// A printer process
+	prt := NewProc(wf, "prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
 	prt.In("in").Connect(abc.Out("out"))
-	wf.SetDriver(prt)
 
 	wf.Run()
 
@@ -122,7 +115,7 @@ func TestProcessWithoutInputsOutputs(t *testing.T) {
 }
 
 func TestDontOverWriteExistingOutputs(t *testing.T) {
-	InitLogError()
+	initTestLogs()
 	Debug.Println("Starting test TestDontOverWriteExistingOutputs")
 	wf := NewWorkflow("TestDontOverWriteExistingOutputsWf1", 16)
 
@@ -134,11 +127,10 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 
 	// Run pipeline a first time
 	tsk := NewProc(wf, "tsk", "echo hej > {o:hej1}")
-	tsk.PathFormatters["hej1"] = func(task *Task) string { return f }
+	tsk.SetPathStatic("hej1", f)
 
 	prt := NewProc(wf, "prt", "echo {i:in1} Done!")
 	prt.In("in1").Connect(tsk.Out("hej1"))
-	wf.SetDriver(prt)
 
 	wf.Run()
 
@@ -161,7 +153,6 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 
 	prt = NewProc(wf, "prt", "echo {i:in2} Done!")
 	prt.In("in2").Connect(tsk.Out("hej2"))
-	wf.SetDriver(prt)
 
 	wf.Run()
 
@@ -182,7 +173,6 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 // spawned to work in parallel.
 func TestSendOrderedOutputs(t *testing.T) {
 	initTestLogs()
-	//InitLogDebug()
 
 	fnames := []string{}
 	for i := 1; i <= 10; i++ {
@@ -233,7 +223,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 
 // Test that streaming works
 func TestStreaming(t *testing.T) {
-	InitLogWarning()
+	initTestLogs()
 	wf := NewWorkflow("TestStreamingWf", 16)
 
 	// Init processes
@@ -247,12 +237,8 @@ func TestStreaming(t *testing.T) {
 		return task.InPath("in") + ".grepped.txt"
 	}
 
-	snk := NewSink("sink")
-	wf.SetSink(snk)
-
 	// Connect
 	grp.In("in").Connect(ls.Out("lsl"))
-	snk.Connect(grp.Out("grepped"))
 
 	// Run
 	wf.Run()
@@ -271,6 +257,7 @@ func TestStreaming(t *testing.T) {
 }
 
 func TestSubStreamReduceInPlaceHolder(t *testing.T) {
+	initTestLogs()
 
 	exec.Command("bash", "-c", "echo 1 > /tmp/file1.txt").CombinedOutput()
 	exec.Command("bash", "-c", "echo 2 > /tmp/file2.txt").CombinedOutput()
@@ -282,15 +269,12 @@ func TestSubStreamReduceInPlaceHolder(t *testing.T) {
 
 	ipg := NewIPGen(wf, "ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
 
-	sts := NewStreamToSubStream()
+	sts := NewStreamToSubStream(wf, "str_to_substr")
 	sts.In.Connect(ipg.Out)
-	wf.AddProc(sts)
 
 	cat := wf.NewProc("concatenate", "cat {i:infiles:r: } > {o:merged}")
 	cat.SetPathStatic("merged", "/tmp/substream_merged.txt")
 	cat.In("infiles").Connect(sts.OutSubStream)
-
-	wf.ConnectLast(cat.Out("merged"))
 
 	wf.Run()
 
@@ -310,7 +294,7 @@ func TestSubStreamReduceInPlaceHolder(t *testing.T) {
 }
 
 func TestMultipleLastProcs(t *testing.T) {
-	InitLogWarning()
+	initTestLogs()
 
 	wf := NewWorkflow("TestMultipleLastProcs_WF", 16)
 	strs := []string{"hey", "how", "hoo"}
@@ -323,8 +307,6 @@ func TestMultipleLastProcs(t *testing.T) {
 		catStr.SetPathExtend("in", "out", ".cat.txt")
 
 		catStr.In("in").Connect(writeStr.Out("out"))
-
-		wf.ConnectLast(catStr.Out("out"))
 	}
 
 	wf.Run()
@@ -360,7 +342,6 @@ func TestPassOnKeys(t *testing.T) {
 	you.SetPathExtend("infile", "youfile", ".you.txt")
 	you.In("infile").Connect(key.Out)
 
-	wf.ConnectLast(you.Out("youfile"))
 	wf.Run()
 
 	dat, err := ioutil.ReadFile("/tmp/hey.txt.you.txt.audit.json")
@@ -396,7 +377,6 @@ func cleanFiles(fileNames ...string) {
 // CombinatoricsProcess helper process
 // --------------------------------------------------------------------------------
 type CombinatoricsProcess struct {
-	EmptyWorkflowProcess
 	name string
 	A    *ParamOutPort
 	B    *ParamOutPort
@@ -404,67 +384,108 @@ type CombinatoricsProcess struct {
 }
 
 func NewCombinatoricsProcess(name string) *CombinatoricsProcess {
-	return &CombinatoricsProcess{
-		A:    NewParamOutPort("a"),
-		B:    NewParamOutPort("b"),
-		C:    NewParamOutPort("c"),
+	a := NewParamOutPort("a")
+	b := NewParamOutPort("b")
+	c := NewParamOutPort("c")
+	p := &CombinatoricsProcess{
+		A:    a,
+		B:    b,
+		C:    c,
 		name: name,
+	}
+	a.Process = p
+	b.Process = p
+	c.Process = p
+	return p
+}
+
+func (p *CombinatoricsProcess) InPorts() map[string]*InPort {
+	return map[string]*InPort{}
+}
+func (p *CombinatoricsProcess) OutPorts() map[string]*OutPort {
+	return map[string]*OutPort{}
+}
+func (p *CombinatoricsProcess) ParamInPorts() map[string]*ParamInPort {
+	return map[string]*ParamInPort{}
+}
+func (p *CombinatoricsProcess) ParamOutPorts() map[string]*ParamOutPort {
+	return map[string]*ParamOutPort{
+		p.A.Name(): p.A,
+		p.B.Name(): p.B,
+		p.C.Name(): p.C,
 	}
 }
 
-func (proc *CombinatoricsProcess) Run() {
-	defer proc.A.Close()
-	defer proc.B.Close()
-	defer proc.C.Close()
+func (p *CombinatoricsProcess) Run() {
+	defer p.A.Close()
+	defer p.B.Close()
+	defer p.C.Close()
 
 	for _, a := range []string{"a1", "a2", "a3"} {
 		for _, b := range []string{"b1", "b2", "b3"} {
 			for _, c := range []string{"c1", "c2", "c3"} {
-				proc.A.Send(a)
-				proc.B.Send(b)
-				proc.C.Send(c)
+				p.A.Send(a)
+				p.B.Send(b)
+				p.C.Send(c)
 			}
 		}
 	}
 }
 
-func (proc *CombinatoricsProcess) Name() string {
-	return proc.name
+func (p *CombinatoricsProcess) Name() string {
+	return p.name
 }
 
-func (proc *CombinatoricsProcess) IsConnected() bool { return true }
+func (p *CombinatoricsProcess) IsConnected() bool { return true }
 
 // --------------------------------------------------------------------------------
 // StreamToSubstream helper process
 // --------------------------------------------------------------------------------
 type StreamToSubStream struct {
 	EmptyWorkflowProcess
+	name         string
 	In           *InPort
 	OutSubStream *OutPort
 }
 
-func NewStreamToSubStream() *StreamToSubStream {
-	return &StreamToSubStream{
+func NewStreamToSubStream(wf *Workflow, name string) *StreamToSubStream {
+	sts := &StreamToSubStream{
 		In:           NewInPort("in"),
 		OutSubStream: NewOutPort("out_substream"),
 	}
+	sts.In.Process = sts
+	sts.OutSubStream.Process = sts
+	wf.AddProc(sts)
+	return sts
 }
 
-func (proc *StreamToSubStream) Run() {
-	defer proc.OutSubStream.Close()
+func (p *StreamToSubStream) InPorts() map[string]*InPort {
+	return map[string]*InPort{
+		p.In.Name(): p.In,
+	}
+}
+
+func (p *StreamToSubStream) OutPorts() map[string]*OutPort {
+	return map[string]*OutPort{
+		p.OutSubStream.Name(): p.OutSubStream,
+	}
+}
+
+func (p *StreamToSubStream) Run() {
+	defer p.OutSubStream.Close()
 
 	subStreamIP := NewIP("")
-	subStreamIP.SubStream = proc.In
+	subStreamIP.SubStream = p.In
 
-	proc.OutSubStream.Send(subStreamIP)
+	p.OutSubStream.Send(subStreamIP)
 }
 
-func (proc *StreamToSubStream) Name() string {
+func (p *StreamToSubStream) Name() string {
 	return "StreamToSubstream"
 }
 
-func (proc *StreamToSubStream) IsConnected() bool {
-	return proc.In.IsConnected() && proc.OutSubStream.IsConnected()
+func (p *StreamToSubStream) IsConnected() bool {
+	return p.In.IsConnected() && p.OutSubStream.IsConnected()
 }
 
 // --------------------------------------------------------------------------------
@@ -485,12 +506,26 @@ func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *IP) map[string]str
 		In:       NewInPort("in"),
 		Out:      NewOutPort("out"),
 	}
+	mtp.In.Process = mtp
+	mtp.Out.Process = mtp
 	wf.AddProc(mtp)
 	return mtp
 }
 
 func (p *MapToKeys) Name() string {
 	return p.procName
+}
+
+func (p *MapToKeys) InPorts() map[string]*InPort {
+	return map[string]*InPort{
+		p.In.Name(): p.In,
+	}
+}
+
+func (p *MapToKeys) OutPorts() map[string]*OutPort {
+	return map[string]*OutPort{
+		p.Out.Name(): p.Out,
+	}
 }
 
 func (p *MapToKeys) IsConnected() bool {

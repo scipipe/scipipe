@@ -9,10 +9,9 @@ func main() {
 	wfl := sp.NewWorkflow("foobar_wf", 4)
 
 	// Sub-workflow
-	fbn := NewFooBarSubWorkflow(wfl, "foobar_subwf")
+	NewFooBarSubWorkflow(wfl, "foobar_subwf")
 
-	// Connect
-	wfl.ConnectLast(fbn.Out)
+	// Run
 	wfl.Run()
 }
 

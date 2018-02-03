@@ -14,5 +14,5 @@ func main() {
 	copyer.SetPathReplace("in", "out", ".txt", ".copy.txt")
 	copyer.In("in").Connect(first.Out("hej"))
 
-	wf.RunProcs(copyer, first)
+	wf.RunToProcName("hej_writer")
 }

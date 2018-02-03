@@ -35,7 +35,6 @@ func main() {
 	abc.ParamInPort("b").Connect(cmb.B)
 	abc.ParamInPort("c").Connect(cmb.C)
 	prt.In("in").Connect(abc.Out("out"))
-	wf.SetDriver(prt)
 
 	wf.Run()
 }
@@ -49,11 +48,24 @@ type CombinatoricsGen struct {
 }
 
 func NewCombinatoricsGen(name string) *CombinatoricsGen {
-	return &CombinatoricsGen{
+	cmb := &CombinatoricsGen{
 		name: name,
 		A:    sci.NewParamOutPort("a"),
 		B:    sci.NewParamOutPort("b"),
 		C:    sci.NewParamOutPort("c"),
+	}
+	cmb.A.Process = cmb
+	cmb.B.Process = cmb
+	cmb.C.Process = cmb
+	return cmb
+}
+
+// ParamOutPorts is a required interface method (WorkflowProcess)
+func (p *CombinatoricsGen) ParamOutPorts() map[string]*sci.ParamOutPort {
+	return map[string]*sci.ParamOutPort{
+		p.A.Name(): p.A,
+		p.B.Name(): p.B,
+		p.C.Name(): p.C,
 	}
 }
 

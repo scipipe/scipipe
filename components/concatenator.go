@@ -31,6 +31,20 @@ func (proc *Concatenator) Name() string {
 	return proc.name
 }
 
+// InPorts returns all the in-ports for the process
+func (proc *Concatenator) InPorts() map[string]*scipipe.InPort {
+	return map[string]*scipipe.InPort{
+		proc.In.Name(): proc.In,
+	}
+}
+
+// OutPorts returns all the out-ports for the process
+func (proc *Concatenator) OutPorts() map[string]*scipipe.OutPort {
+	return map[string]*scipipe.OutPort{
+		proc.Out.Name(): proc.Out,
+	}
+}
+
 // Run runs the Concatenator process
 func (proc *Concatenator) Run() {
 	defer proc.Out.Close()
@@ -38,12 +52,22 @@ func (proc *Concatenator) Run() {
 	outFt := scipipe.NewIP(proc.OutPath)
 	outFh := outFt.OpenWriteTemp()
 	for ft := range proc.In.Chan {
+
 		fr := NewFileReader(proc.workflow, proc.Name()+"_filereader")
+		pop := scipipe.NewParamOutPort("temp_filepath_feeder")
+		pop.Process = proc
+		fr.FilePath.Connect(pop)
 		go func() {
-			defer close(fr.FilePath)
-			fr.FilePath <- ft.GetPath()
+			defer pop.Close()
+			pop.Send(ft.GetPath())
 		}()
-		for line := range fr.OutLine {
+
+		pip := scipipe.NewParamInPort(proc.Name() + "temp_line_reader")
+		pip.Process = proc
+		pip.Connect(fr.OutLine)
+
+		go fr.Run()
+		for line := range pip.Chan {
 			scipipe.Debug.Println("Processing ", line, "...")
 			outFh.Write([]byte(line))
 		}

@@ -116,8 +116,6 @@ func main() {
 		bwaMerge.In("sai2").Connect(outPorts[indv]["2"]["sai"])
 		bwaMerge.In("fq1").Connect(outPorts[indv]["1"]["fastq"])
 		bwaMerge.In("fq2").Connect(outPorts[indv]["2"]["fastq"])
-
-		wf.ConnectLast(bwaMerge.Out("merged"))
 	}
 
 	// -------------------------------------------------------------------------------

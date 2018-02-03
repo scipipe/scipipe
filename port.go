@@ -66,6 +66,19 @@ func (pt *InPort) Connect(rpt *OutPort) {
 	rpt.SetConnectedStatus(true)
 }
 
+// Disconnect disconnects the (out-)port with name rptName, from the InPort
+func (pt *InPort) Disconnect(rptName string) {
+	pt.removeRemotePort(rptName)
+	if len(pt.RemotePorts) == 0 {
+		pt.SetConnectedStatus(false)
+	}
+}
+
+// removeRemotePort removes the (out-)port with name rptName, from the InPort
+func (pt *InPort) removeRemotePort(rptName string) {
+	delete(pt.RemotePorts, rptName)
+}
+
 // SetConnectedStatus sets the connected status of the InPort
 func (pt *InPort) SetConnectedStatus(connected bool) {
 	pt.connected = connected
@@ -138,8 +151,8 @@ func (pt *OutPort) AddRemotePort(rpt *InPort) {
 	pt.RemotePorts[rpt.Name()] = rpt
 }
 
-// RemoveRemotePort removes the (in-)port with name rptName, from the OutPort
-func (pt *OutPort) RemoveRemotePort(rptName string) {
+// removeRemotePort removes the (in-)port with name rptName, from the OutPort
+func (pt *OutPort) removeRemotePort(rptName string) {
 	delete(pt.RemotePorts, rptName)
 }
 
@@ -150,6 +163,14 @@ func (pt *OutPort) Connect(rpt *InPort) {
 
 	pt.SetConnectedStatus(true)
 	rpt.SetConnectedStatus(true)
+}
+
+// Disconnect disconnects the (in-)port with name rptName, from the OutPort
+func (pt *OutPort) Disconnect(rptName string) {
+	pt.removeRemotePort(rptName)
+	if len(pt.RemotePorts) == 0 {
+		pt.SetConnectedStatus(false)
+	}
 }
 
 // SetConnectedStatus sets the connected status of the OutPort
@@ -177,7 +198,7 @@ func (pt *OutPort) Close() {
 	for _, rpt := range pt.RemotePorts {
 		Debug.Printf("Closing out-port %s connected to in-port %s", pt.Name(), rpt.Name())
 		rpt.CloseConnection(pt.Name())
-		pt.RemoveRemotePort(rpt.Name())
+		pt.removeRemotePort(rpt.Name())
 	}
 }
 
@@ -310,11 +331,6 @@ func (pop *ParamOutPort) AddRemotePort(pip *ParamInPort) {
 	pop.RemotePorts[pip.Name()] = pip
 }
 
-// RemoveRemotePort removes the (in-)port with name rptName, from the ParamOutPort
-func (pop *ParamOutPort) RemoveRemotePort(pipName string) {
-	delete(pop.RemotePorts, pipName)
-}
-
 // Connect connects an ParamInPort to the ParamOutPort
 func (pop *ParamOutPort) Connect(pip *ParamInPort) {
 	pop.AddRemotePort(pip)
@@ -322,6 +338,19 @@ func (pop *ParamOutPort) Connect(pip *ParamInPort) {
 
 	pop.SetConnectedStatus(true)
 	pip.SetConnectedStatus(true)
+}
+
+// Disconnect disonnects the (in-)port with name rptName, from the ParamOutPort
+func (pop *ParamOutPort) Disconnect(pipName string) {
+	pop.removeRemotePort(pipName)
+	if len(pop.RemotePorts) == 0 {
+		pop.SetConnectedStatus(false)
+	}
+}
+
+// removeRemotePort removes the (in-)port with name rptName, from the ParamOutPort
+func (pop *ParamOutPort) removeRemotePort(pipName string) {
+	delete(pop.RemotePorts, pipName)
 }
 
 // SetConnectedStatus sets the connected status of the ParamOutPort
@@ -349,6 +378,6 @@ func (pop *ParamOutPort) Close() {
 	for _, pip := range pop.RemotePorts {
 		Debug.Printf("Closing out-param-port %s connected to in-param-port %s", pop.Name(), pip.Name())
 		pip.CloseConnection(pop.Name())
-		pop.RemoveRemotePort(pip.Name())
+		pop.removeRemotePort(pip.Name())
 	}
 }

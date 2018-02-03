@@ -60,8 +60,6 @@ func main() {
 	gcrat.In("gcsum").Connect(gcsum.Out("sum"))
 	gcrat.In("atsum").Connect(atsum.Out("sum"))
 
-	wf.ConnectLast(gcrat.Out("gcratio"))
-
 	// === RUN PIPELINE ===========================================================================
 
 	wf.Run()

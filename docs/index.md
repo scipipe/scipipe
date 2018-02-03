@@ -109,7 +109,6 @@ func main() {
 
     // Connect network
     world.In("in").Connect(hello.Out("out"))
-    wf.ConnectLast(world.Out("out"))
 
     // Run workflow
     wf.Run()

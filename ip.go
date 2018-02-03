@@ -280,14 +280,22 @@ type IPGen struct {
 }
 
 // NewIPGen initializes a new IPGen component from a list of file paths
-func NewIPGen(workflow *Workflow, name string, filePaths ...string) (fq *IPGen) {
-	fq = &IPGen{
+func NewIPGen(workflow *Workflow, name string, filePaths ...string) (ipg *IPGen) {
+	opt := NewOutPort("out")
+	ipg = &IPGen{
 		name:      name,
-		Out:       NewOutPort("out"),
+		Out:       opt,
 		FilePaths: filePaths,
 	}
-	workflow.AddProc(fq)
+	opt.Process = ipg
+	workflow.AddProc(ipg)
 	return
+}
+
+func (ipg *IPGen) OutPorts() map[string]*OutPort {
+	return map[string]*OutPort{
+		ipg.Out.Name(): ipg.Out,
+	}
 }
 
 // Run runs the IPGen process, returning instantiated IP

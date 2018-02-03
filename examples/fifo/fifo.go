@@ -31,7 +31,6 @@ func main() {
 	// connect network
 	grp.In("in").Connect(lsl.Out("lsl"))
 	cat.In("in").Connect(grp.Out("grep"))
-	wf.ConnectLast(cat.Out("out"))
 
 	// run pipeline
 	wf.Run()
