@@ -15,7 +15,7 @@ type StringGen struct {
 func NewStringGen(wf *scipipe.Workflow, name string, strings ...string) *StringGen {
 	sg := &StringGen{
 		name:    name,
-		Out:     scipipe.NewParamOutPort(),
+		Out:     scipipe.NewParamOutPort("out"),
 		Strings: strings,
 	}
 	wf.AddProc(sg)

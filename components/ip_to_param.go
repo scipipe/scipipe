@@ -21,7 +21,7 @@ func NewIPToParamConverter(wf *scipipe.Workflow, name string) *IPToParamConverte
 	p := &IPToParamConverter{
 		name:     name,
 		InFile:   scipipe.NewInPort("in_file"),
-		OutParam: scipipe.NewParamOutPort(),
+		OutParam: scipipe.NewParamOutPort("out_param"),
 	}
 	wf.AddProc(p)
 	return p

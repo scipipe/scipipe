@@ -51,9 +51,9 @@ type CombinatoricsGen struct {
 func NewCombinatoricsGen(name string) *CombinatoricsGen {
 	return &CombinatoricsGen{
 		name: name,
-		A:    sci.NewParamOutPort(),
-		B:    sci.NewParamOutPort(),
-		C:    sci.NewParamOutPort(),
+		A:    sci.NewParamOutPort("a"),
+		B:    sci.NewParamOutPort("b"),
+		C:    sci.NewParamOutPort("c"),
 	}
 }
 

@@ -196,8 +196,9 @@ type ParamInPort struct {
 }
 
 // NewParamInPort returns a new ParamInPort
-func NewParamInPort() *ParamInPort {
+func NewParamInPort(name string) *ParamInPort {
 	return &ParamInPort{
+		name:        name,
 		Chan:        make(chan string, BUFSIZE),
 		RemotePorts: map[string]*ParamOutPort{},
 	}
@@ -231,7 +232,7 @@ func (pip *ParamInPort) Connect(pop *ParamOutPort) {
 // ConnectStr connects a parameter port with a new go-routine feeding the
 // strings in strings, on the fly, to the parameter port
 func (pip *ParamInPort) ConnectStr(strings ...string) {
-	pop := NewParamOutPort()
+	pop := NewParamOutPort("string_feeder")
 	pip.Connect(pop)
 	go func() {
 		defer pop.Close()
@@ -286,8 +287,9 @@ type ParamOutPort struct {
 }
 
 // NewParamOutPort returns a new ParamOutPort
-func NewParamOutPort() *ParamOutPort {
+func NewParamOutPort(name string) *ParamOutPort {
 	return &ParamOutPort{
+		name:        name,
 		RemotePorts: map[string]*ParamInPort{},
 	}
 }

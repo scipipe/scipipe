@@ -305,7 +305,7 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 			p.inPorts[name].Process = p
 		} else if typ == "p" {
 			if params == nil || params[name] == "" {
-				p.paramInPorts[name] = NewParamInPort()
+				p.paramInPorts[name] = NewParamInPort(name)
 				p.paramInPorts[name].Process = p
 			}
 		}

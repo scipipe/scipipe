@@ -405,9 +405,9 @@ type CombinatoricsProcess struct {
 
 func NewCombinatoricsProcess(name string) *CombinatoricsProcess {
 	return &CombinatoricsProcess{
-		A:    NewParamOutPort(),
-		B:    NewParamOutPort(),
-		C:    NewParamOutPort(),
+		A:    NewParamOutPort("a"),
+		B:    NewParamOutPort("b"),
+		C:    NewParamOutPort("c"),
 		name: name,
 	}
 }
