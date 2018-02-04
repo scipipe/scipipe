@@ -5,6 +5,8 @@ import (
 	str "strings"
 )
 
+// ================== Process ==================
+
 // ExecMode specifies which execution mode should be used for a Process and
 // its corresponding Tasks
 type ExecMode int
@@ -17,18 +19,12 @@ const (
 	ExecModeSLURM ExecMode = iota
 )
 
-// ================== Process ==================
-
 // Process is the central component in SciPipe after Workflow. Processes are
 // long-running "services" that schedules and executes Tasks based on the IPs
 // and parameters received on its in-ports and parameter ports
 type Process struct {
-	name             string
-	workflow         *Workflow
+	BaseProcess
 	CommandPattern   string
-	paramInPorts     map[string]*ParamInPort
-	inPorts          map[string]*InPort
-	outPorts         map[string]*OutPort
 	OutPortsDoStream map[string]bool
 	PathFormatters   map[string]func(*Task) string
 	CustomExecute    func(*Task)
@@ -42,12 +38,11 @@ type Process struct {
 // command pattern. If this is what you need, use NewProc instead)
 func NewProcess(workflow *Workflow, name string, command string) *Process {
 	p := &Process{
-		name:             name,
-		workflow:         workflow,
+		BaseProcess: NewBaseProcess(
+			workflow,
+			name,
+		),
 		CommandPattern:   command,
-		paramInPorts:     make(map[string]*ParamInPort),
-		inPorts:          make(map[string]*InPort),
-		outPorts:         make(map[string]*OutPort),
 		OutPortsDoStream: make(map[string]bool),
 		PathFormatters:   make(map[string]func(*Task) string),
 		Spawn:            true,
@@ -75,100 +70,6 @@ func ShellExpand(workflow *Workflow, name string, cmd string, inPaths map[string
 	p := NewProcess(workflow, name, cmdExpr)
 	p.initPortsFromCmdPattern(cmdExpr, params)
 	return p
-}
-
-// ------------------------------------------------
-// Main API methods
-// ------------------------------------------------
-
-// Name returns the name of the process
-func (p *Process) Name() string {
-	return p.name
-}
-
-// ------------------------------------------------
-// In-port stuff
-// ------------------------------------------------
-
-// In returns the in-port with name portName
-func (p *Process) In(portName string) *InPort {
-	if p.inPorts[portName] == nil {
-		Error.Fatalf("No such in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
-	}
-	return p.inPorts[portName]
-}
-
-// SetInPort adds the in-port port to the process, with name portName
-func (p *Process) SetInPort(portName string, port *InPort) {
-	if p.inPorts[portName] != nil {
-		Error.Fatalf("Such an in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
-	}
-	p.inPorts[portName] = port
-}
-
-// InPorts returns a map of all the in-ports of the process, keyed by their
-// names
-func (p *Process) InPorts() map[string]*InPort {
-	return p.inPorts
-}
-
-// ------------------------------------------------
-// Out-port stuff
-// ------------------------------------------------
-
-// Out returns the out-port with name portName
-func (p *Process) Out(portName string) *OutPort {
-	if p.outPorts[portName] == nil {
-		Error.Fatalf("No such out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
-	}
-	return p.outPorts[portName]
-}
-
-// SetOutPort adds the out-port port to the process, with name portName
-func (p *Process) SetOutPort(portName string, port *OutPort) {
-	if p.outPorts[portName] != nil {
-		Error.Fatalf("Such an out-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
-	}
-	p.outPorts[portName] = port
-}
-
-// OutPorts returns a map of all the out-ports of the process, keyed by their
-// names
-func (p *Process) OutPorts() map[string]*OutPort {
-	return p.outPorts
-}
-
-// ------------------------------------------------
-// Param-in-port stuff
-// ------------------------------------------------
-
-// ParamInPort returns the parameter port with name paramPortName
-func (p *Process) ParamInPort(paramPortName string) *ParamInPort {
-	if p.paramInPorts[paramPortName] == nil {
-		Error.Fatalf("No such param-port ('%s') for process '%s'. Please check your workflow code!\n", paramPortName, p.name)
-	}
-	return p.paramInPorts[paramPortName]
-}
-
-// ParamInPorts returns all parameter ports of the process
-func (p *Process) ParamInPorts() map[string]*ParamInPort {
-	return p.paramInPorts
-}
-
-// SetParamInPort adds the parameter port paramPort with name paramPortName
-func (p *Process) SetParamInPort(paramPortName string, paramPort *ParamInPort) {
-	p.paramInPorts[paramPortName] = paramPort
-}
-
-// ------------------------------------------------
-// Param-out-port stuff
-// ------------------------------------------------
-
-// ParamOutPorts returns an empty map of ParamOutPorts, to comlpy with the
-// WorkflowProcess interface (since param-out-ports are not applicable for
-// normal processes)
-func (p *Process) ParamOutPorts() map[string]*ParamOutPort {
-	return map[string]*ParamOutPort{}
 }
 
 // ------------------------------------------------
@@ -311,32 +212,6 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 			}
 		}
 	}
-}
-
-// ------- Sanity checks -------
-
-// Connected checks whether all the process' ports are connected
-func (p *Process) Connected() (isConnected bool) {
-	isConnected = true
-	for portName, port := range p.inPorts {
-		if !port.Connected() {
-			Error.Printf("InPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
-			isConnected = false
-		}
-	}
-	for portName, port := range p.outPorts {
-		if !port.Connected() {
-			Error.Printf("OutPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
-			isConnected = false
-		}
-	}
-	for portName, port := range p.paramInPorts {
-		if !port.Connected() {
-			Error.Printf("ParamInPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
-			isConnected = false
-		}
-	}
-	return isConnected
 }
 
 // ============== Process Run Method ===============
