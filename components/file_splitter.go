@@ -58,9 +58,7 @@ func (p *FileSplitter) OutPorts() map[string]*scipipe.OutPort {
 func (p *FileSplitter) Run() {
 	defer p.OutSplitFile.Close()
 
-	rand.Seed(time.Now().UnixNano())
-
-	fileReader := NewFileReader(p.workflow, p.Name()+"_file_reader"+getRandString(2))
+	fileReader := NewFileReader(p.workflow, p.Name()+"_filereader_"+getRandString(7))
 	pop := scipipe.NewParamOutPort(p.Name() + "_temp_filepath_feeder")
 	pop.Process = p
 	fileReader.FilePath.Connect(pop)
@@ -114,6 +112,8 @@ func (p *FileSplitter) Run() {
 var chars = []rune("abcdefghijklmnopqrstuvwxyz")
 
 func getRandString(n int) string {
+	rand.Seed(time.Now().UnixNano())
+
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = chars[rand.Intn(len(chars))]

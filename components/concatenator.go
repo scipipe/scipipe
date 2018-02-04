@@ -40,7 +40,7 @@ func (p *Concatenator) Run() {
 	outFh := outFt.OpenWriteTemp()
 	for ft := range p.In().Chan {
 
-		fr := NewFileReader(p.Workflow(), p.Name()+"_filereader")
+		fr := NewFileReader(p.Workflow(), p.Name()+"_filereader_"+getRandString(7))
 		pop := scipipe.NewParamOutPort("temp_filepath_feeder")
 		pop.Process = p
 		fr.FilePath.Connect(pop)
