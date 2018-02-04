@@ -5,55 +5,42 @@ import "github.com/scipipe/scipipe"
 // Concatenator is a process that concatenates the content of multiple files
 // received in the in-port In, into one file returned on its out-port, Out
 type Concatenator struct {
-	scipipe.EmptyWorkflowProcess
-	name     string
-	In       *scipipe.InPort
-	Out      *scipipe.OutPort
-	OutPath  string
-	workflow *scipipe.Workflow
+	scipipe.BaseProcess
+	OutPath string
 }
 
 // NewConcatenator returns a new, initialized Concatenator process
 func NewConcatenator(wf *scipipe.Workflow, name string, outPath string) *Concatenator {
-	concat := &Concatenator{
-		name:     name,
-		In:       scipipe.NewInPort("in"),
-		Out:      scipipe.NewOutPort("out"),
-		OutPath:  outPath,
-		workflow: wf,
+	p := &Concatenator{
+		BaseProcess: scipipe.NewBaseProcess(wf, name),
+		OutPath:     outPath,
 	}
-	wf.AddProc(concat)
-	return concat
+	p.InitInPort(p, "in")
+	p.InitOutPort(p, "out")
+
+	wf.AddProc(p)
+	return p
 }
 
-// Name returns the name of the Concatenator process
-func (p *Concatenator) Name() string {
-	return p.name
+// In returns the (only) in-port for this process
+func (p *Concatenator) In() *scipipe.InPort {
+	return p.InPort("in")
 }
 
-// InPorts returns all the in-ports for the process
-func (p *Concatenator) InPorts() map[string]*scipipe.InPort {
-	return map[string]*scipipe.InPort{
-		p.In.Name(): p.In,
-	}
-}
-
-// OutPorts returns all the out-ports for the process
-func (p *Concatenator) OutPorts() map[string]*scipipe.OutPort {
-	return map[string]*scipipe.OutPort{
-		p.Out.Name(): p.Out,
-	}
+// Out returns the (only) out-port for this process
+func (p *Concatenator) Out() *scipipe.OutPort {
+	return p.OutPort("out")
 }
 
 // Run runs the Concatenator process
 func (p *Concatenator) Run() {
-	defer p.Out.Close()
+	defer p.Out().Close()
 
 	outFt := scipipe.NewIP(p.OutPath)
 	outFh := outFt.OpenWriteTemp()
-	for ft := range p.In.Chan {
+	for ft := range p.In().Chan {
 
-		fr := NewFileReader(p.workflow, p.Name()+"_filereader")
+		fr := NewFileReader(p.Workflow(), p.Name()+"_filereader")
 		pop := scipipe.NewParamOutPort("temp_filepath_feeder")
 		pop.Process = p
 		fr.FilePath.Connect(pop)
@@ -74,19 +61,5 @@ func (p *Concatenator) Run() {
 	}
 	outFh.Close()
 	outFt.Atomize()
-	p.Out.Send(outFt)
-}
-
-// Connected tells whether all ports of the Concatenator process are connected
-func (p *Concatenator) Connected() bool {
-	isConnected := true
-	if !p.In.Connected() {
-		scipipe.Error.Println("Concatenator: Port 'In' is not connected!")
-		isConnected = false
-	}
-	if !p.Out.Connected() {
-		scipipe.Error.Println("Concatenator: Port 'Out' is not connected!")
-		isConnected = false
-	}
-	return isConnected
+	p.Out().Send(outFt)
 }

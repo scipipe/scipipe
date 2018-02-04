@@ -34,9 +34,18 @@ type Process struct {
 	Spawn            bool
 }
 
-// NewProcess returns a new Process (without initializing its ports based on the
+// NewProc returns a new Process, and initializes its ports based on the
+// command pattern.
+func NewProc(workflow *Workflow, name string, cmd string) *Process {
+	InitLogInfo()
+	p := newProcess(workflow, name, cmd)
+	p.initPortsFromCmdPattern(cmd, nil)
+	return p
+}
+
+// newProcess returns a new Process (without initializing its ports based on the
 // command pattern. If this is what you need, use NewProc instead)
-func NewProcess(workflow *Workflow, name string, command string) *Process {
+func newProcess(workflow *Workflow, name string, command string) *Process {
 	p := &Process{
 		BaseProcess: NewBaseProcess(
 			workflow,
@@ -52,29 +61,30 @@ func NewProcess(workflow *Workflow, name string, command string) *Process {
 	return p
 }
 
-// ----------- Main API init methods ------------
-
-// NewProc returns a new Process, and initializes its ports based on the
-// command pattern.
-func NewProc(workflow *Workflow, name string, cmd string) *Process {
-	InitLogInfo()
-	p := NewProcess(workflow, name, cmd)
-	p.initPortsFromCmdPattern(cmd, nil)
-	return p
-}
-
 // ShellExpand expands the command pattern in cmd with the concrete values
 // provided in inPaths, ouPaths and params
 func ShellExpand(workflow *Workflow, name string, cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *Process {
 	cmdExpr := expandCommandParamsAndPaths(cmd, params, inPaths, outPaths)
-	p := NewProcess(workflow, name, cmdExpr)
+	p := newProcess(workflow, name, cmdExpr)
 	p.initPortsFromCmdPattern(cmdExpr, params)
 	return p
 }
 
 // ------------------------------------------------
-// Path formatting stuff
+// Main Process API methods
 // ------------------------------------------------
+
+// In is a short-form for InPort() (of BaseProcess), which works only on Process
+// processes
+func (p *Process) In(portName string) *InPort {
+	return p.InPort(portName)
+}
+
+// Out is a short-form for OutPort() (of BaseProcess), which works only on
+// Process processes
+func (p *Process) Out(portName string) *OutPort {
+	return p.OutPort(portName)
+}
 
 // SetPathStatic creates an (output) path formatter returning a static string file name
 func (p *Process) SetPathStatic(outPortName string, path string) {

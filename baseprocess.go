@@ -38,20 +38,22 @@ func (p *BaseProcess) Workflow() *Workflow {
 // In-port stuff
 // ------------------------------------------------
 
-// In returns the in-port with name portName
-func (p *BaseProcess) In(portName string) *InPort {
+// InPort returns the in-port with name portName
+func (p *BaseProcess) InPort(portName string) *InPort {
 	if p.inPorts[portName] == nil {
 		Error.Fatalf("No such in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return p.inPorts[portName]
 }
 
-// SetInPort adds the in-port port to the process, with name portName
-func (p *BaseProcess) SetInPort(portName string, port *InPort) {
+// InitInPort adds the in-port port to the process, with name portName
+func (p *BaseProcess) InitInPort(proc WorkflowProcess, portName string) {
 	if p.inPorts[portName] != nil {
 		Error.Fatalf("Such an in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
-	p.inPorts[portName] = port
+	ipt := NewInPort(portName)
+	ipt.Process = proc
+	p.inPorts[portName] = ipt
 }
 
 // InPorts returns a map of all the in-ports of the process, keyed by their
@@ -64,20 +66,22 @@ func (p *BaseProcess) InPorts() map[string]*InPort {
 // Out-port stuff
 // ------------------------------------------------
 
-// Out returns the out-port with name portName
-func (p *BaseProcess) Out(portName string) *OutPort {
-	if p.outPorts[portName] == nil {
+// InitOutPort adds the out-port port to the process, with name portName
+func (p *BaseProcess) InitOutPort(proc WorkflowProcess, portName string) {
+	if _, ok := p.outPorts[portName]; ok {
+		Error.Fatalf("Such an out-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
+	}
+	opt := NewOutPort(portName)
+	opt.Process = proc
+	p.outPorts[portName] = opt
+}
+
+// OutPort returns the out-port with name portName
+func (p *BaseProcess) OutPort(portName string) *OutPort {
+	if _, ok := p.outPorts[portName]; !ok {
 		Error.Fatalf("No such out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return p.outPorts[portName]
-}
-
-// SetOutPort adds the out-port port to the process, with name portName
-func (p *BaseProcess) SetOutPort(portName string, port *OutPort) {
-	if p.outPorts[portName] != nil {
-		Error.Fatalf("Such an out-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
-	}
-	p.outPorts[portName] = port
 }
 
 // OutPorts returns a map of all the out-ports of the process, keyed by their
@@ -90,31 +94,52 @@ func (p *BaseProcess) OutPorts() map[string]*OutPort {
 // Param-in-port stuff
 // ------------------------------------------------
 
-// ParamInPort returns the parameter port with name paramPortName
-func (p *BaseProcess) ParamInPort(paramPortName string) *ParamInPort {
-	if p.paramInPorts[paramPortName] == nil {
-		Error.Fatalf("No such param-port ('%s') for process '%s'. Please check your workflow code!\n", paramPortName, p.name)
+// InitParamInPort adds the parameter port paramPort with name portName
+func (p *BaseProcess) InitParamInPort(proc WorkflowProcess, portName string) {
+	if _, ok := p.paramInPorts[portName]; ok {
+		Error.Fatalf("Such a param-in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
-	return p.paramInPorts[paramPortName]
+	pip := NewParamInPort(portName)
+	pip.Process = proc
+	p.paramInPorts[portName] = pip
 }
 
-// ParamInPorts returns all parameter ports of the process
+// ParamInPort returns the parameter port with name portName
+func (p *BaseProcess) ParamInPort(portName string) *ParamInPort {
+	if _, ok := p.paramInPorts[portName]; !ok {
+		Error.Fatalf("No such param-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+	}
+	return p.paramInPorts[portName]
+}
+
+// ParamInPorts returns all parameter in-ports of the process
 func (p *BaseProcess) ParamInPorts() map[string]*ParamInPort {
 	return p.paramInPorts
-}
-
-// SetParamInPort adds the parameter port paramPort with name paramPortName
-func (p *BaseProcess) SetParamInPort(paramPortName string, paramPort *ParamInPort) {
-	p.paramInPorts[paramPortName] = paramPort
 }
 
 // ------------------------------------------------
 // Param-out-port stuff
 // ------------------------------------------------
 
-// ParamOutPorts returns an empty map of ParamOutPorts, to comlpy with the
-// WorkflowProcess interface (since param-out-ports are not applicable for
-// normal processes)
+// InitParamOutPort adds the parameter port paramPort with name portName
+func (p *BaseProcess) InitParamOutPort(proc WorkflowProcess, portName string) {
+	if _, ok := p.paramOutPorts[portName]; ok {
+		Error.Fatalf("Such a param-in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
+	}
+	pop := NewParamOutPort(portName)
+	pop.Process = proc
+	p.paramOutPorts[portName] = pop
+}
+
+// ParamOutPort returns the parameter port with name portName
+func (p *BaseProcess) ParamOutPort(portName string) *ParamOutPort {
+	if _, ok := p.paramOutPorts[portName]; !ok {
+		Error.Fatalf("No such param-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+	}
+	return p.paramOutPorts[portName]
+}
+
+// ParamOutPorts returns all parameter out-ports of the process
 func (p *BaseProcess) ParamOutPorts() map[string]*ParamOutPort {
 	return p.paramOutPorts
 }

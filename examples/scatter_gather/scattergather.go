@@ -39,20 +39,20 @@ func main() {
 
 	// Concatenate GC & AT counts
 	gccat := comp.NewConcatenator(wf, "gccat", "gccounts.txt")
-	gccat.In.Connect(gccnt.Out("gccount"))
+	gccat.In().Connect(gccnt.Out("gccount"))
 
 	atcat := comp.NewConcatenator(wf, "atcat", "atcounts.txt")
-	atcat.In.Connect(atcnt.Out("atcount"))
+	atcat.In().Connect(atcnt.Out("atcount"))
 
 	// Sum up the GC & AT counts on the concatenated file
 	sumCommand := "awk '{ SUM += $1 } END { print SUM }' {i:in} > {o:sum}"
 	gcsum := wf.NewProc("gcsum", sumCommand)
 	gcsum.SetPathExtend("in", "sum", ".sum")
-	gcsum.In("in").Connect(gccat.Out)
+	gcsum.In("in").Connect(gccat.Out())
 
 	atsum := wf.NewProc("atsum", sumCommand)
 	atsum.SetPathExtend("in", "sum", ".sum")
-	atsum.In("in").Connect(atcat.Out)
+	atsum.In("in").Connect(atcat.Out())
 
 	// Finally, calculate the ratio between GC chars, vs. GC+AT chars
 	gcrat := wf.NewProc("gcratio", "gc=$(cat {i:gcsum}); at=$(cat {i:atsum}); calc \"$gc/($gc+$at)\" > {o:gcratio}")
