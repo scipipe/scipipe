@@ -24,18 +24,18 @@ const (
 // and parameters received on its in-ports and parameter ports
 type Process struct {
 	name             string
+	workflow         *Workflow
 	CommandPattern   string
-	ExecMode         ExecMode
-	Prepend          string
-	Spawn            bool
+	paramInPorts     map[string]*ParamInPort
 	inPorts          map[string]*InPort
 	outPorts         map[string]*OutPort
 	OutPortsDoStream map[string]bool
 	PathFormatters   map[string]func(*Task) string
-	paramInPorts     map[string]*ParamInPort
 	CustomExecute    func(*Task)
-	workflow         *Workflow
 	CoresPerTask     int
+	ExecMode         ExecMode
+	Prepend          string
+	Spawn            bool
 }
 
 // NewProcess returns a new Process (without initializing its ports based on the
@@ -43,14 +43,14 @@ type Process struct {
 func NewProcess(workflow *Workflow, name string, command string) *Process {
 	p := &Process{
 		name:             name,
+		workflow:         workflow,
 		CommandPattern:   command,
+		paramInPorts:     make(map[string]*ParamInPort),
 		inPorts:          make(map[string]*InPort),
 		outPorts:         make(map[string]*OutPort),
 		OutPortsDoStream: make(map[string]bool),
 		PathFormatters:   make(map[string]func(*Task) string),
-		paramInPorts:     make(map[string]*ParamInPort),
 		Spawn:            true,
-		workflow:         workflow,
 		CoresPerTask:     1,
 	}
 	workflow.AddProc(p)
