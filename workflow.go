@@ -247,6 +247,9 @@ func (wf *Workflow) RunProcsByName(procNames ...string) {
 // RunToProcName runs all processes upstream of, and including, the process with
 // name finalProcName
 func (wf *Workflow) RunToProcName(finalProcName string) {
+	if _, ok := wf.Procs()[finalProcName]; !ok {
+		Error.Fatalf("No process with name '%s' in %s workflow. Please check the name supplied to RunToProcName() in your workflow, and try again", finalProcName, wf.Name())
+	}
 	wf.RunToProc(wf.Proc(finalProcName))
 }
 

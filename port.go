@@ -52,7 +52,7 @@ func (pt *InPort) Name() string {
 // AddRemotePort adds a remote OutPort to the InPort
 func (pt *InPort) AddRemotePort(rpt *OutPort) {
 	if pt.RemotePorts[rpt.Name()] != nil {
-		Error.Fatalf("A remote port with name %s already exists, for in-port %s\n", rpt.Name(), pt.Name())
+		Error.Fatalf("[Process:%s]: A remote port with name %s already exists, for param-port %s connected to process %s\n", pt.Process.Name(), rpt.Name(), pt.Name(), rpt.Process.Name())
 	}
 	pt.RemotePorts[rpt.Name()] = rpt
 }
@@ -146,7 +146,7 @@ func (pt *OutPort) Name() string {
 // AddRemotePort adds a remote InPort to the OutPort
 func (pt *OutPort) AddRemotePort(rpt *InPort) {
 	if pt.RemotePorts[rpt.Name()] != nil {
-		Error.Fatalf("A remote port with name %s already exists, for out-port %s\n", rpt.Name(), pt.Name())
+		Error.Fatalf("[Process:%s]: A remote port with name %s already exists, for param-port %s connected to process %s\n", pt.Process.Name(), rpt.Name(), pt.Name(), rpt.Process.Name())
 	}
 	pt.RemotePorts[rpt.Name()] = rpt
 }
@@ -236,7 +236,7 @@ func (pip *ParamInPort) Name() string {
 // AddRemotePort adds a remote ParamOutPort to the ParamInPort
 func (pip *ParamInPort) AddRemotePort(pop *ParamOutPort) {
 	if pip.RemotePorts[pop.Name()] != nil {
-		Error.Fatalf("A remote param port with name %s already exists, for in-param-port %s\n", pop.Name(), pip.Name())
+		Error.Fatalf("[Process:%s]: A remote param port with name %s already exists, for in-param-port %s connected to process %s\n", pip.Process.Name(), pop.Name(), pip.Name(), pop.Process.Name())
 	}
 	pip.RemotePorts[pop.Name()] = pop
 }
@@ -326,7 +326,7 @@ func (pop *ParamOutPort) Name() string {
 // AddRemotePort adds a remote ParamInPort to the ParamOutPort
 func (pop *ParamOutPort) AddRemotePort(pip *ParamInPort) {
 	if pop.RemotePorts[pip.Name()] != nil {
-		Error.Fatalf("A remote param port with name %s already exists, for out-port %s\n", pip.Name(), pop.Name())
+		Error.Fatalf("[Process:%s]: A remote param port with name %s already exists, for in-param-port %s connected to process %s\n", pop.Process.Name(), pip.Name(), pop.Name(), pip.Process.Name())
 	}
 	pop.RemotePorts[pip.Name()] = pip
 }
