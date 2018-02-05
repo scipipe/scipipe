@@ -62,6 +62,14 @@ func (p *BaseProcess) InPorts() map[string]*InPort {
 	return p.inPorts
 }
 
+// DeleteInPort deletes an InPort object from the process
+func (p *BaseProcess) DeleteInPort(portName string) {
+	if _, ok := p.inPorts[portName]; !ok {
+		Error.Fatalf("No such in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+	}
+	delete(p.inPorts, portName)
+}
+
 // ------------------------------------------------
 // Out-port stuff
 // ------------------------------------------------
@@ -90,6 +98,14 @@ func (p *BaseProcess) OutPorts() map[string]*OutPort {
 	return p.outPorts
 }
 
+// DeleteOutPort deletes a OutPort object from the process
+func (p *BaseProcess) DeleteOutPort(portName string) {
+	if _, ok := p.outPorts[portName]; !ok {
+		Error.Fatalf("No such out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+	}
+	delete(p.outPorts, portName)
+}
+
 // ------------------------------------------------
 // Param-in-port stuff
 // ------------------------------------------------
@@ -107,7 +123,7 @@ func (p *BaseProcess) InitParamInPort(proc WorkflowProcess, portName string) {
 // ParamInPort returns the parameter port with name portName
 func (p *BaseProcess) ParamInPort(portName string) *ParamInPort {
 	if _, ok := p.paramInPorts[portName]; !ok {
-		Error.Fatalf("No such param-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Error.Fatalf("No such param-in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return p.paramInPorts[portName]
 }
@@ -117,14 +133,25 @@ func (p *BaseProcess) ParamInPorts() map[string]*ParamInPort {
 	return p.paramInPorts
 }
 
+// DeleteParamInPort deletes a ParamInPort object from the process
+func (p *BaseProcess) DeleteParamInPort(portName string) {
+	if _, ok := p.paramInPorts[portName]; !ok {
+		Error.Fatalf("No such param-in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+	}
+	delete(p.paramInPorts, portName)
+}
+
 // ------------------------------------------------
 // Param-out-port stuff
 // ------------------------------------------------
 
-// InitParamOutPort adds the parameter port paramPort with name portName
+// InitParamOutPort initializes the parameter port paramPort with name portName
+// to the process We need to supply the concrete process used here as well,
+// since this method might be used as part of an embedded struct, meaning that
+// the process in the receiver is just the *BaseProcess, which doesn't suffice.
 func (p *BaseProcess) InitParamOutPort(proc WorkflowProcess, portName string) {
 	if _, ok := p.paramOutPorts[portName]; ok {
-		Error.Fatalf("Such a param-in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Error.Fatalf("Such a param-out-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	pop := NewParamOutPort(portName)
 	pop.Process = proc
@@ -134,7 +161,7 @@ func (p *BaseProcess) InitParamOutPort(proc WorkflowProcess, portName string) {
 // ParamOutPort returns the parameter port with name portName
 func (p *BaseProcess) ParamOutPort(portName string) *ParamOutPort {
 	if _, ok := p.paramOutPorts[portName]; !ok {
-		Error.Fatalf("No such param-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Error.Fatalf("No such param-out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return p.paramOutPorts[portName]
 }
@@ -142,6 +169,14 @@ func (p *BaseProcess) ParamOutPort(portName string) *ParamOutPort {
 // ParamOutPorts returns all parameter out-ports of the process
 func (p *BaseProcess) ParamOutPorts() map[string]*ParamOutPort {
 	return p.paramOutPorts
+}
+
+// DeleteParamOutPort deletes a ParamOutPort object from the process
+func (p *BaseProcess) DeleteParamOutPort(portName string) {
+	if _, ok := p.paramOutPorts[portName]; !ok {
+		Error.Fatalf("No such param-out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+	}
+	delete(p.paramOutPorts, portName)
 }
 
 // ------------------------------------------------
