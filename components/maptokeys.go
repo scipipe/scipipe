@@ -10,56 +10,32 @@ import (
 // out-port, which are identical to the incoming IPs, except for the new
 // key:value map
 type MapToKeys struct {
-	scipipe.EmptyWorkflowProcess
-	In       *scipipe.InPort
-	Out      *scipipe.OutPort
-	procName string
-	mapFunc  func(ip *scipipe.IP) map[string]string
+	scipipe.BaseProcess
+	mapFunc func(ip *scipipe.IP) map[string]string
 }
 
 // NewMapToKeys returns an initialized MapToKeys process
 func NewMapToKeys(wf *scipipe.Workflow, name string, mapFunc func(ip *scipipe.IP) map[string]string) *MapToKeys {
-	mtp := &MapToKeys{
-		procName: name,
-		mapFunc:  mapFunc,
-		In:       scipipe.NewInPort("in"),
-		Out:      scipipe.NewOutPort("out"),
+	p := &MapToKeys{
+		BaseProcess: scipipe.NewBaseProcess(wf, name),
+		mapFunc:     mapFunc,
 	}
-	wf.AddProc(mtp)
-	return mtp
+	p.InitInPort(p, "in")
+	p.InitOutPort(p, "out")
+	wf.AddProc(p)
+	return p
 }
 
-// Name returns the name of the MapToKeys process
-func (p *MapToKeys) Name() string {
-	return p.procName
-}
-
-// Connected tells whether all ports of the MapToKeys process are connected
-func (p *MapToKeys) Connected() bool {
-	return p.In.Connected() && p.Out.Connected()
-}
-
-// InPorts returns all the in-ports for the process
-func (p *MapToKeys) InPorts() map[string]*scipipe.InPort {
-	return map[string]*scipipe.InPort{
-		p.In.Name(): p.In,
-	}
-}
-
-// OutPorts returns all the out-ports for the process
-func (p *MapToKeys) OutPorts() map[string]*scipipe.OutPort {
-	return map[string]*scipipe.OutPort{
-		p.Out.Name(): p.Out,
-	}
-}
+func (p *MapToKeys) In() *scipipe.InPort   { return p.InPort("in") }
+func (p *MapToKeys) Out() *scipipe.OutPort { return p.OutPort("out") }
 
 // Run runs the MapToKeys process
 func (p *MapToKeys) Run() {
-	defer p.Out.Close()
-	for ip := range p.In.Chan {
+	defer p.Out().Close()
+	for ip := range p.In().Chan {
 		newKeys := p.mapFunc(ip)
 		ip.AddKeys(newKeys)
 		ip.WriteAuditLogToFile()
-		p.Out.Send(ip)
+		p.Out().Send(ip)
 	}
 }
