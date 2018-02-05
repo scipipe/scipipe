@@ -78,6 +78,10 @@ func (ep *EmptyWorkflowProcess) ParamOutPorts() map[string]*ParamOutPort {
 	return map[string]*ParamOutPort{}
 }
 
+func (wf *Workflow) Name() string {
+	return wf.name
+}
+
 // AddProc adds a Process to the workflow, to be run when the workflow runs
 func (wf *Workflow) AddProc(proc WorkflowProcess) {
 	if wf.procs[proc.Name()] != nil {
