@@ -4,7 +4,7 @@ developed workflow, and want to run only up to a specific process, rather
 than also running all downstream processes, which might be unnecessary heavy.
 
 This can be done by using the
-[workflow.RunToProcName()](https://godoc.org/github.com/scipipe/scipipe#Workflow.Run)
+[workflow.RunToProcNames()](https://godoc.org/github.com/scipipe/scipipe#Workflow.RunToProcNames)
 method. By using this instead of the normal `workflow.Run()` method, scipipe
 will only run this process and all upstream processes of that one.
 
