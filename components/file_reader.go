@@ -24,8 +24,8 @@ func NewFileReader(wf *scipipe.Workflow, name string) *FileReader {
 		FilePath: scipipe.NewParamInPort("filepath"),
 		OutLine:  scipipe.NewParamOutPort("line"),
 	}
-	fr.FilePath.Process = fr
-	fr.OutLine.Process = fr
+	fr.FilePath.SetProcess(fr)
+	fr.OutLine.SetProcess(fr)
 	wf.AddProc(fr)
 	return fr
 }

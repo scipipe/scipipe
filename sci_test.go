@@ -196,6 +196,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 	i := 1
 
 	tempPort := NewInPort("temp")
+	tempPort.process = NewBogusProcess("bogus_process")
 	ConnectFrom(tempPort, sl.Out("out"))
 
 	// Should not start go-routines before connection stuff is done
@@ -393,9 +394,9 @@ func NewCombinatoricsProcess(name string) *CombinatoricsProcess {
 		C:    c,
 		name: name,
 	}
-	a.Process = p
-	b.Process = p
-	c.Process = p
+	a.process = p
+	b.process = p
+	c.process = p
 	return p
 }
 
@@ -453,8 +454,8 @@ func NewStreamToSubStream(wf *Workflow, name string) *StreamToSubStream {
 		In:           NewInPort("in"),
 		OutSubStream: NewOutPort("out_substream"),
 	}
-	sts.In.Process = sts
-	sts.OutSubStream.Process = sts
+	sts.In.process = sts
+	sts.OutSubStream.process = sts
 	wf.AddProc(sts)
 	return sts
 }
@@ -506,8 +507,8 @@ func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *IP) map[string]str
 		In:       NewInPort("in"),
 		Out:      NewOutPort("out"),
 	}
-	mtp.In.Process = mtp
-	mtp.Out.Process = mtp
+	mtp.In.process = mtp
+	mtp.Out.process = mtp
 	wf.AddProc(mtp)
 	return mtp
 }

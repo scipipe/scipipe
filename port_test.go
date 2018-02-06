@@ -11,8 +11,11 @@ func TestConnectTo(t *testing.T) {
 
 	outpName := "test_outport"
 	outp := NewOutPort(outpName)
+	outp.process = NewBogusProcess("bogus_process")
+
 	inpName := "test_inport"
 	inp := NewInPort(inpName)
+	inp.process = NewBogusProcess("bogus_process")
 
 	ConnectTo(outp, inp)
 	if !outp.Connected() {
@@ -28,8 +31,11 @@ func TestConnectFrom(t *testing.T) {
 
 	outpName := "test_outport"
 	outp := NewOutPort(outpName)
+	outp.process = NewBogusProcess("bogus_process")
+
 	inpName := "test_inport"
 	inp := NewInPort(inpName)
+	inp.process = NewBogusProcess("bogus_process")
 
 	ConnectFrom(inp, outp)
 	if !outp.Connected() {
@@ -73,17 +79,11 @@ func TestInPortName(t *testing.T) {
 	initTestLogs()
 
 	wf := NewWorkflow("dummy_workflow", 1)
-	prc := NewProc(wf, "foo_proc", "echo foo > {o:out}")
+
 	inp := NewInPort("in_test")
+	inp.process = NewProc(wf, "foo_proc", "echo foo > {o:out}")
 
-	expectedName := "in_test"
-	if inp.Name() != expectedName {
-		t.Errorf("Name of in-port (%s) is not the expected (%s)", inp.Name(), expectedName)
-	}
-
-	inp.Process = prc
-
-	expectedName = "foo_proc.in_test"
+	expectedName := "foo_proc.in_test"
 	if inp.Name() != expectedName {
 		t.Errorf("Name of in-port (%s) is not the expected (%s)", inp.Name(), expectedName)
 	}
@@ -91,6 +91,8 @@ func TestInPortName(t *testing.T) {
 
 func TestInPortSendRecv(t *testing.T) {
 	inp := NewInPort("test_inport")
+	inp.process = NewBogusProcess("bogus_process")
+
 	ip := NewIP("/tmp/test.txt")
 	go func() {
 		inp.Send(ip)
@@ -105,19 +107,12 @@ func TestOutPortName(t *testing.T) {
 	initTestLogs()
 
 	wf := NewWorkflow("dummy_workflow", 1)
-	prc := NewProc(wf, "foo_proc", "echo foo > {o:out}")
-	inp := NewOutPort("out_test")
+	outp := NewOutPort("out_test")
+	outp.process = NewProc(wf, "foo_proc", "echo foo > {o:out}")
 
-	expectedName := "out_test"
-	if inp.Name() != expectedName {
-		t.Errorf("Name of out-port (%s) is not the expected (%s)", inp.Name(), expectedName)
-	}
-
-	inp.Process = prc
-
-	expectedName = "foo_proc.out_test"
-	if inp.Name() != expectedName {
-		t.Errorf("Name of out-port (%s) is not the expected (%s)", inp.Name(), expectedName)
+	expectedName := "foo_proc.out_test"
+	if outp.Name() != expectedName {
+		t.Errorf("Name of out-port (%s) is not the expected (%s)", outp.Name(), expectedName)
 	}
 }
 
@@ -125,17 +120,10 @@ func TestParamInPortName(t *testing.T) {
 	initTestLogs()
 
 	wf := NewWorkflow("dummy_workflow", 1)
-	prc := NewProc(wf, "foo_proc", "echo foo > {o:out}")
 	inp := NewParamInPort("in_test")
+	inp.process = NewProc(wf, "foo_proc", "echo foo > {o:out}")
 
-	expectedName := "in_test"
-	if inp.Name() != expectedName {
-		t.Errorf("Name of in-port (%s) is not the expected (%s)", inp.Name(), expectedName)
-	}
-
-	inp.Process = prc
-
-	expectedName = "foo_proc.in_test"
+	expectedName := "foo_proc.in_test"
 	if inp.Name() != expectedName {
 		t.Errorf("Name of in-port (%s) is not the expected (%s)", inp.Name(), expectedName)
 	}
@@ -159,6 +147,7 @@ func TestParamInPortConnectStr(t *testing.T) {
 	initTestLogs()
 
 	pip := NewParamInPort("test_inport")
+	pip.process = NewBogusProcess("bogus_process")
 
 	pip.ConnectStr("foo", "bar", "baz")
 	expectedStrs := []string{"foo", "bar", "baz"}
@@ -176,19 +165,12 @@ func TestParamOutPortName(t *testing.T) {
 	initTestLogs()
 
 	wf := NewWorkflow("dummy_workflow", 1)
-	prc := NewProc(wf, "foo_proc", "echo foo > {o:out}")
-	inp := NewParamOutPort("out_test")
+	pop := NewParamOutPort("out_test")
+	pop.process = NewProc(wf, "foo_proc", "echo foo > {o:out}")
 
-	expectedName := "out_test"
-	if inp.Name() != expectedName {
-		t.Errorf("Name of out-port (%s) is not the expected (%s)", inp.Name(), expectedName)
-	}
-
-	inp.Process = prc
-
-	expectedName = "foo_proc.out_test"
-	if inp.Name() != expectedName {
-		t.Errorf("Name of out-port (%s) is not the expected (%s)", inp.Name(), expectedName)
+	expectedName := "foo_proc.out_test"
+	if pop.Name() != expectedName {
+		t.Errorf("Name of out-port (%s) is not the expected (%s)", pop.Name(), expectedName)
 	}
 }
 
@@ -197,8 +179,11 @@ func TestParamOutPortConnect(t *testing.T) {
 
 	popName := "test_param_outport"
 	pop := NewParamOutPort(popName)
+	pop.process = NewBogusProcess("bogus_process")
+
 	pipName := "test_param_inport"
 	pip := NewParamInPort(pipName)
+	pip.process = NewBogusProcess("bogus_process")
 
 	pop.Connect(pip)
 
@@ -209,10 +194,10 @@ func TestParamOutPortConnect(t *testing.T) {
 		t.Errorf("Param out port '%s' not having connected status = true", pip.Name())
 	}
 
-	if pop.RemotePorts[pipName] == nil {
+	if pop.RemotePorts["bogus_process."+pipName] == nil {
 		t.Errorf("ParamInPort not among remote ports in ParamOutPort")
 	}
-	if pip.RemotePorts[popName] == nil {
+	if pip.RemotePorts["bogus_process."+popName] == nil {
 		t.Errorf("ParamOutPort not among remote ports in ParamInPort")
 	}
 }

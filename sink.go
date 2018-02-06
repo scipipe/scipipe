@@ -18,8 +18,8 @@ func NewSink(name string) (s *Sink) {
 		inPort:      inp,
 		paramInPort: pip,
 	}
-	inp.Process = snk
-	pip.Process = snk
+	inp.process = snk
+	pip.process = snk
 	return snk
 }
 

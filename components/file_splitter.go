@@ -29,8 +29,8 @@ func NewFileSplitter(wf *scipipe.Workflow, name string, linesPerSplit int) *File
 		LinesPerSplit: linesPerSplit,
 		workflow:      wf,
 	}
-	fs.InFile.Process = fs
-	fs.OutSplitFile.Process = fs
+	fs.InFile.SetProcess(fs)
+	fs.OutSplitFile.SetProcess(fs)
 	wf.AddProc(fs)
 	return fs
 }
@@ -60,7 +60,7 @@ func (p *FileSplitter) Run() {
 
 	fileReader := NewFileReader(p.workflow, p.Name()+"_filereader_"+getRandString(7))
 	pop := scipipe.NewParamOutPort(p.Name() + "_temp_filepath_feeder")
-	pop.Process = p
+	pop.SetProcess(p)
 	fileReader.FilePath.Connect(pop)
 
 	for ft := range p.InFile.Chan {
@@ -72,7 +72,7 @@ func (p *FileSplitter) Run() {
 		}()
 
 		pip := scipipe.NewParamInPort(p.Name() + "temp_line_reader")
-		pip.Process = p
+		pip.SetProcess(p)
 		pip.Connect(fileReader.OutLine)
 
 		go fileReader.Run()

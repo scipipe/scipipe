@@ -287,7 +287,7 @@ func NewIPGen(workflow *Workflow, name string, filePaths ...string) (ipg *IPGen)
 		Out:       opt,
 		FilePaths: filePaths,
 	}
-	opt.Process = ipg
+	opt.process = ipg
 	workflow.AddProc(ipg)
 	return
 }

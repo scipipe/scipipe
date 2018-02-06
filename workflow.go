@@ -108,6 +108,9 @@ func (wf *Workflow) NewProc(procName string, commandPattern string) *Process {
 
 // Proc returns the process with name procName from the workflow
 func (wf *Workflow) Proc(procName string) WorkflowProcess {
+	if _, ok := wf.procs[procName]; !ok {
+		Error.Fatalf("No process named '%s' in workflow '%s'", procName, wf.Name())
+	}
 	return wf.procs[procName]
 }
 
@@ -196,16 +199,16 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 		for _, opt := range proc.OutPorts() {
 			for iptName, ipt := range opt.RemotePorts {
 				// If the remotely connected process is not among the ones to run ...
-				if ipt.Process == nil {
+				if ipt.Process() == nil {
 					Debug.Printf("Disconnecting in-port %s from out-port %s", ipt.Name(), opt.Name())
 					opt.Disconnect(iptName)
-				} else if _, ok := procs[ipt.Process.Name()]; !ok {
+				} else if _, ok := procs[ipt.Process().Name()]; !ok {
 					Debug.Printf("Disconnecting in-port %s from out-port %s", ipt.Name(), opt.Name())
 					opt.Disconnect(iptName)
 				}
 			}
 			if !opt.Connected() {
-				Debug.Printf("Connecting disconnected out-port %s of process %s to workflow sink", opt.Name(), opt.Process.Name())
+				Debug.Printf("Connecting disconnected out-port %s of process %s to workflow sink", opt.Name(), opt.Process().Name())
 				wf.sink.Connect(opt)
 			}
 		}
@@ -214,16 +217,16 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 		for _, pop := range proc.ParamOutPorts() {
 			for rppName, rpp := range pop.RemotePorts {
 				// If the remotely connected process is not among the ones to run ...
-				if rpp.Process == nil {
+				if rpp.Process() == nil {
 					Debug.Printf("Disconnecting in-port %s from out-port %s", rpp.Name(), pop.Name())
 					pop.Disconnect(rppName)
-				} else if _, ok := procs[rpp.Process.Name()]; !ok {
+				} else if _, ok := procs[rpp.Process().Name()]; !ok {
 					Debug.Printf("Disconnecting in-port %s from out-port %s", rpp.Name(), pop.Name())
 					pop.Disconnect(rppName)
 				}
 			}
 			if !pop.Connected() {
-				Debug.Printf("Connecting disconnected out-port %s of process %s to workflow sink", pop.Name(), pop.Process.Name())
+				Debug.Printf("Connecting disconnected out-port %s of process %s to workflow sink", pop.Name(), pop.Process().Name())
 				wf.sink.ConnectParam(pop)
 			}
 		}
@@ -250,17 +253,21 @@ func (wf *Workflow) RunProcsByName(procNames ...string) {
 
 // RunToProcName runs all processes upstream of, and including, the process with
 // name finalProcName
-func (wf *Workflow) RunToProcName(finalProcName string) {
-	if _, ok := wf.Procs()[finalProcName]; !ok {
-		Error.Fatalf("No process with name '%s' in %s workflow. Please check the name supplied to RunToProcName() in your workflow, and try again", finalProcName, wf.Name())
+func (wf *Workflow) RunToProcNames(finalProcNames ...string) {
+	procs := []WorkflowProcess{}
+	for _, procName := range finalProcNames {
+		procs = append(procs, wf.Proc(procName))
 	}
-	wf.RunToProc(wf.Proc(finalProcName))
+	wf.RunToProcs(procs...)
 }
 
-// RunToProc runs all processes upstream of, and including, the finalProc
-func (wf *Workflow) RunToProc(finalProc WorkflowProcess) {
-	procsToRun := upstreamProcsForProc(finalProc)
-	procsToRun[finalProc.Name()] = finalProc
+// RunToProcs runs all processes upstream of, and including, the finalProc
+func (wf *Workflow) RunToProcs(finalProcs ...WorkflowProcess) {
+	procsToRun := map[string]WorkflowProcess{}
+	for _, finalProc := range finalProcs {
+		procsToRun = mergeWFMaps(procsToRun, upstreamProcsForProc(finalProc))
+		procsToRun[finalProc.Name()] = finalProc
+	}
 	wf.runProcs(procsToRun)
 }
 
@@ -270,14 +277,14 @@ func upstreamProcsForProc(proc WorkflowProcess) map[string]WorkflowProcess {
 	procs := map[string]WorkflowProcess{}
 	for _, inp := range proc.InPorts() {
 		for _, rpt := range inp.RemotePorts {
-			procs[rpt.Process.Name()] = rpt.Process
-			mergeWFMaps(procs, upstreamProcsForProc(rpt.Process))
+			procs[rpt.Process().Name()] = rpt.Process()
+			mergeWFMaps(procs, upstreamProcsForProc(rpt.Process()))
 		}
 	}
 	for _, pip := range proc.ParamInPorts() {
 		for _, rpp := range pip.RemotePorts {
-			procs[rpp.Process.Name()] = rpp.Process
-			mergeWFMaps(procs, upstreamProcsForProc(rpp.Process))
+			procs[rpp.Process().Name()] = rpp.Process()
+			mergeWFMaps(procs, upstreamProcsForProc(rpp.Process()))
 		}
 	}
 	return procs

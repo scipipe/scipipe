@@ -44,7 +44,7 @@ func NewFileSender(name string) *FileSender {
 		name: name,
 		Out:  sci.NewOutPort("out"),
 	}
-	fsd.Out.Process = fsd
+	fsd.Out.SetProcess(fsd)
 	return fsd
 }
 

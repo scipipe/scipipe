@@ -52,7 +52,7 @@ func (p *BaseProcess) InitInPort(proc WorkflowProcess, portName string) {
 		Error.Fatalf("Such an in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	ipt := NewInPort(portName)
-	ipt.Process = proc
+	ipt.process = proc
 	p.inPorts[portName] = ipt
 }
 
@@ -80,7 +80,7 @@ func (p *BaseProcess) InitOutPort(proc WorkflowProcess, portName string) {
 		Error.Fatalf("Such an out-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	opt := NewOutPort(portName)
-	opt.Process = proc
+	opt.process = proc
 	p.outPorts[portName] = opt
 }
 
@@ -116,7 +116,7 @@ func (p *BaseProcess) InitParamInPort(proc WorkflowProcess, portName string) {
 		Error.Fatalf("Such a param-in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	pip := NewParamInPort(portName)
-	pip.Process = proc
+	pip.process = proc
 	p.paramInPorts[portName] = pip
 }
 
@@ -154,7 +154,7 @@ func (p *BaseProcess) InitParamOutPort(proc WorkflowProcess, portName string) {
 		Error.Fatalf("Such a param-out-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	pop := NewParamOutPort(portName)
-	pop.Process = proc
+	pop.process = proc
 	p.paramOutPorts[portName] = pop
 }
 

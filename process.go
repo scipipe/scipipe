@@ -203,7 +203,7 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 		name := m[2]
 		if typ == "o" || typ == "os" {
 			p.outPorts[name] = NewOutPort(name)
-			p.outPorts[name].Process = p
+			p.outPorts[name].process = p
 			if typ == "os" {
 				p.OutPortsDoStream[name] = true
 			}
@@ -214,11 +214,11 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 			// anyways, for use cases when we want to send IP
 			// on the inport manually.
 			p.inPorts[name] = NewInPort(name)
-			p.inPorts[name].Process = p
+			p.inPorts[name].process = p
 		} else if typ == "p" {
 			if params == nil || params[name] == "" {
 				p.paramInPorts[name] = NewParamInPort(name)
-				p.paramInPorts[name].Process = p
+				p.paramInPorts[name].process = p
 			}
 		}
 	}

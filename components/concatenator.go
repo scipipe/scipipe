@@ -42,7 +42,7 @@ func (p *Concatenator) Run() {
 
 		fr := NewFileReader(p.Workflow(), p.Name()+"_filereader_"+getRandString(7))
 		pop := scipipe.NewParamOutPort("temp_filepath_feeder")
-		pop.Process = p
+		pop.SetProcess(p)
 		fr.FilePath.Connect(pop)
 		go func() {
 			defer pop.Close()
@@ -50,7 +50,7 @@ func (p *Concatenator) Run() {
 		}()
 
 		pip := scipipe.NewParamInPort(p.Name() + "temp_line_reader")
-		pip.Process = p
+		pip.SetProcess(p)
 		pip.Connect(fr.OutLine)
 
 		go fr.Run()

@@ -43,7 +43,7 @@ func TestRunToProc(t *testing.T) {
 	initTestLogs()
 
 	wf := getWorkflowForTestRunToProc("TestRunToProcWF_A")
-	wf.RunToProcName("mrg")
+	wf.RunToProcNames("mrg")
 
 	if _, err := os.Stat("/tmp/foo.txt.bar.txt"); err != nil {
 		t.Error("Merged file (/tmp/foo.txt.bar.txt) is not created, which it should")
@@ -56,7 +56,7 @@ func TestRunToProc(t *testing.T) {
 	// We need to re-configure the workflow, since the connectivity will be
 	// affected by the previous "RunToProcName" call
 	wf = getWorkflowForTestRunToProc("TestRunToProcWF_B")
-	wf.RunToProcName("rpl")
+	wf.RunToProcNames("rpl")
 
 	if _, err := os.Stat("/tmp/foo.txt.bar.txt.rpl.txt"); err != nil {
 		t.Error("Replaced (merge) file (/tmp/foo.txt.bar.rpl.txt) is not created, which it should (at this point)")

@@ -54,9 +54,9 @@ func NewCombinatoricsGen(name string) *CombinatoricsGen {
 		B:    sci.NewParamOutPort("b"),
 		C:    sci.NewParamOutPort("c"),
 	}
-	cmb.A.Process = cmb
-	cmb.B.Process = cmb
-	cmb.C.Process = cmb
+	cmb.A.SetProcess(cmb)
+	cmb.B.SetProcess(cmb)
+	cmb.C.SetProcess(cmb)
 	return cmb
 }
 
