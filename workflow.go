@@ -251,9 +251,9 @@ func (wf *Workflow) RunProcsByName(procNames ...string) {
 	wf.runProcs(procs)
 }
 
-// RunToProcName runs all processes upstream of, and including, the process with
-// name finalProcName
-func (wf *Workflow) RunToProcNames(finalProcNames ...string) {
+// RunTo runs all processes upstream of, and including, the process with
+// names provided as arguments
+func (wf *Workflow) RunTo(finalProcNames ...string) {
 	procs := []WorkflowProcess{}
 	for _, procName := range finalProcNames {
 		procs = append(procs, wf.Proc(procName))
@@ -261,7 +261,8 @@ func (wf *Workflow) RunToProcNames(finalProcNames ...string) {
 	wf.RunToProcs(procs...)
 }
 
-// RunToProcs runs all processes upstream of, and including, the finalProc
+// RunToProcs runs all processes upstream of, and including, the process strucs
+// provided as arguments
 func (wf *Workflow) RunToProcs(finalProcs ...WorkflowProcess) {
 	procsToRun := map[string]WorkflowProcess{}
 	for _, finalProc := range finalProcs {
