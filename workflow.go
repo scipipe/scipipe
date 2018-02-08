@@ -78,6 +78,7 @@ func (ep *EmptyWorkflowProcess) ParamOutPorts() map[string]*ParamOutPort {
 	return map[string]*ParamOutPort{}
 }
 
+// Name returns the name of the workflow
 func (wf *Workflow) Name() string {
 	return wf.name
 }

@@ -262,8 +262,8 @@ func (pip *ParamInPort) Process() WorkflowProcess {
 }
 
 // SetProcess sets the process of the port to p
-func (pt *ParamInPort) SetProcess(p WorkflowProcess) {
-	pt.process = p
+func (pip *ParamInPort) SetProcess(p WorkflowProcess) {
+	pip.process = p
 }
 
 // AddRemotePort adds a remote ParamOutPort to the ParamInPort
@@ -363,8 +363,8 @@ func (pop *ParamOutPort) Process() WorkflowProcess {
 }
 
 // SetProcess sets the process of the port to p
-func (pt *ParamOutPort) SetProcess(p WorkflowProcess) {
-	pt.process = p
+func (pop *ParamOutPort) SetProcess(p WorkflowProcess) {
+	pop.process = p
 }
 
 // AddRemotePort adds a remote ParamInPort to the ParamOutPort
