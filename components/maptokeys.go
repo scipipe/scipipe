@@ -26,7 +26,11 @@ func NewMapToKeys(wf *scipipe.Workflow, name string, mapFunc func(ip *scipipe.IP
 	return p
 }
 
-func (p *MapToKeys) In() *scipipe.InPort   { return p.InPort("in") }
+// In takes input files the content of which the map function will be run,
+// to generate keys
+func (p *MapToKeys) In() *scipipe.InPort { return p.InPort("in") }
+
+// Out outputs files that are supplemented with keys by the map function.
 func (p *MapToKeys) Out() *scipipe.OutPort { return p.OutPort("out") }
 
 // Run runs the MapToKeys process

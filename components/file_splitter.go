@@ -29,14 +29,10 @@ func NewFileSplitter(wf *scipipe.Workflow, name string, linesPerSplit int) *File
 }
 
 // InFile returns the port for the input file
-func (p *FileSplitter) InFile() *scipipe.InPort {
-	return p.InPort("file")
-}
+func (p *FileSplitter) InFile() *scipipe.InPort { return p.InPort("file") }
 
 // OutSplitFile returns the resulting split (part) files generated0
-func (p *FileSplitter) OutSplitFile() *scipipe.OutPort {
-	return p.OutPort("split_file")
-}
+func (p *FileSplitter) OutSplitFile() *scipipe.OutPort { return p.OutPort("split_file") }
 
 // Run runs the FileSplitter process
 func (p *FileSplitter) Run() {

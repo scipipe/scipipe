@@ -23,14 +23,10 @@ func NewConcatenator(wf *scipipe.Workflow, name string, outPath string) *Concate
 }
 
 // In returns the (only) in-port for this process
-func (p *Concatenator) In() *scipipe.InPort {
-	return p.InPort("in")
-}
+func (p *Concatenator) In() *scipipe.InPort { return p.InPort("in") }
 
 // Out returns the (only) out-port for this process
-func (p *Concatenator) Out() *scipipe.OutPort {
-	return p.OutPort("out")
-}
+func (p *Concatenator) Out() *scipipe.OutPort { return p.OutPort("out") }
 
 // Run runs the Concatenator process
 func (p *Concatenator) Run() {
