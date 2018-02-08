@@ -11,59 +11,43 @@ import (
 // FileSplitter is a process that will split a file into multiple files, each
 // with LinesPerSplit number of lines per file
 type FileSplitter struct {
-	scipipe.EmptyWorkflowProcess
-	name          string
-	InFile        *scipipe.InPort
-	OutSplitFile  *scipipe.OutPort
+	scipipe.BaseProcess
 	LinesPerSplit int
-	workflow      *scipipe.Workflow
 }
 
 // NewFileSplitter returns an initialized FileSplitter process that will split a
 // file into multiple files, each with linesPerSplit number of lines per file
 func NewFileSplitter(wf *scipipe.Workflow, name string, linesPerSplit int) *FileSplitter {
-	fs := &FileSplitter{
-		name:          name,
-		InFile:        scipipe.NewInPort("in_file"),
-		OutSplitFile:  scipipe.NewOutPort("out_split_file"),
+	p := &FileSplitter{
+		BaseProcess:   scipipe.NewBaseProcess(wf, name),
 		LinesPerSplit: linesPerSplit,
-		workflow:      wf,
 	}
-	fs.InFile.SetProcess(fs)
-	fs.OutSplitFile.SetProcess(fs)
-	wf.AddProc(fs)
-	return fs
+	p.InitInPort(p, "file")
+	p.InitOutPort(p, "split_file")
+	wf.AddProc(p)
+	return p
 }
 
-// Name returns the name of the FileSplitter process
-func (p *FileSplitter) Name() string {
-	return p.name
+// InFile returns the port for the input file
+func (p *FileSplitter) InFile() *scipipe.InPort {
+	return p.InPort("file")
 }
 
-// InPorts returns all the in-ports for the process
-func (p *FileSplitter) InPorts() map[string]*scipipe.InPort {
-	return map[string]*scipipe.InPort{
-		p.InFile.Name(): p.InFile,
-	}
-}
-
-// OutPorts returns all the out-ports for the process
-func (p *FileSplitter) OutPorts() map[string]*scipipe.OutPort {
-	return map[string]*scipipe.OutPort{
-		p.OutSplitFile.Name(): p.OutSplitFile,
-	}
+// OutSplitFile returns the resulting split (part) files generated0
+func (p *FileSplitter) OutSplitFile() *scipipe.OutPort {
+	return p.OutPort("split_file")
 }
 
 // Run runs the FileSplitter process
 func (p *FileSplitter) Run() {
-	defer p.OutSplitFile.Close()
+	defer p.OutSplitFile().Close()
 
-	fileReader := NewFileReader(p.workflow, p.Name()+"_filereader_"+getRandString(7))
+	fileReader := NewFileReader(p.Workflow(), p.Name()+"_filereader_"+getRandString(7))
 	pop := scipipe.NewParamOutPort(p.Name() + "_temp_filepath_feeder")
 	pop.SetProcess(p)
 	fileReader.InFilePath().Connect(pop)
 
-	for ft := range p.InFile.Chan {
+	for ft := range p.InFile().Chan {
 		scipipe.Audit.Println("FileSplitter      Now processing input file ", ft.Path(), "...")
 
 		go func() {
@@ -92,7 +76,7 @@ func (p *FileSplitter) Run() {
 					splitfile.Close()
 					splitFt.Atomize()
 					scipipe.Audit.Println("FileSplitter      Created split file", splitFt.Path())
-					p.OutSplitFile.Send(splitFt)
+					p.OutSplitFile().Send(splitFt)
 					splitIdx++
 
 					splitFt = newSplitIPFromIndex(ft.Path(), splitIdx)
@@ -102,7 +86,7 @@ func (p *FileSplitter) Run() {
 			splitfile.Close()
 			splitFt.Atomize()
 			scipipe.Audit.Println("FileSplitter      Created split file", splitFt.Path())
-			p.OutSplitFile.Send(splitFt)
+			p.OutSplitFile().Send(splitFt)
 		} else {
 			scipipe.Audit.Printf("Split file already exists: %s, so skipping.\n", splitFt.Path())
 		}
@@ -119,12 +103,6 @@ func getRandString(n int) string {
 		b[i] = chars[rand.Intn(len(chars))]
 	}
 	return string(b)
-}
-
-// Connected tells whether all the ports of the FileSplitter process are connected
-func (p *FileSplitter) Connected() bool {
-	return p.InFile.Connected() &&
-		p.OutSplitFile.Connected()
 }
 
 func newSplitIPFromIndex(basePath string, splitIdx int) *scipipe.IP {

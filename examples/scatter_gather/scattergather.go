@@ -25,17 +25,17 @@ func main() {
 	// Split the fasta file in to parts with 100000 lines in each
 	linesPerSplit := 100000
 	split := comp.NewFileSplitter(wf, "file_splitter", linesPerSplit)
-	split.InFile.Connect(unzip.Out("ungzipped"))
+	split.InFile().Connect(unzip.Out("ungzipped"))
 
 	// Count GC & AT characters in the fasta file
 	charCountCommand := "cat {i:infile} | fold -w 1 | grep '[%s]' | wc -l | awk '{ print $1 }' > {o:%s}"
 	gccnt := wf.NewProc("gccount", fmt.Sprintf(charCountCommand, "GC", "gccount"))
 	gccnt.SetPathExtend("infile", "gccount", ".gccnt")
-	gccnt.In("infile").Connect(split.OutSplitFile)
+	gccnt.In("infile").Connect(split.OutSplitFile())
 
 	atcnt := wf.NewProc("atcount", fmt.Sprintf(charCountCommand, "AT", "atcount"))
 	atcnt.SetPathExtend("infile", "atcount", ".atcnt")
-	atcnt.In("infile").Connect(split.OutSplitFile)
+	atcnt.In("infile").Connect(split.OutSplitFile())
 
 	// Concatenate GC & AT counts
 	gccat := comp.NewConcatenator(wf, "gccat", "gccounts.txt")
