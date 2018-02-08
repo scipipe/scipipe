@@ -346,10 +346,10 @@ func TestPassOnKeys(t *testing.T) {
 	wf.Run()
 
 	dat, err := ioutil.ReadFile("/tmp/hey.txt.you.txt.audit.json")
-	CheckErr(err)
+	Check(err)
 	auditInfo := &AuditInfo{}
 	err = json.Unmarshal(dat, auditInfo)
-	CheckErr(err)
+	Check(err)
 
 	assert.EqualValues(t, "you", auditInfo.Keys["hey"], "Audit info does not contain passed on keys")
 

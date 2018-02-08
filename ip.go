@@ -54,28 +54,28 @@ func (ip *IP) FifoPath() string {
 // Size returns the size of an existing file, in bytes
 func (ip *IP) Size() int64 {
 	fi, err := os.Stat(ip.path)
-	CheckErr(err)
+	Check(err)
 	return fi.Size()
 }
 
 // Open opens the file and returns a file handle (*os.File)
 func (ip *IP) Open() *os.File {
 	f, err := os.Open(ip.Path())
-	Check(err, "Could not open file: "+ip.Path())
+	CheckWithMsg(err, "Could not open file: "+ip.Path())
 	return f
 }
 
 // OpenTemp opens the temp file and returns a file handle (*os.File)
 func (ip *IP) OpenTemp() *os.File {
 	f, err := os.Open(ip.TempPath())
-	Check(err, "Could not open temp file: "+ip.TempPath())
+	CheckWithMsg(err, "Could not open temp file: "+ip.TempPath())
 	return f
 }
 
 // OpenWriteTemp opens the file for writing, and returns a file handle (*os.File)
 func (ip *IP) OpenWriteTemp() *os.File {
 	f, err := os.Create(ip.TempPath())
-	Check(err, "Could not open temp file for writing: "+ip.TempPath())
+	CheckWithMsg(err, "Could not open temp file for writing: "+ip.TempPath())
 	return f
 }
 
@@ -83,21 +83,21 @@ func (ip *IP) OpenWriteTemp() *os.File {
 // array
 func (ip *IP) Read() []byte {
 	dat, err := ioutil.ReadFile(ip.Path())
-	Check(err, "Could not open file for reading: "+ip.Path())
+	CheckWithMsg(err, "Could not open file for reading: "+ip.Path())
 	return dat
 }
 
 // ReadAuditFile reads the content of the audit file and return it as a byte array
 func (ip *IP) ReadAuditFile() []byte {
 	dat, err := ioutil.ReadFile(ip.AuditFilePath())
-	Check(err, "Could not open file for reading: "+ip.AuditFilePath())
+	CheckWithMsg(err, "Could not open file for reading: "+ip.AuditFilePath())
 	return dat
 }
 
 // WriteTempFile writes a byte array ([]byte) to the file's temp path
 func (ip *IP) WriteTempFile(dat []byte) {
 	err := ioutil.WriteFile(ip.TempPath(), dat, 0644)
-	Check(err, "Could not write to temp file: "+ip.TempPath())
+	CheckWithMsg(err, "Could not write to temp file: "+ip.TempPath())
 }
 
 const (
@@ -113,7 +113,7 @@ func (ip *IP) Atomize() {
 		if ip.TempFileExists() {
 			ip.lock.Lock()
 			err := os.Rename(ip.TempPath(), ip.path)
-			Check(err, "Could not rename file: "+ip.TempPath())
+			CheckWithMsg(err, "Could not rename file: "+ip.TempPath())
 			ip.lock.Unlock()
 			doneAtomizing = true
 			Debug.Println("IP: Done atomizing", ip.TempPath(), "->", ip.Path())
@@ -134,7 +134,7 @@ func (ip *IP) CreateFifo() {
 		Warning.Println("FIFO already exists, so not creating a new one:", ip.FifoPath())
 	} else {
 		_, err := exec.Command("bash", "-c", cmd).Output()
-		Check(err, "Could not execute command: "+cmd)
+		CheckWithMsg(err, "Could not execute command: "+cmd)
 	}
 
 	ip.lock.Unlock()
@@ -145,7 +145,7 @@ func (ip *IP) RemoveFifo() {
 	// FIXME: Shouldn't we check first whether the fifo exists?
 	ip.lock.Lock()
 	output, err := exec.Command("bash", "-c", "rm "+ip.FifoPath()).Output()
-	Check(err, "Could not delete fifo file: "+ip.FifoPath())
+	CheckWithMsg(err, "Could not delete fifo file: "+ip.FifoPath())
 	Debug.Println("Removed FIFO output: ", output)
 	ip.lock.Unlock()
 }
@@ -229,7 +229,7 @@ func (ip *IP) AddKeys(keys map[string]string) {
 func (ip *IP) UnMarshalJSON(v interface{}) {
 	d := ip.Read()
 	err := json.Unmarshal(d, v)
-	Check(err, "Could not unmarshal content of file: "+ip.Path())
+	CheckWithMsg(err, "Could not unmarshal content of file: "+ip.Path())
 }
 
 // AuditInfo returns the AuditInfo struct for the IP
@@ -241,7 +241,7 @@ func (ip *IP) AuditInfo() *AuditInfo {
 		auditFileData, err := ioutil.ReadFile(ip.AuditFilePath())
 		if err == nil {
 			unmarshalErr := json.Unmarshal(auditFileData, ip.auditInfo)
-			Check(unmarshalErr, "Could not unmarshal audit log file content: "+ip.AuditFilePath())
+			CheckWithMsg(unmarshalErr, "Could not unmarshal audit log file content: "+ip.AuditFilePath())
 		}
 	}
 	return ip.auditInfo
@@ -263,9 +263,9 @@ func (ip *IP) AuditFilePath() string {
 func (ip *IP) WriteAuditLogToFile() {
 	auditInfo := ip.AuditInfo()
 	auditInfoJSON, jsonErr := json.MarshalIndent(auditInfo, "", "    ")
-	Check(jsonErr, "Could not marshall JSON")
+	CheckWithMsg(jsonErr, "Could not marshall JSON")
 	writeErr := ioutil.WriteFile(ip.AuditFilePath(), auditInfoJSON, 0644)
-	Check(writeErr, "Could not write audit file: "+ip.Path())
+	CheckWithMsg(writeErr, "Could not write audit file: "+ip.Path())
 }
 
 // --------------------------------------------------------------------------------

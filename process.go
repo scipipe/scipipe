@@ -196,7 +196,7 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 	for _, m := range ms {
 		if len(m) < 3 {
 			msg := "Too few matches"
-			Check(errors.New(msg), msg)
+			CheckWithMsg(errors.New(msg), msg)
 		}
 
 		typ := m[1]

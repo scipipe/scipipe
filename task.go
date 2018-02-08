@@ -88,7 +88,7 @@ func (t *Task) Execute() {
 		for _, oip := range t.OutTargets {
 			oipDir := filepath.Dir(oip.Path())
 			err := os.MkdirAll(oipDir, 0777)
-			Check(err, "Could not create directory: "+oipDir)
+			CheckWithMsg(err, "Could not create directory: "+oipDir)
 		}
 
 		t.workflow.IncConcurrentTasks(t.cores) // Will block if max concurrent tasks is reached
@@ -264,7 +264,7 @@ func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*
 			// Out-ports
 			if outTargets[name] == nil {
 				msg := fmt.Sprint("Missing outpath for outport '", name, "' for command '", cmd, "'")
-				Check(errors.New(msg), msg)
+				CheckWithMsg(errors.New(msg), msg)
 			} else {
 				if typ == "o" {
 					filePath = outTargets[name].TempPath() // Means important to Atomize afterwards!
@@ -276,7 +276,7 @@ func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*
 			// In-ports
 			if inTargets[name] == nil {
 				msg := fmt.Sprint("Missing intarget for inport '", name, "' for command '", cmd, "'")
-				Check(errors.New(msg), msg)
+				CheckWithMsg(errors.New(msg), msg)
 			} else if inTargets[name].Path() == "" && reduceInputs {
 				ips := []*IP{}
 				for ip := range inTargets[name].SubStream.Chan {
@@ -294,7 +294,7 @@ func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*
 				Debug.Println("Got filePath: ", filePath)
 			} else if inTargets[name].Path() == "" {
 				msg := fmt.Sprint("Missing inpath for inport '", name, "', and no substream, for command '", cmd, "'")
-				Check(errors.New(msg), msg)
+				CheckWithMsg(errors.New(msg), msg)
 			} else {
 				if inTargets[name].doStream {
 					filePath = inTargets[name].FifoPath()
@@ -306,14 +306,14 @@ func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*
 		} else if typ == "p" {
 			if params[name] == "" {
 				msg := fmt.Sprint("Missing param value param '", name, "' for command '", cmd, "'")
-				Check(errors.New(msg), msg)
+				CheckWithMsg(errors.New(msg), msg)
 			} else {
 				filePath = params[name]
 			}
 		}
 		if filePath == "" {
 			msg := fmt.Sprint("Replace failed for port ", name, " for command '", cmd, "'")
-			Check(errors.New(msg), msg)
+			CheckWithMsg(errors.New(msg), msg)
 		}
 		cmd = str.Replace(cmd, placeHolderStr, filePath, -1)
 	}

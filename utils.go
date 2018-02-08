@@ -19,21 +19,18 @@ func ExecCmd(cmd string) string {
 	return string(combOutput)
 }
 
-// Check checks the error err, and prints both the original error message, and a
+// CheckWithMsg checks the error err, and prints both the original error message, and a
 // custom one provided in errMsg
-func Check(err error, errMsg string) {
+func CheckWithMsg(err error, errMsg string) {
 	if err != nil {
-		Error.Println("Custom Error Message: " + errMsg)
-		Error.Println("Original Error Message: " + err.Error())
-		panic(err)
+		Error.Fatalln("Custom Error Message: " + errMsg + "\n" + "Original Error Message: " + err.Error())
 	}
 }
 
-// CheckErr checks the error err, and prints the message in the error
-func CheckErr(err error) {
+// Check checks the error err, and prints the message in the error
+func Check(err error) {
 	if err != nil {
-		Error.Println(err)
-		panic(err)
+		Error.Fatalln(err)
 	}
 }
 
@@ -42,7 +39,7 @@ func CheckErr(err error) {
 func getShellCommandPlaceHolderRegex() *re.Regexp {
 	regex := "{(o|os|i|is|p):([^{}:]+)(:r(:([^{}:]))?)?}"
 	r, err := re.Compile(regex)
-	Check(err, "Could not compile regex: "+regex)
+	CheckWithMsg(err, "Could not compile regex: "+regex)
 	return r
 }
 
