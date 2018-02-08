@@ -268,51 +268,37 @@ func (ip *IP) WriteAuditLogToFile() {
 	Check(writeErr, "Could not write audit file: "+ip.Path())
 }
 
-// ======= IPGen =======
+// --------------------------------------------------------------------------------
+// IPGenerator helper process
+// --------------------------------------------------------------------------------
 
-// IPGen is initialized by a set of strings with file paths, and from that will
+// IPGenerator is initialized by a set of strings with file paths, and from that will
 // return instantiated (generated) IP on its Out-port, when run.
-type IPGen struct {
-	EmptyWorkflowProcess
-	name      string
-	Out       *OutPort
+type IPGenerator struct {
+	BaseProcess
 	FilePaths []string
 }
 
-// NewIPGen initializes a new IPGen component from a list of file paths
-func NewIPGen(workflow *Workflow, name string, filePaths ...string) (ipg *IPGen) {
-	opt := NewOutPort("out")
-	ipg = &IPGen{
-		name:      name,
-		Out:       opt,
-		FilePaths: filePaths,
+// NewIPGenerator initializes a new IPGenerator component from a list of file paths
+func NewIPGenerator(wf *Workflow, name string, filePaths ...string) (p *IPGenerator) {
+	p = &IPGenerator{
+		BaseProcess: NewBaseProcess(wf, name),
+		FilePaths:   filePaths,
 	}
-	opt.process = ipg
-	workflow.AddProc(ipg)
-	return
+	p.InitOutPort(p, "out")
+	wf.AddProc(p)
+	return p
 }
 
-// OutPorts returns the out-ports for the process
-func (ipg *IPGen) OutPorts() map[string]*OutPort {
-	return map[string]*OutPort{
-		ipg.Out.Name(): ipg.Out,
+// Out returns the out-port of the IPGenerator
+func (p *IPGenerator) Out() *OutPort {
+	return p.OutPort("out")
+}
+
+// Run runs the IPGenerator process, returning instantiated IP
+func (p *IPGenerator) Run() {
+	defer p.Out().Close()
+	for _, fp := range p.FilePaths {
+		p.Out().Send(NewIP(fp))
 	}
-}
-
-// Run runs the IPGen process, returning instantiated IP
-func (ipg *IPGen) Run() {
-	defer ipg.Out.Close()
-	for _, fp := range ipg.FilePaths {
-		ipg.Out.Send(NewIP(fp))
-	}
-}
-
-// Name returns the name of the IPGen process
-func (ipg *IPGen) Name() string {
-	return ipg.name
-}
-
-// Connected check if the IPGen outport is connected
-func (ipg *IPGen) Connected() bool {
-	return ipg.Out.Connected()
 }

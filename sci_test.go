@@ -180,11 +180,11 @@ func TestSendOrderedOutputs(t *testing.T) {
 	}
 
 	wf := NewWorkflow("test_wf", 16)
-	ig := NewIPGen(wf, "ipgen", fnames...)
+	ig := NewIPGenerator(wf, "ipgen", fnames...)
 
 	fc := NewProc(wf, "fc", "echo {i:in} > {o:out}")
 	fc.SetPathExtend("in", "out", "")
-	fc.In("in").Connect(ig.Out)
+	fc.In("in").Connect(ig.Out())
 
 	sl := NewProc(wf, "sl", "cat {i:in} > {o:out}")
 	sl.SetPathExtend("in", "out", ".copy.txt")
@@ -268,10 +268,10 @@ func TestSubStreamReduceInPlaceHolder(t *testing.T) {
 
 	// Create some input files
 
-	ipg := NewIPGen(wf, "ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
+	ipg := NewIPGenerator(wf, "ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
 
 	sts := NewStreamToSubStream(wf, "str_to_substr")
-	sts.In.Connect(ipg.Out)
+	sts.In.Connect(ipg.Out())
 
 	cat := wf.NewProc("concatenate", "cat {i:infiles:r: } > {o:merged}")
 	cat.SetPathStatic("merged", "/tmp/substream_merged.txt")

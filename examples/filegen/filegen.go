@@ -7,11 +7,11 @@ import (
 func main() {
 	wf := sci.NewWorkflow("filegenwf", 4)
 
-	fq := sci.NewIPGen(wf, "hej1.txt", "hej2.txt", "hej3.txt")
+	fq := sci.NewIPGenerator(wf, "hej1.txt", "hej2.txt", "hej3.txt")
 
 	fw := sci.NewProc(wf, "filewriter", "echo {i:in} > {o:out}")
 	fw.SetPathCustom("out", func(t *sci.Task) string { return t.InPath("in") })
-	fw.In("in").Connect(fq.Out)
+	fw.In("in").Connect(fq.Out())
 
 	wf.Run()
 }
