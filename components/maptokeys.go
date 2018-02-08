@@ -35,7 +35,7 @@ func (p *MapToKeys) Out() *scipipe.OutPort { return p.OutPort("out") }
 
 // Run runs the MapToKeys process
 func (p *MapToKeys) Run() {
-	defer p.Out().Close()
+	defer p.CloseAllOutPorts()
 	for ip := range p.In().Chan {
 		newKeys := p.mapFunc(ip)
 		ip.AddKeys(newKeys)

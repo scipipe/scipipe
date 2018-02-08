@@ -63,9 +63,9 @@ func newProcess(workflow *Workflow, name string, command string) *Process {
 
 // ShellExpand expands the command pattern in cmd with the concrete values
 // provided in inPaths, ouPaths and params
-func ShellExpand(workflow *Workflow, name string, cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *Process {
+func ShellExpand(wf *Workflow, name string, cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *Process {
 	cmdExpr := expandCommandParamsAndPaths(cmd, params, inPaths, outPaths)
-	p := newProcess(workflow, name, cmdExpr)
+	p := newProcess(wf, name, cmdExpr)
 	p.initPortsFromCmdPattern(cmdExpr, params)
 	return p
 }

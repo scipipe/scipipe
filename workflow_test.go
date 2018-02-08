@@ -95,7 +95,7 @@ func getWorkflowForTestRunToProc(wfName string) *Workflow {
 // A process with does just satisfy the Process interface, without doing any
 // actual work.
 type BogusProcess struct {
-	EmptyWorkflowProcess
+	BaseProcess
 	name       string
 	WasRun     bool
 	WasRunLock sync.Mutex

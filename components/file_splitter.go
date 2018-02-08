@@ -36,7 +36,7 @@ func (p *FileSplitter) OutSplitFile() *scipipe.OutPort { return p.OutPort("split
 
 // Run runs the FileSplitter process
 func (p *FileSplitter) Run() {
-	defer p.OutSplitFile().Close()
+	defer p.CloseAllOutPorts()
 
 	fileReader := NewFileReader(p.Workflow(), p.Name()+"_filereader_"+getRandString(7))
 	pop := scipipe.NewParamOutPort(p.Name() + "_temp_filepath_feeder")

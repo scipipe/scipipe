@@ -9,11 +9,9 @@ func main() {
 	// Init
 	wf := sci.NewWorkflow("staticparams_wf", 4)
 
-	fls := NewFileSender("filesender")
-	wf.AddProc(fls)
+	fls := NewFileSender(wf, "filesender")
 
 	params := map[string]string{"a": "a1", "b": "b1", "c": "c1"}
-
 	abc := sci.ShellExpand(wf, "abc", "echo {p:a} {p:b} {p:c} > {o:out} # {i:in}", nil, nil, params)
 	abc.SetPathCustom("out", func(task *sci.Task) string {
 		return task.InPath("in")
@@ -22,7 +20,7 @@ func main() {
 	prt := wf.NewProc("prt", "echo {i:in} >> log.txt")
 
 	// Connect
-	abc.In("in").Connect(fls.Out)
+	abc.In("in").Connect(fls.Out())
 	prt.In("in").Connect(abc.Out("out"))
 
 	// Run
@@ -34,37 +32,23 @@ func main() {
 // --------------------------------
 
 type FileSender struct {
-	sci.EmptyWorkflowProcess
-	name string
-	Out  *sci.OutPort
+	sci.BaseProcess
 }
 
-func NewFileSender(name string) *FileSender {
-	fsd := &FileSender{
-		name: name,
-		Out:  sci.NewOutPort("out"),
+func NewFileSender(wf *sci.Workflow, name string) *FileSender {
+	p := &FileSender{
+		BaseProcess: sci.NewBaseProcess(wf, name),
 	}
-	fsd.Out.SetProcess(fsd)
-	return fsd
+	p.InitOutPort(p, "out")
+	wf.AddProc(p)
+	return p
 }
 
-func (p *FileSender) OutPorts() map[string]*sci.OutPort {
-	return map[string]*sci.OutPort{
-		p.Out.Name(): p.Out,
-	}
-}
+func (p *FileSender) Out() *sci.OutPort { return p.OutPort("out") }
 
 func (p *FileSender) Run() {
-	defer p.Out.Close()
+	defer p.Out().Close()
 	for _, fn := range []string{"file1.txt", "file2.txt", "file3.txt"} {
-		p.Out.Send(sci.NewIP(fn))
+		p.Out().Send(sci.NewIP(fn))
 	}
-}
-
-func (p *FileSender) Name() string {
-	return p.name
-}
-
-func (p *FileSender) Connected() bool {
-	return p.Out.Connected()
 }

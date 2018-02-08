@@ -271,11 +271,11 @@ func TestSubStreamReduceInPlaceHolder(t *testing.T) {
 	ipg := NewIPGenerator(wf, "ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
 
 	sts := NewStreamToSubStream(wf, "str_to_substr")
-	sts.In.Connect(ipg.Out())
+	sts.In().Connect(ipg.Out())
 
 	cat := wf.NewProc("concatenate", "cat {i:infiles:r: } > {o:merged}")
 	cat.SetPathStatic("merged", "/tmp/substream_merged.txt")
-	cat.In("infiles").Connect(sts.OutSubStream)
+	cat.In("infiles").Connect(sts.OutSubStream())
 
 	wf.Run()
 
@@ -337,11 +337,11 @@ func TestPassOnKeys(t *testing.T) {
 	key := NewMapToKeys(wf, "add_key", func(ip *IP) map[string]string {
 		return map[string]string{"hey": "you"}
 	})
-	key.In.Connect(hey.Out("heyfile"))
+	key.In().Connect(hey.Out("heyfile"))
 
 	you := wf.NewProc("add_you", "echo '$(cat {i:infile}) you' > {o:youfile}")
 	you.SetPathExtend("infile", "youfile", ".you.txt")
-	you.In("infile").Connect(key.Out)
+	you.In("infile").Connect(key.Out())
 
 	wf.Run()
 
@@ -443,102 +443,59 @@ func (p *CombinatoricsProcess) Connected() bool { return true }
 // StreamToSubstream helper process
 // --------------------------------------------------------------------------------
 type StreamToSubStream struct {
-	EmptyWorkflowProcess
-	name         string
-	In           *InPort
-	OutSubStream *OutPort
+	BaseProcess
 }
 
 func NewStreamToSubStream(wf *Workflow, name string) *StreamToSubStream {
-	sts := &StreamToSubStream{
-		In:           NewInPort("in"),
-		OutSubStream: NewOutPort("out_substream"),
+	p := &StreamToSubStream{
+		BaseProcess: NewBaseProcess(wf, name),
 	}
-	sts.In.process = sts
-	sts.OutSubStream.process = sts
-	wf.AddProc(sts)
-	return sts
+	p.InitInPort(p, "in")
+	p.InitOutPort(p, "substream")
+	wf.AddProc(p)
+	return p
 }
 
-func (p *StreamToSubStream) InPorts() map[string]*InPort {
-	return map[string]*InPort{
-		p.In.Name(): p.In,
-	}
-}
-
-func (p *StreamToSubStream) OutPorts() map[string]*OutPort {
-	return map[string]*OutPort{
-		p.OutSubStream.Name(): p.OutSubStream,
-	}
-}
+func (p *StreamToSubStream) In() *InPort            { return p.InPort("in") }
+func (p *StreamToSubStream) OutSubStream() *OutPort { return p.OutPort("substream") }
 
 func (p *StreamToSubStream) Run() {
-	defer p.OutSubStream.Close()
+	defer p.OutSubStream().Close()
 
 	subStreamIP := NewIP("")
-	subStreamIP.SubStream = p.In
+	subStreamIP.SubStream = p.In()
 
-	p.OutSubStream.Send(subStreamIP)
-}
-
-func (p *StreamToSubStream) Name() string {
-	return "StreamToSubstream"
-}
-
-func (p *StreamToSubStream) Connected() bool {
-	return p.In.Connected() && p.OutSubStream.Connected()
+	p.OutSubStream().Send(subStreamIP)
 }
 
 // --------------------------------------------------------------------------------
 // MapToKey helper process
 // --------------------------------------------------------------------------------
 type MapToKeys struct {
-	EmptyWorkflowProcess
-	In       *InPort
-	Out      *OutPort
-	procName string
-	mapFunc  func(ip *IP) map[string]string
+	BaseProcess
+	mapFunc func(ip *IP) map[string]string
 }
 
 func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *IP) map[string]string) *MapToKeys {
-	mtp := &MapToKeys{
-		procName: name,
-		mapFunc:  mapFunc,
-		In:       NewInPort("in"),
-		Out:      NewOutPort("out"),
+	p := &MapToKeys{
+		BaseProcess: NewBaseProcess(wf, name),
+		mapFunc:     mapFunc,
 	}
-	mtp.In.process = mtp
-	mtp.Out.process = mtp
-	wf.AddProc(mtp)
-	return mtp
+	p.InitInPort(p, "in")
+	p.InitOutPort(p, "out")
+	wf.AddProc(p)
+	return p
 }
 
-func (p *MapToKeys) Name() string {
-	return p.procName
-}
-
-func (p *MapToKeys) InPorts() map[string]*InPort {
-	return map[string]*InPort{
-		p.In.Name(): p.In,
-	}
-}
-
-func (p *MapToKeys) OutPorts() map[string]*OutPort {
-	return map[string]*OutPort{
-		p.Out.Name(): p.Out,
-	}
-}
-
-func (p *MapToKeys) Connected() bool {
-	return p.In.Connected() && p.Out.Connected()
-}
+func (p *MapToKeys) In() *InPort   { return p.InPort("in") }
+func (p *MapToKeys) Out() *OutPort { return p.OutPort("out") }
 
 func (p *MapToKeys) Run() {
-	defer p.Out.Close()
-	for ip := range p.In.Chan {
+	defer p.CloseAllOutPorts()
+	for ip := range p.In().Chan {
 		newKeys := p.mapFunc(ip)
 		ip.AddKeys(newKeys)
 		ip.WriteAuditLogToFile()
-		p.Out.Send(ip)
+		p.Out().Send(ip)
 	}
 }

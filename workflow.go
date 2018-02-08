@@ -31,14 +31,15 @@ type Workflow struct {
 // NewWorkflow returns a new Workflow
 func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
 	InitLogInfo()
-	sink := NewSink(name + "_default_sink")
-	return &Workflow{
+	wf := &Workflow{
 		name:            name,
 		procs:           map[string]WorkflowProcess{},
 		concurrentTasks: make(chan struct{}, maxConcurrentTasks),
-		sink:            sink,
-		driver:          sink,
 	}
+	sink := NewSink(wf, name+"_default_sink")
+	wf.sink = sink
+	wf.driver = sink
+	return wf
 }
 
 // WorkflowProcess is an interface for processes to be handled by Workflow
@@ -50,32 +51,6 @@ type WorkflowProcess interface {
 	ParamOutPorts() map[string]*ParamOutPort
 	Connected() bool
 	Run()
-}
-
-// EmptyWorkflowProcess implements the WorkflowProcess interface in the simplest
-// possible way, by just returning default values. It is supposed to be used to
-// avoid re-implementing such "default" behaviour where needed, in new
-// components
-type EmptyWorkflowProcess struct{}
-
-// InPorts returns an empty map of InPorts
-func (ep *EmptyWorkflowProcess) InPorts() map[string]*InPort {
-	return map[string]*InPort{}
-}
-
-// OutPorts returns an empty map of OutPorts
-func (ep *EmptyWorkflowProcess) OutPorts() map[string]*OutPort {
-	return map[string]*OutPort{}
-}
-
-// ParamInPorts returns an empty map of ParamInPorts
-func (ep *EmptyWorkflowProcess) ParamInPorts() map[string]*ParamInPort {
-	return map[string]*ParamInPort{}
-}
-
-// ParamOutPorts returns an empty map of ParamOutPorts
-func (ep *EmptyWorkflowProcess) ParamOutPorts() map[string]*ParamOutPort {
-	return map[string]*ParamOutPort{}
 }
 
 // Name returns the name of the workflow

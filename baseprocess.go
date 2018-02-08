@@ -180,7 +180,7 @@ func (p *BaseProcess) DeleteParamOutPort(portName string) {
 }
 
 // ------------------------------------------------
-// Sanity check stuff
+// Other stuff
 // ------------------------------------------------
 
 // Connected checks whether all the process' ports are connected
@@ -211,4 +211,24 @@ func (p *BaseProcess) Connected() (isConnected bool) {
 		}
 	}
 	return isConnected
+}
+
+// CloseOutPorts closes all (normal) out-ports
+func (p *BaseProcess) CloseOutPorts() {
+	for _, p := range p.OutPorts() {
+		p.Close()
+	}
+}
+
+// CloseParamOutPorts closes all parameter out-ports
+func (p *BaseProcess) CloseParamOutPorts() {
+	for _, op := range p.ParamOutPorts() {
+		op.Close()
+	}
+}
+
+// CloseAllOutPorts closes all normal-, and parameter out ports
+func (p *BaseProcess) CloseAllOutPorts() {
+	p.CloseOutPorts()
+	p.CloseParamOutPorts()
 }

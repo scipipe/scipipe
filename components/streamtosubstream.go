@@ -30,7 +30,7 @@ func (p *StreamToSubStream) OutSubStream() *scipipe.OutPort { return p.OutPort("
 
 // Run runs the StreamToSubStream
 func (p *StreamToSubStream) Run() {
-	defer p.OutSubStream().Close()
+	defer p.CloseAllOutPorts()
 
 	scipipe.Debug.Println("Creating new information packet for the substream...")
 	subStreamIP := scipipe.NewIP("")

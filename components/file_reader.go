@@ -33,7 +33,7 @@ func (p *FileReader) OutLine() *scipipe.ParamOutPort { return p.ParamOutPort("li
 
 // Run the FileReader
 func (p *FileReader) Run() {
-	defer p.OutLine().Close()
+	defer p.CloseAllOutPorts()
 
 	file, err := os.Open(<-p.InFilePath().Chan) // Read a single file name right now
 	if err != nil {
