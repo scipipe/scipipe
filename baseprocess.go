@@ -232,3 +232,36 @@ func (p *BaseProcess) CloseAllOutPorts() {
 	p.CloseOutPorts()
 	p.CloseParamOutPorts()
 }
+
+func (p *BaseProcess) receiveOnInPorts() (ips map[string]*IP, inPortsOpen bool) {
+	inPortsOpen = true
+	ips = make(map[string]*IP)
+	// Read input targets on in-ports and set up path mappings
+	for inpName, inPort := range p.InPorts() {
+		Debug.Printf("Process %s: Receieving on inPort %s ...", p.name, inpName)
+		ip, open := <-inPort.Chan
+		if !open {
+			inPortsOpen = false
+			continue
+		}
+		Debug.Printf("Process %s: Got ip %s ...", p.name, ip.Path())
+		ips[inpName] = ip
+	}
+	return
+}
+
+func (p *BaseProcess) receiveOnParamInPorts() (params map[string]string, paramPortsOpen bool) {
+	paramPortsOpen = true
+	params = make(map[string]string)
+	// Read input targets on in-ports and set up path mappings
+	for pname, pport := range p.ParamInPorts() {
+		pval, open := <-pport.Chan
+		if !open {
+			paramPortsOpen = false
+			continue
+		}
+		Debug.Println("Receiving param:", pname, "with value", pval)
+		params[pname] = pval
+	}
+	return
+}

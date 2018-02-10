@@ -298,47 +298,14 @@ func (p *Process) Run() {
 
 // -------- Helper methods for the Run method ---------
 
-func (p *Process) receiveInputs() (inTargets map[string]*IP, inPortsOpen bool) {
-	inPortsOpen = true
-	inTargets = make(map[string]*IP)
-	// Read input targets on in-ports and set up path mappings
-	for inpName, inPort := range p.inPorts {
-		Debug.Printf("Process %s: Receieving on inPort %s ...", p.name, inpName)
-		inTarget, open := <-inPort.Chan
-		if !open {
-			inPortsOpen = false
-			continue
-		}
-		Debug.Printf("Process %s: Got inTarget %s ...", p.name, inTarget.Path())
-		inTargets[inpName] = inTarget
-	}
-	return
-}
-
-func (p *Process) receiveParams() (params map[string]string, paramPortsOpen bool) {
-	paramPortsOpen = true
-	params = make(map[string]string)
-	// Read input targets on in-ports and set up path mappings
-	for pname, pport := range p.paramInPorts {
-		pval, open := <-pport.Chan
-		if !open {
-			paramPortsOpen = false
-			continue
-		}
-		Debug.Println("Receiving param:", pname, "with value", pval)
-		params[pname] = pval
-	}
-	return
-}
-
 func (p *Process) createTasks() (ch chan *Task) {
 	ch = make(chan *Task)
 	go func() {
 		defer close(ch)
 		for {
-			inTargets, inPortsOpen := p.receiveInputs()
+			inTargets, inPortsOpen := p.receiveOnInPorts()
 			Debug.Printf("Process.createTasks:%s Got inTargets: %v", p.name, inTargets)
-			params, paramPortsOpen := p.receiveParams()
+			params, paramPortsOpen := p.receiveOnParamInPorts()
 			Debug.Printf("Process.createTasks:%s Got params: %s", p.name, params)
 			if !inPortsOpen && !paramPortsOpen {
 				Debug.Printf("Process.createTasks:%s Breaking: Both inPorts and paramInPorts closed", p.name)
