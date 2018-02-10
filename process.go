@@ -237,7 +237,7 @@ func (p *Process) Run() {
 		Error.Fatalf("%s: CoresPerTask (%d) can't be greater than maxConcurrentTasks of workflow (%d)\n", p.Name(), p.CoresPerTask, cap(p.workflow.concurrentTasks))
 	}
 
-	defer p.closeOutPorts()
+	defer p.CloseOutPorts()
 
 	tasks := []*Task{}
 	Debug.Printf("Process %s: Starting to create and schedule tasks\n", p.name)
@@ -365,11 +365,4 @@ func (p *Process) createTasks() (ch chan *Task) {
 		Debug.Printf("Process.createTasks:%s Did break", p.name)
 	}()
 	return ch
-}
-
-func (p *Process) closeOutPorts() {
-	for oname, oport := range p.outPorts {
-		Debug.Printf("Process %s: Closing port(s) %s ...\n", p.name, oname)
-		oport.Close()
-	}
 }
