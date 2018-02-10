@@ -15,14 +15,14 @@ import (
 type Task struct {
 	Name          string
 	Command       string
-	ExecMode      ExecMode
+	ExecMode      ExecMode // TODO: Probably implement via different struct types (local/slurm/k8s, etc etc)
 	CustomExecute func(*Task)
 	InTargets     map[string]*IP
 	OutTargets    map[string]*IP
 	Params        map[string]string
 	Done          chan int
-	Image         string
-	DataFolder    string
+	Image         string // TODO: Later probably only include in k8s-task
+	DataFolder    string // TODO: Later probably only include in k8s-task
 	workflow      *Workflow
 	cores         int
 }
@@ -237,14 +237,6 @@ var (
 )
 
 func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*IP, params map[string]string, prepend string) string {
-
-	// Debug.Println("Formatting command with the following data:")
-	// Debug.Println("prepend:", prepend)
-	// Debug.Println("cmd:", cmd)
-	// Debug.Println("inTargets:", inTargets)
-	// Debug.Println("outTargets:", outTargets)
-	// Debug.Println("params:", params)
-
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {

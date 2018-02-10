@@ -2,7 +2,7 @@ package scipipe
 
 import (
 	"errors"
-	str "strings"
+	"strings"
 )
 
 // ================== Process ==================
@@ -106,7 +106,7 @@ func (p *Process) SetPathExtend(inPortName string, outPortName string,
 // but replaces parts of it.
 func (p *Process) SetPathReplace(inPortName string, outPortName string, old string, new string) {
 	p.PathFormatters[outPortName] = func(t *Task) string {
-		return str.Replace(t.InPath(inPortName), old, new, -1)
+		return strings.Replace(t.InPath(inPortName), old, new, -1)
 	}
 }
 
@@ -151,7 +151,7 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 					Debug.Println("Found param:", val)
 					filePath = val
 					Debug.Println("Replacing:", placeHolderStr, "->", filePath)
-					cmdExpr = str.Replace(cmdExpr, placeHolderStr, filePath, -1)
+					cmdExpr = strings.Replace(cmdExpr, placeHolderStr, filePath, -1)
 				}
 			}
 		} else if typ == "i" {
@@ -160,7 +160,7 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 					Debug.Println("Found inPath:", val)
 					filePath = val
 					Debug.Println("Replacing:", placeHolderStr, "->", filePath)
-					cmdExpr = str.Replace(cmdExpr, placeHolderStr, filePath, -1)
+					cmdExpr = strings.Replace(cmdExpr, placeHolderStr, filePath, -1)
 				}
 			}
 		} else if typ == "o" || typ == "os" {
@@ -169,7 +169,7 @@ func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths m
 					Debug.Println("Found outPath:", val)
 					filePath = val
 					Debug.Println("Replacing:", placeHolderStr, "->", filePath)
-					cmdExpr = str.Replace(cmdExpr, placeHolderStr, filePath, -1)
+					cmdExpr = strings.Replace(cmdExpr, placeHolderStr, filePath, -1)
 				}
 			}
 		}

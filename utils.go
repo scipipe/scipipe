@@ -1,8 +1,6 @@
 package scipipe
 
 import (
-	// "github.com/go-errors/errors"
-	//"os"
 	"math/rand"
 	"os/exec"
 	re "regexp"
