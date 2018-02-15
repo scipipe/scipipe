@@ -22,7 +22,7 @@ func ConnectFrom(inPort *InPort, outPort *OutPort) {
 // processes, from its own process, and with which it is communicating via
 // channels under the hood
 type InPort struct {
-	Chan        chan *IP
+	Chan        chan IP
 	name        string
 	process     WorkflowProcess
 	RemotePorts map[string]*OutPort
@@ -35,7 +35,7 @@ func NewInPort(name string) *InPort {
 	inp := &InPort{
 		name:        name,
 		RemotePorts: map[string]*OutPort{},
-		Chan:        make(chan *IP, BUFSIZE), // This one will contain merged inputs from inChans
+		Chan:        make(chan IP, BUFSIZE), // This one will contain merged inputs from inChans
 		connected:   false,
 	}
 	return inp
@@ -101,12 +101,12 @@ func (pt *InPort) Connected() bool {
 
 // Send sends IPs to the in-port, and is supposed to be called from the remote
 // (out-) port, to send to this in-port
-func (pt *InPort) Send(ip *IP) {
+func (pt *InPort) Send(ip IP) {
 	pt.Chan <- ip
 }
 
 // Recv receives IPs from the port
-func (pt *InPort) Recv() *IP {
+func (pt *InPort) Recv() IP {
 	return <-pt.Chan
 }
 
@@ -207,7 +207,7 @@ func (pt *OutPort) Connected() bool {
 }
 
 // Send sends an IP to all the in-ports connected to the OutPort
-func (pt *OutPort) Send(ip *IP) {
+func (pt *OutPort) Send(ip IP) {
 	for _, rpt := range pt.RemotePorts {
 		Debug.Printf("Sending on out-port %s connected to in-port %s", pt.Name(), rpt.Name())
 		rpt.Send(ip)
