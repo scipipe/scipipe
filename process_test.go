@@ -60,7 +60,7 @@ func TestSetPathExtend(t *testing.T) {
 	p := NewProc(wf, "cat_foo", "cat {i:foo} > {o:bar}")
 	p.SetPathExtend("foo", "bar", ".bar.txt")
 
-	mockTask := NewTask(wf, "echo_foo_task", "", map[string]*IP{"foo": NewIP("foo.txt")}, nil, nil, nil, "", p.ExecMode, 1)
+	mockTask := NewTask(wf, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, nil, "", p.ExecMode, 1)
 
 	if p.PathFormatters["bar"](mockTask) != "foo.txt.bar.txt" {
 		t.Error(`p.PathFormatters["bar"]() != "foo.txt.bar.txt"`)
@@ -72,7 +72,7 @@ func TestSetPathReplace(t *testing.T) {
 	p := NewProc(wf, "cat_foo", "cat {i:foo} > {o:bar}")
 	p.SetPathReplace("foo", "bar", ".txt", ".bar.txt")
 
-	mockTask := NewTask(wf, "echo_foo_task", "", map[string]*IP{"foo": NewIP("foo.txt")}, nil, nil, nil, "", p.ExecMode, 1)
+	mockTask := NewTask(wf, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, nil, "", p.ExecMode, 1)
 
 	if p.PathFormatters["bar"](mockTask) != "foo.bar.txt" {
 		t.Error(`p.PathFormatters["bar"]() != "foo.bar.txt"`)

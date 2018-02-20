@@ -101,6 +101,6 @@ func getRandString(n int) string {
 	return string(b)
 }
 
-func newSplitIPFromIndex(basePath string, splitIdx int) *scipipe.IP {
-	return scipipe.NewIP(basePath + fmt.Sprintf(".split_%v", splitIdx))
+func newSplitIPFromIndex(basePath string, splitIdx int) *scipipe.FileIP {
+	return scipipe.NewFileIP(basePath + fmt.Sprintf(".split_%v", splitIdx))
 }

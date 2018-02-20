@@ -49,6 +49,6 @@ func (p *FileSender) Out() *sci.OutPort { return p.OutPort("out") }
 func (p *FileSender) Run() {
 	defer p.Out().Close()
 	for _, fn := range []string{"file1.txt", "file2.txt", "file3.txt"} {
-		p.Out().Send(sci.NewIP(fn))
+		p.Out().Send(sci.NewFileIP(fn))
 	}
 }

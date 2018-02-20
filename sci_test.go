@@ -180,7 +180,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 	}
 
 	wf := NewWorkflow("test_wf", 16)
-	ig := NewIPGenerator(wf, "ipgen", fnames...)
+	ig := NewFileIPGenerator(wf, "ipgen", fnames...)
 
 	fc := NewProc(wf, "fc", "echo {i:in} > {o:out}")
 	fc.SetPathExtend("in", "out", "")
@@ -268,7 +268,7 @@ func TestSubStreamReduceInPlaceHolder(t *testing.T) {
 
 	// Create some input files
 
-	ipg := NewIPGenerator(wf, "ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
+	ipg := NewFileIPGenerator(wf, "ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
 
 	sts := NewStreamToSubStream(wf, "str_to_substr")
 	sts.In().Connect(ipg.Out())
@@ -334,7 +334,7 @@ func TestPassOnKeys(t *testing.T) {
 	hey := wf.NewProc("create_file", "echo hey > {o:heyfile}")
 	hey.SetPathStatic("heyfile", "/tmp/hey.txt")
 
-	key := NewMapToKeys(wf, "add_key", func(ip *IP) map[string]string {
+	key := NewMapToKeys(wf, "add_key", func(ip *FileIP) map[string]string {
 		return map[string]string{"hey": "you"}
 	})
 	key.In().Connect(hey.Out("heyfile"))
@@ -462,7 +462,7 @@ func (p *StreamToSubStream) OutSubStream() *OutPort { return p.OutPort("substrea
 func (p *StreamToSubStream) Run() {
 	defer p.OutSubStream().Close()
 
-	subStreamIP := NewIP("")
+	subStreamIP := NewFileIP("")
 	subStreamIP.SubStream = p.In()
 
 	p.OutSubStream().Send(subStreamIP)
@@ -473,10 +473,10 @@ func (p *StreamToSubStream) Run() {
 // --------------------------------------------------------------------------------
 type MapToKeys struct {
 	BaseProcess
-	mapFunc func(ip *IP) map[string]string
+	mapFunc func(ip *FileIP) map[string]string
 }
 
-func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *IP) map[string]string) *MapToKeys {
+func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *FileIP) map[string]string) *MapToKeys {
 	p := &MapToKeys{
 		BaseProcess: NewBaseProcess(wf, name),
 		mapFunc:     mapFunc,

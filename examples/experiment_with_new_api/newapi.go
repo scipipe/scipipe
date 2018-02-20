@@ -23,8 +23,8 @@ func main() {
 type FooToBarReplacer struct {
 	InnerProcess *sci.WorkflowProcess
 	Run          func(p *FooToBarReplacer)
-	InFoo        chan *sci.IP
-	OutBar       chan *sci.IP
+	InFoo        chan *sci.FileIP
+	OutBar       chan *sci.FileIP
 }
 
 func NewFooToBarReplacer() interface{} {
@@ -45,14 +45,14 @@ func NewFooToBarReplacer() interface{} {
 
 func NewProcessFromStruct(procStruct interface{}, execFunc func(*sci.Task), pathFuncs map[string]func(*sci.Task) string) interface{} {
 	// Get in-ports of struct
-	inPorts := map[string]chan *sci.IP{}
-	outPorts := map[string]chan *sci.IP{}
+	inPorts := map[string]chan *sci.FileIP{}
+	outPorts := map[string]chan *sci.FileIP{}
 
 	procStructVal := r.ValueOf(procStruct).Elem()
 	for i := 0; i < procStructVal.NumField(); i++ {
 		structFieldName := procStructVal.Type().Field(i).Name
 		structFieldType := procStructVal.Type().Field(i).Type
-		exampleChan := make(chan *sci.IP)
+		exampleChan := make(chan *sci.FileIP)
 		if strings.HasPrefix(structFieldName, "In") && structFieldType == r.TypeOf(exampleChan) {
 			fmt.Println("In-port:", structFieldName)
 			inPorts[strings.ToLower(structFieldName)] = exampleChan // TODO: Change this!

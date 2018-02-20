@@ -11,7 +11,7 @@ const (
 )
 
 func TestIPPaths(t *testing.T) {
-	ip := NewIP(TESTPATH)
+	ip := NewFileIP(TESTPATH)
 	assertPathsEqual(t, ip.Path(), TESTPATH)
 	assertPathsEqual(t, ip.TempPath(), TESTPATH+".tmp")
 	assertPathsEqual(t, ip.FifoPath(), TESTPATH+".fifo")

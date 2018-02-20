@@ -32,7 +32,7 @@ func (p *Concatenator) Out() *scipipe.OutPort { return p.OutPort("out") }
 func (p *Concatenator) Run() {
 	defer p.CloseAllOutPorts()
 
-	outFt := scipipe.NewIP(p.OutPath)
+	outFt := scipipe.NewFileIP(p.OutPath)
 	outFh := outFt.OpenWriteTemp()
 	for ft := range p.In().Chan {
 

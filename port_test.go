@@ -93,7 +93,7 @@ func TestInPortSendRecv(t *testing.T) {
 	inp := NewInPort("test_inport")
 	inp.process = NewBogusProcess("bogus_process")
 
-	ip := NewIP("/tmp/test.txt")
+	ip := NewFileIP("/tmp/test.txt")
 	go func() {
 		inp.Send(ip)
 	}()

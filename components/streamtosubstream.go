@@ -33,7 +33,7 @@ func (p *StreamToSubStream) Run() {
 	defer p.CloseAllOutPorts()
 
 	scipipe.Debug.Println("Creating new information packet for the substream...")
-	subStreamIP := scipipe.NewIP("")
+	subStreamIP := scipipe.NewFileIP("")
 	scipipe.Debug.Printf("Setting in-port of process %s to IP substream field\n", p.Name())
 	subStreamIP.SubStream = p.In()
 

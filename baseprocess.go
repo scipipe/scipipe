@@ -233,9 +233,9 @@ func (p *BaseProcess) CloseAllOutPorts() {
 	p.CloseParamOutPorts()
 }
 
-func (p *BaseProcess) receiveOnInPorts() (ips map[string]*IP, inPortsOpen bool) {
+func (p *BaseProcess) receiveOnInPorts() (ips map[string]*FileIP, inPortsOpen bool) {
 	inPortsOpen = true
-	ips = make(map[string]*IP)
+	ips = make(map[string]*FileIP)
 	// Read input targets on in-ports and set up path mappings
 	for inpName, inPort := range p.InPorts() {
 		Debug.Printf("Process %s: Receieving on inPort %s ...", p.name, inpName)

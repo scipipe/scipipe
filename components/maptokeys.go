@@ -11,11 +11,11 @@ import (
 // key:value map
 type MapToKeys struct {
 	scipipe.BaseProcess
-	mapFunc func(ip *scipipe.IP) map[string]string
+	mapFunc func(ip *scipipe.FileIP) map[string]string
 }
 
 // NewMapToKeys returns an initialized MapToKeys process
-func NewMapToKeys(wf *scipipe.Workflow, name string, mapFunc func(ip *scipipe.IP) map[string]string) *MapToKeys {
+func NewMapToKeys(wf *scipipe.Workflow, name string, mapFunc func(ip *scipipe.FileIP) map[string]string) *MapToKeys {
 	p := &MapToKeys{
 		BaseProcess: scipipe.NewBaseProcess(wf, name),
 		mapFunc:     mapFunc,

@@ -17,8 +17,8 @@ type Task struct {
 	Command       string
 	ExecMode      ExecMode // TODO: Probably implement via different struct types (local/slurm/k8s, etc etc)
 	CustomExecute func(*Task)
-	InTargets     map[string]*IP
-	OutTargets    map[string]*IP
+	InTargets     map[string]*FileIP
+	OutTargets    map[string]*FileIP
 	Params        map[string]string
 	Done          chan int
 	Image         string // TODO: Later probably only include in k8s-task
@@ -28,11 +28,11 @@ type Task struct {
 }
 
 // NewTask instantiates and initializes a new Task
-func NewTask(workflow *Workflow, name string, cmdPat string, inTargets map[string]*IP, outPathFuncs map[string]func(*Task) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, cores int) *Task {
+func NewTask(workflow *Workflow, name string, cmdPat string, inTargets map[string]*FileIP, outPathFuncs map[string]func(*Task) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, cores int) *Task {
 	t := &Task{
 		Name:       name,
 		InTargets:  inTargets,
-		OutTargets: make(map[string]*IP),
+		OutTargets: make(map[string]*FileIP),
 		Params:     params,
 		Command:    "",
 		ExecMode:   execMode,
@@ -43,10 +43,10 @@ func NewTask(workflow *Workflow, name string, cmdPat string, inTargets map[strin
 
 	// Create out targets
 	Debug.Printf("Task:%s: Creating outTargets now ... [%s]", name, cmdPat)
-	outTargets := make(map[string]*IP)
+	outTargets := make(map[string]*FileIP)
 	for oname, ofun := range outPathFuncs {
 		opath := ofun(t)
-		otgt := NewIP(opath)
+		otgt := NewFileIP(opath)
 		if outPortsDoStream[oname] {
 			otgt.doStream = true
 		}
@@ -236,7 +236,7 @@ var (
 	falseVal = false
 )
 
-func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*IP, params map[string]string, prepend string) string {
+func formatCommand(cmd string, inTargets map[string]*FileIP, outTargets map[string]*FileIP, params map[string]string, prepend string) string {
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	for _, m := range ms {
@@ -270,7 +270,7 @@ func formatCommand(cmd string, inTargets map[string]*IP, outTargets map[string]*
 				msg := fmt.Sprint("Missing intarget for inport '", name, "' for command '", cmd, "'")
 				CheckWithMsg(errors.New(msg), msg)
 			} else if inTargets[name].Path() == "" && reduceInputs {
-				ips := []*IP{}
+				ips := []*FileIP{}
 				for ip := range inTargets[name].SubStream.Chan {
 					Debug.Println("Got ip: ", ip)
 					ips = append(ips, ip)
