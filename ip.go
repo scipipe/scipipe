@@ -16,10 +16,11 @@ type IP interface {
 	Digest() string
 	URL() string        // Example: file:///proj/cheminf/exp/20180101-logd/dat/rawdata.tsv
 	StagedPath() string // Example: /proj/cheminf/exp/20180101-logd/dat/rawdata.tsv
-	StagedTempPath() string
+	TempPath() string
 	Atomize()
 	EnsureStaged()
 	EnsureUnstaged()
+	ParamType() int // string / int8 / float64 / bool / date? / time?
 	// ----------------------------------------
 	// Some tentative additions:
 	// ----------------------------------------
