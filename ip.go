@@ -10,6 +10,40 @@ import (
 	"time"
 )
 
+// IP Is the base interface which all other IPs need to adhere to
+type IP interface {
+	ID() string
+	URL() string            // Example: file:///proj/cheminf/exp/20180101-logd/dat/rawdata.tsv
+	StagedPath() string     // Example: /proj/cheminf/exp/20180101-logd/dat/rawdata.tsv
+	StagedTempPath() string // Example: /proj/cheminf/exp/20180101-logd/dat/rawdata.tsv.tmp
+	Digest() string
+	Atomize()
+	EnsureStaged()
+	EnsureUnstaged()
+	// ----------------------------------------
+	// Some tentative additions:
+	// ----------------------------------------
+	// Param() string
+	// Key() string
+	// Keys() map[string]string
+	// AddKey(key string)
+	// AddKeys(keys ...string)
+	// AuditInfo()
+	// SetAuditInfo()
+	// AuditInfoFilePath() string
+	// WriteAuditLogToFile()
+	// Params() map[string]string
+	// ----------------------------------------
+	// Persistable() bool
+	// Data() []byte
+	// SetData(data []byte)
+	// OpenR() io.Reader // Return a reader interface to read content directly
+	// OpenW() io.Writer // (Possibly relevant for object storage without staging)
+	// OpenRW() io.ReadWriter
+	// Close()
+	// ----------------------------------------
+}
+
 // ======= FileIP ========
 
 // FileIP (Short for "Information Packet" in Flow-Based Programming terminology)
