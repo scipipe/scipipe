@@ -13,10 +13,10 @@ import (
 // IP Is the base interface which all other IPs need to adhere to
 type IP interface {
 	ID() string
-	URL() string            // Example: file:///proj/cheminf/exp/20180101-logd/dat/rawdata.tsv
-	StagedPath() string     // Example: /proj/cheminf/exp/20180101-logd/dat/rawdata.tsv
-	StagedTempPath() string // Example: /proj/cheminf/exp/20180101-logd/dat/rawdata.tsv.tmp
 	Digest() string
+	URL() string        // Example: file:///proj/cheminf/exp/20180101-logd/dat/rawdata.tsv
+	StagedPath() string // Example: /proj/cheminf/exp/20180101-logd/dat/rawdata.tsv
+	StagedTempPath() string
 	Atomize()
 	EnsureStaged()
 	EnsureUnstaged()
@@ -44,23 +44,46 @@ type IP interface {
 	// ----------------------------------------
 }
 
+// ======= BaseIP ========
+
+// BaseIP contains foundational functionality which all IPs need to implement.
+// It is meant to be embedded into other IP implementations.
+type BaseIP struct {
+	path      string
+	id        string
+	auditInfo *AuditInfo
+}
+
+// NewBaseIP creates a new BaseIP
+func NewBaseIP(path string) *BaseIP {
+	return &BaseIP{
+		path:      path,
+		id:        randSeqLC(20),
+		auditInfo: NewAuditInfo(),
+	}
+}
+
+// ID returns a globally unique ID for the IP
+func (ip *BaseIP) ID() string {
+	return ip.id
+}
+
 // ======= FileIP ========
 
 // FileIP (Short for "Information Packet" in Flow-Based Programming terminology)
 // contains information and helper methods for a physical file on a normal disk.
 type FileIP struct {
-	path      string
+	*BaseIP
 	buffer    *bytes.Buffer
 	doStream  bool
 	lock      *sync.Mutex
-	auditInfo *AuditInfo
 	SubStream *InPort
 }
 
 // NewFileIP creates a new FileIP
 func NewFileIP(path string) *FileIP {
 	ip := &FileIP{
-		path:      path,
+		BaseIP:    NewBaseIP(path),
 		lock:      &sync.Mutex{},
 		SubStream: NewInPort("in_substream"),
 	}
