@@ -25,10 +25,11 @@ type FileIP struct {
 
 // NewFileIP creates a new FileIP
 func NewFileIP(path string) *FileIP {
-	ip := new(FileIP)
-	ip.path = path
-	ip.lock = new(sync.Mutex)
-	ip.SubStream = NewInPort("in_substream")
+	ip := &FileIP{
+		path:      path,
+		lock:      &sync.Mutex{},
+		SubStream: NewInPort("in_substream"),
+	}
 	//Don't init buffer if not needed?
 	//buf := make([]byte, 0, 128)
 	//ip.buffer = bytes.NewBuffer(buf)
