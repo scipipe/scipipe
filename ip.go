@@ -35,9 +35,9 @@ type IP interface {
 	// WriteAuditLogToFile()
 	// Params() map[string]string
 	// ----------------------------------------
-	// Persistable() bool
-	// Data() []byte
-	// SetData(data []byte)
+	// Persistable() bool // Whether the content or data of the IP can be persisted, e.g. by being written to disk
+	// Read() []byte
+	// Write(data []byte)
 	// OpenR() io.Reader // Return a reader interface to read content directly
 	// OpenW() io.Writer // (Possibly relevant for object storage without staging)
 	// OpenRW() io.ReadWriter
