@@ -4,8 +4,10 @@ import (
 	"time"
 )
 
-// AuditInfo contains structured audit/provenance logging information to go with an IP
+// AuditInfo contains structured audit/provenance logging information for a
+// particular task (invocation), to go with all outgoing IPs from that task
 type AuditInfo struct {
+	ID         string
 	Command    string
 	Params     map[string]string
 	Keys       map[string]string
@@ -16,6 +18,7 @@ type AuditInfo struct {
 // NewAuditInfo returns a new AuditInfo struct
 func NewAuditInfo() *AuditInfo {
 	return &AuditInfo{
+		ID:         randSeqLC(20),
 		Command:    "",
 		Params:     make(map[string]string),
 		Keys:       make(map[string]string),
