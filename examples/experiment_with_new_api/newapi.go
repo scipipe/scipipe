@@ -31,7 +31,7 @@ func NewFooToBarReplacer() interface{} {
 	execFunc := func(task *sci.Task) {
 		indata := task.InTargets["foo"].Read()
 		indataReplaced := bytes.Replace(indata, []byte("foo"), []byte("bar"), -1)
-		task.OutTargets["bar"].WriteTempFile(indataReplaced)
+		task.OutTargets["bar"].Write(indataReplaced)
 	}
 	pathFuncs := map[string]func(*sci.Task) string{
 		"bar": func(t *sci.Task) string { return t.InTargets["foo"].Path() + ".bar.txt" },

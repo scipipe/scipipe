@@ -153,8 +153,8 @@ func (ip *FileIP) ReadAuditFile() []byte {
 	return dat
 }
 
-// WriteTempFile writes a byte array ([]byte) to the file's temp path
-func (ip *FileIP) WriteTempFile(dat []byte) {
+// Write writes a byte array ([]byte) to the file's temp file path
+func (ip *FileIP) Write(dat []byte) {
 	err := ioutil.WriteFile(ip.TempPath(), dat, 0644)
 	CheckWithMsg(err, "Could not write to temp file: "+ip.TempPath())
 }
