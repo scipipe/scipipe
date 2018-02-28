@@ -27,45 +27,25 @@ package main
 import sp "github.com/scipipe/scipipe"
 
 func main() {
-	// --------------------------------
-	// Create a pipeline runner
-	// --------------------------------
+	// Create a workflow, using 4 cpu cores
+	wf := sp.NewWorkflow("my_workflow", 4)
 
-	run := sp.NewPipelineRunner()
-
-	// --------------------------------
-	// Initialize processes and add to runner
-	// --------------------------------
-
-	foo := sp.NewProc("fooer",
-		"echo foo > {o:foo}")
+	// Initialize processes
+	foo := wf.NewProc("fooer", "echo foo > {o:foo}")
 	foo.SetPathStatic("foo", "foo.txt")
-	run.AddProcess(foo)
 
-	f2b := sp.NewProc("foo2bar",
-		"sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	f2b := wf.NewProc("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	f2b.SetPathExtend("foo", "bar", ".bar.txt")
-	run.AddProcess(f2b)
 
-	snk := sp.NewSink()
-	run.AddProcess(snk)
-
-	// --------------------------------
 	// Connect workflow dependency network
-	// --------------------------------
+	f2b.In("foo").Connect(foo.Out("foo"))
 
-	f2b.In["foo"].Connect(foo.Out["foo"])
-	snk.Connect(f2b.Out["bar"])
-
-	// --------------------------------
-	// Run the pipeline!
-	// --------------------------------
-
-	run.Run()
+	// Run the workflow
+	wf.Run()
 }`
 				fileName := c.Args().First()
 				if fileName == "" {
-					fileName = "new_scipipe_workflow.go"
+					fileName = "my_workflow.go"
 					fmt.Printf("No filename specified, so using the default '%s' ...\n", fileName)
 				}
 
