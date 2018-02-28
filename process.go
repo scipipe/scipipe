@@ -37,7 +37,6 @@ type Process struct {
 // NewProc returns a new Process, and initializes its ports based on the
 // command pattern.
 func NewProc(workflow *Workflow, name string, cmd string) *Process {
-	InitLogInfo()
 	p := newProcess(workflow, name, cmd)
 	p.initPortsFromCmdPattern(cmd, nil)
 	return p
