@@ -41,7 +41,7 @@ func (p *BaseProcess) Workflow() *Workflow {
 // InPort returns the in-port with name portName
 func (p *BaseProcess) InPort(portName string) *InPort {
 	if p.inPorts[portName] == nil {
-		Error.Fatalf("No such in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Failf("No such in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return p.inPorts[portName]
 }
@@ -49,7 +49,7 @@ func (p *BaseProcess) InPort(portName string) *InPort {
 // InitInPort adds the in-port port to the process, with name portName
 func (p *BaseProcess) InitInPort(proc WorkflowProcess, portName string) {
 	if p.inPorts[portName] != nil {
-		Error.Fatalf("Such an in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Failf("Such an in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	ipt := NewInPort(portName)
 	ipt.process = proc
@@ -65,7 +65,7 @@ func (p *BaseProcess) InPorts() map[string]*InPort {
 // DeleteInPort deletes an InPort object from the process
 func (p *BaseProcess) DeleteInPort(portName string) {
 	if _, ok := p.inPorts[portName]; !ok {
-		Error.Fatalf("No such in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Failf("No such in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	delete(p.inPorts, portName)
 }
@@ -77,7 +77,7 @@ func (p *BaseProcess) DeleteInPort(portName string) {
 // InitOutPort adds the out-port port to the process, with name portName
 func (p *BaseProcess) InitOutPort(proc WorkflowProcess, portName string) {
 	if _, ok := p.outPorts[portName]; ok {
-		Error.Fatalf("Such an out-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Failf("Such an out-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	opt := NewOutPort(portName)
 	opt.process = proc
@@ -87,7 +87,7 @@ func (p *BaseProcess) InitOutPort(proc WorkflowProcess, portName string) {
 // OutPort returns the out-port with name portName
 func (p *BaseProcess) OutPort(portName string) *OutPort {
 	if _, ok := p.outPorts[portName]; !ok {
-		Error.Fatalf("No such out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Failf("No such out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return p.outPorts[portName]
 }
@@ -101,7 +101,7 @@ func (p *BaseProcess) OutPorts() map[string]*OutPort {
 // DeleteOutPort deletes a OutPort object from the process
 func (p *BaseProcess) DeleteOutPort(portName string) {
 	if _, ok := p.outPorts[portName]; !ok {
-		Error.Fatalf("No such out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Failf("No such out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	delete(p.outPorts, portName)
 }
@@ -113,7 +113,7 @@ func (p *BaseProcess) DeleteOutPort(portName string) {
 // InitParamInPort adds the parameter port paramPort with name portName
 func (p *BaseProcess) InitParamInPort(proc WorkflowProcess, portName string) {
 	if _, ok := p.paramInPorts[portName]; ok {
-		Error.Fatalf("Such a param-in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Failf("Such a param-in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	pip := NewParamInPort(portName)
 	pip.process = proc
@@ -123,7 +123,7 @@ func (p *BaseProcess) InitParamInPort(proc WorkflowProcess, portName string) {
 // ParamInPort returns the parameter port with name portName
 func (p *BaseProcess) ParamInPort(portName string) *ParamInPort {
 	if _, ok := p.paramInPorts[portName]; !ok {
-		Error.Fatalf("No such param-in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Failf("No such param-in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return p.paramInPorts[portName]
 }
@@ -136,7 +136,7 @@ func (p *BaseProcess) ParamInPorts() map[string]*ParamInPort {
 // DeleteParamInPort deletes a ParamInPort object from the process
 func (p *BaseProcess) DeleteParamInPort(portName string) {
 	if _, ok := p.paramInPorts[portName]; !ok {
-		Error.Fatalf("No such param-in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Failf("No such param-in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	delete(p.paramInPorts, portName)
 }
@@ -151,7 +151,7 @@ func (p *BaseProcess) DeleteParamInPort(portName string) {
 // the process in the receiver is just the *BaseProcess, which doesn't suffice.
 func (p *BaseProcess) InitParamOutPort(proc WorkflowProcess, portName string) {
 	if _, ok := p.paramOutPorts[portName]; ok {
-		Error.Fatalf("Such a param-out-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Failf("Such a param-out-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	pop := NewParamOutPort(portName)
 	pop.process = proc
@@ -161,7 +161,7 @@ func (p *BaseProcess) InitParamOutPort(proc WorkflowProcess, portName string) {
 // ParamOutPort returns the parameter port with name portName
 func (p *BaseProcess) ParamOutPort(portName string) *ParamOutPort {
 	if _, ok := p.paramOutPorts[portName]; !ok {
-		Error.Fatalf("No such param-out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Failf("No such param-out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return p.paramOutPorts[portName]
 }
@@ -174,7 +174,7 @@ func (p *BaseProcess) ParamOutPorts() map[string]*ParamOutPort {
 // DeleteParamOutPort deletes a ParamOutPort object from the process
 func (p *BaseProcess) DeleteParamOutPort(portName string) {
 	if _, ok := p.paramOutPorts[portName]; !ok {
-		Error.Fatalf("No such param-out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
+		Failf("No such param-out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	delete(p.paramOutPorts, portName)
 }

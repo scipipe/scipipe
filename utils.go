@@ -1,7 +1,9 @@
 package scipipe
 
 import (
+	"fmt"
 	"math/rand"
+	"os"
 	"os/exec"
 	re "regexp"
 	"time"
@@ -21,15 +23,35 @@ func ExecCmd(cmd string) string {
 // custom one provided in errMsg
 func CheckWithMsg(err error, errMsg string) {
 	if err != nil {
-		Error.Fatalln("Custom Error Message: " + errMsg + "\n" + "Original Error Message: " + err.Error())
+		Fail("Custom Error Message: " + errMsg + "\n" + "Original Error Message: " + err.Error())
 	}
 }
 
 // Check checks the error err, and prints the message in the error
 func Check(err error) {
 	if err != nil {
-		Error.Fatalln(err)
+		Fail(err.Error())
 	}
+}
+
+// Fail logs the error message, prints a call stack (for debugging purposes) and
+// exists with a final static error message. Fail is supposed to be used inside
+// SciPipe instead of doing calls to exit or log.Fatal() and similar directly,
+// so that there will always be a sensible call stack printed when the program
+// fails. This is important when developing workflows, since the workflow code
+// is itself Go code, so to find the relevant place that fails, we need the Go
+// stack trace.
+func Fail(vs ...interface{}) {
+	Error.Println(vs...)
+	//Error.Println("Printing stack trace (read from bottom to find the workflow code that hit this error):")
+	//debug.PrintStack()
+	os.Exit(1) // Indicates a "general error" (See http://www.tldp.org/LDP/abs/html/exitcodes.html)
+}
+
+// Failf is like Fail but with msg being a formatter string for the message and
+// vs being items to format into the message
+func Failf(msg string, vs ...interface{}) {
+	Fail(fmt.Sprintf(msg, vs...))
 }
 
 // Return the regular expression used to parse the place-holder syntax for in-, out- and

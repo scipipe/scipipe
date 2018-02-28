@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
+
+	"github.com/scipipe/scipipe"
 
 	"github.com/urfave/cli"
 )
 
 func main() {
-	errLog := log.New(os.Stderr, "", 0)
 	app := cli.NewApp()
 	app.Name = "The SciPipe Tool"
 	app.Usage = "A helper tool to ease working with SciPipe workflows"
@@ -71,13 +71,13 @@ func main() {
 
 				f, err := os.Create(fileName)
 				if err != nil {
-					errLog.Fatalln("Could not create file:", fileName)
+					scipipe.Fail("Could not create file:", fileName)
 				}
 				defer f.Close()
 
 				_, err = f.Write([]byte(wfcode))
 				if err != nil {
-					errLog.Fatalln("Could not write to file:", fileName)
+					scipipe.Fail("Could not write to file:", fileName)
 				}
 
 				fmt.Println("Successfully wrote new workflow file to:", fileName)

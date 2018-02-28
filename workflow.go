@@ -61,7 +61,7 @@ func (wf *Workflow) Name() string {
 // AddProc adds a Process to the workflow, to be run when the workflow runs
 func (wf *Workflow) AddProc(proc WorkflowProcess) {
 	if wf.procs[proc.Name()] != nil {
-		Error.Fatalf(wf.name+" workflow: A process with name '%s' already exists in the workflow! Use a more unique name!\n", proc.Name())
+		Failf(wf.name+" workflow: A process with name '%s' already exists in the workflow! Use a more unique name!\n", proc.Name())
 	}
 	wf.procs[proc.Name()] = proc
 }
@@ -85,7 +85,7 @@ func (wf *Workflow) NewProc(procName string, commandPattern string) *Process {
 // Proc returns the process with name procName from the workflow
 func (wf *Workflow) Proc(procName string) WorkflowProcess {
 	if _, ok := wf.procs[procName]; !ok {
-		Error.Fatalf("No process named '%s' in workflow '%s'", procName, wf.Name())
+		Failf("No process named '%s' in workflow '%s'", procName, wf.Name())
 	}
 	return wf.procs[procName]
 }
@@ -103,7 +103,7 @@ func (wf *Workflow) Sink() *Sink {
 // SetSink sets the sink of the workflow to the provided sink process
 func (wf *Workflow) SetSink(sink *Sink) {
 	if wf.sink.Connected() {
-		Error.Fatalln("Trying to replace a sink which is already connected. Are you combining SetSink() with ConnectFinalOutPort()? That is not allowed!")
+		Fail("Trying to replace a sink which is already connected. Are you combining SetSink() with ConnectFinalOutPort()? That is not allowed!")
 	}
 	wf.sink = sink
 }
@@ -152,7 +152,7 @@ func (wf *Workflow) runProcs(procs map[string]WorkflowProcess) {
 	wf.reconnectDeadEndConnections(procs)
 
 	if !wf.readyToRun(procs) {
-		Error.Fatalln("Workflow not ready to run, due to previously reported errors, so exiting.")
+		Fail("Workflow not ready to run, due to previously reported errors, so exiting.")
 	}
 
 	for _, proc := range procs {
@@ -209,7 +209,7 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 
 		if len(proc.OutPorts()) == 0 && len(proc.ParamOutPorts()) == 0 {
 			if foundNewDriverProc {
-				Error.Fatalf("Found more than one process without out-ports nor out-param ports. Cannot use both as drivers (One of them being '%s'). Adapt your workflow accordingly.", proc.Name())
+				Failf("Found more than one process without out-ports nor out-param ports. Cannot use both as drivers (One of them being '%s'). Adapt your workflow accordingly.", proc.Name())
 			}
 			foundNewDriverProc = true
 			wf.driver = proc

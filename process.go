@@ -233,7 +233,7 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 func (p *Process) Run() {
 	// Check that CoresPerTask is a sane number
 	if p.CoresPerTask > cap(p.workflow.concurrentTasks) {
-		Error.Fatalf("%s: CoresPerTask (%d) can't be greater than maxConcurrentTasks of workflow (%d)\n", p.Name(), p.CoresPerTask, cap(p.workflow.concurrentTasks))
+		Failf("%s: CoresPerTask (%d) can't be greater than maxConcurrentTasks of workflow (%d)\n", p.Name(), p.CoresPerTask, cap(p.workflow.concurrentTasks))
 	}
 
 	defer p.CloseOutPorts()

@@ -62,7 +62,7 @@ func NewTask(workflow *Workflow, name string, cmdPat string, inTargets map[strin
 // InPath returns the path name of an input file for the task
 func (t *Task) InPath(portName string) string {
 	if t.InTargets[portName] == nil {
-		Error.Fatalf("No such portname (%s) in task (%s)\n", portName, t.Name)
+		Failf("No such portname (%s) in task (%s)\n", portName, t.Name)
 	}
 	return t.InTargets[portName].Path()
 }
@@ -72,7 +72,7 @@ func (t *Task) Param(portName string) string {
 	if param, ok := t.Params[portName]; ok {
 		return param
 	}
-	Error.Fatalf("No such param port '%s' for task '%s'\n", portName, t.Name)
+	Failf("No such param port '%s' for task '%s'\n", portName, t.Name)
 	return "invalid"
 }
 

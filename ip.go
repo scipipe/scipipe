@@ -246,7 +246,7 @@ func (ip *FileIP) FifoFileExists() bool {
 func (ip *FileIP) Param(key string) string {
 	val, ok := ip.AuditInfo().Params[key]
 	if !ok {
-		Error.Fatalf("Could not find parameter %s in ip with path: %s\n", key, ip.Path())
+		Failf("Could not find parameter %s in ip with path: %s\n", key, ip.Path())
 	}
 	return val
 }
@@ -257,7 +257,7 @@ func (ip *FileIP) Param(key string) string {
 func (ip *FileIP) Key(k string) string {
 	v, ok := ip.AuditInfo().Keys[k]
 	if !ok {
-		Error.Fatalf("Could not find key %s in ip with path: %s\n", k, ip.Path())
+		Failf("Could not find key %s in ip with path: %s\n", k, ip.Path())
 	}
 	return v
 }
@@ -271,7 +271,7 @@ func (ip *FileIP) Keys() map[string]string {
 func (ip *FileIP) AddKey(k string, v string) {
 	ai := ip.AuditInfo()
 	if ai.Keys[k] != "" && ai.Keys[k] != v {
-		Error.Fatalf("Can not add value %s to existing key %s with different value %s\n", v, k, ai.Keys[k])
+		Failf("Can not add value %s to existing key %s with different value %s\n", v, k, ai.Keys[k])
 	}
 	ai.Keys[k] = v
 }
