@@ -170,7 +170,7 @@ func (wf *Workflow) runProcs(procs map[string]WorkflowProcess) {
 func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess) {
 	foundNewDriverProc := false
 
-	for _, proc := range procs {
+	for pname, proc := range procs {
 		// OutPorts
 		for _, opt := range proc.OutPorts() {
 			for iptName, ipt := range opt.RemotePorts {
@@ -213,6 +213,7 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 			}
 			foundNewDriverProc = true
 			wf.driver = proc
+			delete(wf.procs, pname) // A process can't both be the driver, and be included in the main procs map
 		}
 	}
 }
