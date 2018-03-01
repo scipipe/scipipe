@@ -3,6 +3,7 @@ package scipipe
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"sync"
 	"testing"
 
@@ -20,7 +21,9 @@ func TestMaxConcurrentTasksCapacity(t *testing.T) {
 	initTestLogs()
 	wf := NewWorkflow("TestWorkflow", 16)
 
-	assert.Equal(t, 16, cap(wf.concurrentTasks), "Wrong number of concurrent tasks")
+	if cap(wf.concurrentTasks) != 16 {
+		t.Error("Wrong number of concurrent tasks")
+	}
 }
 
 func TestAddProc(t *testing.T) {
@@ -33,10 +36,16 @@ func TestAddProc(t *testing.T) {
 	proc2 := NewBogusProcess("bogusproc2")
 	wf.AddProc(proc2)
 
-	assert.EqualValues(t, len(wf.procs), 2)
+	if len(wf.procs) != 2 {
+		t.Error("Wrong number of processes")
+	}
 
-	assert.IsType(t, &BogusProcess{}, wf.procs["bogusproc1"], "Process 1 was not of the right type!")
-	assert.IsType(t, &BogusProcess{}, wf.procs["bogusproc2"], "Process 2 was not of the right type!")
+	if !reflect.DeepEqual(reflect.TypeOf(wf.procs["bogusproc1"]), reflect.TypeOf(&BogusProcess{})) {
+		t.Error("Bogusproc1 was not of the right type!")
+	}
+	if !reflect.DeepEqual(reflect.TypeOf(wf.procs["bogusproc2"]), reflect.TypeOf(&BogusProcess{})) {
+		t.Error("Bogusproc2 was not of the right type!")
+	}
 }
 
 func TestRunToProc(t *testing.T) {
