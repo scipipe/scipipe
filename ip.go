@@ -58,9 +58,8 @@ type BaseIP struct {
 // NewBaseIP creates a new BaseIP
 func NewBaseIP(path string) *BaseIP {
 	return &BaseIP{
-		path:      path,
-		id:        randSeqLC(20),
-		auditInfo: NewAuditInfo(),
+		path: path,
+		id:   randSeqLC(20),
 	}
 }
 
@@ -87,6 +86,9 @@ func NewFileIP(path string) *FileIP {
 		BaseIP:    NewBaseIP(path),
 		lock:      &sync.Mutex{},
 		SubStream: NewInPort("in_substream"),
+	}
+	if ip.Exists() {
+		ip.AuditInfo() // This will populate the audit info from file
 	}
 	//Don't init buffer if not needed?
 	//buf := make([]byte, 0, 128)
@@ -297,8 +299,10 @@ func (ip *FileIP) AuditInfo() *AuditInfo {
 	ip.lock.Lock()
 	if ip.auditInfo == nil {
 		ip.auditInfo = NewAuditInfo()
-		auditFileData, err := ioutil.ReadFile(ip.AuditFilePath())
-		if err == nil {
+		auditFileData, readFileErr := ioutil.ReadFile(ip.AuditFilePath())
+		if readFileErr != nil {
+			Warning.Println("Could not read audit file: " + ip.AuditFilePath())
+		} else {
 			unmarshalErr := json.Unmarshal(auditFileData, ip.auditInfo)
 			CheckWithMsg(unmarshalErr, "Could not unmarshal audit log file content: "+ip.AuditFilePath())
 		}

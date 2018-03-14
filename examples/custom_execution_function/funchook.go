@@ -36,7 +36,7 @@ func NewFooer(wf *Workflow, name string) *Fooer {
 	innerFoo.SetPathStatic("foo", "foo.txt")
 	// Create the custom execute function, with pure Go code
 	innerFoo.CustomExecute = func(task *Task) {
-		task.OutTargets["foo"].Write([]byte("foo\n"))
+		task.OutIP("foo").Write([]byte("foo\n"))
 	}
 	// Connect the ports of the outer task to the inner, generic one
 	fooer := &Fooer{
@@ -63,7 +63,7 @@ func NewFoo2Barer(wf *Workflow, name string) *Foo2Barer {
 	innerProc.SetPathExtend("foo", "bar", ".bar.txt")
 	// Create the custom execute function, with pure Go code
 	innerProc.CustomExecute = func(task *Task) {
-		task.OutTargets["bar"].Write(bytes.Replace(task.InTargets["foo"].Read(), []byte("foo"), []byte("bar"), 1))
+		task.OutIP("bar").Write(bytes.Replace(task.InIP("foo").Read(), []byte("foo"), []byte("bar"), 1))
 	}
 
 	// Connect the ports of the outer task to the inner, generic one

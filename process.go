@@ -257,7 +257,7 @@ func (p *Process) Run() {
 			}
 
 			// Sending FIFOs for the task
-			for oname, oip := range t.OutTargets {
+			for oname, oip := range t.OutIPs {
 				if oip.doStream {
 					p.Out(oname).Send(oip)
 				}
@@ -280,16 +280,16 @@ func (p *Process) Run() {
 		}
 	}
 
-	Debug.Printf("Process %s: Starting to loop over %d tasks to send out targets ...\n", p.name, len(tasks))
+	Debug.Printf("Process %s: Starting to loop over %d tasks to send out IPs ...\n", p.name, len(tasks))
 	for _, t := range tasks {
 		Debug.Printf("Process %s: Waiting for Done from task: [%s]\n", p.name, t.Command)
 		<-t.Done
 		Debug.Printf("Process %s: Received Done from task: [%s]\n", p.name, t.Command)
-		for oname, oip := range t.OutTargets {
+		for oname, oip := range t.OutIPs {
 			if !oip.doStream {
-				Debug.Printf("Process %s: Sending target on outport %s, for task [%s] ...\n", p.name, oname, t.Command)
+				Debug.Printf("Process %s: Sending IPs on outport %s, for task [%s] ...\n", p.name, oname, t.Command)
 				p.Out(oname).Send(oip)
-				Debug.Printf("Process %s: Done sending target on outport %s, for task [%s] ...\n", p.name, oname, t.Command)
+				Debug.Printf("Process %s: Done sending IPs on outport %s, for task [%s] ...\n", p.name, oname, t.Command)
 			}
 		}
 	}
@@ -302,8 +302,8 @@ func (p *Process) createTasks() (ch chan *Task) {
 	go func() {
 		defer close(ch)
 		for {
-			inTargets, inPortsOpen := p.receiveOnInPorts()
-			Debug.Printf("Process.createTasks:%s Got inTargets: %v", p.name, inTargets)
+			inIPs, inPortsOpen := p.receiveOnInPorts()
+			Debug.Printf("Process.createTasks:%s Got inIPs: %v", p.name, inIPs)
 			params, paramPortsOpen := p.receiveOnParamInPorts()
 			Debug.Printf("Process.createTasks:%s Got params: %s", p.name, params)
 			if !inPortsOpen && !paramPortsOpen {
@@ -318,7 +318,7 @@ func (p *Process) createTasks() (ch chan *Task) {
 				Debug.Printf("Process.createTasks:%s Breaking: No params, and inPorts closed", p.name)
 				break
 			}
-			t := NewTask(p.workflow, p.name, p.CommandPattern, inTargets, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode, p.CoresPerTask)
+			t := NewTask(p.workflow, p.name, p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode, p.CoresPerTask)
 			if p.CustomExecute != nil {
 				t.CustomExecute = p.CustomExecute
 			}

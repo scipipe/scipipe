@@ -29,12 +29,12 @@ type FooToBarReplacer struct {
 
 func NewFooToBarReplacer() interface{} {
 	execFunc := func(task *sci.Task) {
-		indata := task.InTargets["foo"].Read()
+		indata := task.InIP("foo").Read()
 		indataReplaced := bytes.Replace(indata, []byte("foo"), []byte("bar"), -1)
-		task.OutTargets["bar"].Write(indataReplaced)
+		task.OutIP("bar").Write(indataReplaced)
 	}
 	pathFuncs := map[string]func(*sci.Task) string{
-		"bar": func(t *sci.Task) string { return t.InTargets["foo"].Path() + ".bar.txt" },
+		"bar": func(t *sci.Task) string { return t.InIP("foo").Path() + ".bar.txt" },
 	}
 	return NewProcessFromStruct(&FooToBarReplacer{}, execFunc, pathFuncs)
 }
