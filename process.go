@@ -76,12 +76,22 @@ func ShellExpand(wf *Workflow, name string, cmd string, inPaths map[string]strin
 // In is a short-form for InPort() (of BaseProcess), which works only on Process
 // processes
 func (p *Process) In(portName string) *InPort {
+	if portName == "" && len(p.InPorts()) == 1 {
+		for _, inPort := range p.InPorts() {
+			return inPort // Return the (only) in-port available
+		}
+	}
 	return p.InPort(portName)
 }
 
 // Out is a short-form for OutPort() (of BaseProcess), which works only on
 // Process processes
 func (p *Process) Out(portName string) *OutPort {
+	if portName == "" && len(p.OutPorts()) == 1 {
+		for _, outPort := range p.OutPorts() {
+			return outPort // Return the (only) out-port available
+		}
+	}
 	return p.OutPort(portName)
 }
 
