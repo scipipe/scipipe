@@ -37,7 +37,7 @@ func main() {
 }`
 		fileName := flag.Arg(1)
 		if fileName == "" {
-			fmt.Println("ERROR: No filename specified!\n")
+			fmt.Println("ERROR: No filename specified!")
 			printUsage()
 			os.Exit(1)
 		}

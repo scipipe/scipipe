@@ -1,11 +1,8 @@
 package scipipe
 
 import (
-	"testing"
-
 	"strings"
-
-	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestExecCmd_EchoFooBar(t *testing.T) {
@@ -28,6 +25,8 @@ func TestRegexPatternMatchesCases(t *testing.T) {
 		"{i:hej:r:,}",
 	}
 	for _, ph := range placeHolders {
-		assert.True(t, r.Match([]byte(ph)), "Regex does not match placeholder: "+ph)
+		if !r.Match([]byte(ph)) {
+			t.Errorf("Error does not match placeholder: %s\n", ph)
+		}
 	}
 }

@@ -1,17 +1,15 @@
 package scipipe
 
 import (
-	"fmt"
-	"os/exec"
-	"sync"
-
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
+	"reflect"
+	"sync"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 var initTestLogsLock sync.Mutex
@@ -28,22 +26,22 @@ func TestBasicRun(t *testing.T) {
 	wf := NewWorkflow("TestBasicRunWf", 16)
 
 	t1 := NewProc(wf, "t1", "echo foo > {o:foo}")
-	assert.IsType(t, t1.Out("foo"), NewOutPort("foo"))
+	assertIsType(t, t1.Out("foo"), NewOutPort("foo"))
 	t1.PathFormatters["foo"] = func(t *Task) string {
 		return "foo.txt"
 	}
 
 	t2 := NewProc(wf, "t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	assert.IsType(t, t2.In("foo"), NewInPort("foo"))
-	assert.IsType(t, t2.Out("bar"), NewOutPort("bar"))
+	assertIsType(t, t2.In("foo"), NewInPort("foo"))
+	assertIsType(t, t2.Out("bar"), NewOutPort("bar"))
 	t2.PathFormatters["bar"] = func(t *Task) string {
 		return t.InPath("foo") + ".bar.txt"
 	}
 
 	t2.In("foo").Connect(t1.Out("foo"))
 
-	assert.IsType(t, t2.In("foo"), NewInPort("foo"))
-	assert.IsType(t, t2.Out("bar"), NewOutPort("bar"))
+	assertIsType(t, t2.In("foo"), NewInPort("foo"))
+	assertIsType(t, t2.Out("bar"), NewOutPort("bar"))
 
 	wf.Run()
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
@@ -96,7 +94,7 @@ func TestParameterCommand(t *testing.T) {
 
 	// Run tests
 	_, err := os.Stat("/tmp/log.txt")
-	assert.Nil(t, err)
+	assertNil(t, err)
 
 	cleanFiles("/tmp/log.txt")
 }
@@ -110,7 +108,7 @@ func TestProcessWithoutInputsOutputs(t *testing.T) {
 	tsk := NewProc(wf, "tsk", "echo hej > "+f)
 	tsk.Run()
 	_, err := os.Stat(f)
-	assert.Nil(t, err, fmt.Sprintf("File is missing: %s", f))
+	assertNil(t, err, fmt.Sprintf("File is missing: %s", f))
 	cleanFiles(f)
 }
 
@@ -123,7 +121,7 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 
 	// Assert file does not exist before running
 	_, e1 := os.Stat(f)
-	assert.NotNil(t, e1)
+	assertNotNil(t, e1)
 
 	// Run pipeline a first time
 	tsk := NewProc(wf, "tsk", "echo hej > {o:hej1}")
@@ -136,7 +134,7 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 
 	// Assert file DO exist after running
 	fiBef, e2 := os.Stat(f)
-	assert.Nil(t, e2)
+	assertNil(t, e2)
 
 	// Get modified time before
 	mtBef := fiBef.ModTime()
@@ -158,13 +156,13 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 
 	// Assert exists
 	fiAft, e3 := os.Stat(f)
-	assert.Nil(t, e3)
+	assertNil(t, e3)
 
 	// Get modified time AFTER second run
 	mtAft := fiAft.ModTime()
 
 	// Assert file is not modified!
-	assert.EqualValues(t, mtBef, mtAft)
+	assertEqualValues(t, mtBef, mtAft)
 
 	cleanFiles(f)
 }
@@ -190,7 +188,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 	sl.SetPathExtend("in", "out", ".copy.txt")
 	sl.In("in").Connect(fc.Out("out"))
 
-	assert.NotNil(t, sl.Out)
+	assertNotNil(t, sl.Out)
 
 	var expFname string
 	i := 1
@@ -207,7 +205,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 	for ft := range tempPort.Chan {
 		Debug.Printf("TestSendOrderedOutputs: Looping over item %d ...\n", i)
 		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
-		assert.EqualValues(t, expFname, ft.Path())
+		assertEqualValues(t, expFname, ft.Path())
 		Debug.Printf("TestSendOrderedOutputs: Looping over item %d Done.\n", i)
 		i++
 	}
@@ -246,11 +244,11 @@ func TestStreaming(t *testing.T) {
 
 	// Assert that a file exists
 	_, err1 := os.Stat("/tmp/lsl.txt.fifo")
-	assert.Nil(t, err1, "FIFO file does not exist, which it should!")
+	assertNil(t, err1, "FIFO file does not exist, which it should!")
 
 	// Assert otuput file exists
 	_, err2 := os.Stat("/tmp/lsl.txt.grepped.txt")
-	assert.Nil(t, err2, "File missing!")
+	assertNil(t, err2, "File missing!")
 
 	// Clean up
 	cleanFiles("/tmp/lsl.txt", "/tmp/lsl.txt.grepped.txt")
@@ -280,16 +278,16 @@ func TestSubStreamReduceInPlaceHolder(t *testing.T) {
 	wf.Run()
 
 	_, err1 := os.Stat("/tmp/file1.txt")
-	assert.Nil(t, err1, "File missing!")
+	assertNil(t, err1, "File missing!")
 
 	_, err2 := os.Stat("/tmp/file2.txt")
-	assert.Nil(t, err2, "File missing!")
+	assertNil(t, err2, "File missing!")
 
 	_, err3 := os.Stat("/tmp/file3.txt")
-	assert.Nil(t, err3, "File missing!")
+	assertNil(t, err3, "File missing!")
 
 	_, err4 := os.Stat("/tmp/substream_merged.txt")
-	assert.Nil(t, err4, "File missing!")
+	assertNil(t, err4, "File missing!")
 
 	cleanFiles("/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt", "/tmp/substream_merged.txt")
 }
@@ -315,13 +313,13 @@ func TestMultipleLastProcs(t *testing.T) {
 	for _, str := range strs {
 		path := "/tmp/" + str + ".txt"
 		_, err := os.Stat(path)
-		assert.Nil(t, err, "File missing: "+path)
+		assertNil(t, err, "File missing: "+path)
 	}
 
 	for _, str := range strs {
 		path := "/tmp/" + str + ".txt.cat.txt"
 		_, err := os.Stat(path)
-		assert.Nil(t, err, "File missing: "+path)
+		assertNil(t, err, "File missing: "+path)
 	}
 
 	cleanFiles("/tmp/hey.txt", "/tmp/how.txt", "/tmp/hoo.txt")
@@ -351,7 +349,7 @@ func TestPassOnKeys(t *testing.T) {
 	err = json.Unmarshal(dat, auditInfo)
 	Check(err)
 
-	assert.EqualValues(t, "you", auditInfo.Keys["hey"], "Audit info does not contain passed on keys")
+	assertEqualValues(t, "you", auditInfo.Keys["hey"], "Audit info does not contain passed on keys")
 
 	cleanFiles("/tmp/hey.txt", "/tmp/hey.txt.you.txt")
 }
@@ -371,6 +369,30 @@ func cleanFiles(fileNames ...string) {
 			os.Remove(auditFileName)
 			Debug.Println("Successfully removed audit.json file", auditFileName)
 		}
+	}
+}
+
+func assertIsType(t *testing.T, expected interface{}, actual interface{}) {
+	if !reflect.DeepEqual(reflect.TypeOf(expected), reflect.TypeOf(actual)) {
+		t.Errorf("Types do not match! (%s) and (%s)\n", reflect.TypeOf(expected).String(), reflect.TypeOf(actual).String())
+	}
+}
+
+func assertNil(t *testing.T, obj interface{}, msgs ...interface{}) {
+	if obj != nil {
+		t.Errorf("Object is not nil: %v. Message: %v\n", obj, msgs)
+	}
+}
+
+func assertNotNil(t *testing.T, obj interface{}, msgs ...interface{}) {
+	if obj == nil {
+		t.Errorf("Object is nil, which it should not be: %v. Message: %v\n", obj, msgs)
+	}
+}
+
+func assertEqualValues(t *testing.T, expected interface{}, actual interface{}, msgs ...interface{}) {
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("Values are not equal (Expected: %v, Actual: %v)\n", expected, actual)
 	}
 }
 

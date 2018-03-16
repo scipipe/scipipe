@@ -6,15 +6,16 @@ import (
 	"reflect"
 	"sync"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestSetWfName(t *testing.T) {
 	initTestLogs()
 	wf := NewWorkflow("TestWorkflow", 16)
 
-	assert.Equal(t, "TestWorkflow", wf.name, "Wrong name on workflow")
+	expectedWfName := "TestWorkflow"
+	if wf.name != expectedWfName {
+		t.Errorf("Workflow name is wrong, should be %s but is %s\n", wf.name, expectedWfName)
+	}
 }
 
 func TestMaxConcurrentTasksCapacity(t *testing.T) {
