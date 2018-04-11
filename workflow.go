@@ -6,6 +6,8 @@
 package scipipe
 
 import (
+	"fmt"
+	"regexp"
 	"sync"
 )
 
@@ -226,6 +228,22 @@ func (wf *Workflow) RunProcsByName(procNames ...string) {
 		procs[procName] = wf.Proc(procName)
 	}
 	wf.runProcs(procs)
+}
+
+// RunToRegex runs all processes upstream of, and including, the process
+// whose name matches any of the provided regexp patterns
+func (wf *Workflow) RunToRegex(procNamePatterns ...string) {
+	procsToRun := []WorkflowProcess{}
+	for procName, proc := range wf.Procs() {
+		for _, pattern := range procNamePatterns {
+			matches, err := regexp.MatchString(pattern, procName)
+			CheckWithMsg(err, fmt.Sprintf("Regex pattern doesn't work: %s", pattern))
+			if matches {
+				procsToRun = append(procsToRun, proc)
+			}
+		}
+	}
+	wf.RunToProcs(procsToRun...)
 }
 
 // RunTo runs all processes upstream of, and including, the process with
