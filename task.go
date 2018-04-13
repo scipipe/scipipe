@@ -122,7 +122,8 @@ func (t *Task) Execute() {
 				Error.Printf("Task:%-12s SLURM Execution mode not implemented!", t.Name)
 			}
 		}
-		execTime := time.Since(startTime)
+		finishTime := time.Now()
+		execTime := finishTime.Sub(startTime)
 		t.workflow.DecConcurrentTasks(t.cores)
 
 		// Append audit info for the task to all its output IPs
@@ -130,8 +131,9 @@ func (t *Task) Execute() {
 		auditInfo := NewAuditInfo()
 		auditInfo.Command = t.Command
 		auditInfo.Params = t.Params
-		execTimeMS := execTime / time.Millisecond
-		auditInfo.ExecTimeMS = execTimeMS
+		auditInfo.StartTime = startTime
+		auditInfo.FinishTime = finishTime
+		auditInfo.ExecTimeMS = execTime / time.Millisecond
 		// Set the audit infos from incoming IPs into the "Upstream" map
 		for _, iip := range t.InIPs {
 			iipPath := iip.Path()

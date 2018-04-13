@@ -11,6 +11,8 @@ type AuditInfo struct {
 	Command    string
 	Params     map[string]string
 	Keys       map[string]string
+	StartTime  time.Time
+	FinishTime time.Time
 	ExecTimeMS time.Duration
 	Upstream   map[string]*AuditInfo
 }
