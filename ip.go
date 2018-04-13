@@ -301,7 +301,7 @@ func (ip *FileIP) AuditInfo() *AuditInfo {
 		ip.auditInfo = NewAuditInfo()
 		auditFileData, readFileErr := ioutil.ReadFile(ip.AuditFilePath())
 		if readFileErr != nil {
-			Warning.Println("Could not read audit file: " + ip.AuditFilePath())
+			Warning.Println("Could not read audit file: " + ip.AuditFilePath() + " (" + readFileErr.Error() + ")")
 		} else {
 			unmarshalErr := json.Unmarshal(auditFileData, ip.auditInfo)
 			CheckWithMsg(unmarshalErr, "Could not unmarshal audit log file content: "+ip.AuditFilePath())
