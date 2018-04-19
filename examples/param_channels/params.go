@@ -46,9 +46,9 @@ func NewCombinatoricsGen(wf *sci.Workflow, name string) *CombinatoricsGen {
 	p := &CombinatoricsGen{
 		BaseProcess: sci.NewBaseProcess(wf, name),
 	}
-	p.InitParamInPort(p, "a")
-	p.InitParamInPort(p, "b")
-	p.InitParamInPort(p, "c")
+	p.InitParamOutPort(p, "a")
+	p.InitParamOutPort(p, "b")
+	p.InitParamOutPort(p, "c")
 	wf.AddProc(p)
 	return p
 }
