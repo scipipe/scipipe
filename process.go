@@ -328,7 +328,7 @@ func (p *Process) createTasks() (ch chan *Task) {
 				Debug.Printf("Process.createTasks:%s Breaking: No params, and inPorts closed", p.name)
 				break
 			}
-			t := NewTask(p.workflow, p.name, p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode, p.CoresPerTask)
+			t := NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode, p.CoresPerTask)
 			if p.CustomExecute != nil {
 				t.CustomExecute = p.CustomExecute
 			}

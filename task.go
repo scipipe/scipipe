@@ -23,12 +23,13 @@ type Task struct {
 	Done          chan int
 	Image         string // TODO: Later probably only include in k8s-task
 	DataFolder    string // TODO: Later probably only include in k8s-task
-	workflow      *Workflow
 	cores         int
+	workflow      *Workflow
+	process       *Process
 }
 
 // NewTask instantiates and initializes a new Task
-func NewTask(workflow *Workflow, name string, cmdPat string, inIPs map[string]*FileIP, outPathFuncs map[string]func(*Task) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, cores int) *Task {
+func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, inIPs map[string]*FileIP, outPathFuncs map[string]func(*Task) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, cores int) *Task {
 	t := &Task{
 		Name:     name,
 		InIPs:    inIPs,
@@ -37,8 +38,9 @@ func NewTask(workflow *Workflow, name string, cmdPat string, inIPs map[string]*F
 		Command:  "",
 		ExecMode: execMode,
 		Done:     make(chan int),
-		workflow: workflow,
 		cores:    cores,
+		workflow: workflow,
+		process:  process,
 	}
 
 	// Create out IPs
@@ -130,6 +132,7 @@ func (t *Task) Execute() {
 
 		auditInfo := NewAuditInfo()
 		auditInfo.Command = t.Command
+		auditInfo.ProcessName = t.process.Name()
 		auditInfo.Params = t.Params
 		auditInfo.StartTime = startTime
 		auditInfo.FinishTime = finishTime
