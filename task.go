@@ -173,7 +173,7 @@ func (t *Task) anyOutputExists() (anyFileExists bool) {
 				anyFileExists = true
 			}
 			if _, err := os.Stat(otmpPath); err == nil {
-				Warning.Printf("Task:%-12s Temp   file already exists, so skipping: %s (Note: If resuming from a failed run, clean up .tmp files first).\n", t.Name, otmpPath)
+				Error.Fatalf("Task:%-12s Temp file already exists, so exiting: %s (Note: If resuming from a failed run, clean up .tmp files first. Also, make sure that two processes don't produce the same output files!).\n", t.Name, otmpPath)
 				anyFileExists = true
 			}
 		}
