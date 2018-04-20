@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -135,6 +136,7 @@ func (ip *FileIP) OpenTemp() *os.File {
 
 // OpenWriteTemp opens the file for writing, and returns a file handle (*os.File)
 func (ip *FileIP) OpenWriteTemp() *os.File {
+	ip.createDirs()
 	f, err := os.Create(ip.TempPath())
 	CheckWithMsg(err, "Could not open temp file for writing: "+ip.TempPath())
 	return f
@@ -157,6 +159,7 @@ func (ip *FileIP) ReadAuditFile() []byte {
 
 // Write writes a byte array ([]byte) to the file's temp file path
 func (ip *FileIP) Write(dat []byte) {
+	ip.createDirs()
 	err := ioutil.WriteFile(ip.TempPath(), dat, 0644)
 	CheckWithMsg(err, "Could not write to temp file: "+ip.TempPath())
 }
@@ -187,6 +190,7 @@ func (ip *FileIP) Atomize() {
 
 // CreateFifo creates a FIFO file for the FileIP
 func (ip *FileIP) CreateFifo() {
+	ip.createDirs()
 	ip.lock.Lock()
 	cmd := "mkfifo " + ip.FifoPath()
 	Debug.Println("Now creating FIFO with command:", cmd)
@@ -327,8 +331,17 @@ func (ip *FileIP) WriteAuditLogToFile() {
 	auditInfo := ip.AuditInfo()
 	auditInfoJSON, jsonErr := json.MarshalIndent(auditInfo, "", "    ")
 	CheckWithMsg(jsonErr, "Could not marshall JSON")
+	ip.createDirs()
 	writeErr := ioutil.WriteFile(ip.AuditFilePath(), auditInfoJSON, 0644)
 	CheckWithMsg(writeErr, "Could not write audit file: "+ip.Path())
+}
+
+// CreateDirs creates all directories needed to enable writing the IP to its
+// path (or temporary-path, which will have the same directory)
+func (ip *FileIP) createDirs() {
+	dir := filepath.Dir(ip.Path())
+	err := os.MkdirAll(dir, 0777)
+	CheckWithMsg(err, "Could not create directory: "+dir)
 }
 
 // --------------------------------------------------------------------------------
