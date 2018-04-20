@@ -98,6 +98,7 @@ func (p *Process) Out(portName string) *OutPort {
 // SetPathStatic creates an (output) path formatter returning a static string file name
 func (p *Process) SetPathStatic(outPortName string, path string) {
 	p.PathFormatters[outPortName] = func(t *Task) string {
+		path := path
 		return path
 	}
 }
@@ -107,6 +108,7 @@ func (p *Process) SetPathStatic(outPortName string, path string) {
 func (p *Process) SetPathExtend(inPortName string, outPortName string,
 	extension string) {
 	p.PathFormatters[outPortName] = func(t *Task) string {
+		extension := extension
 		return t.InPath(inPortName) + extension
 	}
 }
@@ -115,6 +117,8 @@ func (p *Process) SetPathExtend(inPortName string, outPortName string,
 // but replaces parts of it.
 func (p *Process) SetPathReplace(inPortName string, outPortName string, old string, new string) {
 	p.PathFormatters[outPortName] = func(t *Task) string {
+		old := old
+		new := new
 		return strings.Replace(t.InPath(inPortName), old, new, -1)
 	}
 }
