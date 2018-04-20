@@ -100,16 +100,63 @@ would write like this:
 ```go
 // Configure output file path formatters for the processes created above
 hello.SetPathCustom("out", func(t *sp.Task) string {
-return "hello.txt"
+    return "hello.txt"
 })
 world.SetPathCustom("out", func(t *sp.Task) string {
-return strings.Replace(t.InPath("in"), ".txt", "_world.txt", -1)
+    return strings.Replace(t.InPath("in"), ".txt", "_world.txt", -1)
 })
 ```
 
 As you can see, this is a much more complicated way to format paths, but it can
 be useful for example when needing to incorporate parameter values into file
 names.
+
+### A caveat about using variables in anonymous functions
+
+Note that when using anonymous functions, you have to be careful to not re-use
+the same variable (even with different values) in multiple functions, due to
+the [subtle ways in which closures work in Go](https://golang.org/doc/faq#closures_and_goroutines).
+
+For example, if you create multiple new processes with separate formatting
+functions in a loop, that uses a shared variable, like this:
+
+```go
+for _, val := range []string{"foo", "bar"} {
+    proc := scipipe.NewProc(val + "_proc", "cat {p:val} > {o:out}")
+    proc.SetPathCustom("out", func(t *sp.Task) string {
+        return val + ".txt"
+    })
+}
+```
+
+... then, both functions will return "bar.txt", since both funcs were pointing to
+the same variable ("var"), which had the value "bar" at the end of the loop.
+
+To avoid this situation, you can do one of two things, of which the latter is recommended:
+
+1. Create a new copy of the variable, inside the anonymous function:
+
+```go
+for _, val := range []string{"foo", "bar"} {
+    proc := scipipe.NewProc(val + "_proc", "cat {p:val} > {o:out}")
+    proc.SetPathCustom("out", func(t *sp.Task) string {
+        val := val // <- Here we create a new, local, copy of the variable
+        return val + ".txt"
+    })
+}
+```
+
+2. ... or, better, access the parameter value via the task which the path
+   function receives:
+
+```go
+for _, val := range []string{"foo", "bar"} {
+    proc := scipipe.NewProc(val + "_proc", "cat {p:val} > {o:out}")
+    proc.SetPathCustom("out", func(t *sp.Task) string {
+        return t.Param("val") + ".txt" // We here access the parameter via the task (`t`)
+    })
+}
+```
 
 ## Connecting processes into a network
 
