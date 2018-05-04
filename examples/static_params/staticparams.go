@@ -11,8 +11,10 @@ func main() {
 
 	fls := NewFileSender(wf, "filesender")
 
-	params := map[string]string{"a": "a1", "b": "b1", "c": "c1"}
-	abc := sci.ShellExpand(wf, "abc", "echo {p:a} {p:b} {p:c} > {o:out} # {i:in}", nil, nil, params)
+	abc := sci.NewProc(wf, "abc", "echo {p:a} {p:b} {p:c} > {o:out} # {i:in}")
+	abc.ParamInPort("a").ConnectStr("a1")
+	abc.ParamInPort("b").ConnectStr("b1")
+	abc.ParamInPort("c").ConnectStr("c1")
 	abc.SetPathCustom("out", func(task *sci.Task) string {
 		return task.InPath("in")
 	})

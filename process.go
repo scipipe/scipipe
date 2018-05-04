@@ -5,8 +5,6 @@ import (
 	"strings"
 )
 
-// ================== Process ==================
-
 // ExecMode specifies which execution mode should be used for a Process and
 // its corresponding Tasks
 type ExecMode int
@@ -59,19 +57,6 @@ func newProcess(workflow *Workflow, name string, command string) *Process {
 	workflow.AddProc(p)
 	return p
 }
-
-// ShellExpand expands the command pattern in cmd with the concrete values
-// provided in inPaths, ouPaths and params
-func ShellExpand(wf *Workflow, name string, cmd string, inPaths map[string]string, outPaths map[string]string, params map[string]string) *Process {
-	cmdExpr := expandCommandParamsAndPaths(cmd, params, inPaths, outPaths)
-	p := newProcess(wf, name, cmdExpr)
-	p.initPortsFromCmdPattern(cmdExpr, params)
-	return p
-}
-
-// ------------------------------------------------
-// Main Process API methods
-// ------------------------------------------------
 
 // In is a short-form for InPort() (of BaseProcess), which works only on Process
 // processes
@@ -129,78 +114,13 @@ func (p *Process) SetPathCustom(outPortName string, pathFmtFunc func(task *Task)
 	p.PathFormatters[outPortName] = pathFmtFunc
 }
 
-// ------- Helper methods for initialization -------
-
-// ExpandParams takes a command pattern and a map of parameter names mapped to
-// parameter values, and returns the command as a string where any parameter
-// placeholders (on the form `{p:paramname}` are replaced with the parameter
-// value from the provided parameter values map.
-func ExpandParams(cmd string, params map[string]string) string {
-	return expandCommandParamsAndPaths(cmd, params, nil, nil)
-}
-
-func expandCommandParamsAndPaths(cmd string, params map[string]string, inPaths map[string]string, outPaths map[string]string) (cmdExpr string) {
-	r := getShellCommandPlaceHolderRegex()
-	ms := r.FindAllStringSubmatch(cmd, -1)
-	if params != nil {
-		Debug.Println("Params:", params)
-	}
-	if inPaths != nil {
-		Debug.Println("inPaths:", inPaths)
-	}
-	if outPaths != nil {
-		Debug.Println("outPaths:", outPaths)
-	}
-	cmdExpr = cmd
-	Debug.Println("Got command: ", cmd)
-	for _, m := range ms {
-		placeHolderStr := m[0]
-		typ := m[1]
-		name := m[2]
-		var filePath string
-		if typ == "p" {
-			if params != nil {
-				if val, ok := params[name]; ok {
-					Debug.Println("Found param:", val)
-					filePath = val
-					Debug.Println("Replacing:", placeHolderStr, "->", filePath)
-					cmdExpr = strings.Replace(cmdExpr, placeHolderStr, filePath, -1)
-				}
-			}
-		} else if typ == "i" {
-			if inPaths != nil {
-				if val, ok := inPaths[name]; ok {
-					Debug.Println("Found inPath:", val)
-					filePath = val
-					Debug.Println("Replacing:", placeHolderStr, "->", filePath)
-					cmdExpr = strings.Replace(cmdExpr, placeHolderStr, filePath, -1)
-				}
-			}
-		} else if typ == "o" || typ == "os" {
-			if outPaths != nil {
-				if val, ok := outPaths[name]; ok {
-					Debug.Println("Found outPath:", val)
-					filePath = val
-					Debug.Println("Replacing:", placeHolderStr, "->", filePath)
-					cmdExpr = strings.Replace(cmdExpr, placeHolderStr, filePath, -1)
-				}
-			}
-		}
-	}
-	if cmd != cmdExpr {
-		Debug.Printf("Expanded command '%s' into '%s'\n", cmd, cmdExpr)
-	}
-	return
-}
-
-// Set up in- and out-ports based on the shell command pattern used to create the
-// Process. Ports are set up in this way:
+// iniPortsFromCmdPattern sets up in- and out-ports based on the shell command
+// pattern used to create the Process. Ports are set up in this way:
 // `{i:PORTNAME}` specifies an in-port
 // `{o:PORTNAME}` specifies an out-port
 // `{os:PORTNAME}` specifies an out-port that streams via a FIFO file
 // `{p:PORTNAME}` a "parameter-port", which means a port where parameters can be "streamed"
 func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) {
-
 	// Find in/out port names and Params and set up in struct fields
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
@@ -236,8 +156,6 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 		}
 	}
 }
-
-// ============== Process Run Method ===============
 
 // Run runs the process by instantiating and executing Tasks for all inputs
 // and parameter values on its in-ports. in the case when there are no inputs
@@ -309,8 +227,9 @@ func (p *Process) Run() {
 	}
 }
 
-// -------- Helper methods for the Run method ---------
-
+// createTasks is a helper method for the Run method that creates tasks based on
+// in-coming IPs on the in-ports, and feeds them to the Run method on the
+// returned channel ch
 func (p *Process) createTasks() (ch chan *Task) {
 	ch = make(chan *Task)
 	go func() {

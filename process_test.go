@@ -1,7 +1,6 @@
 package scipipe
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -18,28 +17,6 @@ func TestNewProc(t *testing.T) {
 	}
 	if p2.Out("outfile") == nil {
 		t.Error(`p.Out("outfile") = nil. want: not nil`)
-	}
-}
-
-func ExampleExpandParams() {
-	fmt.Println(ExpandParams("echo {p:msg}", map[string]string{"msg": "Hello"}))
-	// Output:
-	// echo Hello
-}
-
-func TestShellExpand_OnlyParams(t *testing.T) {
-	wf := NewWorkflow("test_wf", 16)
-	p1 := ShellExpand(wf, "echo", "echo {p:foo}", nil, nil, map[string]string{"foo": "bar"})
-	if p1.CommandPattern != "echo bar" {
-		t.Error(`p.CommandPattern != "echo bar", want: echo bar`)
-	}
-}
-
-func TestShellExpand_InputOutput(t *testing.T) {
-	wf := NewWorkflow("test_wf", 16)
-	p := ShellExpand(wf, "cat", "cat {i:foo} > {o:bar}", map[string]string{"foo": "foo.txt"}, map[string]string{"bar": "bar.txt"}, nil)
-	if p.CommandPattern != "cat foo.txt > bar.txt" {
-		t.Error(`if p.CommandPattern != "cat foo.txt > bar.txt"`)
 	}
 }
 
