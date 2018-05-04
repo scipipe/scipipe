@@ -76,7 +76,7 @@ func TestParameterCommand(t *testing.T) {
 	abc := NewProc(wf, "abc", "echo {p:a} {p:b} {p:c} > {o:out}")
 	abc.SetPathCustom("out", func(task *Task) string {
 		return fmt.Sprintf(
-			"%s_%s_%s.txt",
+			"/tmp/%s_%s_%s.txt",
 			task.Param("a"),
 			task.Param("b"),
 			task.Param("c"),
