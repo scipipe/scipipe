@@ -1,7 +1,6 @@
 package scipipe
 
 import (
-	"errors"
 	"strings"
 )
 
@@ -61,39 +60,30 @@ func NewProc(workflow *Workflow, name string, cmd string) *Process {
 // `{i:PORTNAME}` specifies an in-port
 // `{o:PORTNAME}` specifies an out-port
 // `{os:PORTNAME}` specifies an out-port that streams via a FIFO file
-// `{p:PORTNAME}` a "parameter-port", which means a port where parameters can be "streamed"
+// `{p:PORTNAME}` a "parameter (in-)port", which means a port where parameters can be "streamed"
 func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) {
 	// Find in/out port names and Params and set up in struct fields
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
-	Debug.Printf("Got the following matches for placeholders in the command, when initializing ports: %v\n", ms)
-
+	if len(ms) == 0 {
+		Fail("No placeholders found in command: " + cmd)
+	}
 	for _, m := range ms {
-		if len(m) < 3 {
-			msg := "Too few matches"
-			CheckWithMsg(errors.New(msg), msg)
-		}
-
-		typ := m[1]
-		name := m[2]
-		if typ == "o" || typ == "os" {
-			p.outPorts[name] = NewOutPort(name)
-			p.outPorts[name].process = p
-			if typ == "os" {
-				p.OutPortsDoStream[name] = true
+		portType := m[1]
+		portName := m[2]
+		if portType == "o" || portType == "os" {
+			p.outPorts[portName] = NewOutPort(portName)
+			p.outPorts[portName].process = p
+			if portType == "os" {
+				p.OutPortsDoStream[portName] = true
 			}
-		} else if typ == "i" {
-			// Set up a channel on the inports, even though this is
-			// often replaced by another processes output port channel.
-			// It might be nice to have it init'ed with a channel
-			// anyways, for use cases when we want to send IP
-			// on the inport manually.
-			p.inPorts[name] = NewInPort(name)
-			p.inPorts[name].process = p
-		} else if typ == "p" {
-			if params == nil || params[name] == "" {
-				p.paramInPorts[name] = NewParamInPort(name)
-				p.paramInPorts[name].process = p
+		} else if portType == "i" {
+			p.inPorts[portName] = NewInPort(portName)
+			p.inPorts[portName].process = p
+		} else if portType == "p" {
+			if params == nil || params[portName] == "" {
+				p.paramInPorts[portName] = NewParamInPort(portName)
+				p.paramInPorts[portName].process = p
 			}
 		}
 	}

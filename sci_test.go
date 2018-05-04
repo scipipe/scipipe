@@ -99,19 +99,6 @@ func TestParameterCommand(t *testing.T) {
 	cleanFiles("/tmp/log.txt")
 }
 
-func TestProcessWithoutInputsOutputs(t *testing.T) {
-	wf := NewWorkflow("test_wf", 16)
-	initTestLogs()
-	Debug.Println("Starting test TestProcessWithoutInputsOutputs")
-
-	f := "/tmp/hej.txt"
-	tsk := NewProc(wf, "tsk", "echo hej > "+f)
-	tsk.Run()
-	_, err := os.Stat(f)
-	assertNil(t, err, fmt.Sprintf("File is missing: %s", f))
-	cleanFiles(f)
-}
-
 func TestDontOverWriteExistingOutputs(t *testing.T) {
 	initTestLogs()
 	Debug.Println("Starting test TestDontOverWriteExistingOutputs")
