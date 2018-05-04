@@ -91,7 +91,7 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 }
 
 // ------------------------------------------------------------------------
-// Main API methods for setting up (connecting) workflows
+// Main API methods: Port accessor methods
 // ------------------------------------------------------------------------
 
 // In is a short-form for InPort() (of BaseProcess), which works only on Process
@@ -115,6 +115,10 @@ func (p *Process) Out(portName string) *OutPort {
 	}
 	return p.OutPort(portName)
 }
+
+// ------------------------------------------------------------------------
+// Main API methods: Configure path formatting
+// ------------------------------------------------------------------------
 
 // SetPathStatic creates an (output) path formatter returning a static string file name
 func (p *Process) SetPathStatic(outPortName string, path string) {
@@ -198,41 +202,24 @@ func (p *Process) Run() {
 	}
 }
 
-// createTasks is a helper method for the Run method that creates tasks based on
-// in-coming IPs on the in-ports, and feeds them to the Run method on the
-// returned channel ch
+// createTasks is a helper method for Run that creates tasks based on in-coming
+// IPs on in-ports, and feeds them to the Run method on the returned channel ch
 func (p *Process) createTasks() (ch chan *Task) {
 	ch = make(chan *Task)
 	go func() {
 		defer close(ch)
 		for {
 			inIPs, inPortsOpen := p.receiveOnInPorts()
-			Debug.Printf("Process.createTasks:%s Got inIPs: %v", p.name, inIPs)
 			params, paramPortsOpen := p.receiveOnParamInPorts()
-			Debug.Printf("Process.createTasks:%s Got params: %s", p.name, params)
-			if !inPortsOpen && !paramPortsOpen {
-				Debug.Printf("Process.createTasks:%s Breaking: Both inPorts and paramInPorts closed", p.name)
+			if (!inPortsOpen && !paramPortsOpen) || (len(p.inPorts) == 0 && !paramPortsOpen) || (len(p.paramInPorts) == 0 && !inPortsOpen) {
 				break
 			}
-			if len(p.inPorts) == 0 && !paramPortsOpen {
-				Debug.Printf("Process.createTasks:%s Breaking: No inports, and params closed", p.name)
-				break
-			}
-			if len(p.paramInPorts) == 0 && !inPortsOpen {
-				Debug.Printf("Process.createTasks:%s Breaking: No params, and inPorts closed", p.name)
-				break
-			}
-			t := NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode, p.CoresPerTask)
-			if p.CustomExecute != nil {
-				t.CustomExecute = p.CustomExecute
-			}
+			t := NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode, p.CustomExecute, p.CoresPerTask)
 			ch <- t
 			if len(p.inPorts) == 0 && len(p.paramInPorts) == 0 {
-				Debug.Printf("Process.createTasks:%s Breaking: No inports nor params", p.name)
 				break
 			}
 		}
-		Debug.Printf("Process.createTasks:%s Did break", p.name)
 	}()
 	return ch
 }

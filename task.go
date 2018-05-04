@@ -29,18 +29,19 @@ type Task struct {
 }
 
 // NewTask instantiates and initializes a new Task
-func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, inIPs map[string]*FileIP, outPathFuncs map[string]func(*Task) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, cores int) *Task {
+func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, inIPs map[string]*FileIP, outPathFuncs map[string]func(*Task) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, customExecute func(*Task), cores int) *Task {
 	t := &Task{
-		Name:     name,
-		InIPs:    inIPs,
-		OutIPs:   make(map[string]*FileIP),
-		Params:   params,
-		Command:  "",
-		ExecMode: execMode,
-		Done:     make(chan int),
-		cores:    cores,
-		workflow: workflow,
-		process:  process,
+		Name:          name,
+		InIPs:         inIPs,
+		OutIPs:        make(map[string]*FileIP),
+		Params:        params,
+		Command:       "",
+		ExecMode:      execMode,
+		CustomExecute: customExecute,
+		Done:          make(chan int),
+		cores:         cores,
+		workflow:      workflow,
+		process:       process,
 	}
 
 	// Create out IPs
