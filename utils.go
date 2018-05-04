@@ -34,13 +34,8 @@ func Check(err error) {
 	}
 }
 
-// Fail logs the error message, prints a call stack (for debugging purposes) and
-// exists with a final static error message. Fail is supposed to be used inside
-// SciPipe instead of doing calls to exit or log.Fatal() and similar directly,
-// so that there will always be a sensible call stack printed when the program
-// fails. This is important when developing workflows, since the workflow code
-// is itself Go code, so to find the relevant place that fails, we need the Go
-// stack trace.
+// Fail logs the error message, so that it will be possible to improve error
+// messages in one place
 func Fail(vs ...interface{}) {
 	Error.Println(vs...)
 	//Error.Println("Printing stack trace (read from bottom to find the workflow code that hit this error):")

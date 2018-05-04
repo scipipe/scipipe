@@ -121,7 +121,7 @@ func (t *Task) Execute() {
 			case ExecModeLocal:
 				t.executeCommand(t.Command)
 			case ExecModeSLURM:
-				Error.Printf("Task:%-12s SLURM Execution mode not implemented!", t.Name)
+				Failf("Task:%-12s SLURM Execution mode not implemented!", t.Name)
 			}
 		}
 		finishTime := time.Now()
@@ -173,7 +173,7 @@ func (t *Task) anyOutputExists() (anyFileExists bool) {
 				anyFileExists = true
 			}
 			if _, err := os.Stat(otmpPath); err == nil {
-				Error.Fatalf("Task:%-12s Temp file already exists, so exiting: %s (Note: If resuming from a failed run, clean up .tmp files first. Also, make sure that two processes don't produce the same output files!).\n", t.Name, otmpPath)
+				Failf("Task:%-12s Temp file already exists, so exiting: %s (Note: If resuming from a failed run, clean up .tmp files first. Also, make sure that two processes don't produce the same output files!).\n", t.Name, otmpPath)
 				anyFileExists = true
 			}
 		}
@@ -213,8 +213,7 @@ func (t *Task) executeCommand(cmd string) {
 	Audit.Printf("Task:%-12s Executing command: %s\n", t.Name, cmd)
 	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
 	if err != nil {
-		Error.Printf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\n\n", cmd, string(out))
-		os.Exit(126)
+		Failf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\n\n", cmd, string(out))
 	}
 }
 
