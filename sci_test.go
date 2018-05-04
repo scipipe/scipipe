@@ -195,7 +195,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 
 	tempPort := NewInPort("temp")
 	tempPort.process = NewBogusProcess("bogus_process")
-	ConnectFrom(tempPort, sl.Out("out"))
+	tempPort.Connect(sl.Out("out"))
 
 	// Should not start go-routines before connection stuff is done
 	go ig.Run()

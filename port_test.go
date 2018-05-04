@@ -6,46 +6,6 @@ import (
 	"testing"
 )
 
-func TestConnectTo(t *testing.T) {
-	initTestLogs()
-
-	outpName := "test_outport"
-	outp := NewOutPort(outpName)
-	outp.process = NewBogusProcess("bogus_process")
-
-	inpName := "test_inport"
-	inp := NewInPort(inpName)
-	inp.process = NewBogusProcess("bogus_process")
-
-	ConnectTo(outp, inp)
-	if !outp.Connected() {
-		t.Error("Out-port not connected")
-	}
-	if !inp.Connected() {
-		t.Error("In-port not connected")
-	}
-}
-
-func TestConnectFrom(t *testing.T) {
-	initTestLogs()
-
-	outpName := "test_outport"
-	outp := NewOutPort(outpName)
-	outp.process = NewBogusProcess("bogus_process")
-
-	inpName := "test_inport"
-	inp := NewInPort(inpName)
-	inp.process = NewBogusProcess("bogus_process")
-
-	ConnectFrom(inp, outp)
-	if !outp.Connected() {
-		t.Error("Out-port not connected")
-	}
-	if !inp.Connected() {
-		t.Error("In-port not connected")
-	}
-}
-
 func TestMultiInPort(t *testing.T) {
 	initTestLogs()
 

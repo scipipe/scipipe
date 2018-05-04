@@ -4,16 +4,6 @@ import (
 	"sync"
 )
 
-// ConnectTo connects an OutPort to an InPort
-func ConnectTo(outPort *OutPort, inPort *InPort) {
-	outPort.Connect(inPort)
-}
-
-// ConnectFrom connects from an InPort to an OutPort
-func ConnectFrom(inPort *InPort, outPort *OutPort) {
-	outPort.Connect(inPort)
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // InPort
 ////////////////////////////////////////////////////////////////////////////////
