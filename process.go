@@ -32,6 +32,10 @@ type Process struct {
 	Spawn            bool
 }
 
+// ------------------------------------------------------------------------
+// Factory method(s)
+// ------------------------------------------------------------------------
+
 // NewProc returns a new Process, and initializes its ports based on the
 // command pattern.
 func NewProc(workflow *Workflow, name string, cmd string) *Process {
@@ -50,6 +54,54 @@ func NewProc(workflow *Workflow, name string, cmd string) *Process {
 	p.initPortsFromCmdPattern(cmd, nil)
 	return p
 }
+
+// initPortsFromCmdPattern is a helper function for NewProc, that sets up in-
+// and out-ports based on the shell command pattern used to create the Process.
+// Ports are set up in this way:
+// `{i:PORTNAME}` specifies an in-port
+// `{o:PORTNAME}` specifies an out-port
+// `{os:PORTNAME}` specifies an out-port that streams via a FIFO file
+// `{p:PORTNAME}` a "parameter-port", which means a port where parameters can be "streamed"
+func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) {
+	// Find in/out port names and Params and set up in struct fields
+	r := getShellCommandPlaceHolderRegex()
+	ms := r.FindAllStringSubmatch(cmd, -1)
+	Debug.Printf("Got the following matches for placeholders in the command, when initializing ports: %v\n", ms)
+
+	for _, m := range ms {
+		if len(m) < 3 {
+			msg := "Too few matches"
+			CheckWithMsg(errors.New(msg), msg)
+		}
+
+		typ := m[1]
+		name := m[2]
+		if typ == "o" || typ == "os" {
+			p.outPorts[name] = NewOutPort(name)
+			p.outPorts[name].process = p
+			if typ == "os" {
+				p.OutPortsDoStream[name] = true
+			}
+		} else if typ == "i" {
+			// Set up a channel on the inports, even though this is
+			// often replaced by another processes output port channel.
+			// It might be nice to have it init'ed with a channel
+			// anyways, for use cases when we want to send IP
+			// on the inport manually.
+			p.inPorts[name] = NewInPort(name)
+			p.inPorts[name].process = p
+		} else if typ == "p" {
+			if params == nil || params[name] == "" {
+				p.paramInPorts[name] = NewParamInPort(name)
+				p.paramInPorts[name].process = p
+			}
+		}
+	}
+}
+
+// ------------------------------------------------------------------------
+// Main API methods for setting up (connecting) workflows
+// ------------------------------------------------------------------------
 
 // In is a short-form for InPort() (of BaseProcess), which works only on Process
 // processes
@@ -107,48 +159,9 @@ func (p *Process) SetPathCustom(outPortName string, pathFmtFunc func(task *Task)
 	p.PathFormatters[outPortName] = pathFmtFunc
 }
 
-// iniPortsFromCmdPattern sets up in- and out-ports based on the shell command
-// pattern used to create the Process. Ports are set up in this way:
-// `{i:PORTNAME}` specifies an in-port
-// `{o:PORTNAME}` specifies an out-port
-// `{os:PORTNAME}` specifies an out-port that streams via a FIFO file
-// `{p:PORTNAME}` a "parameter-port", which means a port where parameters can be "streamed"
-func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) {
-	// Find in/out port names and Params and set up in struct fields
-	r := getShellCommandPlaceHolderRegex()
-	ms := r.FindAllStringSubmatch(cmd, -1)
-	Debug.Printf("Got the following matches for placeholders in the command, when initializing ports: %v\n", ms)
-
-	for _, m := range ms {
-		if len(m) < 3 {
-			msg := "Too few matches"
-			CheckWithMsg(errors.New(msg), msg)
-		}
-
-		typ := m[1]
-		name := m[2]
-		if typ == "o" || typ == "os" {
-			p.outPorts[name] = NewOutPort(name)
-			p.outPorts[name].process = p
-			if typ == "os" {
-				p.OutPortsDoStream[name] = true
-			}
-		} else if typ == "i" {
-			// Set up a channel on the inports, even though this is
-			// often replaced by another processes output port channel.
-			// It might be nice to have it init'ed with a channel
-			// anyways, for use cases when we want to send IP
-			// on the inport manually.
-			p.inPorts[name] = NewInPort(name)
-			p.inPorts[name].process = p
-		} else if typ == "p" {
-			if params == nil || params[name] == "" {
-				p.paramInPorts[name] = NewParamInPort(name)
-				p.paramInPorts[name].process = p
-			}
-		}
-	}
-}
+// ------------------------------------------------------------------------
+// Run method
+// ------------------------------------------------------------------------
 
 // Run runs the process by instantiating and executing Tasks for all inputs
 // and parameter values on its in-ports. in the case when there are no inputs
