@@ -101,7 +101,7 @@ func (t *Task) Param(portName string) string {
 func (t *Task) Execute() {
 	defer close(t.Done)
 
-	if !t.anyOutputExists() && t.allFifosInOutIPsExist() {
+	if !t.anyOutputExists() {
 		Debug.Printf("Task:%-12s Executing task. [%s]\n", t.Name, t.Command)
 
 		// Create directories for out-IPs
@@ -181,49 +181,11 @@ func (t *Task) anyOutputExists() (anyFileExists bool) {
 	return
 }
 
-// Check if any FIFO files for this tasks exist, for out-ports specified to support streaming
-func (t *Task) anyFifosExist() (anyFifosExist bool) {
-	anyFifosExist = false
-	for _, tgt := range t.OutIPs {
-		ofifoPath := tgt.FifoPath()
-		if tgt.doStream {
-			if _, err := os.Stat(ofifoPath); err == nil {
-				Warning.Printf("Task:%-12s Output FIFO already exists, so skipping: %s (Note: If resuming from a failed run, clean up .fifo files first).\n", t.Name, ofifoPath)
-				anyFifosExist = true
-			}
-		}
-	}
-	return
-}
-
-// Make sure that FIFOs that are supposed to exist, really exists
-func (t *Task) allFifosInOutIPsExist() bool {
-	for _, tgt := range t.OutIPs {
-		if tgt.doStream {
-			if !tgt.FifoFileExists() {
-				Warning.Printf("Task:%-12s FIFO Output file missing, for streaming output: %s. Check your workflow for correctness! [%s]\n", t.Name, t.Command, tgt.FifoPath())
-				return false
-			}
-		}
-	}
-	return true
-}
-
 func (t *Task) executeCommand(cmd string) {
 	Audit.Printf("Task:%-12s Executing command: %s\n", t.Name, cmd)
 	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
 	if err != nil {
 		Failf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\n\n", cmd, string(out))
-	}
-}
-
-// Create FIFO files for all out-ports that are specified to support streaming
-func (t *Task) createFifos() {
-	Debug.Printf("Task:%s: Now creating fifos for task [%s]\n", t.Name, t.Command)
-	for _, otgt := range t.OutIPs {
-		if otgt.doStream {
-			otgt.CreateFifo()
-		}
 	}
 }
 

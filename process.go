@@ -1,6 +1,7 @@
 package scipipe
 
 import (
+	"os"
 	"strings"
 )
 
@@ -154,65 +155,44 @@ func (p *Process) SetPathCustom(outPortName string, pathFmtFunc func(task *Task)
 // terminates. note that the actual execution of shell commands are done inside
 // Task.Execute, not here.
 func (p *Process) Run() {
+	defer p.CloseOutPorts()
 	// Check that CoresPerTask is a sane number
 	if p.CoresPerTask > cap(p.workflow.concurrentTasks) {
 		Failf("%s: CoresPerTask (%d) can't be greater than maxConcurrentTasks of workflow (%d)\n", p.Name(), p.CoresPerTask, cap(p.workflow.concurrentTasks))
 	}
 
-	defer p.CloseOutPorts()
-
 	tasks := []*Task{}
-	Debug.Printf("Process %s: Starting to create and schedule tasks\n", p.name)
 	for t := range p.createTasks() {
-
-		// Collect created tasks, for the second round
-		// where tasks are waited for to finish, before
-		// sending their outputs.
-		Debug.Printf("Process %s: Instantiated task [%s] ...", p.name, t.Command)
+		// Collect tasks so we can later wait for their done-signal before sending outputs
 		tasks = append(tasks, t)
 
-		anyPreviousFifosExists := t.anyFifosExist()
-
-		if p.ExecMode == ExecModeLocal {
-			if !anyPreviousFifosExists {
-				Debug.Printf("Process %s: No FIFOs existed, so creating, for task [%s] ...", p.name, t.Command)
-				t.createFifos()
-			}
-
+		if p.ExecMode == ExecModeLocal { // Streaming/FIFO files only work in local mode
 			// Sending FIFOs for the task
 			for oname, oip := range t.OutIPs {
 				if oip.doStream {
+					if oip.FifoFileExists() {
+						Fail("Fifo file exists, so exiting (clean up fifo files before restarting the workflow): ", oip.FifoPath())
+					}
+					oip.CreateFifo()
 					p.Out(oname).Send(oip)
 				}
 			}
 		}
 
-		if anyPreviousFifosExists {
-			Debug.Printf("Process %s: Previous FIFOs existed, so not executing task [%s] ...\n", p.name, t.Command)
-			// Since t.Execute() is not run, that normally sends the Done signal, we
-			// have to send it manually here:
-			go func() {
-				defer close(t.Done)
-				t.Done <- 1
-			}()
-		} else {
-			Debug.Printf("Process %s: Go-Executing task in separate go-routine: [%s] ...\n", p.name, t.Command)
-			// Run the task
-			go t.Execute()
-			Debug.Printf("Process %s: Done go-executing task in go-routine: [%s] ...\n", p.name, t.Command)
-		}
+		// Execute task in separate go-routine
+		go t.Execute()
 	}
 
-	Debug.Printf("Process %s: Starting to loop over %d tasks to send out IPs ...\n", p.name, len(tasks))
+	// Wait for tasks to finish (singalled via t.Done channel) so we can send outputs
 	for _, t := range tasks {
-		Debug.Printf("Process %s: Waiting for Done from task: [%s]\n", p.name, t.Command)
 		<-t.Done
-		Debug.Printf("Process %s: Received Done from task: [%s]\n", p.name, t.Command)
 		for oname, oip := range t.OutIPs {
-			if !oip.doStream {
-				Debug.Printf("Process %s: Sending IPs on outport %s, for task [%s] ...\n", p.name, oname, t.Command)
+			if !oip.doStream { // Streaming (FIFO) outputs have been sent earlier
 				p.Out(oname).Send(oip)
-				Debug.Printf("Process %s: Done sending IPs on outport %s, for task [%s] ...\n", p.name, oname, t.Command)
+			}
+			// Remove any FIFO file
+			if oip.doStream && oip.FifoFileExists() {
+				os.Remove(oip.FifoPath())
 			}
 		}
 	}

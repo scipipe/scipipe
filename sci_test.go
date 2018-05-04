@@ -229,17 +229,12 @@ func TestStreaming(t *testing.T) {
 	// Run
 	wf.Run()
 
-	// Assert that a file exists
-	_, err1 := os.Stat("/tmp/lsl.txt.fifo")
-	assertNil(t, err1, "FIFO file does not exist, which it should!")
-
 	// Assert otuput file exists
 	_, err2 := os.Stat("/tmp/lsl.txt.grepped.txt")
 	assertNil(t, err2, "File missing!")
 
 	// Clean up
 	cleanFiles("/tmp/lsl.txt", "/tmp/lsl.txt.grepped.txt")
-	cleanFiles("/tmp/lsl.txt.fifo")
 }
 
 func TestSubStreamReduceInPlaceHolder(t *testing.T) {
