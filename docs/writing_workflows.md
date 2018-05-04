@@ -132,22 +132,22 @@ for _, val := range []string{"foo", "bar"} {
 ... then, both functions will return "bar.txt", since both funcs were pointing to
 the same variable ("var"), which had the value "bar" at the end of the loop.
 
-To avoid this situation, you can do one of two things, of which the latter is recommended:
+To avoid this situation, you can do one of two things, of which the latter is
+generally recommended:
 
 1. Create a new copy of the variable, inside the anonymous function:
 
 ```go
 for _, val := range []string{"foo", "bar"} {
     proc := scipipe.NewProc(val + "_proc", "cat {p:val} > {o:out}")
+    val := val // <- Here we create a new copy of the variable
     proc.SetPathCustom("out", func(t *sp.Task) string {
-        val := val // <- Here we create a new, local, copy of the variable
         return val + ".txt"
     })
 }
 ```
 
-2. ... or, better, access the parameter value via the task which the path
-   function receives:
+2. ... or, better, access the parameter value via the task which the path function receives:
 
 ```go
 for _, val := range []string{"foo", "bar"} {

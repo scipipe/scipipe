@@ -62,7 +62,7 @@ func NewProc(workflow *Workflow, name string, cmd string) *Process {
 // `{os:PORTNAME}` specifies an out-port that streams via a FIFO file
 // `{p:PORTNAME}` a "parameter (in-)port", which means a port where parameters can be "streamed"
 func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) {
-	// Find in/out port names and Params and set up in struct fields
+	// Find in/out port names and params and set up ports
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 	if len(ms) == 0 {
@@ -118,17 +118,14 @@ func (p *Process) Out(portName string) *OutPort {
 // SetPathStatic creates an (output) path formatter returning a static string file name
 func (p *Process) SetPathStatic(outPortName string, path string) {
 	p.PathFormatters[outPortName] = func(t *Task) string {
-		path := path
 		return path
 	}
 }
 
 // SetPathExtend creates an (output) path formatter that extends the path of
 // an input IP
-func (p *Process) SetPathExtend(inPortName string, outPortName string,
-	extension string) {
+func (p *Process) SetPathExtend(inPortName string, outPortName string, extension string) {
 	p.PathFormatters[outPortName] = func(t *Task) string {
-		extension := extension
 		return t.InPath(inPortName) + extension
 	}
 }
@@ -137,8 +134,6 @@ func (p *Process) SetPathExtend(inPortName string, outPortName string,
 // but replaces parts of it.
 func (p *Process) SetPathReplace(inPortName string, outPortName string, old string, new string) {
 	p.PathFormatters[outPortName] = func(t *Task) string {
-		old := old
-		new := new
 		return strings.Replace(t.InPath(inPortName), old, new, -1)
 	}
 }
