@@ -35,26 +35,19 @@ type Process struct {
 // NewProc returns a new Process, and initializes its ports based on the
 // command pattern.
 func NewProc(workflow *Workflow, name string, cmd string) *Process {
-	p := newProcess(workflow, name, cmd)
-	p.initPortsFromCmdPattern(cmd, nil)
-	return p
-}
-
-// newProcess returns a new Process (without initializing its ports based on the
-// command pattern. If this is what you need, use NewProc instead)
-func newProcess(workflow *Workflow, name string, command string) *Process {
 	p := &Process{
 		BaseProcess: NewBaseProcess(
 			workflow,
 			name,
 		),
-		CommandPattern:   command,
+		CommandPattern:   cmd,
 		OutPortsDoStream: make(map[string]bool),
 		PathFormatters:   make(map[string]func(*Task) string),
 		Spawn:            true,
 		CoresPerTask:     1,
 	}
 	workflow.AddProc(p)
+	p.initPortsFromCmdPattern(cmd, nil)
 	return p
 }
 
