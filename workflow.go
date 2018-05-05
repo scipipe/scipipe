@@ -30,6 +30,21 @@ type Workflow struct {
 	driver            WorkflowProcess
 }
 
+// WorkflowProcess is an interface for processes to be handled by Workflow
+type WorkflowProcess interface {
+	Name() string
+	InPorts() map[string]*InPort
+	OutPorts() map[string]*OutPort
+	ParamInPorts() map[string]*ParamInPort
+	ParamOutPorts() map[string]*ParamOutPort
+	Connected() bool
+	Run()
+}
+
+// ----------------------------------------------------------------------------
+// Factory function(s)
+// ----------------------------------------------------------------------------
+
 // NewWorkflow returns a new Workflow
 func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
 	InitLogInfo()
@@ -44,36 +59,13 @@ func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
 	return wf
 }
 
-// WorkflowProcess is an interface for processes to be handled by Workflow
-type WorkflowProcess interface {
-	Name() string
-	InPorts() map[string]*InPort
-	OutPorts() map[string]*OutPort
-	ParamInPorts() map[string]*ParamInPort
-	ParamOutPorts() map[string]*ParamOutPort
-	Connected() bool
-	Run()
-}
+// ----------------------------------------------------------------------------
+// Main API methods
+// ----------------------------------------------------------------------------
 
 // Name returns the name of the workflow
 func (wf *Workflow) Name() string {
 	return wf.name
-}
-
-// AddProc adds a Process to the workflow, to be run when the workflow runs
-func (wf *Workflow) AddProc(proc WorkflowProcess) {
-	if wf.procs[proc.Name()] != nil {
-		Failf(wf.name+" workflow: A process with name '%s' already exists in the workflow! Use a more unique name!\n", proc.Name())
-	}
-	wf.procs[proc.Name()] = proc
-}
-
-// AddProcs takes one or many Processes and adds them to the workflow, to be run
-// when the workflow runs.
-func (wf *Workflow) AddProcs(procs ...WorkflowProcess) {
-	for _, proc := range procs {
-		wf.AddProc(proc)
-	}
 }
 
 // NewProc returns a new process based on a commandPattern (See the
@@ -95,6 +87,22 @@ func (wf *Workflow) Proc(procName string) WorkflowProcess {
 // Procs returns a map of all processes keyed by their names in the workflow
 func (wf *Workflow) Procs() map[string]WorkflowProcess {
 	return wf.procs
+}
+
+// AddProc adds a Process to the workflow, to be run when the workflow runs
+func (wf *Workflow) AddProc(proc WorkflowProcess) {
+	if wf.procs[proc.Name()] != nil {
+		Failf(wf.name+" workflow: A process with name '%s' already exists in the workflow! Use a more unique name!\n", proc.Name())
+	}
+	wf.procs[proc.Name()] = proc
+}
+
+// AddProcs takes one or many Processes and adds them to the workflow, to be run
+// when the workflow runs.
+func (wf *Workflow) AddProcs(procs ...WorkflowProcess) {
+	for _, proc := range procs {
+		wf.AddProc(proc)
+	}
 }
 
 // Sink returns the sink process of the workflow
@@ -131,23 +139,55 @@ func (wf *Workflow) DecConcurrentTasks(slots int) {
 	}
 }
 
-func (wf *Workflow) readyToRun(procs map[string]WorkflowProcess) bool {
-	if len(procs) == 0 {
-		Error.Println(wf.name + ": The workflow is empty. Did you forget to add the processes to it?")
-		return false
+// ----------------------------------------------------------------------------
+// Run methods
+// ----------------------------------------------------------------------------
+
+// Run runs all the processes of the workflow
+func (wf *Workflow) Run() {
+	wf.runProcs(wf.procs)
+}
+
+// RunTo runs all processes upstream of, and including, the process with
+// names provided as arguments
+func (wf *Workflow) RunTo(finalProcNames ...string) {
+	procs := []WorkflowProcess{}
+	for _, procName := range finalProcNames {
+		procs = append(procs, wf.Proc(procName))
 	}
-	if wf.sink == nil {
-		Error.Println(wf.name + ": sink is nil!")
-		return false
-	}
-	for _, proc := range procs {
-		if !proc.Connected() {
-			Error.Println(wf.name + ": Not everything connected. Workflow shutting down.")
-			return false
+	wf.RunToProcs(procs...)
+}
+
+// RunToRegex runs all processes upstream of, and including, the process
+// whose name matches any of the provided regexp patterns
+func (wf *Workflow) RunToRegex(procNamePatterns ...string) {
+	procsToRun := []WorkflowProcess{}
+	for procName, proc := range wf.Procs() {
+		for _, pattern := range procNamePatterns {
+			matches, err := regexp.MatchString(pattern, procName)
+			CheckWithMsg(err, fmt.Sprintf("Regex pattern doesn't work: %s", pattern))
+			if matches {
+				procsToRun = append(procsToRun, proc)
+			}
 		}
 	}
-	return true
+	wf.RunToProcs(procsToRun...)
 }
+
+// RunToProcs runs all processes upstream of, and including, the process strucs
+// provided as arguments
+func (wf *Workflow) RunToProcs(finalProcs ...WorkflowProcess) {
+	procsToRun := map[string]WorkflowProcess{}
+	for _, finalProc := range finalProcs {
+		procsToRun = mergeWFMaps(procsToRun, upstreamProcsForProc(finalProc))
+		procsToRun[finalProc.Name()] = finalProc
+	}
+	wf.runProcs(procsToRun)
+}
+
+// ----------------------------------------------------------------------------
+// Helper methods for running the workflow
+// ----------------------------------------------------------------------------
 
 // runProcs runs a specified set of processes only
 func (wf *Workflow) runProcs(procs map[string]WorkflowProcess) {
@@ -164,6 +204,24 @@ func (wf *Workflow) runProcs(procs map[string]WorkflowProcess) {
 
 	Debug.Printf(wf.name + ": Starting driver process in main go-routine")
 	wf.driver.Run()
+}
+
+func (wf *Workflow) readyToRun(procs map[string]WorkflowProcess) bool {
+	if len(procs) == 0 {
+		Error.Println(wf.name + ": The workflow is empty. Did you forget to add the processes to it?")
+		return false
+	}
+	if wf.sink == nil {
+		Error.Println(wf.name + ": sink is nil!")
+		return false
+	}
+	for _, proc := range procs {
+		if !proc.Connected() {
+			Error.Println(wf.name + ": Not everything connected. Workflow shutting down.")
+			return false
+		}
+	}
+	return true
 }
 
 // reconnectDeadEndConnections disonnects connections to processes which are not
@@ -220,53 +278,6 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 	}
 }
 
-// RunProcsByName runs a specified set of processes only, specified by their
-// names as strings
-func (wf *Workflow) RunProcsByName(procNames ...string) {
-	procs := map[string]WorkflowProcess{}
-	for _, procName := range procNames {
-		procs[procName] = wf.Proc(procName)
-	}
-	wf.runProcs(procs)
-}
-
-// RunToRegex runs all processes upstream of, and including, the process
-// whose name matches any of the provided regexp patterns
-func (wf *Workflow) RunToRegex(procNamePatterns ...string) {
-	procsToRun := []WorkflowProcess{}
-	for procName, proc := range wf.Procs() {
-		for _, pattern := range procNamePatterns {
-			matches, err := regexp.MatchString(pattern, procName)
-			CheckWithMsg(err, fmt.Sprintf("Regex pattern doesn't work: %s", pattern))
-			if matches {
-				procsToRun = append(procsToRun, proc)
-			}
-		}
-	}
-	wf.RunToProcs(procsToRun...)
-}
-
-// RunTo runs all processes upstream of, and including, the process with
-// names provided as arguments
-func (wf *Workflow) RunTo(finalProcNames ...string) {
-	procs := []WorkflowProcess{}
-	for _, procName := range finalProcNames {
-		procs = append(procs, wf.Proc(procName))
-	}
-	wf.RunToProcs(procs...)
-}
-
-// RunToProcs runs all processes upstream of, and including, the process strucs
-// provided as arguments
-func (wf *Workflow) RunToProcs(finalProcs ...WorkflowProcess) {
-	procsToRun := map[string]WorkflowProcess{}
-	for _, finalProc := range finalProcs {
-		procsToRun = mergeWFMaps(procsToRun, upstreamProcsForProc(finalProc))
-		procsToRun[finalProc.Name()] = finalProc
-	}
-	wf.runProcs(procsToRun)
-}
-
 // upstreamProcsForProc returns all processes it is connected to, either
 // directly or indirectly, via its in-ports and param-in-ports
 func upstreamProcsForProc(proc WorkflowProcess) map[string]WorkflowProcess {
@@ -291,9 +302,4 @@ func mergeWFMaps(a map[string]WorkflowProcess, b map[string]WorkflowProcess) map
 		a[k] = v
 	}
 	return a
-}
-
-// Run runs the workflow
-func (wf *Workflow) Run() {
-	wf.runProcs(wf.procs)
 }
