@@ -15,7 +15,6 @@ import (
 type Task struct {
 	Name          string
 	Command       string
-	ExecMode      ExecMode // TODO: Probably implement via different struct types (local/slurm/k8s, etc etc)
 	CustomExecute func(*Task)
 	InIPs         map[string]*FileIP
 	OutIPs        map[string]*FileIP
@@ -31,14 +30,13 @@ type Task struct {
 // ------------------------------------------------------------------------
 
 // NewTask instantiates and initializes a new Task
-func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, inIPs map[string]*FileIP, outPathFuncs map[string]func(*Task) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, execMode ExecMode, customExecute func(*Task), cores int) *Task {
+func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, inIPs map[string]*FileIP, outPathFuncs map[string]func(*Task) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, customExecute func(*Task), cores int) *Task {
 	t := &Task{
 		Name:          name,
 		InIPs:         inIPs,
 		OutIPs:        make(map[string]*FileIP),
 		Params:        params,
 		Command:       "",
-		ExecMode:      execMode,
 		CustomExecute: customExecute,
 		Done:          make(chan int),
 		cores:         cores,
@@ -199,12 +197,7 @@ func (t *Task) Execute() {
 	if t.CustomExecute != nil {
 		t.CustomExecute(t)
 	} else {
-		switch t.ExecMode {
-		case ExecModeLocal:
-			t.executeCommand(t.Command)
-		case ExecModeSLURM:
-			Failf("Task:%-12s SLURM Execution mode not implemented!", t.Name)
-		}
+		t.executeCommand(t.Command)
 	}
 	finishTime := time.Now()
 	t.writeAuditLogs(startTime, finishTime)

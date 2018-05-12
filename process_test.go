@@ -25,7 +25,7 @@ func TestSetPathStatic(t *testing.T) {
 	p := NewProc(wf, "echo_foo", "echo foo > {o:bar}")
 	p.SetPathStatic("bar", "bar.txt")
 
-	mockTask := NewTask(wf, p, "echo_foo_task", "", nil, nil, nil, nil, "", p.ExecMode, nil, 1)
+	mockTask := NewTask(wf, p, "echo_foo_task", "", nil, nil, nil, nil, "", nil, 1)
 
 	if p.PathFormatters["bar"](mockTask) != "bar.txt" {
 		t.Error(`p.PathFormatters["bar"]() != "bar.txt"`)
@@ -37,7 +37,7 @@ func TestSetPathExtend(t *testing.T) {
 	p := NewProc(wf, "cat_foo", "cat {i:foo} > {o:bar}")
 	p.SetPathExtend("foo", "bar", ".bar.txt")
 
-	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, nil, "", p.ExecMode, nil, 1)
+	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, nil, "", nil, 1)
 
 	if p.PathFormatters["bar"](mockTask) != "foo.txt.bar.txt" {
 		t.Error(`p.PathFormatters["bar"]() != "foo.txt.bar.txt"`)
@@ -49,7 +49,7 @@ func TestSetPathReplace(t *testing.T) {
 	p := NewProc(wf, "cat_foo", "cat {i:foo} > {o:bar}")
 	p.SetPathReplace("foo", "bar", ".txt", ".bar.txt")
 
-	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, nil, "", p.ExecMode, nil, 1)
+	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, nil, "", nil, 1)
 
 	if p.PathFormatters["bar"](mockTask) != "foo.bar.txt" {
 		t.Error(`p.PathFormatters["bar"]() != "foo.bar.txt"`)

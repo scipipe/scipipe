@@ -5,18 +5,6 @@ import (
 	"strings"
 )
 
-// ExecMode specifies which execution mode should be used for a Process and
-// its corresponding Tasks
-type ExecMode int
-
-const (
-	// ExecModeLocal indicates that commands on the local computer
-	ExecModeLocal ExecMode = iota
-	// ExecModeSLURM indicates that commands should be executed on a HPC cluster
-	// via a SLURM resource manager
-	ExecModeSLURM ExecMode = iota
-)
-
 // Process is the central component in SciPipe after Workflow. Processes are
 // long-running "services" that schedules and executes Tasks based on the IPs
 // and parameters received on its in-ports and parameter ports
@@ -27,7 +15,6 @@ type Process struct {
 	PathFormatters   map[string]func(*Task) string
 	CustomExecute    func(*Task)
 	CoresPerTask     int
-	ExecMode         ExecMode
 	Prepend          string
 	Spawn            bool
 }
@@ -170,16 +157,14 @@ func (p *Process) Run() {
 		// Collect tasks so we can later wait for their done-signal before sending outputs
 		tasks = append(tasks, t)
 
-		if p.ExecMode == ExecModeLocal { // Streaming/FIFO files only work in local mode
-			// Sending FIFOs for the task
-			for oname, oip := range t.OutIPs {
-				if oip.doStream {
-					if oip.FifoFileExists() {
-						Fail("Fifo file exists, so exiting (clean up fifo files before restarting the workflow): ", oip.FifoPath())
-					}
-					oip.CreateFifo()
-					p.Out(oname).Send(oip)
+		// Sending FIFOs for the task
+		for oname, oip := range t.OutIPs {
+			if oip.doStream {
+				if oip.FifoFileExists() {
+					Fail("Fifo file exists, so exiting (clean up fifo files before restarting the workflow): ", oip.FifoPath())
 				}
+				oip.CreateFifo()
+				p.Out(oname).Send(oip)
 			}
 		}
 
@@ -187,7 +172,8 @@ func (p *Process) Run() {
 		go t.Execute()
 	}
 
-	// Wait for tasks to finish (singalled via t.Done channel) so we can send outputs
+	// Wait for tasks to finish, in the order they were started (thus maintaining
+	// order of IPs), and then sending output IPs
 	for _, t := range tasks {
 		<-t.Done
 		for oname, oip := range t.OutIPs {
@@ -214,7 +200,7 @@ func (p *Process) createTasks() (ch chan *Task) {
 			if (!inPortsOpen && !paramPortsOpen) || (len(p.inPorts) == 0 && !paramPortsOpen) || (len(p.paramInPorts) == 0 && !inPortsOpen) {
 				break
 			}
-			t := NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.ExecMode, p.CustomExecute, p.CoresPerTask)
+			t := NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.CustomExecute, p.CoresPerTask)
 			ch <- t
 			if len(p.inPorts) == 0 && len(p.paramInPorts) == 0 {
 				break
