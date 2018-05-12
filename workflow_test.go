@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestSetWfName(t *testing.T) {
@@ -52,8 +53,8 @@ func TestAddProc(t *testing.T) {
 func TestRunToProc(t *testing.T) {
 	initTestLogs()
 
-	wf := getWorkflowForTestRunToProc("TestRunToProcWF_A")
-	wf.RunTo("mrg")
+	wfa := getWorkflowForTestRunToProc("TestRunToProcWF_A")
+	wfa.RunTo("mrg")
 
 	if _, err := os.Stat("/tmp/foo.txt.bar.txt"); err != nil {
 		t.Error("Merged file (/tmp/foo.txt.bar.txt) is not created, which it should")
@@ -63,13 +64,15 @@ func TestRunToProc(t *testing.T) {
 		t.Error("Replaced (merge) file (/tmp/foo.txt.bar.rpl.txt) exists, which it should not (yet)!")
 	}
 
+	time.Sleep(1 * time.Second)
+
 	// We need to re-configure the workflow, since the connectivity will be
 	// affected by the previous "RunTo" call
-	wf = getWorkflowForTestRunToProc("TestRunToProcWF_B")
-	wf.RunTo("rpl")
+	wfb := getWorkflowForTestRunToProc("TestRunToProcWF_B")
+	wfb.RunTo("rpl")
 
 	if _, err := os.Stat("/tmp/foo.txt.bar.txt.rpl.txt"); err != nil {
-		t.Error("Replaced (merge) file (/tmp/foo.txt.bar.rpl.txt) is not created, which it should (at this point)")
+		t.Errorf("Replaced (merge) file (/tmp/foo.txt.bar.rpl.txt) is not created, which it should (at this point): %v", err)
 	}
 
 	cleanFiles("/tmp/*.txt*")

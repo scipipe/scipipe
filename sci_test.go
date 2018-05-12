@@ -102,7 +102,6 @@ func TestParameterCommand(t *testing.T) {
 func TestDontOverWriteExistingOutputs(t *testing.T) {
 	initTestLogs()
 	Debug.Println("Starting test TestDontOverWriteExistingOutputs")
-	wf := NewWorkflow("TestDontOverWriteExistingOutputsWf1", 16)
 
 	f := "/tmp/hej.txt"
 
@@ -111,35 +110,30 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 	assertNotNil(t, e1)
 
 	// Run pipeline a first time
-	tsk := NewProc(wf, "tsk", "echo hej > {o:hej1}")
+	wf1 := NewWorkflow("TestDontOverWriteExistingOutputsWf1", 16)
+	tsk := wf1.NewProc("tsk", "echo hej > {o:hej1}")
 	tsk.SetPathStatic("hej1", f)
-
-	prt := NewProc(wf, "prt", "echo {i:in1} Done!")
+	prt := wf1.NewProc("prt", "cat {i:in1} > {o:done}")
+	prt.SetPathExtend("in1", "done", ".done.txt")
 	prt.In("in1").Connect(tsk.Out("hej1"))
-
-	wf.Run()
+	wf1.Run()
 
 	// Assert file DO exist after running
 	fiBef, e2 := os.Stat(f)
 	assertNil(t, e2)
 
+	time.Sleep(1 * time.Millisecond)
 	// Get modified time before
 	mtBef := fiBef.ModTime()
 
-	// Make sure some time has passed before the second write
-	time.Sleep(1 * time.Millisecond)
-
-	Debug.Println("Try running the same workflow again ...")
-	wf = NewWorkflow("TestDontOverWriteExistingOutputsWf2", 16)
-
 	// Run again with different output
-	tsk = NewProc(wf, "tsk", "echo hej > {o:hej2}")
-	tsk.PathFormatters["hej2"] = func(task *Task) string { return f }
-
-	prt = NewProc(wf, "prt", "echo {i:in2} Done!")
-	prt.In("in2").Connect(tsk.Out("hej2"))
-
-	wf.Run()
+	wf2 := NewWorkflow("TestDontOverWriteExistingOutputsWf2", 16)
+	tsk = wf2.NewProc("tsk", "echo hej > {o:hej2}")
+	tsk.SetPathCustom("hej2", func(task *Task) string { return f })
+	prt = wf2.NewProc("prt", "cat {i:in1} > {o:done}")
+	prt.SetPathExtend("in1", "done", ".done.txt")
+	prt.In("in1").Connect(tsk.Out("hej2"))
+	wf2.Run()
 
 	// Assert exists
 	fiAft, e3 := os.Stat(f)
@@ -151,7 +145,7 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 	// Assert file is not modified!
 	assertEqualValues(t, mtBef, mtAft)
 
-	cleanFiles(f)
+	cleanFiles(f, f+".done.txt")
 }
 
 // Make sure that outputs are returned in order, even though they are
