@@ -195,6 +195,11 @@ func (t *Task) Execute() {
 	t.createDirs()
 	startTime := time.Now()
 	if t.CustomExecute != nil {
+		outputsStr := ""
+		for oipName, oip := range t.OutIPs {
+			outputsStr += " " + oipName + ": " + oip.Path()
+		}
+		Audit.Printf("Task:%-12s Executing custom Go function, producing output(s):%s\n", t.Name, outputsStr)
 		t.CustomExecute(t)
 	} else {
 		t.executeCommand(t.Command)
