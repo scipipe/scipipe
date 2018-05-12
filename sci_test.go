@@ -25,18 +25,14 @@ func TestBasicRun(t *testing.T) {
 	initTestLogs()
 	wf := NewWorkflow("TestBasicRunWf", 16)
 
-	t1 := NewProc(wf, "t1", "echo foo > {o:foo}")
+	t1 := wf.NewProc("t1", "echo foo > {o:foo}")
 	assertIsType(t, t1.Out("foo"), NewOutPort("foo"))
-	t1.PathFormatters["foo"] = func(t *Task) string {
-		return "foo.txt"
-	}
+	t1.SetPathCustom("foo", func(t *Task) string { return "foo.txt" })
 
-	t2 := NewProc(wf, "t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	t2 := wf.NewProc("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	assertIsType(t, t2.In("foo"), NewInPort("foo"))
 	assertIsType(t, t2.Out("bar"), NewOutPort("bar"))
-	t2.PathFormatters["bar"] = func(t *Task) string {
-		return t.InPath("foo") + ".bar.txt"
-	}
+	t2.SetPathExtend("foo", "bar", ".bar.txt")
 
 	t2.In("foo").Connect(t1.Out("foo"))
 
@@ -73,7 +69,7 @@ func TestParameterCommand(t *testing.T) {
 	wf.AddProc(cmb)
 
 	// An abc file printer
-	abc := NewProc(wf, "abc", "echo {p:a} {p:b} {p:c} > {o:out}")
+	abc := wf.NewProc("abc", "echo {p:a} {p:b} {p:c} > {o:out}")
 	abc.SetPathCustom("out", func(task *Task) string {
 		return fmt.Sprintf(
 			"/tmp/%s_%s_%s.txt",
@@ -87,7 +83,7 @@ func TestParameterCommand(t *testing.T) {
 	abc.ParamInPort("c").Connect(cmb.C)
 
 	// A printer process
-	prt := NewProc(wf, "prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
+	prt := wf.NewProc("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
 	prt.In("in").Connect(abc.Out("out"))
 
 	wf.Run()
@@ -161,11 +157,11 @@ func TestSendOrderedOutputs(t *testing.T) {
 	wf := NewWorkflow("test_wf", 16)
 	ig := NewFileIPGenerator(wf, "ipgen", fnames...)
 
-	fc := NewProc(wf, "fc", "echo {i:in} > {o:out}")
+	fc := wf.NewProc("fc", "echo {i:in} > {o:out}")
 	fc.SetPathExtend("in", "out", "")
 	fc.In("in").Connect(ig.Out())
 
-	sl := NewProc(wf, "sl", "cat {i:in} > {o:out}")
+	sl := wf.NewProc("sl", "cat {i:in} > {o:out}")
 	sl.SetPathExtend("in", "out", ".copy.txt")
 	sl.In("in").Connect(fc.Out("out"))
 
@@ -204,23 +200,14 @@ func TestSendOrderedOutputs(t *testing.T) {
 // Test that streaming works
 func TestStreaming(t *testing.T) {
 	initTestLogs()
+
+	// Set up and run workflow
 	wf := NewWorkflow("TestStreamingWf", 16)
-
-	// Init processes
-	ls := NewProc(wf, "ls", "ls -l / > {os:lsl}")
-	ls.PathFormatters["lsl"] = func(task *Task) string {
-		return "/tmp/lsl.txt"
-	}
-
-	grp := NewProc(wf, "grp", "grep etc {i:in} > {o:grepped}")
-	grp.PathFormatters["grepped"] = func(task *Task) string {
-		return task.InPath("in") + ".grepped.txt"
-	}
-
-	// Connect
+	ls := wf.NewProc("ls", "ls -l / > {os:lsl}")
+	ls.SetPathStatic("lsl", "/tmp/lsl.txt")
+	grp := wf.NewProc("grp", "grep etc {i:in} > {o:grepped}")
+	grp.SetPathExtend("in", "grepped", ".grepped.txt")
 	grp.In("in").Connect(ls.Out("lsl"))
-
-	// Run
 	wf.Run()
 
 	// Assert otuput file exists
@@ -280,7 +267,6 @@ func TestMultipleLastProcs(t *testing.T) {
 
 		catStr := wf.NewProc("catstr_"+str, "cat {i:in} > {o:out}")
 		catStr.SetPathExtend("in", "out", ".cat.txt")
-
 		catStr.In("in").Connect(writeStr.Out("out"))
 	}
 
