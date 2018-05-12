@@ -192,7 +192,7 @@ func (t *Task) Execute() {
 
 	// Execute task
 	t.workflow.IncConcurrentTasks(t.cores) // Will block if max concurrent tasks is reached
-	t.createDirs()
+	t.createDirs()                         // Create output directories needed for any outputs
 	startTime := time.Now()
 	if t.CustomExecute != nil {
 		outputsStr := ""
@@ -202,6 +202,7 @@ func (t *Task) Execute() {
 		Audit.Printf("Task:%-12s Executing custom Go function, producing output(s):%s\n", t.Name, outputsStr)
 		t.CustomExecute(t)
 	} else {
+		Audit.Printf("Task:%-12s Executing command: %s\n", t.Name, t.Command)
 		t.executeCommand(t.Command)
 	}
 	finishTime := time.Now()
@@ -258,7 +259,6 @@ func (t *Task) createDirs() {
 
 // executeCommand executes the shell command cmd via bash
 func (t *Task) executeCommand(cmd string) {
-	Audit.Printf("Task:%-12s Executing command: %s\n", t.Name, cmd)
 	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
 	if err != nil {
 		Failf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\n\n", cmd, string(out))
