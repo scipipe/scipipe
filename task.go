@@ -261,7 +261,7 @@ func (t *Task) createDirs() {
 func (t *Task) executeCommand(cmd string) {
 	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
 	if err != nil {
-		Failf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\n\n", cmd, string(out))
+		Failf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\nOriginal error:%s\n", cmd, string(out), err.Error())
 	}
 }
 
