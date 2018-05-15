@@ -181,11 +181,10 @@ func (t *Task) Execute() {
 
 	// Do some sanity checks
 	if t.anyTempfileExists() {
-		Failf("Task:%-12s Existing temp files found so existing. Clean up .tmp files before restarting the workflow!", t.Name)
+		Failf("| %-32s | Existing temp files found so existing. Clean up .tmp files before restarting the workflow!", t.Name)
 	}
 
 	if t.anyOutputsExist() {
-		Audit.Printf("Task:%-12s Outputs exist, so not executing", t.Name)
 		t.Done <- 1
 		return
 	}
@@ -199,11 +198,13 @@ func (t *Task) Execute() {
 		for oipName, oip := range t.OutIPs {
 			outputsStr += " " + oipName + ": " + oip.Path()
 		}
-		Audit.Printf("Task:%-12s Executing custom Go function, producing output(s):%s\n", t.Name, outputsStr)
+		Audit.Printf("| %-32s | Executing | Custom Go function with outputs: %s\n", t.Name, outputsStr)
 		t.CustomExecute(t)
+		Audit.Printf("| %-32s | Finished  | Custom Go function with outputs: %s\n", t.Name, outputsStr)
 	} else {
-		Audit.Printf("Task:%-12s Executing command: %s\n", t.Name, t.Command)
+		Audit.Printf("| %-32s | Executing | %s\n", t.Name, t.Command)
 		t.executeCommand(t.Command)
+		Audit.Printf("| %-32s | Finished  | %s\n", t.Name, t.Command)
 	}
 	finishTime := time.Now()
 	t.writeAuditLogs(startTime, finishTime)
@@ -224,7 +225,7 @@ func (t *Task) anyTempfileExists() (anyTempfileExists bool) {
 		if !oip.doStream {
 			otmpPath := oip.TempPath()
 			if _, err := os.Stat(otmpPath); err == nil {
-				Warning.Printf("Task:%-12s Temp file already exists: %s (Note: If resuming from a failed run, clean up .tmp files first. Also, make sure that two processes don't produce the same output files!).\n", t.Name, otmpPath)
+				Warning.Printf("| %-32s | Temp file already exists: %s (Note: If resuming from a failed run, clean up .tmp files first. Also, make sure that two processes don't produce the same output files!).\n", t.Name, otmpPath)
 				anyTempfileExists = true
 			}
 		}
@@ -239,7 +240,7 @@ func (t *Task) anyOutputsExist() (anyFileExists bool) {
 		if !oip.doStream {
 			opath := oip.Path()
 			if _, err := os.Stat(opath); err == nil {
-				Info.Printf("Task:%-12s Output file already exists, so skipping: %s\n", t.Name, opath)
+				Info.Printf("| %-32s | Output file already exists, so skipping: %s\n", t.Name, opath)
 				anyFileExists = true
 			}
 		}

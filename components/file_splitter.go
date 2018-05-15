@@ -44,7 +44,7 @@ func (p *FileSplitter) Run() {
 	fileReader.InFilePath().Connect(pop)
 
 	for ft := range p.InFile().Chan {
-		scipipe.Audit.Println("FileSplitter      Now processing input file ", ft.Path(), "...")
+		scipipe.Audit.Println("FileSplitter                          Now processing input file ", ft.Path(), "...")
 
 		go func() {
 			defer pop.Close()
