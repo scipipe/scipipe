@@ -162,10 +162,11 @@ func (wf *Workflow) RunTo(finalProcNames ...string) {
 // whose name matches any of the provided regexp patterns
 func (wf *Workflow) RunToRegex(procNamePatterns ...string) {
 	procsToRun := []WorkflowProcess{}
-	for procName, proc := range wf.Procs() {
-		for _, pattern := range procNamePatterns {
-			matches, err := regexp.MatchString(pattern, procName)
-			CheckWithMsg(err, fmt.Sprintf("Regex pattern doesn't work: %s", pattern))
+	for _, pattern := range procNamePatterns {
+		regexpPtrn, err := regexp.Compile(pattern)
+		CheckWithMsg(err, fmt.Sprintf("Regex pattern doesn't work: %s", pattern))
+		for procName, proc := range wf.Procs() {
+			matches := regexpPtrn.MatchString(procName)
 			if matches {
 				procsToRun = append(procsToRun, proc)
 			}
