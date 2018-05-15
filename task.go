@@ -181,11 +181,11 @@ func (t *Task) Execute() {
 
 	// Do some sanity checks
 	if t.anyTempfileExists() {
-		Failf("Task:%s-12s Existing temp files found so existing. Clean up .tmp files before restarting the workflow!", t.Name)
+		Failf("Task:%-12s Existing temp files found so existing. Clean up .tmp files before restarting the workflow!", t.Name)
 	}
 
 	if t.anyOutputsExist() {
-		Audit.Printf("Task:%s-12s Outputs exist, so not executing", t.Name)
+		Audit.Printf("Task:%-12s Outputs exist, so not executing", t.Name)
 		t.Done <- 1
 		return
 	}
