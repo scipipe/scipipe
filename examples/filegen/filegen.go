@@ -1,17 +1,52 @@
 package main
 
 import (
-	sci "github.com/scipipe/scipipe"
+	sp "github.com/scipipe/scipipe"
 )
 
 func main() {
-	wf := sci.NewWorkflow("filegenwf", 4)
+	wf := sp.NewWorkflow("filegenwf", 4)
 
-	fq := sci.NewFileIPGenerator(wf, "hej1.txt", "hej2.txt", "hej3.txt")
+	fq := NewFileIPGenerator(wf, "hej1.txt", "hej2.txt", "hej3.txt")
 
-	fw := sci.NewProc(wf, "filewriter", "echo {i:in} > {o:out}")
-	fw.SetPathCustom("out", func(t *sci.Task) string { return t.InPath("in") })
+	fw := sp.NewProc(wf, "filewriter", "echo {i:in} > {o:out}")
+	fw.SetPathCustom("out", func(t *sp.Task) string { return t.InPath("in") })
 	fw.In("in").Connect(fq.Out())
 
 	wf.Run()
+}
+
+// --------------------------------------------------------------------------------
+// FileIPGenerator helper process
+// --------------------------------------------------------------------------------
+
+// FileIPGenerator is initialized by a set of strings with file paths, and from that will
+// return instantiated (generated) FileIP on its Out-port, when run.
+type FileIPGenerator struct {
+	sp.BaseProcess
+	FilePaths []string
+}
+
+// NewFileIPGenerator initializes a new FileIPGenerator component from a list of file paths
+func NewFileIPGenerator(wf *sp.Workflow, name string, filePaths ...string) (p *FileIPGenerator) {
+	p = &FileIPGenerator{
+		BaseProcess: sp.NewBaseProcess(wf, name),
+		FilePaths:   filePaths,
+	}
+	p.InitOutPort(p, "out")
+	wf.AddProc(p)
+	return p
+}
+
+// Out returns the out-port of the FileIPGenerator
+func (p *FileIPGenerator) Out() *sp.OutPort {
+	return p.OutPort("out")
+}
+
+// Run runs the FileIPGenerator process, returning instantiated FileIP
+func (p *FileIPGenerator) Run() {
+	defer p.Out().Close()
+	for _, fp := range p.FilePaths {
+		p.Out().Send(sp.NewFileIP(fp))
+	}
 }

@@ -483,3 +483,38 @@ func (p *MapToKeys) Run() {
 		p.Out().Send(ip)
 	}
 }
+
+// --------------------------------------------------------------------------------
+// FileIPGenerator helper process
+// --------------------------------------------------------------------------------
+
+// FileIPGenerator is initialized by a set of strings with file paths, and from that will
+// return instantiated (generated) FileIP on its Out-port, when run.
+type FileIPGenerator struct {
+	BaseProcess
+	FilePaths []string
+}
+
+// NewFileIPGenerator initializes a new FileIPGenerator component from a list of file paths
+func NewFileIPGenerator(wf *Workflow, name string, filePaths ...string) (p *FileIPGenerator) {
+	p = &FileIPGenerator{
+		BaseProcess: NewBaseProcess(wf, name),
+		FilePaths:   filePaths,
+	}
+	p.InitOutPort(p, "out")
+	wf.AddProc(p)
+	return p
+}
+
+// Out returns the out-port of the FileIPGenerator
+func (p *FileIPGenerator) Out() *OutPort {
+	return p.OutPort("out")
+}
+
+// Run runs the FileIPGenerator process, returning instantiated FileIP
+func (p *FileIPGenerator) Run() {
+	defer p.Out().Close()
+	for _, fp := range p.FilePaths {
+		p.Out().Send(NewFileIP(fp))
+	}
+}
