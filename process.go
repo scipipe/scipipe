@@ -188,20 +188,40 @@ func (p *Process) Run() {
 	}
 }
 
-// createTasks is a helper method for Run that creates tasks based on in-coming
+// createTasks is a helper method for Run that creates tasks based on incoming
 // IPs on in-ports, and feeds them to the Run method on the returned channel ch
 func (p *Process) createTasks() (ch chan *Task) {
 	ch = make(chan *Task)
 	go func() {
 		defer close(ch)
+
+		inIPs := map[string]*FileIP{}
+		params := map[string]string{}
+
+		inPortsOpen := true
+		paramPortsOpen := true
 		for {
-			inIPs, inPortsOpen := p.receiveOnInPorts()
-			params, paramPortsOpen := p.receiveOnParamInPorts()
-			if (!inPortsOpen && !paramPortsOpen) || (len(p.inPorts) == 0 && !paramPortsOpen) || (len(p.paramInPorts) == 0 && !inPortsOpen) {
-				break
+			// Only read on in-ports if we have any
+			if len(p.inPorts) > 0 {
+				inIPs, inPortsOpen = p.receiveOnInPorts()
+				// If in-port is closed, that means we got the last params on last iteration, so break
+				if !inPortsOpen {
+					break
+				}
 			}
-			t := NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.CustomExecute, p.CoresPerTask)
-			ch <- t
+			// Only read on param in-ports if we have any
+			if len(p.paramInPorts) > 0 {
+				params, paramPortsOpen = p.receiveOnParamInPorts()
+				// If param-port is closed, that means we got the last params on last iteration, so break
+				if !paramPortsOpen {
+					break
+				}
+			}
+
+			// Create task and send on the channel we are about to return
+			ch <- NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, p.Prepend, p.CustomExecute, p.CoresPerTask)
+
+			// If we have no in-ports nor param in-ports, we should break after the first iteration
 			if len(p.inPorts) == 0 && len(p.paramInPorts) == 0 {
 				break
 			}

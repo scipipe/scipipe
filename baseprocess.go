@@ -260,7 +260,7 @@ func (p *BaseProcess) receiveOnParamInPorts() (params map[string]string, paramPo
 			paramPortsOpen = false
 			continue
 		}
-		Debug.Println("Receiving param:", pname, "with value", pval)
+		Debug.Printf("Process %s: Got param %s ...", p.name, pval)
 		params[pname] = pval
 	}
 	return

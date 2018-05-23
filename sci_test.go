@@ -155,7 +155,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 	}
 
 	wf := NewWorkflow("test_wf", 16)
-	ig := NewFileIPGenerator(wf, "ipgen", fnames...)
+	ig := NewFileSource(wf, "ipgen", fnames...)
 
 	fc := wf.NewProc("fc", "echo {i:in} > {o:out}")
 	fc.SetPathExtend("in", "out", "")
@@ -229,7 +229,7 @@ func TestSubStreamReduceInPlaceHolder(t *testing.T) {
 
 	// Create some input files
 
-	ipg := NewFileIPGenerator(wf, "ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
+	ipg := NewFileSource(wf, "ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
 
 	sts := NewStreamToSubStream(wf, "str_to_substr")
 	sts.In().Connect(ipg.Out())
@@ -314,6 +314,45 @@ func TestPassOnKeys(t *testing.T) {
 	assertEqualValues(t, "you", auditInfo.Keys["hey"], "Audit info does not contain passed on keys")
 
 	cleanFiles("/tmp/hey.txt", "/tmp/hey.txt.you.txt")
+}
+
+// TestReceiveBothIPsAndParams makes sure that channels in the process
+// createTask process are not short-cut before all parameters and IPs are
+// received, by running a workflow that receives both a stream of params, and
+// one or more IPs
+func TestReceiveBothIPsAndParams(t *testing.T) {
+	wf := NewWorkflow("multiout", 4)
+
+	echo := wf.NewProc("echo", "echo hej > {o:hej}")
+	echo.SetPathStatic("hej", "/tmp/ipsparams.hej.txt")
+
+	params := NewParamSource(wf, "params", "tjo", "hej", "hopp")
+
+	strs := []string{"foo", "bar", "baz"}
+	for _, str := range strs {
+		add := wf.NewProc("add_"+str, `echo {i:infile} {p:param} > {o:out}`)
+		str := str
+		add.SetPathCustom("out", func(t *Task) string {
+			return t.InPath("infile") + "." + str + ".txt"
+		})
+		add.ParamInPort("param").Connect(params.Out())
+		add.In("infile").Connect(echo.Out("hej"))
+	}
+
+	wf.Run()
+
+	_, err := os.Stat("/tmp/ipsparams.hej.txt")
+	assertNil(t, err)
+
+	files := []string{"/tmp/ipsparams.hej.txt"}
+	for _, str := range strs {
+		file := "/tmp/ipsparams.hej.txt." + str + ".txt"
+		_, err := os.Stat(file)
+		assertNil(t, err)
+		files = append(files, file)
+	}
+
+	cleanFiles(files...)
 }
 
 // --------------------------------------------------------------------------------
@@ -485,36 +524,68 @@ func (p *MapToKeys) Run() {
 }
 
 // --------------------------------------------------------------------------------
-// FileIPGenerator helper process
+// FileSource helper process
 // --------------------------------------------------------------------------------
 
-// FileIPGenerator is initialized by a set of strings with file paths, and from that will
-// return instantiated (generated) FileIP on its Out-port, when run.
-type FileIPGenerator struct {
+// FileSource is initiated with a set of file paths, which it will send as a
+// stream of File IPs on its outport Out()
+type FileSource struct {
 	BaseProcess
-	FilePaths []string
+	filePaths []string
 }
 
-// NewFileIPGenerator initializes a new FileIPGenerator component from a list of file paths
-func NewFileIPGenerator(wf *Workflow, name string, filePaths ...string) (p *FileIPGenerator) {
-	p = &FileIPGenerator{
+// NewFileSource returns a new initialized FileSource process
+func NewFileSource(wf *Workflow, name string, filePaths ...string) *FileSource {
+	p := &FileSource{
 		BaseProcess: NewBaseProcess(wf, name),
-		FilePaths:   filePaths,
+		filePaths:   filePaths,
 	}
 	p.InitOutPort(p, "out")
 	wf.AddProc(p)
 	return p
 }
 
-// Out returns the out-port of the FileIPGenerator
-func (p *FileIPGenerator) Out() *OutPort {
-	return p.OutPort("out")
+// Out returns the out-port, on which file IPs based on the file paths the
+// process was initialized with, will be retrieved.
+func (p *FileSource) Out() *OutPort { return p.OutPort("out") }
+
+// Run runs the FileSource process
+func (p *FileSource) Run() {
+	defer p.CloseAllOutPorts()
+	for _, filePath := range p.filePaths {
+		p.Out().Send(NewFileIP(filePath))
+	}
 }
 
-// Run runs the FileIPGenerator process, returning instantiated FileIP
-func (p *FileIPGenerator) Run() {
-	defer p.Out().Close()
-	for _, fp := range p.FilePaths {
-		p.Out().Send(NewFileIP(fp))
+// --------------------------------------------------------------------------------
+// ParamSource helper process
+// --------------------------------------------------------------------------------
+
+// ParamSource will feed parameters on an out-port
+type ParamSource struct {
+	BaseProcess
+	params []string
+}
+
+// NewParamSource returns a new ParamSource
+func NewParamSource(wf *Workflow, name string, params ...string) *ParamSource {
+	p := &ParamSource{
+		BaseProcess: NewBaseProcess(wf, name),
+		params:      params,
+	}
+	p.InitParamOutPort(p, "out")
+	wf.AddProc(p)
+	return p
+}
+
+// Out returns the out-port, on which parameters the process was initialized
+// with, will be retrieved.
+func (p *ParamSource) Out() *ParamOutPort { return p.ParamOutPort("out") }
+
+// Run runs the process
+func (p *ParamSource) Run() {
+	defer p.CloseAllOutPorts()
+	for _, param := range p.params {
+		p.Out().Send(param)
 	}
 }
