@@ -241,8 +241,13 @@ func (ip *FileIP) Write(dat []byte) {
 	CheckWithMsg(err, "Could not write to temp file: "+ip.TempPath())
 }
 
-const (
+var (
 	sleepDurationSec = 1
+)
+
+const (
+	maxTries      = 3
+	backoffFactor = 4
 )
 
 // Atomize renames the temporary file name to the final file name, thus enabling
@@ -250,6 +255,8 @@ const (
 func (ip *FileIP) Atomize() {
 	Debug.Println("FileIP: Atomizing", ip.TempPath(), "->", ip.Path())
 	doneAtomizing := false
+	tries := 0
+
 	for !doneAtomizing {
 		if ip.TempFileExists() {
 			ip.lock.Lock()
@@ -259,8 +266,13 @@ func (ip *FileIP) Atomize() {
 			doneAtomizing = true
 			Debug.Println("FileIP: Done atomizing", ip.TempPath(), "->", ip.Path())
 		} else {
-			Debug.Printf("Sleeping for %d seconds before atomizing ...\n", sleepDurationSec)
+			if tries >= maxTries {
+				Failf("Failed to find .tmp file after %d tries, so shutting down: %s\nNote: If this problem persists, it could be a problem with your workflow, that the configured output filename in scipipe doesn't match what is written by the tool.\n", maxTries, ip.TempPath())
+			}
+			Warning.Printf("Expected .tmp file missing: %s\nSleeping for %d seconds before checking again ...\n", ip.TempPath(), sleepDurationSec)
 			time.Sleep(time.Duration(sleepDurationSec) * time.Second)
+			sleepDurationSec *= backoffFactor
+			tries += 1
 		}
 	}
 }
