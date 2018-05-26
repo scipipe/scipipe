@@ -47,7 +47,7 @@ type WorkflowProcess interface {
 
 // NewWorkflow returns a new Workflow
 func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
-	InitLogInfo()
+	InitLogAudit()
 	wf := &Workflow{
 		name:            name,
 		procs:           map[string]WorkflowProcess{},

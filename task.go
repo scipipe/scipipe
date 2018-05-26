@@ -240,7 +240,7 @@ func (t *Task) anyOutputsExist() (anyFileExists bool) {
 		if !oip.doStream {
 			opath := oip.Path()
 			if _, err := os.Stat(opath); err == nil {
-				Info.Printf("| %-32s | Output file already exists, so skipping: %s\n", t.Name, opath)
+				Audit.Printf("| %-32s | Output file already exists, so skipping: %s\n", t.Name, opath)
 				anyFileExists = true
 			}
 		}
