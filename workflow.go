@@ -51,14 +51,7 @@ type WorkflowProcess interface {
 
 // NewWorkflow returns a new Workflow
 func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
-	wf := &Workflow{
-		name:            name,
-		procs:           map[string]WorkflowProcess{},
-		concurrentTasks: make(chan struct{}, maxConcurrentTasks),
-	}
-	sink := NewSink(wf, name+"_default_sink")
-	wf.sink = sink
-	wf.driver = sink
+	wf := newWorkflowWithoutLogging(name, maxConcurrentTasks)
 
 	// Set up logging
 	allowedCharsPtrn, err := regexp.Compile("[^a-z0-9_]")
@@ -70,6 +63,28 @@ func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
 	wf.logFile = "log/scipipe-" + time.Now().Format("20060102-150405") + "-" + wfNameNormalized + ".log"
 	InitLogAuditToFile(wf.logFile)
 
+	return wf
+}
+
+// NewWorkflowCustomLogFile returns a new Workflow, with
+func NewWorkflowCustomLogFile(name string, maxConcurrentTasks int, logFile string) *Workflow {
+	wf := newWorkflowWithoutLogging(name, maxConcurrentTasks)
+
+	wf.logFile = logFile
+	InitLogAuditToFile(logFile)
+
+	return wf
+}
+
+func newWorkflowWithoutLogging(name string, maxConcurrentTasks int) *Workflow {
+	wf := &Workflow{
+		name:            name,
+		procs:           map[string]WorkflowProcess{},
+		concurrentTasks: make(chan struct{}, maxConcurrentTasks),
+	}
+	sink := NewSink(wf, name+"_default_sink")
+	wf.sink = sink
+	wf.driver = sink
 	return wf
 }
 
