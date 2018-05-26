@@ -1,10 +1,12 @@
 package scipipe
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 var (
@@ -97,6 +99,32 @@ func InitLogAudit() {
 		os.Stdout,
 		os.Stdout,
 		os.Stderr,
+	)
+}
+
+// InitLogAuditToFile initiate logging with level=AUDIT, and write that to
+// fileName
+func InitLogAuditToFile(filePath string) {
+	dir := filepath.Dir(filePath)
+	err := os.MkdirAll(dir, 0777)
+	if err != nil {
+		fmt.Println("Could not create directory: " + dir + " " + err.Error())
+	}
+
+	logFile, err := os.Create(filePath)
+	if err != nil {
+		fmt.Println("Could not create log file: " + filePath + " " + err.Error())
+	}
+
+	multiWrite := io.MultiWriter(os.Stdout, logFile)
+
+	InitLog(
+		ioutil.Discard,
+		ioutil.Discard,
+		ioutil.Discard,
+		multiWrite,
+		multiWrite,
+		multiWrite,
 	)
 }
 

@@ -198,13 +198,13 @@ func (t *Task) Execute() {
 		for oipName, oip := range t.OutIPs {
 			outputsStr += " " + oipName + ": " + oip.Path()
 		}
-		Audit.Printf("| %-32s | Executing | Custom Go function with outputs: %s\n", t.Name, outputsStr)
+		Audit.Printf("| %-32s | Executing: Custom Go function with outputs: %s\n", t.Name, outputsStr)
 		t.CustomExecute(t)
-		Audit.Printf("| %-32s | Finished  | Custom Go function with outputs: %s\n", t.Name, outputsStr)
+		Audit.Printf("| %-32s | Finished:  Custom Go function with outputs: %s\n", t.Name, outputsStr)
 	} else {
-		Audit.Printf("| %-32s | Executing | %s\n", t.Name, t.Command)
+		Audit.Printf("| %-32s | Executing: %s\n", t.Name, t.Command)
 		t.executeCommand(t.Command)
-		Audit.Printf("| %-32s | Finished  | %s\n", t.Name, t.Command)
+		Audit.Printf("| %-32s | Finished:  %s\n", t.Name, t.Command)
 	}
 	finishTime := time.Now()
 	t.writeAuditLogs(startTime, finishTime)

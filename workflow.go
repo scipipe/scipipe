@@ -7,8 +7,11 @@ package scipipe
 
 import (
 	"fmt"
+	"os"
 	"regexp"
+	"strings"
 	"sync"
+	"time"
 )
 
 // ----------------------------------------------------------------------------
@@ -28,6 +31,7 @@ type Workflow struct {
 	concurrentTasksMx sync.Mutex
 	sink              *Sink
 	driver            WorkflowProcess
+	logFile           string
 }
 
 // WorkflowProcess is an interface for processes to be handled by Workflow
@@ -47,7 +51,6 @@ type WorkflowProcess interface {
 
 // NewWorkflow returns a new Workflow
 func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
-	InitLogAudit()
 	wf := &Workflow{
 		name:            name,
 		procs:           map[string]WorkflowProcess{},
@@ -56,6 +59,17 @@ func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
 	sink := NewSink(wf, name+"_default_sink")
 	wf.sink = sink
 	wf.driver = sink
+
+	// Set up logging
+	allowedCharsPtrn, err := regexp.Compile("[^a-z0-9_]")
+	if err != nil {
+		fmt.Println("Could not compile regex for workflow name")
+		os.Exit(1)
+	}
+	wfNameNormalized := allowedCharsPtrn.ReplaceAllString(strings.ToLower(name), "-")
+	wf.logFile = "log/scipipe-" + time.Now().Format("20060102-150405") + "-" + wfNameNormalized + ".log"
+	InitLogAuditToFile(wf.logFile)
+
 	return wf
 }
 
@@ -204,7 +218,9 @@ func (wf *Workflow) runProcs(procs map[string]WorkflowProcess) {
 	}
 
 	Debug.Printf(wf.name + ": Starting driver process in main go-routine")
+	Audit.Printf("| workflow:%-23s | Starting workflow (Writing log to %s)", wf.Name(), wf.logFile)
 	wf.driver.Run()
+	Audit.Printf("| workflow:%-23s | Finished worklfow (Log written to %s)", wf.Name(), wf.logFile)
 }
 
 func (wf *Workflow) readyToRun(procs map[string]WorkflowProcess) bool {
