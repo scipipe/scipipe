@@ -241,10 +241,6 @@ func (ip *FileIP) Write(dat []byte) {
 	CheckWithMsg(err, "Could not write to temp file: "+ip.TempPath())
 }
 
-var (
-	sleepDurationSec = 1
-)
-
 const (
 	maxTries      = 3
 	backoffFactor = 4
@@ -257,6 +253,7 @@ func (ip *FileIP) Atomize() {
 	doneAtomizing := false
 	tries := 0
 
+	sleepDurationSec := 1
 	for !doneAtomizing {
 		if ip.TempFileExists() {
 			ip.lock.Lock()
