@@ -235,7 +235,7 @@ func (wf *Workflow) runProcs(procs map[string]WorkflowProcess) {
 	Debug.Printf(wf.name + ": Starting driver process in main go-routine")
 	Audit.Printf("| workflow:%-23s | Starting workflow (Writing log to %s)", wf.Name(), wf.logFile)
 	wf.driver.Run()
-	Audit.Printf("| workflow:%-23s | Finished worklfow (Log written to %s)", wf.Name(), wf.logFile)
+	Audit.Printf("| workflow:%-23s | Finished workflow (Log written to %s)", wf.Name(), wf.logFile)
 }
 
 func (wf *Workflow) readyToRun(procs map[string]WorkflowProcess) bool {
