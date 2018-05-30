@@ -115,7 +115,7 @@ func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*File
 		case "p":
 			if params[portName] == "" {
 				msg := fmt.Sprint("Missing param value param '", portName, "' for command '", cmd, "'")
-				CheckWithMsg(errors.New(msg), msg)
+				Fail(msg)
 			} else {
 				filePath = params[portName]
 			}
