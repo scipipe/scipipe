@@ -1,7 +1,6 @@
 package scipipe
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -19,6 +18,7 @@ type Task struct {
 	InIPs         map[string]*FileIP
 	OutIPs        map[string]*FileIP
 	Params        map[string]string
+	Keys          map[string]string
 	Done          chan int
 	cores         int
 	workflow      *Workflow
@@ -30,12 +30,13 @@ type Task struct {
 // ------------------------------------------------------------------------
 
 // NewTask instantiates and initializes a new Task
-func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, inIPs map[string]*FileIP, outPathFuncs map[string]func(*Task) string, outPortsDoStream map[string]bool, params map[string]string, prepend string, customExecute func(*Task), cores int) *Task {
+func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, inIPs map[string]*FileIP, outPathFuncs map[string]func(*Task) string, outPortsDoStream map[string]bool, params map[string]string, keys map[string]string, prepend string, customExecute func(*Task), cores int) *Task {
 	t := &Task{
 		Name:          name,
 		InIPs:         inIPs,
 		OutIPs:        make(map[string]*FileIP),
 		Params:        params,
+		Keys:          keys,
 		Command:       "",
 		CustomExecute: customExecute,
 		Done:          make(chan int),
@@ -52,13 +53,13 @@ func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, i
 		}
 		t.OutIPs[oname] = oip
 	}
-	t.Command = formatCommand(cmdPat, inIPs, t.OutIPs, params, prepend)
+	t.Command = formatCommand(cmdPat, inIPs, t.OutIPs, params, keys, prepend)
 	return t
 }
 
 // formatCommand is a helper function for NewTask, that formats a shell command
 // based on concrete file paths and parameter values
-func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*FileIP, params map[string]string, prepend string) string {
+func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*FileIP, params map[string]string, keys map[string]string, prepend string) string {
 	r := getShellCommandPlaceHolderRegex()
 	placeHolderMatches := r.FindAllStringSubmatch(cmd, -1)
 	for _, placeHolderMatch := range placeHolderMatches {
@@ -117,6 +118,13 @@ func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*File
 				CheckWithMsg(errors.New(msg), msg)
 			} else {
 				filePath = params[portName]
+			}
+		case "k":
+			if keys[portName] == "" {
+				msg := fmt.Sprint("Missing key value for key '", portName, "' for command '", cmd, "'")
+				Fail(msg)
+			} else {
+				filePath = keys[portName]
 			}
 		default:
 			Fail("Replace failed for port ", portName, " for command '", cmd, "'")

@@ -52,7 +52,7 @@ func Failf(msg string, vs ...interface{}) {
 // Return the regular expression used to parse the place-holder syntax for in-, out- and
 // parameter ports, that can be used to instantiate a Process.
 func getShellCommandPlaceHolderRegex() *re.Regexp {
-	regex := "{(o|os|i|is|p):([^{}:]+)(:r(:([^{}:]))?)?}"
+	regex := "{(o|os|i|is|p|k):([^{}:]+)(:r(:([^{}:]))?)?}"
 	r, err := re.Compile(regex)
 	CheckWithMsg(err, "Could not compile regex: "+regex)
 	return r
