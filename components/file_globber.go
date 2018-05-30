@@ -39,7 +39,7 @@ func (p *FileGlobber) Run() {
 		matches, err := filepath.Glob(globPtn)
 		scipipe.CheckWithMsg(err, "FileGlobber: This glob pattern doesn't look right: "+globPtn)
 		for _, filePath := range matches {
-			scipipe.Audit.Println("%s: Sending concrete file %s", p.Name(), filePath)
+			scipipe.Audit.Printf("%s: Sending concrete file %s", p.Name(), filePath)
 			p.Out().Send(scipipe.NewFileIP(filePath))
 		}
 	}
