@@ -175,12 +175,14 @@ func (wf *Workflow) DecConcurrentTasks(slots int) {
 func (wf *Workflow) PlotGraph(filePath string, edgeLabels bool, createPdf bool) {
 	dot := fmt.Sprintf("digraph %s {\n", wf.Name())
 	con := ""
+	remToDotPtn, err := regexp.Compile(`^[^\.]+\.`)
+	Check(err)
 	for pName, p := range wf.Procs() {
 		dot += fmt.Sprintf("  %s[shape=box];\n", pName)
 		for opname, op := range p.OutPorts() {
 			for rpname, rp := range op.RemotePorts {
 				if edgeLabels {
-					con += fmt.Sprintf(`  %s -> %s [label="%s -> %s"];`+"\n", op.Process().Name(), rp.Process().Name(), opname, rpname)
+					con += fmt.Sprintf(`  %s -> %s [taillabel="%s", headlabel="%s"];`+"\n", op.Process().Name(), rp.Process().Name(), remToDotPtn.ReplaceAllString(opname, ""), remToDotPtn.ReplaceAllString(rpname, ""))
 				} else {
 					con += fmt.Sprintf(`  %s -> %s;`+"\n", op.Process().Name(), rp.Process().Name())
 				}
