@@ -173,19 +173,19 @@ func (wf *Workflow) DecConcurrentTasks(slots int) {
 // If edgeLabels is set to true, a label containing the in-port and out-port
 // to which edges are connected to, will be printed.
 func (wf *Workflow) PlotGraph(filePath string, edgeLabels bool, createPdf bool) {
-	dot := fmt.Sprintf("digraph %s {\n", wf.Name())
+	dot := fmt.Sprintf(`digraph "%s" {`+"\n", wf.Name())
 	con := ""
 	remToDotPtn, err := regexp.Compile(`^[^\.]+\.`)
 	Check(err)
 	for pName, p := range wf.Procs() {
-		dot += fmt.Sprintf("  %s[shape=box];\n", pName)
+		dot += fmt.Sprintf(`  "%s" [shape=box];`+"\n", pName)
 		// File connections
 		for opname, op := range p.OutPorts() {
 			for rpname, rp := range op.RemotePorts {
 				if edgeLabels {
-					con += fmt.Sprintf(`  %s -> %s [taillabel="%s", headlabel="%s"];`+"\n", op.Process().Name(), rp.Process().Name(), remToDotPtn.ReplaceAllString(opname, ""), remToDotPtn.ReplaceAllString(rpname, ""))
+					con += fmt.Sprintf(`  "%s" -> "%s" [taillabel="%s", headlabel="%s"];`+"\n", op.Process().Name(), rp.Process().Name(), remToDotPtn.ReplaceAllString(opname, ""), remToDotPtn.ReplaceAllString(rpname, ""))
 				} else {
-					con += fmt.Sprintf(`  %s -> %s;`+"\n", op.Process().Name(), rp.Process().Name())
+					con += fmt.Sprintf(`  "%s" -> "%s";`+"\n", op.Process().Name(), rp.Process().Name())
 				}
 			}
 		}
@@ -193,9 +193,9 @@ func (wf *Workflow) PlotGraph(filePath string, edgeLabels bool, createPdf bool) 
 		for popname, pop := range p.ParamOutPorts() {
 			for rpname, rp := range pop.RemotePorts {
 				if edgeLabels {
-					con += fmt.Sprintf(`  %s -> %s [style="dashed", taillabel="%s", headlabel="%s"];`+"\n", pop.Process().Name(), rp.Process().Name(), remToDotPtn.ReplaceAllString(popname, ""), remToDotPtn.ReplaceAllString(rpname, ""))
+					con += fmt.Sprintf(`  "%s" -> "%s" [style="dashed", taillabel="%s", headlabel="%s"];`+"\n", pop.Process().Name(), rp.Process().Name(), remToDotPtn.ReplaceAllString(popname, ""), remToDotPtn.ReplaceAllString(rpname, ""))
 				} else {
-					con += fmt.Sprintf(`  %s -> %s [style="dashed"];`+"\n", pop.Process().Name(), rp.Process().Name())
+					con += fmt.Sprintf(`  "%s" -> "%s" [style="dashed"];`+"\n", pop.Process().Name(), rp.Process().Name())
 				}
 			}
 		}
