@@ -168,6 +168,35 @@ func (wf *Workflow) DecConcurrentTasks(slots int) {
 	}
 }
 
+// PlotGraph writes the workflow structure to a dot file, and optionally to a
+// PDF file (requires graphviz, with the dot command, installed on the system)
+// If edgeLabels is set to true, a label containing the in-port and out-port
+// to which edges are connected to, will be printed.
+func (wf *Workflow) PlotGraph(filePath string, edgeLabels bool, createPdf bool) {
+	dot := fmt.Sprintf("digraph %s {\n", wf.Name())
+	con := ""
+	for pName, p := range wf.Procs() {
+		dot += fmt.Sprintf("  %s[shape=box];\n", pName)
+		for opname, op := range p.OutPorts() {
+			for rpname, rp := range op.RemotePorts {
+				if edgeLabels {
+					con += fmt.Sprintf(`  %s -> %s [label="%s -> %s"];`+"\n", op.Process().Name(), rp.Process().Name(), opname, rpname)
+				} else {
+					con += fmt.Sprintf(`  %s -> %s;`+"\n", op.Process().Name(), rp.Process().Name())
+				}
+			}
+		}
+	}
+	dot += con
+	dot += "}\n"
+	dotIP := NewFileIP(filePath)
+	dotIP.Write([]byte(dot))
+	dotIP.Atomize()
+	if createPdf {
+		ExecCmd(fmt.Sprintf("dot -Tpdf %s -o %s.pdf", filePath, filePath))
+	}
+}
+
 // ----------------------------------------------------------------------------
 // Run methods
 // ----------------------------------------------------------------------------
