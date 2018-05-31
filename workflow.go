@@ -179,12 +179,23 @@ func (wf *Workflow) PlotGraph(filePath string, edgeLabels bool, createPdf bool) 
 	Check(err)
 	for pName, p := range wf.Procs() {
 		dot += fmt.Sprintf("  %s[shape=box];\n", pName)
+		// File connections
 		for opname, op := range p.OutPorts() {
 			for rpname, rp := range op.RemotePorts {
 				if edgeLabels {
 					con += fmt.Sprintf(`  %s -> %s [taillabel="%s", headlabel="%s"];`+"\n", op.Process().Name(), rp.Process().Name(), remToDotPtn.ReplaceAllString(opname, ""), remToDotPtn.ReplaceAllString(rpname, ""))
 				} else {
 					con += fmt.Sprintf(`  %s -> %s;`+"\n", op.Process().Name(), rp.Process().Name())
+				}
+			}
+		}
+		// Parameter connections
+		for popname, pop := range p.ParamOutPorts() {
+			for rpname, rp := range pop.RemotePorts {
+				if edgeLabels {
+					con += fmt.Sprintf(`  %s -> %s [style="dashed", taillabel="%s", headlabel="%s"];`+"\n", pop.Process().Name(), rp.Process().Name(), remToDotPtn.ReplaceAllString(popname, ""), remToDotPtn.ReplaceAllString(rpname, ""))
+				} else {
+					con += fmt.Sprintf(`  %s -> %s [style="dashed"];`+"\n", pop.Process().Name(), rp.Process().Name())
 				}
 			}
 		}
