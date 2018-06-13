@@ -103,13 +103,13 @@ func TestInParamPortSendRecv(t *testing.T) {
 	}
 }
 
-func TestInParamPortConnectStr(t *testing.T) {
+func TestInParamPortFromStr(t *testing.T) {
 	initTestLogs()
 
 	pip := NewInParamPort("test_inport")
 	pip.process = NewBogusProcess("bogus_process")
 
-	pip.ConnectStr("foo", "bar", "baz")
+	pip.FromStr("foo", "bar", "baz")
 	expectedStrs := []string{"foo", "bar", "baz"}
 
 	outStrs := []string{}

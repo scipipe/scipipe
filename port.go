@@ -273,9 +273,9 @@ func (pip *InParamPort) From(pop *OutParamPort) {
 	pop.SetReady(true)
 }
 
-// ConnectStr connects a parameter port with a new go-routine feeding the
+// FromStr connects a parameter port with a new go-routine feeding the
 // strings in strings, on the fly, to the parameter port
-func (pip *InParamPort) ConnectStr(strings ...string) {
+func (pip *InParamPort) FromStr(strings ...string) {
 	pop := NewOutParamPort("string_feeder")
 	pop.process = pip.Process()
 	pip.From(pop)
