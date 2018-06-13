@@ -70,8 +70,8 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 			p.inPorts[portName].process = p
 		} else if portType == "p" {
 			if params == nil || params[portName] == "" {
-				p.paramInPorts[portName] = NewInParamPort(portName)
-				p.paramInPorts[portName].process = p
+				p.inParamPorts[portName] = NewInParamPort(portName)
+				p.inParamPorts[portName].process = p
 			}
 		}
 	}
@@ -223,7 +223,7 @@ func (p *Process) createTasks() (ch chan *Task) {
 				}
 			}
 			// Only read on param in-ports if we have any
-			if len(p.paramInPorts) > 0 {
+			if len(p.inParamPorts) > 0 {
 				params, paramPortsOpen = p.receiveOnInParamPorts()
 				// If param-port is closed, that means we got the last params on last iteration, so break
 				if !paramPortsOpen {
@@ -241,7 +241,7 @@ func (p *Process) createTasks() (ch chan *Task) {
 			ch <- NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, tags, p.Prepend, p.CustomExecute, p.CoresPerTask)
 
 			// If we have no in-ports nor param in-ports, we should break after the first iteration
-			if len(p.inPorts) == 0 && len(p.paramInPorts) == 0 {
+			if len(p.inPorts) == 0 && len(p.inParamPorts) == 0 {
 				break
 			}
 		}

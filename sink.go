@@ -25,8 +25,8 @@ func (p *Sink) From(outPort *OutPort) {
 }
 
 // FromParam connects a param-out-port to the sinks param-in-port
-func (p *Sink) FromParam(paramOutPort *OutParamPort) {
-	p.paramIn().From(paramOutPort)
+func (p *Sink) FromParam(outParamPort *OutParamPort) {
+	p.paramIn().From(outParamPort)
 }
 
 // Run runs the Sink process
