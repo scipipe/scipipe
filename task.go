@@ -178,6 +178,15 @@ func (t *Task) Param(portName string) string {
 	return "invalid"
 }
 
+// Tag returns the value of a param, for the task
+func (t *Task) Tag(tagName string) string {
+	if tag, ok := t.Tags[tagName]; ok {
+		return tag
+	}
+	Failf("No such tag '%s' for task '%s'\n", tagName, t.Name)
+	return "invalid"
+}
+
 // ------------------------------------------------------------------------
 // Execute the task
 // ------------------------------------------------------------------------
