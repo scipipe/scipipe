@@ -26,10 +26,10 @@ type IP interface {
 	// EnsureUnstaged()
 	// ParamType() int // string / int8 / float64 / bool / date? / time?
 	// Param() string
-	// Key() string
-	// Keys() map[string]string
-	// AddKey(key string)
-	// AddKeys(keys ...string)
+	// Tag() string
+	// Tags() map[string]string
+	// AddTag(tag string)
+	// AddTags(tags ...string)
 	// AuditInfo()
 	// SetAuditInfo()
 	// AuditInfoFilePath() string
@@ -275,7 +275,7 @@ func (ip *FileIP) Atomize() {
 }
 
 // ------------------------------------------------------------------------
-// Params and keys
+// Params and tags
 // ------------------------------------------------------------------------
 
 // Param returns the parameter named key, from the IPs audit info
@@ -288,38 +288,36 @@ func (ip *FileIP) Param(key string) string {
 }
 
 // ------------------------------------------------------------------------
-// Keys stuff
+// Tags stuff
 // ------------------------------------------------------------------------
 
-// Key returns the key value for the key with key k from the IPs audit info
-// (don't confuse this with the keys of maps in go. Keys in this case is a
-// SciPipe audit info concept)
-func (ip *FileIP) Key(k string) string {
-	v, ok := ip.AuditInfo().Keys[k]
+// Tag returns the tag for the tag with key k from the IPs audit info
+func (ip *FileIP) Tag(k string) string {
+	v, ok := ip.AuditInfo().Tags[k]
 	if !ok {
-		Failf("Could not find key %s in ip with path: %s\n", k, ip.Path())
+		Failf("Could not find tag %s in ip with path: %s\n", k, ip.Path())
 	}
 	return v
 }
 
-// Keys returns the audit info's key values
-func (ip *FileIP) Keys() map[string]string {
-	return ip.AuditInfo().Keys
+// Tags returns the audit info's tags
+func (ip *FileIP) Tags() map[string]string {
+	return ip.AuditInfo().Tags
 }
 
-// AddKey adds the key k with value v
-func (ip *FileIP) AddKey(k string, v string) {
+// AddTag adds the tag k with value v
+func (ip *FileIP) AddTag(k string, v string) {
 	ai := ip.AuditInfo()
-	if ai.Keys[k] != "" && ai.Keys[k] != v {
-		Failf("Can not add value %s to existing key %s with different value %s\n", v, k, ai.Keys[k])
+	if ai.Tags[k] != "" && ai.Tags[k] != v {
+		Failf("Can not add value %s to existing tag %s with different value %s\n", v, k, ai.Tags[k])
 	}
-	ai.Keys[k] = v
+	ai.Tags[k] = v
 }
 
-// AddKeys adds a map of keys to the IPs audit info
-func (ip *FileIP) AddKeys(keys map[string]string) {
-	for k, v := range keys {
-		ip.AddKey(k, v)
+// AddTags adds a map of tags to the IPs audit info
+func (ip *FileIP) AddTags(tags map[string]string) {
+	for k, v := range tags {
+		ip.AddTag(k, v)
 	}
 }
 

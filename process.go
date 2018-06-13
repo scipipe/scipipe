@@ -209,7 +209,7 @@ func (p *Process) createTasks() (ch chan *Task) {
 
 		inIPs := map[string]*FileIP{}
 		params := map[string]string{}
-		keys := map[string]string{}
+		tags := map[string]string{}
 
 		inPortsOpen := true
 		paramPortsOpen := true
@@ -232,13 +232,13 @@ func (p *Process) createTasks() (ch chan *Task) {
 			}
 
 			for iname, ip := range inIPs {
-				for k, v := range ip.Keys() {
-					keys[iname+"."+k] = v
+				for k, v := range ip.Tags() {
+					tags[iname+"."+k] = v
 				}
 			}
 
 			// Create task and send on the channel we are about to return
-			ch <- NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, keys, p.Prepend, p.CustomExecute, p.CoresPerTask)
+			ch <- NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, tags, p.Prepend, p.CustomExecute, p.CoresPerTask)
 
 			// If we have no in-ports nor param in-ports, we should break after the first iteration
 			if len(p.inPorts) == 0 && len(p.paramInPorts) == 0 {

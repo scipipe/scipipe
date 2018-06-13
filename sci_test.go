@@ -288,20 +288,20 @@ func TestMultipleLastProcs(t *testing.T) {
 	cleanFiles("/tmp/hey.txt.cat.txt", "/tmp/how.txt.cat.txt", "/tmp/hoo.txt.cat.txt")
 }
 
-func TestPassOnKeys(t *testing.T) {
-	wf := NewWorkflow("TestPassOnKeys_WF", 4)
+func TestPassOnTags(t *testing.T) {
+	wf := NewWorkflow("TestPassOnTags_WF", 4)
 
 	hey := wf.NewProc("create_file", "echo hey > {o:heyfile}")
 	hey.SetPathStatic("heyfile", "/tmp/hey.txt")
 
-	key := NewMapToKeys(wf, "add_key", func(ip *FileIP) map[string]string {
+	tag := NewMapToTags(wf, "add_tag", func(ip *FileIP) map[string]string {
 		return map[string]string{"hey": "you"}
 	})
-	key.In().From(hey.Out("heyfile"))
+	tag.In().From(hey.Out("heyfile"))
 
 	you := wf.NewProc("add_you", "echo '$(cat {i:infile}) you' > {o:youfile}")
 	you.SetPathExtend("infile", "youfile", ".you.txt")
-	you.In("infile").From(key.Out())
+	you.In("infile").From(tag.Out())
 
 	wf.Run()
 
@@ -311,7 +311,7 @@ func TestPassOnKeys(t *testing.T) {
 	err = json.Unmarshal(dat, auditInfo)
 	Check(err)
 
-	assertEqualValues(t, "you", auditInfo.Keys["hey"], "Audit info does not contain passed on keys")
+	assertEqualValues(t, "you", auditInfo.Tags["hey"], "Audit info does not contain passed on tags")
 
 	cleanFiles("/tmp/hey.txt", "/tmp/hey.txt.you.txt")
 }
@@ -492,15 +492,15 @@ func (p *StreamToSubStream) Run() {
 }
 
 // --------------------------------------------------------------------------------
-// MapToKey helper process
+// MapToTag helper process
 // --------------------------------------------------------------------------------
-type MapToKeys struct {
+type MapToTags struct {
 	BaseProcess
 	mapFunc func(ip *FileIP) map[string]string
 }
 
-func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *FileIP) map[string]string) *MapToKeys {
-	p := &MapToKeys{
+func NewMapToTags(wf *Workflow, name string, mapFunc func(ip *FileIP) map[string]string) *MapToTags {
+	p := &MapToTags{
 		BaseProcess: NewBaseProcess(wf, name),
 		mapFunc:     mapFunc,
 	}
@@ -510,14 +510,14 @@ func NewMapToKeys(wf *Workflow, name string, mapFunc func(ip *FileIP) map[string
 	return p
 }
 
-func (p *MapToKeys) In() *InPort   { return p.InPort("in") }
-func (p *MapToKeys) Out() *OutPort { return p.OutPort("out") }
+func (p *MapToTags) In() *InPort   { return p.InPort("in") }
+func (p *MapToTags) Out() *OutPort { return p.OutPort("out") }
 
-func (p *MapToKeys) Run() {
+func (p *MapToTags) Run() {
 	defer p.CloseAllOutPorts()
 	for ip := range p.In().Chan {
-		newKeys := p.mapFunc(ip)
-		ip.AddKeys(newKeys)
+		newTags := p.mapFunc(ip)
+		ip.AddTags(newTags)
 		ip.WriteAuditLogToFile()
 		p.Out().Send(ip)
 	}

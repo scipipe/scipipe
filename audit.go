@@ -11,7 +11,7 @@ type AuditInfo struct {
 	ProcessName string
 	Command     string
 	Params      map[string]string
-	Keys        map[string]string
+	Tags        map[string]string
 	StartTime   time.Time
 	FinishTime  time.Time
 	ExecTimeMS  time.Duration
@@ -25,7 +25,7 @@ func NewAuditInfo() *AuditInfo {
 		ProcessName: "",
 		Command:     "",
 		Params:      make(map[string]string),
-		Keys:        make(map[string]string),
+		Tags:        make(map[string]string),
 		ExecTimeMS:  -1,
 		Upstream:    make(map[string]*AuditInfo),
 	}
