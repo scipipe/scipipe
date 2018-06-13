@@ -39,6 +39,7 @@ func NewProc(workflow *Workflow, name string, cmd string) *Process {
 	}
 	workflow.AddProc(p)
 	p.initPortsFromCmdPattern(cmd, nil)
+	p.initDefaultPathFormatters()
 	return p
 }
 
@@ -73,6 +74,25 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 				p.inParamPorts[portName] = NewInParamPort(portName)
 				p.inParamPorts[portName].process = p
 			}
+		}
+	}
+}
+
+// initDefaultPathFormatters does exactly what it name says: Initializes default
+// path formatters for processes, that is used if no explicit path is set, usint
+// the proc.SetPath[...] methods
+func (p *Process) initDefaultPathFormatters() {
+	for oname := range p.OutPorts() {
+		p.PathFormatters[oname] = func(t *Task) string {
+			paramsStr := ""
+			for p, v := range t.Params {
+				paramsStr += "." + p + "_" + v
+			}
+			tagsStr := ""
+			for t, v := range t.Tags {
+				tagsStr += "." + t + "_" + v
+			}
+			return t.process.Name() + "/" + t.process.Name() + paramsStr + tagsStr + ".out"
 		}
 	}
 }
