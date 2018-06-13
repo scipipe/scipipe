@@ -118,7 +118,7 @@ func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*File
 			} else {
 				filePath = params[portName]
 			}
-		case "k":
+		case "t":
 			if tags[portName] == "" {
 				msg := fmt.Sprint("Missing tag value for tag '", portName, "' for command '", cmd, "'")
 				Fail(msg)
