@@ -58,14 +58,14 @@ func main() {
 	ungzipRefCmd := "gunzip -c {i:in} > {o:out}"
 	ungzipRef := wf.NewProc("ugzip_ref", ungzipRefCmd)
 	ungzipRef.SetPathReplace("in", "out", ".gz", "")
-	ungzipRef.In("in").Connect(downloadRef.Out("outfile"))
+	ungzipRef.In("in").From(downloadRef.Out("outfile"))
 
 	// --------------------------------------------------------------------------------
 	// Index Reference Genome
 	// --------------------------------------------------------------------------------
 	indexRef := wf.NewProc("index_ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
 	indexRef.SetPathExtend("index", "done", ".indexed")
-	indexRef.In("index").Connect(ungzipRef.Out("out"))
+	indexRef.In("index").From(ungzipRef.Out("out"))
 
 	// Create (multi-level) maps where we can gather outports from processes
 	// for each for loop iteration and access them in the merge step later
@@ -93,9 +93,9 @@ func main() {
 			bwaAlignCmd := "bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}"
 			bwaAlign := wf.NewProc("bwa_aln"+indv_smpl, bwaAlignCmd)
 			bwaAlign.SetPathExtend("fastq", "sai", ".sai")
-			bwaAlign.In("ref").Connect(ungzipRef.Out("out"))
-			bwaAlign.In("idxdone").Connect(indexRef.Out("done"))
-			bwaAlign.In("fastq").Connect(downloadFastQ.Out("fastq"))
+			bwaAlign.In("ref").From(ungzipRef.Out("out"))
+			bwaAlign.In("idxdone").From(indexRef.Out("done"))
+			bwaAlign.In("fastq").From(downloadFastQ.Out("fastq"))
 
 			// Save outPorts for later use
 			outPorts[indv][smpl]["sai"] = bwaAlign.Out("sai")
@@ -110,12 +110,12 @@ func main() {
 			return t.Param("indv") + ".merged.sam"
 		})
 		bwaMerge.ParamInPort("indv").ConnectStr(indv)
-		bwaMerge.In("ref").Connect(ungzipRef.Out("out"))
-		bwaMerge.In("refdone").Connect(indexRef.Out("done"))
-		bwaMerge.In("sai1").Connect(outPorts[indv]["1"]["sai"])
-		bwaMerge.In("sai2").Connect(outPorts[indv]["2"]["sai"])
-		bwaMerge.In("fq1").Connect(outPorts[indv]["1"]["fastq"])
-		bwaMerge.In("fq2").Connect(outPorts[indv]["2"]["fastq"])
+		bwaMerge.In("ref").From(ungzipRef.Out("out"))
+		bwaMerge.In("refdone").From(indexRef.Out("done"))
+		bwaMerge.In("sai1").From(outPorts[indv]["1"]["sai"])
+		bwaMerge.In("sai2").From(outPorts[indv]["2"]["sai"])
+		bwaMerge.In("fq1").From(outPorts[indv]["1"]["fastq"])
+		bwaMerge.In("fq2").From(outPorts[indv]["2"]["fastq"])
 	}
 
 	// -------------------------------------------------------------------------------

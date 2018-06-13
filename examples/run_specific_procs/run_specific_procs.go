@@ -12,7 +12,7 @@ func main() {
 
 	copyer := wf.NewProc("copyer", "cat {i:in} > {o:out}")
 	copyer.SetPathReplace("in", "out", ".txt", ".copy.txt")
-	copyer.In("in").Connect(first.Out("hej"))
+	copyer.In("in").From(first.Out("hej"))
 
 	wf.RunTo("hej_writer")
 }

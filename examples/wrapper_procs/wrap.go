@@ -11,7 +11,7 @@ func main() {
 	f2b := NewFoo2Barer(wfl, "foo2barer")
 
 	// Connect
-	f2b.InFoo().Connect(foo.OutFoo())
+	f2b.InFoo().From(foo.OutFoo())
 
 	// Run
 	wfl.Run()

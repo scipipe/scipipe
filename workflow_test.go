@@ -91,12 +91,12 @@ func getWorkflowForTestRunToProc(wfName string) *Workflow {
 	mrg.SetPathCustom("mgd", func(tk *Task) string {
 		return tk.InPath("in1") + "." + filepath.Base(tk.InPath("in2"))
 	})
-	mrg.In("in1").Connect(foo.Out("out"))
-	mrg.In("in2").Connect(bar.Out("out"))
+	mrg.In("in1").From(foo.Out("out"))
+	mrg.In("in2").From(bar.Out("out"))
 
 	rpl := wf.NewProc("rpl", "cat {i:in} | sed 's/bar/baz/' > {o:out}")
 	rpl.SetPathExtend("in", "out", ".rpl.txt")
-	rpl.In("in").Connect(mrg.Out("mgd"))
+	rpl.In("in").From(mrg.Out("mgd"))
 
 	return wf
 }

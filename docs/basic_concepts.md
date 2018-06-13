@@ -62,9 +62,10 @@ In `Process` objects, in-ports are are accessed with
 Some pre-made components might have ports bound to custom field names though,
 such as `myFastaReader.InFastaFile`, or `myZipComponent.OutZipFile`.
 
-Port objects have some methods bound to them, most importantly the `Connect()`
-method, which takes another port, and connects to it, by stitching a channel
-between the ports.
+Port objects have some methods bound to them, most importantly the `From()`
+method (for in-ports. Out-ports have a corresponding `To()` method), which
+takes another port, and connects to it, by stitching a channel between the
+ports.
 
 On `Process` objects, there is also a third port type, `ParamInPort` (and the
 accompanying `ParamOutPort`), which is used when it is needed to send a

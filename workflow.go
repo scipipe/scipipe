@@ -319,7 +319,7 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 			}
 			if !opt.Connected() {
 				Debug.Printf("Connecting disconnected out-port %s of process %s to workflow sink", opt.Name(), opt.Process().Name())
-				wf.sink.Connect(opt)
+				wf.sink.From(opt)
 			}
 		}
 
@@ -337,7 +337,7 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 			}
 			if !pop.Connected() {
 				Debug.Printf("Connecting disconnected out-port %s of process %s to workflow sink", pop.Name(), pop.Process().Name())
-				wf.sink.ConnectParam(pop)
+				wf.sink.FromParam(pop)
 			}
 		}
 

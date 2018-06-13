@@ -38,7 +38,7 @@ func NewFooBarSubWorkflow(wf *sp.Workflow, name string) *FooBarSubWorkflow {
 	fbn.Procs["f2b"].SetPathReplace("foo", "bar", ".txt", ".bar.txt")
 
 	// Connect together inner processes
-	fbn.Procs["foo"].Out("foo").Connect(fbn.Procs["f2b"].In("foo"))
+	fbn.Procs["foo"].Out("foo").To(fbn.Procs["f2b"].In("foo"))
 
 	// Connect last port of inner process to subnetwork out-port
 	fbn.Out = fbn.Procs["f2b"].Out("bar")

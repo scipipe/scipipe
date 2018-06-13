@@ -29,8 +29,8 @@ func main() {
 	f2b := wf.NewProc("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	f2b.SetPathExtend("foo", "bar", ".bar.txt")
 
-	// Connect workflow dependency network
-	f2b.In("foo").Connect(foo.Out("foo"))
+	// From workflow dependency network
+	f2b.In("foo").From(foo.Out("foo"))
 
 	// Run the workflow
 	wf.Run()

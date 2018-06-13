@@ -29,8 +29,8 @@ func main() {
 	})
 
 	// connect network
-	grp.In("in").Connect(lsl.Out("lsl"))
-	cat.In("in").Connect(grp.Out("grep"))
+	grp.In("in").From(lsl.Out("lsl"))
+	cat.In("in").From(grp.Out("grep"))
 
 	// run pipeline
 	wf.Run()

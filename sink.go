@@ -19,14 +19,14 @@ func NewSink(wf *Workflow, name string) *Sink {
 func (p *Sink) in() *InPort           { return p.InPort("sink_in") }
 func (p *Sink) paramIn() *ParamInPort { return p.ParamInPort("param_sink_in") }
 
-// Connect connects an out-port to the sinks in-port
-func (p *Sink) Connect(outPort *OutPort) {
-	p.in().Connect(outPort)
+// From connects an out-port to the sinks in-port
+func (p *Sink) From(outPort *OutPort) {
+	p.in().From(outPort)
 }
 
-// ConnectParam connects a param-out-port to the sinks param-in-port
-func (p *Sink) ConnectParam(paramOutPort *ParamOutPort) {
-	p.paramIn().Connect(paramOutPort)
+// FromParam connects a param-out-port to the sinks param-in-port
+func (p *Sink) FromParam(paramOutPort *ParamOutPort) {
+	p.paramIn().From(paramOutPort)
 }
 
 // Run runs the Sink process

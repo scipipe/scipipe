@@ -34,7 +34,7 @@ func TestBasicRun(t *testing.T) {
 	assertIsType(t, t2.Out("bar"), NewOutPort("bar"))
 	t2.SetPathExtend("foo", "bar", ".bar.txt")
 
-	t2.In("foo").Connect(t1.Out("foo"))
+	t2.In("foo").From(t1.Out("foo"))
 
 	assertIsType(t, t2.In("foo"), NewInPort("foo"))
 	assertIsType(t, t2.Out("bar"), NewOutPort("bar"))
@@ -54,7 +54,7 @@ func TestConnectBackwards(t *testing.T) {
 	t2 := wf.NewProc("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	t2.SetPathCustom("bar", func(t *Task) string { return t.InPath("foo") + ".bar.txt" })
 
-	t1.Out("foo").Connect(t2.In("foo"))
+	t1.Out("foo").To(t2.In("foo"))
 
 	wf.Run()
 
@@ -78,13 +78,13 @@ func TestParameterCommand(t *testing.T) {
 			task.Param("c"),
 		)
 	})
-	abc.ParamInPort("a").Connect(cmb.A)
-	abc.ParamInPort("b").Connect(cmb.B)
-	abc.ParamInPort("c").Connect(cmb.C)
+	abc.ParamInPort("a").From(cmb.A)
+	abc.ParamInPort("b").From(cmb.B)
+	abc.ParamInPort("c").From(cmb.C)
 
 	// A printer process
 	prt := wf.NewProc("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
-	prt.In("in").Connect(abc.Out("out"))
+	prt.In("in").From(abc.Out("out"))
 
 	wf.Run()
 
@@ -111,7 +111,7 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 	tsk.SetPathStatic("hej1", f)
 	prt := wf1.NewProc("prt", "cat {i:in1} > {o:done}")
 	prt.SetPathExtend("in1", "done", ".done.txt")
-	prt.In("in1").Connect(tsk.Out("hej1"))
+	prt.In("in1").From(tsk.Out("hej1"))
 	wf1.Run()
 
 	// Assert file DO exist after running
@@ -128,7 +128,7 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 	tsk.SetPathCustom("hej2", func(task *Task) string { return f })
 	prt = wf2.NewProc("prt", "cat {i:in1} > {o:done}")
 	prt.SetPathExtend("in1", "done", ".done.txt")
-	prt.In("in1").Connect(tsk.Out("hej2"))
+	prt.In("in1").From(tsk.Out("hej2"))
 	wf2.Run()
 
 	// Assert exists
@@ -159,11 +159,11 @@ func TestSendOrderedOutputs(t *testing.T) {
 
 	fc := wf.NewProc("fc", "echo {i:in} > {o:out}")
 	fc.SetPathExtend("in", "out", "")
-	fc.In("in").Connect(ig.Out())
+	fc.In("in").From(ig.Out())
 
 	sl := wf.NewProc("sl", "cat {i:in} > {o:out}")
 	sl.SetPathExtend("in", "out", ".copy.txt")
-	sl.In("in").Connect(fc.Out("out"))
+	sl.In("in").From(fc.Out("out"))
 
 	assertNotNil(t, sl.Out)
 
@@ -172,7 +172,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 
 	tempPort := NewInPort("temp")
 	tempPort.process = NewBogusProcess("bogus_process")
-	tempPort.Connect(sl.Out("out"))
+	tempPort.From(sl.Out("out"))
 
 	// Should not start go-routines before connection stuff is done
 	go ig.Run()
@@ -207,7 +207,7 @@ func TestStreaming(t *testing.T) {
 	ls.SetPathStatic("lsl", "/tmp/lsl.txt")
 	grp := wf.NewProc("grp", "grep etc {i:in} > {o:grepped}")
 	grp.SetPathExtend("in", "grepped", ".grepped.txt")
-	grp.In("in").Connect(ls.Out("lsl"))
+	grp.In("in").From(ls.Out("lsl"))
 	wf.Run()
 
 	// Assert otuput file exists
@@ -232,11 +232,11 @@ func TestSubStreamReduceInPlaceHolder(t *testing.T) {
 	ipg := NewFileSource(wf, "ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
 
 	sts := NewStreamToSubStream(wf, "str_to_substr")
-	sts.In().Connect(ipg.Out())
+	sts.In().From(ipg.Out())
 
 	cat := wf.NewProc("concatenate", "cat {i:infiles:r: } > {o:merged}")
 	cat.SetPathStatic("merged", "/tmp/substream_merged.txt")
-	cat.In("infiles").Connect(sts.OutSubStream())
+	cat.In("infiles").From(sts.OutSubStream())
 
 	wf.Run()
 
@@ -267,7 +267,7 @@ func TestMultipleLastProcs(t *testing.T) {
 
 		catStr := wf.NewProc("catstr_"+str, "cat {i:in} > {o:out}")
 		catStr.SetPathExtend("in", "out", ".cat.txt")
-		catStr.In("in").Connect(writeStr.Out("out"))
+		catStr.In("in").From(writeStr.Out("out"))
 	}
 
 	wf.Run()
@@ -297,11 +297,11 @@ func TestPassOnKeys(t *testing.T) {
 	key := NewMapToKeys(wf, "add_key", func(ip *FileIP) map[string]string {
 		return map[string]string{"hey": "you"}
 	})
-	key.In().Connect(hey.Out("heyfile"))
+	key.In().From(hey.Out("heyfile"))
 
 	you := wf.NewProc("add_you", "echo '$(cat {i:infile}) you' > {o:youfile}")
 	you.SetPathExtend("infile", "youfile", ".you.txt")
-	you.In("infile").Connect(key.Out())
+	you.In("infile").From(key.Out())
 
 	wf.Run()
 
@@ -335,8 +335,8 @@ func TestReceiveBothIPsAndParams(t *testing.T) {
 		add.SetPathCustom("out", func(t *Task) string {
 			return t.InPath("infile") + "." + str + ".txt"
 		})
-		add.ParamInPort("param").Connect(params.Out())
-		add.In("infile").Connect(echo.Out("hej"))
+		add.ParamInPort("param").From(params.Out())
+		add.In("infile").From(echo.Out("hej"))
 	}
 
 	wf.Run()

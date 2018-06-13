@@ -108,7 +108,7 @@ func main() {
     world.SetPathReplace("in", "out", ".txt", "_world.txt")
 
     // Connect network
-    world.In("in").Connect(hello.Out("out"))
+    world.In("in").From(hello.Out("out"))
 
     // Run workflow
     wf.Run()

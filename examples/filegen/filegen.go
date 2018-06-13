@@ -11,7 +11,7 @@ func main() {
 
 	fw := sp.NewProc(wf, "filewriter", "echo {i:in} > {o:out}")
 	fw.SetPathCustom("out", func(t *sp.Task) string { return t.InPath("in") })
-	fw.In("in").Connect(fq.Out())
+	fw.In("in").From(fq.Out())
 
 	wf.Run()
 }

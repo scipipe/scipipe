@@ -19,7 +19,7 @@ func main() {
 	// Connect workflow dependency network
 	// --------------------------------
 
-	f2b.In("foo").Connect(foo.Out("foo"))
+	f2b.In("foo").From(foo.Out("foo"))
 
 	// --------------------------------
 	// Run the workflow!

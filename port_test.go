@@ -18,8 +18,8 @@ func TestMultiInPort(t *testing.T) {
 
 	world := wf.NewProc("append_world", "echo $(cat {i:infile}) world > {o:worldfile}")
 	world.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
-	world.In("infile").Connect(hello.Out("hellofile"))
-	world.In("infile").Connect(tjena.Out("tjenafile"))
+	world.In("infile").From(hello.Out("hellofile"))
+	world.In("infile").From(tjena.Out("tjenafile"))
 
 	wf.Run()
 
@@ -134,7 +134,7 @@ func TestParamOutPortName(t *testing.T) {
 	}
 }
 
-func TestParamOutPortConnect(t *testing.T) {
+func TestParamOutPortFrom(t *testing.T) {
 	initTestLogs()
 
 	popName := "test_param_outport"
@@ -145,7 +145,7 @@ func TestParamOutPortConnect(t *testing.T) {
 	pip := NewParamInPort(pipName)
 	pip.process = NewBogusProcess("bogus_process")
 
-	pop.Connect(pip)
+	pop.To(pip)
 
 	if !pop.Connected() {
 		t.Errorf("Param out port '%s' not having connected status = true", pop.Name())

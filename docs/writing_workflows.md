@@ -26,7 +26,7 @@ func main() {
     world.SetPathReplace("in", "out", ".txt", "_world.txt")
 
     // Connect network
-    world.In("in").Connect(hello.Out("out"))
+    world.In("in").From(hello.Out("out"))
 
     // Run workflow
     wf.Run()
@@ -159,16 +159,16 @@ generally recommended:
 
 ## Connecting processes into a network
 
-Finally we need to define the data dependencies between our processes.  We do
+Finally we need to define the data dependencies between our processes. We do
 this by connecting the outports of one process to the inport of another
-process, using the `Connect` method available on each port object. We also need
-to connect the final out-port of the pipeline to the workflow, so that the
-workflow can pull on this port (technically pulling on a Go channel), in order
-to drive the workflow.
+process, using the `From` method available on each in-port object (Or the
+`To` method on out-ports). We also need to connect the final out-port of the
+pipeline to the workflow, so that the workflow can pull on this port
+(technically pulling on a Go channel), in order to drive the workflow.
 
 ```go
 // Connect network
-world.In("in").Connect(helloWriter.Out("out"))
+world.In("in").From(helloWriter.Out("out"))
 ```
 
 ## Running the pipeline

@@ -57,8 +57,8 @@ func (pt *InPort) AddRemotePort(rpt *OutPort) {
 	pt.RemotePorts[rpt.Name()] = rpt
 }
 
-// Connect connects an OutPort to the InPort
-func (pt *InPort) Connect(rpt *OutPort) {
+// From connects an OutPort to the InPort
+func (pt *InPort) From(rpt *OutPort) {
 	pt.AddRemotePort(rpt)
 	rpt.AddRemotePort(pt)
 
@@ -169,8 +169,8 @@ func (pt *OutPort) removeRemotePort(rptName string) {
 	delete(pt.RemotePorts, rptName)
 }
 
-// Connect connects an InPort to the OutPort
-func (pt *OutPort) Connect(rpt *InPort) {
+// To connects an InPort to the OutPort
+func (pt *OutPort) To(rpt *InPort) {
 	pt.AddRemotePort(rpt)
 	rpt.AddRemotePort(pt)
 
@@ -264,8 +264,8 @@ func (pip *ParamInPort) AddRemotePort(pop *ParamOutPort) {
 	pip.RemotePorts[pop.Name()] = pop
 }
 
-// Connect connects one parameter port with another one
-func (pip *ParamInPort) Connect(pop *ParamOutPort) {
+// From connects one parameter port with another one
+func (pip *ParamInPort) From(pop *ParamOutPort) {
 	pip.AddRemotePort(pop)
 	pop.AddRemotePort(pip)
 
@@ -278,7 +278,7 @@ func (pip *ParamInPort) Connect(pop *ParamOutPort) {
 func (pip *ParamInPort) ConnectStr(strings ...string) {
 	pop := NewParamOutPort("string_feeder")
 	pop.process = pip.Process()
-	pip.Connect(pop)
+	pip.From(pop)
 	go func() {
 		defer pop.Close()
 		for _, str := range strings {
@@ -365,8 +365,8 @@ func (pop *ParamOutPort) AddRemotePort(pip *ParamInPort) {
 	pop.RemotePorts[pip.Name()] = pip
 }
 
-// Connect connects an ParamInPort to the ParamOutPort
-func (pop *ParamOutPort) Connect(pip *ParamInPort) {
+// To connects an ParamInPort to the ParamOutPort
+func (pop *ParamOutPort) To(pip *ParamInPort) {
 	pop.AddRemotePort(pip)
 	pip.AddRemotePort(pop)
 

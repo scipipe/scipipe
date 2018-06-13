@@ -30,10 +30,10 @@ func main() {
 	prt.Spawn = false
 
 	// Connection info
-	abc.ParamInPort("a").Connect(cmb.A())
-	abc.ParamInPort("b").Connect(cmb.B())
-	abc.ParamInPort("c").Connect(cmb.C())
-	prt.In("in").Connect(abc.Out("out"))
+	abc.ParamInPort("a").From(cmb.A())
+	abc.ParamInPort("b").From(cmb.B())
+	abc.ParamInPort("c").From(cmb.C())
+	prt.In("in").From(abc.Out("out"))
 
 	wf.Run()
 }

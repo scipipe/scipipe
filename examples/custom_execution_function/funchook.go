@@ -12,7 +12,7 @@ func main() {
 	foo := NewFooer(wf, "foo")
 	f2b := NewFoo2Barer(wf, "f2b")
 
-	foo.OutFoo().Connect(f2b.InFoo())
+	foo.OutFoo().To(f2b.InFoo())
 
 	wf.Run()
 }
