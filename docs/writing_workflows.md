@@ -86,6 +86,12 @@ replace-pattern for the output filename.  With the example above, our input
 file named `hello.txt` will be converted into `hello_world.txt` by this path
 pattern.
 
+`SetPathPattern` is the most advanced: It takes a pattern similar to the
+shell command pattern, with placeholders, used to define new (shell-based)
+processes. The available placeholders that can be used are: `{i:INPORTNAME}`,
+`{p:PARAMNAME}` and `{t:TAGNAME}`. An example of a full pattern might be:
+`{i:foo}.replace_with_{p:replacement}.txt`.
+
 ## Even more control over file formatting
 
 We can actually get even more control over how file names are produced than

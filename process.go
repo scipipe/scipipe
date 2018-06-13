@@ -162,6 +162,39 @@ func (p *Process) SetPathReplace(inPortName string, outPortName string, old stri
 	}
 }
 
+// SetPathPattern allows setting the path of outputs using a pattern similar to the
+// command pattern used to create new processes. Available patterns to use are:
+// {i:inport}
+// {p:paramname}
+// {t:tagname}
+// An example might be: {i:foo}.replace_with_{p:replacement}.txt
+func (p *Process) SetPathPattern(outPortName string, pathPattern string) {
+	p.PathFormatters[outPortName] = func(t *Task) string {
+		r := getShellCommandPlaceHolderRegex()
+		matches := r.FindAllStringSubmatch(pathPattern, -1)
+		for _, match := range matches {
+			var replacement string
+
+			placeHolder := match[0]
+			phType := match[1]
+			phName := match[2]
+
+			switch phType {
+			case "i":
+				replacement = t.InIP(phName).Path()
+			case "p":
+				replacement = t.Param(phName)
+			case "t":
+				replacement = t.Tag(phName)
+			default:
+				Fail("Replace failed for placeholder ", phName, " for path patterh '", pathPattern, "'")
+			}
+			pathPattern = strings.Replace(pathPattern, placeHolder, replacement, -1)
+		}
+		return pathPattern
+	}
+}
+
 // SetPathCustom takes a function which produces a file path based on data
 // available in *Task, such as concrete file paths and parameter values,
 func (p *Process) SetPathCustom(outPortName string, pathFmtFunc func(task *Task) (path string)) {

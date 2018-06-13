@@ -55,3 +55,16 @@ func TestSetPathReplace(t *testing.T) {
 		t.Error(`p.PathFormatters["bar"]() != "foo.bar.txt"`)
 	}
 }
+
+func TestSetPathPattern(t *testing.T) {
+	wf := NewWorkflow("test_wf", 16)
+	p := wf.NewProc("cat_foo", "cat {i:foo} > {o:bar} # {p:p1}")
+	p.InParam("p1").FromStr("p1val")
+	p.SetPathPattern("bar", "{i:foo}.bar.{p:p1}.txt")
+
+	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)
+
+	if p.PathFormatters["bar"](mockTask) != "foo.txt.bar.p1val.txt" {
+		t.Error(`p.PathFormatters["bar"]() != "foo.bar.txt"`)
+	}
+}
