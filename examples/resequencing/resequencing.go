@@ -109,7 +109,7 @@ func main() {
 		bwaMerge.SetPathCustom("merged", func(t *Task) string {
 			return t.Param("indv") + ".merged.sam"
 		})
-		bwaMerge.ParamInPort("indv").ConnectStr(indv)
+		bwaMerge.InParamPort("indv").ConnectStr(indv)
 		bwaMerge.In("ref").From(ungzipRef.Out("out"))
 		bwaMerge.In("refdone").From(indexRef.Out("done"))
 		bwaMerge.In("sai1").From(outPorts[indv]["1"]["sai"])

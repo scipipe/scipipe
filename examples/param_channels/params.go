@@ -30,9 +30,9 @@ func main() {
 	prt.Spawn = false
 
 	// Connection info
-	abc.ParamInPort("a").From(cmb.A())
-	abc.ParamInPort("b").From(cmb.B())
-	abc.ParamInPort("c").From(cmb.C())
+	abc.InParamPort("a").From(cmb.A())
+	abc.InParamPort("b").From(cmb.B())
+	abc.InParamPort("c").From(cmb.C())
 	prt.In("in").From(abc.Out("out"))
 
 	wf.Run()
@@ -46,16 +46,16 @@ func NewCombinatoricsGen(wf *sci.Workflow, name string) *CombinatoricsGen {
 	p := &CombinatoricsGen{
 		BaseProcess: sci.NewBaseProcess(wf, name),
 	}
-	p.InitParamOutPort(p, "a")
-	p.InitParamOutPort(p, "b")
-	p.InitParamOutPort(p, "c")
+	p.InitOutParamPort(p, "a")
+	p.InitOutParamPort(p, "b")
+	p.InitOutParamPort(p, "c")
 	wf.AddProc(p)
 	return p
 }
 
-func (p *CombinatoricsGen) A() *sci.ParamOutPort { return p.ParamOutPort("a") }
-func (p *CombinatoricsGen) B() *sci.ParamOutPort { return p.ParamOutPort("b") }
-func (p *CombinatoricsGen) C() *sci.ParamOutPort { return p.ParamOutPort("c") }
+func (p *CombinatoricsGen) A() *sci.OutParamPort { return p.OutParamPort("a") }
+func (p *CombinatoricsGen) B() *sci.OutParamPort { return p.OutParamPort("b") }
+func (p *CombinatoricsGen) C() *sci.OutParamPort { return p.OutParamPort("c") }
 
 func (p *CombinatoricsGen) Run() {
 	defer p.CloseAllOutPorts()

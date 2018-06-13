@@ -67,15 +67,15 @@ method (for in-ports. Out-ports have a corresponding `To()` method), which
 takes another port, and connects to it, by stitching a channel between the
 ports.
 
-On `Process` objects, there is also a third port type, `ParamInPort` (and the
-accompanying `ParamOutPort`), which is used when it is needed to send a
+On `Process` objects, there is also a third port type, `InParamPort` (and the
+accompanying `OutParamPort`), which is used when it is needed to send a
 stream of parameter values (in string format) to be supplied to as arguments
 to shell commands.
 
 * See [GoDoc for the InPort struct type](https://godoc.org/github.com/scipipe/scipipe#InPort)
 * See [GoDoc for the OutPort struct type](https://godoc.org/github.com/scipipe/scipipe#OutPort)
-* See [GoDoc for the ParamInPort struct type](https://godoc.org/github.com/scipipe/scipipe#ParamInPort)
-* See [GoDoc for the ParamOutPort struct type](https://godoc.org/github.com/scipipe/scipipe#ParamOutPort)
+* See [GoDoc for the InParamPort struct type](https://godoc.org/github.com/scipipe/scipipe#InParamPort)
+* See [GoDoc for the OutParamPort struct type](https://godoc.org/github.com/scipipe/scipipe#OutParamPort)
 
 ## Channels
 

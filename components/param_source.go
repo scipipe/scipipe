@@ -16,14 +16,14 @@ func NewParamSource(wf *scipipe.Workflow, name string, params ...string) *ParamS
 		BaseProcess: scipipe.NewBaseProcess(wf, name),
 		params:      params,
 	}
-	p.InitParamOutPort(p, "out")
+	p.InitOutParamPort(p, "out")
 	wf.AddProc(p)
 	return p
 }
 
 // Out returns the out-port, on which parameters the process was initialized
 // with, will be retrieved.
-func (p *ParamSource) Out() *scipipe.ParamOutPort { return p.ParamOutPort("out") }
+func (p *ParamSource) Out() *scipipe.OutParamPort { return p.OutParamPort("out") }
 
 // Run runs the process
 func (p *ParamSource) Run() {

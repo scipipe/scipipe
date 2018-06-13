@@ -39,8 +39,8 @@ type WorkflowProcess interface {
 	Name() string
 	InPorts() map[string]*InPort
 	OutPorts() map[string]*OutPort
-	ParamInPorts() map[string]*ParamInPort
-	ParamOutPorts() map[string]*ParamOutPort
+	InParamPorts() map[string]*InParamPort
+	OutParamPorts() map[string]*OutParamPort
 	Ready() bool
 	Run()
 }
@@ -190,7 +190,7 @@ func (wf *Workflow) PlotGraph(filePath string, edgeLabels bool, createPdf bool) 
 			}
 		}
 		// Parameter connections
-		for popname, pop := range p.ParamOutPorts() {
+		for popname, pop := range p.OutParamPorts() {
 			for rpname, rp := range pop.RemotePorts {
 				if edgeLabels {
 					con += fmt.Sprintf(`  "%s" -> "%s" [style="dashed", taillabel="%s", headlabel="%s"];`+"\n", pop.Process().Name(), rp.Process().Name(), remToDotPtn.ReplaceAllString(popname, ""), remToDotPtn.ReplaceAllString(rpname, ""))
@@ -323,8 +323,8 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 			}
 		}
 
-		// ParamOutPorts
-		for _, pop := range proc.ParamOutPorts() {
+		// OutParamPorts
+		for _, pop := range proc.OutParamPorts() {
 			for rppName, rpp := range pop.RemotePorts {
 				// If the remotely connected process is not among the ones to run ...
 				if rpp.Process() == nil {
@@ -341,7 +341,7 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 			}
 		}
 
-		if len(proc.OutPorts()) == 0 && len(proc.ParamOutPorts()) == 0 {
+		if len(proc.OutPorts()) == 0 && len(proc.OutParamPorts()) == 0 {
 			if foundNewDriverProc {
 				Failf("Found more than one process without out-ports nor out-param ports. Cannot use both as drivers (One of them being '%s'). Adapt your workflow accordingly.", proc.Name())
 			}
@@ -362,7 +362,7 @@ func upstreamProcsForProc(proc WorkflowProcess) map[string]WorkflowProcess {
 			mergeWFMaps(procs, upstreamProcsForProc(rpt.Process()))
 		}
 	}
-	for _, pip := range proc.ParamInPorts() {
+	for _, pip := range proc.InParamPorts() {
 		for _, rpp := range pip.RemotePorts {
 			procs[rpp.Process().Name()] = rpp.Process()
 			mergeWFMaps(procs, upstreamProcsForProc(rpp.Process()))

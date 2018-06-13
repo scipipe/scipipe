@@ -76,11 +76,11 @@ func TestOutPortName(t *testing.T) {
 	}
 }
 
-func TestParamInPortName(t *testing.T) {
+func TestInParamPortName(t *testing.T) {
 	initTestLogs()
 
 	wf := NewWorkflow("dummy_workflow", 1)
-	inp := NewParamInPort("in_test")
+	inp := NewInParamPort("in_test")
 	inp.process = NewProc(wf, "foo_proc", "echo foo > {o:out}")
 
 	expectedName := "foo_proc.in_test"
@@ -89,10 +89,10 @@ func TestParamInPortName(t *testing.T) {
 	}
 }
 
-func TestParamInPortSendRecv(t *testing.T) {
+func TestInParamPortSendRecv(t *testing.T) {
 	initTestLogs()
 
-	pip := NewParamInPort("test_param_inport")
+	pip := NewInParamPort("test_param_inport")
 	param := "foo-bar"
 	go func() {
 		pip.Send(param)
@@ -103,10 +103,10 @@ func TestParamInPortSendRecv(t *testing.T) {
 	}
 }
 
-func TestParamInPortConnectStr(t *testing.T) {
+func TestInParamPortConnectStr(t *testing.T) {
 	initTestLogs()
 
-	pip := NewParamInPort("test_inport")
+	pip := NewInParamPort("test_inport")
 	pip.process = NewBogusProcess("bogus_process")
 
 	pip.ConnectStr("foo", "bar", "baz")
@@ -121,11 +121,11 @@ func TestParamInPortConnectStr(t *testing.T) {
 	}
 }
 
-func TestParamOutPortName(t *testing.T) {
+func TestOutParamPortName(t *testing.T) {
 	initTestLogs()
 
 	wf := NewWorkflow("dummy_workflow", 1)
-	pop := NewParamOutPort("out_test")
+	pop := NewOutParamPort("out_test")
 	pop.process = NewProc(wf, "foo_proc", "echo foo > {o:out}")
 
 	expectedName := "foo_proc.out_test"
@@ -134,15 +134,15 @@ func TestParamOutPortName(t *testing.T) {
 	}
 }
 
-func TestParamOutPortFrom(t *testing.T) {
+func TestOutParamPortFrom(t *testing.T) {
 	initTestLogs()
 
 	popName := "test_param_outport"
-	pop := NewParamOutPort(popName)
+	pop := NewOutParamPort(popName)
 	pop.process = NewBogusProcess("bogus_process")
 
 	pipName := "test_param_inport"
-	pip := NewParamInPort(pipName)
+	pip := NewInParamPort(pipName)
 	pip.process = NewBogusProcess("bogus_process")
 
 	pop.To(pip)
@@ -155,9 +155,9 @@ func TestParamOutPortFrom(t *testing.T) {
 	}
 
 	if pop.RemotePorts["bogus_process."+pipName] == nil {
-		t.Errorf("ParamInPort not among remote ports in ParamOutPort")
+		t.Errorf("InParamPort not among remote ports in OutParamPort")
 	}
 	if pip.RemotePorts["bogus_process."+popName] == nil {
-		t.Errorf("ParamOutPort not among remote ports in ParamInPort")
+		t.Errorf("OutParamPort not among remote ports in InParamPort")
 	}
 }

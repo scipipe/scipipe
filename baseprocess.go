@@ -7,8 +7,8 @@ type BaseProcess struct {
 	workflow      *Workflow
 	inPorts       map[string]*InPort
 	outPorts      map[string]*OutPort
-	paramInPorts  map[string]*ParamInPort
-	paramOutPorts map[string]*ParamOutPort
+	paramInPorts  map[string]*InParamPort
+	paramOutPorts map[string]*OutParamPort
 }
 
 // NewBaseProcess returns a new BaseProcess, connected to the provided workflow,
@@ -19,8 +19,8 @@ func NewBaseProcess(wf *Workflow, name string) BaseProcess {
 		name:          name,
 		inPorts:       make(map[string]*InPort),
 		outPorts:      make(map[string]*OutPort),
-		paramInPorts:  make(map[string]*ParamInPort),
-		paramOutPorts: make(map[string]*ParamOutPort),
+		paramInPorts:  make(map[string]*InParamPort),
+		paramOutPorts: make(map[string]*OutParamPort),
 	}
 }
 
@@ -110,31 +110,31 @@ func (p *BaseProcess) DeleteOutPort(portName string) {
 // Param-in-port stuff
 // ------------------------------------------------
 
-// InitParamInPort adds the parameter port paramPort with name portName
-func (p *BaseProcess) InitParamInPort(proc WorkflowProcess, portName string) {
+// InitInParamPort adds the parameter port paramPort with name portName
+func (p *BaseProcess) InitInParamPort(proc WorkflowProcess, portName string) {
 	if _, ok := p.paramInPorts[portName]; ok {
 		Failf("Such a param-in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
-	pip := NewParamInPort(portName)
+	pip := NewInParamPort(portName)
 	pip.process = proc
 	p.paramInPorts[portName] = pip
 }
 
-// ParamInPort returns the parameter port with name portName
-func (p *BaseProcess) ParamInPort(portName string) *ParamInPort {
+// InParamPort returns the parameter port with name portName
+func (p *BaseProcess) InParamPort(portName string) *InParamPort {
 	if _, ok := p.paramInPorts[portName]; !ok {
 		Failf("No such param-in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return p.paramInPorts[portName]
 }
 
-// ParamInPorts returns all parameter in-ports of the process
-func (p *BaseProcess) ParamInPorts() map[string]*ParamInPort {
+// InParamPorts returns all parameter in-ports of the process
+func (p *BaseProcess) InParamPorts() map[string]*InParamPort {
 	return p.paramInPorts
 }
 
-// DeleteParamInPort deletes a ParamInPort object from the process
-func (p *BaseProcess) DeleteParamInPort(portName string) {
+// DeleteInParamPort deletes a InParamPort object from the process
+func (p *BaseProcess) DeleteInParamPort(portName string) {
 	if _, ok := p.paramInPorts[portName]; !ok {
 		Failf("No such param-in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
@@ -145,34 +145,34 @@ func (p *BaseProcess) DeleteParamInPort(portName string) {
 // Param-out-port stuff
 // ------------------------------------------------
 
-// InitParamOutPort initializes the parameter port paramPort with name portName
+// InitOutParamPort initializes the parameter port paramPort with name portName
 // to the process We need to supply the concrete process used here as well,
 // since this method might be used as part of an embedded struct, meaning that
 // the process in the receiver is just the *BaseProcess, which doesn't suffice.
-func (p *BaseProcess) InitParamOutPort(proc WorkflowProcess, portName string) {
+func (p *BaseProcess) InitOutParamPort(proc WorkflowProcess, portName string) {
 	if _, ok := p.paramOutPorts[portName]; ok {
 		Failf("Such a param-out-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
-	pop := NewParamOutPort(portName)
+	pop := NewOutParamPort(portName)
 	pop.process = proc
 	p.paramOutPorts[portName] = pop
 }
 
-// ParamOutPort returns the parameter port with name portName
-func (p *BaseProcess) ParamOutPort(portName string) *ParamOutPort {
+// OutParamPort returns the parameter port with name portName
+func (p *BaseProcess) OutParamPort(portName string) *OutParamPort {
 	if _, ok := p.paramOutPorts[portName]; !ok {
 		Failf("No such param-out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return p.paramOutPorts[portName]
 }
 
-// ParamOutPorts returns all parameter out-ports of the process
-func (p *BaseProcess) ParamOutPorts() map[string]*ParamOutPort {
+// OutParamPorts returns all parameter out-ports of the process
+func (p *BaseProcess) OutParamPorts() map[string]*OutParamPort {
 	return p.paramOutPorts
 }
 
-// DeleteParamOutPort deletes a ParamOutPort object from the process
-func (p *BaseProcess) DeleteParamOutPort(portName string) {
+// DeleteOutParamPort deletes a OutParamPort object from the process
+func (p *BaseProcess) DeleteOutParamPort(portName string) {
 	if _, ok := p.paramOutPorts[portName]; !ok {
 		Failf("No such param-out-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
@@ -200,13 +200,13 @@ func (p *BaseProcess) Ready() (isReady bool) {
 	}
 	for portName, port := range p.paramInPorts {
 		if !port.Ready() {
-			Error.Printf("ParamInPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
+			Error.Printf("InParamPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
 			isReady = false
 		}
 	}
 	for portName, port := range p.paramOutPorts {
 		if !port.Ready() {
-			Error.Printf("ParamOutPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
+			Error.Printf("OutParamPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
 			isReady = false
 		}
 	}
@@ -220,9 +220,9 @@ func (p *BaseProcess) CloseOutPorts() {
 	}
 }
 
-// CloseParamOutPorts closes all parameter out-ports
-func (p *BaseProcess) CloseParamOutPorts() {
-	for _, op := range p.ParamOutPorts() {
+// CloseOutParamPorts closes all parameter out-ports
+func (p *BaseProcess) CloseOutParamPorts() {
+	for _, op := range p.OutParamPorts() {
 		op.Close()
 	}
 }
@@ -230,7 +230,7 @@ func (p *BaseProcess) CloseParamOutPorts() {
 // CloseAllOutPorts closes all normal-, and parameter out ports
 func (p *BaseProcess) CloseAllOutPorts() {
 	p.CloseOutPorts()
-	p.CloseParamOutPorts()
+	p.CloseOutParamPorts()
 }
 
 func (p *BaseProcess) receiveOnInPorts() (ips map[string]*FileIP, inPortsOpen bool) {
@@ -250,11 +250,11 @@ func (p *BaseProcess) receiveOnInPorts() (ips map[string]*FileIP, inPortsOpen bo
 	return
 }
 
-func (p *BaseProcess) receiveOnParamInPorts() (params map[string]string, paramPortsOpen bool) {
+func (p *BaseProcess) receiveOnInParamPorts() (params map[string]string, paramPortsOpen bool) {
 	paramPortsOpen = true
 	params = make(map[string]string)
 	// Read input IPs on in-ports and set up path mappings
-	for pname, pport := range p.ParamInPorts() {
+	for pname, pport := range p.InParamPorts() {
 		pval, open := <-pport.Chan
 		if !open {
 			paramPortsOpen = false

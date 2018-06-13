@@ -70,7 +70,7 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 			p.inPorts[portName].process = p
 		} else if portType == "p" {
 			if params == nil || params[portName] == "" {
-				p.paramInPorts[portName] = NewParamInPort(portName)
+				p.paramInPorts[portName] = NewInParamPort(portName)
 				p.paramInPorts[portName].process = p
 			}
 		}
@@ -101,6 +101,18 @@ func (p *Process) Out(portName string) *OutPort {
 		}
 	}
 	return p.OutPort(portName)
+}
+
+// InParam is a short-form for InParamPort() (of BaseProcess), which works only on Process
+// processes
+func (p *Process) InParam(portName string) *InParamPort {
+	return p.InParamPort(portName)
+}
+
+// OutParam is a short-form for OutParamPort() (of BaseProcess), which works only on
+// Process processes
+func (p *Process) OutParam(portName string) *OutParamPort {
+	return p.OutParamPort(portName)
 }
 
 // ------------------------------------------------------------------------
@@ -212,7 +224,7 @@ func (p *Process) createTasks() (ch chan *Task) {
 			}
 			// Only read on param in-ports if we have any
 			if len(p.paramInPorts) > 0 {
-				params, paramPortsOpen = p.receiveOnParamInPorts()
+				params, paramPortsOpen = p.receiveOnInParamPorts()
 				// If param-port is closed, that means we got the last params on last iteration, so break
 				if !paramPortsOpen {
 					break

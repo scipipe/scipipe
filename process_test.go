@@ -7,8 +7,8 @@ import (
 func TestNewProc(t *testing.T) {
 	wf := NewWorkflow("test_wf", 16)
 	p1 := NewProc(wf, "echo", "echo {p:text}")
-	if p1.ParamInPort("text") == nil {
-		t.Error(`p.ParamInPort("text") = nil. want: not nil`)
+	if p1.InParam("text") == nil {
+		t.Error(`p.InParam("text") = nil. want: not nil`)
 	}
 
 	p2 := NewProc(wf, "cat", "cat {i:infile} > {o:outfile}")

@@ -78,9 +78,9 @@ func TestParameterCommand(t *testing.T) {
 			task.Param("c"),
 		)
 	})
-	abc.ParamInPort("a").From(cmb.A)
-	abc.ParamInPort("b").From(cmb.B)
-	abc.ParamInPort("c").From(cmb.C)
+	abc.InParam("a").From(cmb.A)
+	abc.InParam("b").From(cmb.B)
+	abc.InParam("c").From(cmb.C)
 
 	// A printer process
 	prt := wf.NewProc("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
@@ -335,7 +335,7 @@ func TestReceiveBothIPsAndParams(t *testing.T) {
 		add.SetPathCustom("out", func(t *Task) string {
 			return t.InPath("infile") + "." + str + ".txt"
 		})
-		add.ParamInPort("param").From(params.Out())
+		add.InParam("param").From(params.Out())
 		add.In("infile").From(echo.Out("hej"))
 	}
 
@@ -402,15 +402,15 @@ func assertEqualValues(t *testing.T, expected interface{}, actual interface{}, m
 // --------------------------------------------------------------------------------
 type CombinatoricsProcess struct {
 	name string
-	A    *ParamOutPort
-	B    *ParamOutPort
-	C    *ParamOutPort
+	A    *OutParamPort
+	B    *OutParamPort
+	C    *OutParamPort
 }
 
 func NewCombinatoricsProcess(name string) *CombinatoricsProcess {
-	a := NewParamOutPort("a")
-	b := NewParamOutPort("b")
-	c := NewParamOutPort("c")
+	a := NewOutParamPort("a")
+	b := NewOutParamPort("b")
+	c := NewOutParamPort("c")
 	p := &CombinatoricsProcess{
 		A:    a,
 		B:    b,
@@ -429,11 +429,11 @@ func (p *CombinatoricsProcess) InPorts() map[string]*InPort {
 func (p *CombinatoricsProcess) OutPorts() map[string]*OutPort {
 	return map[string]*OutPort{}
 }
-func (p *CombinatoricsProcess) ParamInPorts() map[string]*ParamInPort {
-	return map[string]*ParamInPort{}
+func (p *CombinatoricsProcess) InParamPorts() map[string]*InParamPort {
+	return map[string]*InParamPort{}
 }
-func (p *CombinatoricsProcess) ParamOutPorts() map[string]*ParamOutPort {
-	return map[string]*ParamOutPort{
+func (p *CombinatoricsProcess) OutParamPorts() map[string]*OutParamPort {
+	return map[string]*OutParamPort{
 		p.A.Name(): p.A,
 		p.B.Name(): p.B,
 		p.C.Name(): p.C,
@@ -573,14 +573,14 @@ func NewParamSource(wf *Workflow, name string, params ...string) *ParamSource {
 		BaseProcess: NewBaseProcess(wf, name),
 		params:      params,
 	}
-	p.InitParamOutPort(p, "out")
+	p.InitOutParamPort(p, "out")
 	wf.AddProc(p)
 	return p
 }
 
 // Out returns the out-port, on which parameters the process was initialized
 // with, will be retrieved.
-func (p *ParamSource) Out() *ParamOutPort { return p.ParamOutPort("out") }
+func (p *ParamSource) Out() *OutParamPort { return p.OutParamPort("out") }
 
 // Run runs the process
 func (p *ParamSource) Run() {

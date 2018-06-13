@@ -19,17 +19,17 @@ func NewFileReader(wf *scipipe.Workflow, name string) *FileReader {
 	p := &FileReader{
 		BaseProcess: scipipe.NewBaseProcess(wf, name),
 	}
-	p.InitParamInPort(p, "filepath")
-	p.InitParamOutPort(p, "line")
+	p.InitInParamPort(p, "filepath")
+	p.InitOutParamPort(p, "line")
 	wf.AddProc(p)
 	return p
 }
 
 // InFilePath returns the parameter in-port on which a file name is read
-func (p *FileReader) InFilePath() *scipipe.ParamInPort { return p.ParamInPort("filepath") }
+func (p *FileReader) InFilePath() *scipipe.InParamPort { return p.InParamPort("filepath") }
 
 // OutLine returns an parameter out-port with lines of the files being read
-func (p *FileReader) OutLine() *scipipe.ParamOutPort { return p.ParamOutPort("line") }
+func (p *FileReader) OutLine() *scipipe.OutParamPort { return p.OutParamPort("line") }
 
 // Run the FileReader
 func (p *FileReader) Run() {

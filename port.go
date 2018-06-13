@@ -216,35 +216,35 @@ func (pt *OutPort) Close() {
 }
 
 // ------------------------------------------------------------------------
-// ParamInPort
+// InParamPort
 // ------------------------------------------------------------------------
 
-// ParamInPort is an in-port for parameter values of string type
-type ParamInPort struct {
+// InParamPort is an in-port for parameter values of string type
+type InParamPort struct {
 	Chan        chan string
 	name        string
 	process     WorkflowProcess
-	RemotePorts map[string]*ParamOutPort
+	RemotePorts map[string]*OutParamPort
 	ready       bool
 	closeLock   sync.Mutex
 }
 
-// NewParamInPort returns a new ParamInPort
-func NewParamInPort(name string) *ParamInPort {
-	return &ParamInPort{
+// NewInParamPort returns a new InParamPort
+func NewInParamPort(name string) *InParamPort {
+	return &InParamPort{
 		name:        name,
 		Chan:        make(chan string, BUFSIZE),
-		RemotePorts: map[string]*ParamOutPort{},
+		RemotePorts: map[string]*OutParamPort{},
 	}
 }
 
-// Name returns the name of the ParamInPort
-func (pip *ParamInPort) Name() string {
+// Name returns the name of the InParamPort
+func (pip *InParamPort) Name() string {
 	return pip.Process().Name() + "." + pip.name
 }
 
 // Process returns the process that is connected to the port
-func (pip *ParamInPort) Process() WorkflowProcess {
+func (pip *InParamPort) Process() WorkflowProcess {
 	if pip.process == nil {
 		Failf("Parameter in-port %s has no connected process", pip.name)
 	}
@@ -252,12 +252,12 @@ func (pip *ParamInPort) Process() WorkflowProcess {
 }
 
 // SetProcess sets the process of the port to p
-func (pip *ParamInPort) SetProcess(p WorkflowProcess) {
+func (pip *InParamPort) SetProcess(p WorkflowProcess) {
 	pip.process = p
 }
 
-// AddRemotePort adds a remote ParamOutPort to the ParamInPort
-func (pip *ParamInPort) AddRemotePort(pop *ParamOutPort) {
+// AddRemotePort adds a remote OutParamPort to the InParamPort
+func (pip *InParamPort) AddRemotePort(pop *OutParamPort) {
 	if pip.RemotePorts[pop.Name()] != nil {
 		Failf("[Process:%s]: A remote param port with name %s already exists, for in-param-port %s connected to process %s\n", pip.Process().Name(), pop.Name(), pip.Name(), pop.Process().Name())
 	}
@@ -265,7 +265,7 @@ func (pip *ParamInPort) AddRemotePort(pop *ParamOutPort) {
 }
 
 // From connects one parameter port with another one
-func (pip *ParamInPort) From(pop *ParamOutPort) {
+func (pip *InParamPort) From(pop *OutParamPort) {
 	pip.AddRemotePort(pop)
 	pop.AddRemotePort(pip)
 
@@ -275,8 +275,8 @@ func (pip *ParamInPort) From(pop *ParamOutPort) {
 
 // ConnectStr connects a parameter port with a new go-routine feeding the
 // strings in strings, on the fly, to the parameter port
-func (pip *ParamInPort) ConnectStr(strings ...string) {
-	pop := NewParamOutPort("string_feeder")
+func (pip *InParamPort) ConnectStr(strings ...string) {
+	pop := NewOutParamPort("string_feeder")
 	pop.process = pip.Process()
 	pip.From(pop)
 	go func() {
@@ -287,30 +287,30 @@ func (pip *ParamInPort) ConnectStr(strings ...string) {
 	}()
 }
 
-// SetReady sets the ready status of the ParamInPort
-func (pip *ParamInPort) SetReady(ready bool) {
+// SetReady sets the ready status of the InParamPort
+func (pip *InParamPort) SetReady(ready bool) {
 	pip.ready = ready
 }
 
 // Ready tells whether the port is ready or not
-func (pip *ParamInPort) Ready() bool {
+func (pip *InParamPort) Ready() bool {
 	return pip.ready
 }
 
 // Send sends IPs to the in-port, and is supposed to be called from the remote
 // (out-) port, to send to this in-port
-func (pip *ParamInPort) Send(param string) {
+func (pip *InParamPort) Send(param string) {
 	pip.Chan <- param
 }
 
 // Recv receiveds a param value over the ports connection
-func (pip *ParamInPort) Recv() string {
+func (pip *InParamPort) Recv() string {
 	return <-pip.Chan
 }
 
 // CloseConnection closes the connection to the remote out-port with name
-// popName, on the ParamInPort
-func (pip *ParamInPort) CloseConnection(popName string) {
+// popName, on the InParamPort
+func (pip *InParamPort) CloseConnection(popName string) {
 	pip.closeLock.Lock()
 	delete(pip.RemotePorts, popName)
 	if len(pip.RemotePorts) == 0 {
@@ -320,32 +320,32 @@ func (pip *ParamInPort) CloseConnection(popName string) {
 }
 
 // ------------------------------------------------------------------------
-// ParamOutPort
+// OutParamPort
 // ------------------------------------------------------------------------
 
-// ParamOutPort is an out-port for parameter values of string type
-type ParamOutPort struct {
+// OutParamPort is an out-port for parameter values of string type
+type OutParamPort struct {
 	name        string
 	process     WorkflowProcess
-	RemotePorts map[string]*ParamInPort
+	RemotePorts map[string]*InParamPort
 	ready       bool
 }
 
-// NewParamOutPort returns a new ParamOutPort
-func NewParamOutPort(name string) *ParamOutPort {
-	return &ParamOutPort{
+// NewOutParamPort returns a new OutParamPort
+func NewOutParamPort(name string) *OutParamPort {
+	return &OutParamPort{
 		name:        name,
-		RemotePorts: map[string]*ParamInPort{},
+		RemotePorts: map[string]*InParamPort{},
 	}
 }
 
-// Name returns the name of the ParamOutPort
-func (pop *ParamOutPort) Name() string {
+// Name returns the name of the OutParamPort
+func (pop *OutParamPort) Name() string {
 	return pop.Process().Name() + "." + pop.name
 }
 
 // Process returns the process that is connected to the port
-func (pop *ParamOutPort) Process() WorkflowProcess {
+func (pop *OutParamPort) Process() WorkflowProcess {
 	if pop.process == nil {
 		Failf("Parameter out-port %s has no connected process", pop.name)
 	}
@@ -353,20 +353,20 @@ func (pop *ParamOutPort) Process() WorkflowProcess {
 }
 
 // SetProcess sets the process of the port to p
-func (pop *ParamOutPort) SetProcess(p WorkflowProcess) {
+func (pop *OutParamPort) SetProcess(p WorkflowProcess) {
 	pop.process = p
 }
 
-// AddRemotePort adds a remote ParamInPort to the ParamOutPort
-func (pop *ParamOutPort) AddRemotePort(pip *ParamInPort) {
+// AddRemotePort adds a remote InParamPort to the OutParamPort
+func (pop *OutParamPort) AddRemotePort(pip *InParamPort) {
 	if pop.RemotePorts[pip.Name()] != nil {
 		Failf("[Process:%s]: A remote param port with name %s already exists, for in-param-port %s connected to process %s\n", pop.Process().Name(), pip.Name(), pop.Name(), pip.Process().Name())
 	}
 	pop.RemotePorts[pip.Name()] = pip
 }
 
-// To connects an ParamInPort to the ParamOutPort
-func (pop *ParamOutPort) To(pip *ParamInPort) {
+// To connects an InParamPort to the OutParamPort
+func (pop *OutParamPort) To(pip *InParamPort) {
 	pop.AddRemotePort(pip)
 	pip.AddRemotePort(pop)
 
@@ -374,31 +374,31 @@ func (pop *ParamOutPort) To(pip *ParamInPort) {
 	pip.SetReady(true)
 }
 
-// Disconnect disonnects the (in-)port with name rptName, from the ParamOutPort
-func (pop *ParamOutPort) Disconnect(pipName string) {
+// Disconnect disonnects the (in-)port with name rptName, from the OutParamPort
+func (pop *OutParamPort) Disconnect(pipName string) {
 	pop.removeRemotePort(pipName)
 	if len(pop.RemotePorts) == 0 {
 		pop.SetReady(false)
 	}
 }
 
-// removeRemotePort removes the (in-)port with name rptName, from the ParamOutPort
-func (pop *ParamOutPort) removeRemotePort(pipName string) {
+// removeRemotePort removes the (in-)port with name rptName, from the OutParamPort
+func (pop *OutParamPort) removeRemotePort(pipName string) {
 	delete(pop.RemotePorts, pipName)
 }
 
-// SetReady sets the ready status of the ParamOutPort
-func (pop *ParamOutPort) SetReady(ready bool) {
+// SetReady sets the ready status of the OutParamPort
+func (pop *OutParamPort) SetReady(ready bool) {
 	pop.ready = ready
 }
 
 // Ready tells whether the port is ready or not
-func (pop *ParamOutPort) Ready() bool {
+func (pop *OutParamPort) Ready() bool {
 	return pop.ready
 }
 
-// Send sends an FileIP to all the in-ports connected to the ParamOutPort
-func (pop *ParamOutPort) Send(param string) {
+// Send sends an FileIP to all the in-ports connected to the OutParamPort
+func (pop *OutParamPort) Send(param string) {
 	for _, pip := range pop.RemotePorts {
 		Debug.Printf("Sending on out-param-port %s connected to in-param-port %s", pop.Name(), pip.Name())
 		pip.Send(param)
@@ -408,7 +408,7 @@ func (pop *ParamOutPort) Send(param string) {
 // Close closes the connection between this port and all the ports it is
 // connected to. If this port is the last connected port to an in-port, that
 // in-ports channel will also be closed.
-func (pop *ParamOutPort) Close() {
+func (pop *OutParamPort) Close() {
 	for _, pip := range pop.RemotePorts {
 		Debug.Printf("Closing out-param-port %s connected to in-param-port %s", pop.Name(), pip.Name())
 		pip.CloseConnection(pop.Name())
