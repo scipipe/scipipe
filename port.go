@@ -16,7 +16,7 @@ type InPort struct {
 	name        string
 	process     WorkflowProcess
 	RemotePorts map[string]*OutPort
-	connected   bool
+	ready       bool
 	closeLock   sync.Mutex
 }
 
@@ -26,7 +26,7 @@ func NewInPort(name string) *InPort {
 		name:        name,
 		RemotePorts: map[string]*OutPort{},
 		Chan:        make(chan *FileIP, BUFSIZE), // This one will contain merged inputs from inChans
-		connected:   false,
+		ready:       false,
 	}
 	return inp
 }
@@ -62,15 +62,15 @@ func (pt *InPort) From(rpt *OutPort) {
 	pt.AddRemotePort(rpt)
 	rpt.AddRemotePort(pt)
 
-	pt.SetConnectedStatus(true)
-	rpt.SetConnectedStatus(true)
+	pt.SetReady(true)
+	rpt.SetReady(true)
 }
 
 // Disconnect disconnects the (out-)port with name rptName, from the InPort
 func (pt *InPort) Disconnect(rptName string) {
 	pt.removeRemotePort(rptName)
 	if len(pt.RemotePorts) == 0 {
-		pt.SetConnectedStatus(false)
+		pt.SetReady(false)
 	}
 }
 
@@ -79,14 +79,14 @@ func (pt *InPort) removeRemotePort(rptName string) {
 	delete(pt.RemotePorts, rptName)
 }
 
-// SetConnectedStatus sets the connected status of the InPort
-func (pt *InPort) SetConnectedStatus(connected bool) {
-	pt.connected = connected
+// SetReady sets the ready status of the InPort
+func (pt *InPort) SetReady(ready bool) {
+	pt.ready = ready
 }
 
-// Connected tells whether the port is connected or not
-func (pt *InPort) Connected() bool {
-	return pt.connected
+// Ready tells whether the port is ready or not
+func (pt *InPort) Ready() bool {
+	return pt.ready
 }
 
 // Send sends IPs to the in-port, and is supposed to be called from the remote
@@ -122,7 +122,7 @@ type OutPort struct {
 	name        string
 	process     WorkflowProcess
 	RemotePorts map[string]*InPort
-	connected   bool
+	ready       bool
 }
 
 // NewOutPort returns a new OutPort struct
@@ -130,7 +130,7 @@ func NewOutPort(name string) *OutPort {
 	outp := &OutPort{
 		name:        name,
 		RemotePorts: map[string]*InPort{},
-		connected:   false,
+		ready:       false,
 	}
 	return outp
 }
@@ -174,26 +174,26 @@ func (pt *OutPort) To(rpt *InPort) {
 	pt.AddRemotePort(rpt)
 	rpt.AddRemotePort(pt)
 
-	pt.SetConnectedStatus(true)
-	rpt.SetConnectedStatus(true)
+	pt.SetReady(true)
+	rpt.SetReady(true)
 }
 
 // Disconnect disconnects the (in-)port with name rptName, from the OutPort
 func (pt *OutPort) Disconnect(rptName string) {
 	pt.removeRemotePort(rptName)
 	if len(pt.RemotePorts) == 0 {
-		pt.SetConnectedStatus(false)
+		pt.SetReady(false)
 	}
 }
 
-// SetConnectedStatus sets the connected status of the OutPort
-func (pt *OutPort) SetConnectedStatus(connected bool) {
-	pt.connected = connected
+// SetReady sets the ready status of the OutPort
+func (pt *OutPort) SetReady(ready bool) {
+	pt.ready = ready
 }
 
-// Connected tells whether the port is connected or not
-func (pt *OutPort) Connected() bool {
-	return pt.connected
+// Ready tells whether the port is ready or not
+func (pt *OutPort) Ready() bool {
+	return pt.ready
 }
 
 // Send sends an FileIP to all the in-ports connected to the OutPort
@@ -225,7 +225,7 @@ type ParamInPort struct {
 	name        string
 	process     WorkflowProcess
 	RemotePorts map[string]*ParamOutPort
-	connected   bool
+	ready       bool
 	closeLock   sync.Mutex
 }
 
@@ -269,8 +269,8 @@ func (pip *ParamInPort) From(pop *ParamOutPort) {
 	pip.AddRemotePort(pop)
 	pop.AddRemotePort(pip)
 
-	pip.SetConnectedStatus(true)
-	pop.SetConnectedStatus(true)
+	pip.SetReady(true)
+	pop.SetReady(true)
 }
 
 // ConnectStr connects a parameter port with a new go-routine feeding the
@@ -287,14 +287,14 @@ func (pip *ParamInPort) ConnectStr(strings ...string) {
 	}()
 }
 
-// SetConnectedStatus sets the connected status of the ParamInPort
-func (pip *ParamInPort) SetConnectedStatus(connected bool) {
-	pip.connected = connected
+// SetReady sets the ready status of the ParamInPort
+func (pip *ParamInPort) SetReady(ready bool) {
+	pip.ready = ready
 }
 
-// Connected tells whether the port is connected or not
-func (pip *ParamInPort) Connected() bool {
-	return pip.connected
+// Ready tells whether the port is ready or not
+func (pip *ParamInPort) Ready() bool {
+	return pip.ready
 }
 
 // Send sends IPs to the in-port, and is supposed to be called from the remote
@@ -328,7 +328,7 @@ type ParamOutPort struct {
 	name        string
 	process     WorkflowProcess
 	RemotePorts map[string]*ParamInPort
-	connected   bool
+	ready       bool
 }
 
 // NewParamOutPort returns a new ParamOutPort
@@ -370,15 +370,15 @@ func (pop *ParamOutPort) To(pip *ParamInPort) {
 	pop.AddRemotePort(pip)
 	pip.AddRemotePort(pop)
 
-	pop.SetConnectedStatus(true)
-	pip.SetConnectedStatus(true)
+	pop.SetReady(true)
+	pip.SetReady(true)
 }
 
 // Disconnect disonnects the (in-)port with name rptName, from the ParamOutPort
 func (pop *ParamOutPort) Disconnect(pipName string) {
 	pop.removeRemotePort(pipName)
 	if len(pop.RemotePorts) == 0 {
-		pop.SetConnectedStatus(false)
+		pop.SetReady(false)
 	}
 }
 
@@ -387,14 +387,14 @@ func (pop *ParamOutPort) removeRemotePort(pipName string) {
 	delete(pop.RemotePorts, pipName)
 }
 
-// SetConnectedStatus sets the connected status of the ParamOutPort
-func (pop *ParamOutPort) SetConnectedStatus(connected bool) {
-	pop.connected = connected
+// SetReady sets the ready status of the ParamOutPort
+func (pop *ParamOutPort) SetReady(ready bool) {
+	pop.ready = ready
 }
 
-// Connected tells whether the port is connected or not
-func (pop *ParamOutPort) Connected() bool {
-	return pop.connected
+// Ready tells whether the port is ready or not
+func (pop *ParamOutPort) Ready() bool {
+	return pop.ready
 }
 
 // Send sends an FileIP to all the in-ports connected to the ParamOutPort

@@ -147,10 +147,10 @@ func TestParamOutPortFrom(t *testing.T) {
 
 	pop.To(pip)
 
-	if !pop.Connected() {
+	if !pop.Ready() {
 		t.Errorf("Param out port '%s' not having connected status = true", pop.Name())
 	}
-	if !pip.Connected() {
+	if !pip.Ready() {
 		t.Errorf("Param out port '%s' not having connected status = true", pip.Name())
 	}
 

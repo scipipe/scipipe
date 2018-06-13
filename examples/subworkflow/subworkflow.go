@@ -55,6 +55,6 @@ func (wf *FooBarSubWorkflow) Run() {
 	}
 }
 
-func (wf *FooBarSubWorkflow) Connected() bool {
-	return wf.Out.Connected()
+func (wf *FooBarSubWorkflow) Ready() bool {
+	return wf.Out.Ready()
 }

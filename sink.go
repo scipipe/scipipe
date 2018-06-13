@@ -32,7 +32,7 @@ func (p *Sink) FromParam(paramOutPort *ParamOutPort) {
 // Run runs the Sink process
 func (p *Sink) Run() {
 	merged := make(chan int)
-	if p.in().Connected() {
+	if p.in().Ready() {
 		go func() {
 			for ip := range p.in().Chan {
 				Debug.Printf("Got file in sink: %s\n", ip.Path())
@@ -40,7 +40,7 @@ func (p *Sink) Run() {
 			merged <- 1
 		}()
 	}
-	if p.paramIn().Connected() {
+	if p.paramIn().Ready() {
 		go func() {
 			for param := range p.paramIn().Chan {
 				Debug.Printf("Got param in sink: %s\n", param)
@@ -48,10 +48,10 @@ func (p *Sink) Run() {
 			merged <- 1
 		}()
 	}
-	if p.in().Connected() {
+	if p.in().Ready() {
 		<-merged
 	}
-	if p.paramIn().Connected() {
+	if p.paramIn().Ready() {
 		<-merged
 	}
 	close(merged)

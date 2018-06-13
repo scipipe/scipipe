@@ -460,7 +460,7 @@ func (p *CombinatoricsProcess) Name() string {
 	return p.name
 }
 
-func (p *CombinatoricsProcess) Connected() bool { return true }
+func (p *CombinatoricsProcess) Ready() bool { return true }
 
 // --------------------------------------------------------------------------------
 // StreamToSubstream helper process

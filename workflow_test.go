@@ -128,6 +128,6 @@ func (p *BogusProcess) Name() string {
 	return p.name
 }
 
-func (p *BogusProcess) Connected() bool {
+func (p *BogusProcess) Ready() bool {
 	return true
 }

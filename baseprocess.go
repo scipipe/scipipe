@@ -183,34 +183,34 @@ func (p *BaseProcess) DeleteParamOutPort(portName string) {
 // Other stuff
 // ------------------------------------------------
 
-// Connected checks whether all the process' ports are connected
-func (p *BaseProcess) Connected() (isConnected bool) {
-	isConnected = true
+// Ready checks whether all the process' ports are connected
+func (p *BaseProcess) Ready() (isReady bool) {
+	isReady = true
 	for portName, port := range p.inPorts {
-		if !port.Connected() {
+		if !port.Ready() {
 			Error.Printf("InPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
-			isConnected = false
+			isReady = false
 		}
 	}
 	for portName, port := range p.outPorts {
-		if !port.Connected() {
+		if !port.Ready() {
 			Error.Printf("OutPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
-			isConnected = false
+			isReady = false
 		}
 	}
 	for portName, port := range p.paramInPorts {
-		if !port.Connected() {
+		if !port.Ready() {
 			Error.Printf("ParamInPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
-			isConnected = false
+			isReady = false
 		}
 	}
 	for portName, port := range p.paramOutPorts {
-		if !port.Connected() {
+		if !port.Ready() {
 			Error.Printf("ParamOutPort %s of process %s is not connected - check your workflow code!\n", portName, p.name)
-			isConnected = false
+			isReady = false
 		}
 	}
-	return isConnected
+	return isReady
 }
 
 // CloseOutPorts closes all (normal) out-ports
