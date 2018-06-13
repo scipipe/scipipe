@@ -110,9 +110,14 @@ func (ip *FileIP) Path() string {
 	return ip.path
 }
 
+// TempDir returns the path to a temporary directory where outputs are written
+func (ip *FileIP) TempDir() string {
+	return ip.path + ".tmp"
+}
+
 // TempPath returns the temporary path of the physical file
 func (ip *FileIP) TempPath() string {
-	return ip.path + ".tmp"
+	return ip.TempDir() + "/" + filepath.Base(ip.path)
 }
 
 // FifoPath returns the path to use when a FIFO file is used instead of a
@@ -257,8 +262,16 @@ func (ip *FileIP) Atomize() {
 	for !doneAtomizing {
 		if ip.TempFileExists() {
 			ip.lock.Lock()
-			err := os.Rename(ip.TempPath(), ip.path)
-			CheckWithMsg(err, "Could not rename file: "+ip.TempPath())
+			tempPaths, err := filepath.Glob(ip.TempDir() + "/*")
+			CheckWithMsg(err, "Could not blog directory: "+ip.TempDir())
+			for _, tempPath := range tempPaths {
+				origDir := filepath.Dir(ip.TempDir())
+				origFileName := filepath.Base(tempPath)
+				err := os.Rename(tempPath, origDir+"/"+origFileName)
+				CheckWithMsg(err, "Could not rename file: "+ip.TempPath())
+			}
+			err = os.Remove(ip.TempDir())
+			CheckWithMsg(err, "Could not remove temp dir: "+ip.TempDir())
 			ip.lock.Unlock()
 			doneAtomizing = true
 			Debug.Println("FileIP: Done atomizing", ip.TempPath(), "->", ip.Path())

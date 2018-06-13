@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -259,7 +258,7 @@ func (t *Task) anyOutputsExist() (anyFileExists bool) {
 // createDirs creates directories for out-IPs of the task
 func (t *Task) createDirs() {
 	for _, oip := range t.OutIPs {
-		oipDir := filepath.Dir(oip.Path())
+		oipDir := oip.TempDir() // This will create all out dirs, including the temp dir
 		err := os.MkdirAll(oipDir, 0777)
 		CheckWithMsg(err, "Could not create directory: "+oipDir)
 	}
