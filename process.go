@@ -2,6 +2,7 @@ package scipipe
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -84,6 +85,10 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 func (p *Process) initDefaultPathFormatters() {
 	for oname := range p.OutPorts() {
 		p.PathFormatters[oname] = func(t *Task) string {
+			inputsStr := ""
+			for _, v := range t.InIPs {
+				inputsStr += filepath.Base(v.Path()) + "."
+			}
 			paramsStr := ""
 			for p, v := range t.Params {
 				paramsStr += "." + p + "_" + v
@@ -92,7 +97,7 @@ func (p *Process) initDefaultPathFormatters() {
 			for t, v := range t.Tags {
 				tagsStr += "." + t + "_" + v
 			}
-			return t.process.Name() + "/" + t.process.Name() + paramsStr + tagsStr + ".out"
+			return inputsStr + t.process.Name() + paramsStr + tagsStr + "." + oname
 		}
 	}
 }
