@@ -43,6 +43,22 @@ func TestBasicRun(t *testing.T) {
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
 }
 
+func TestWithoutPathFormatter(t *testing.T) {
+	initTestLogs()
+	wf := NewWorkflow("TestWithoutPathFormatter", 4)
+	foo := wf.NewProc("foo", "echo foo > {o:txt}")
+	f2b := wf.NewProc("f2b", "cat {i:in} | sed 's/foo/bar/g' > {o:txt}")
+	f2b.In("in").From(foo.Out("txt"))
+	wf.Run()
+	fps := []string{"foo.txt", "foo.txt.audit.json", "foo.txt.f2b.txt", "foo.txt.f2b.txt.audit.json"}
+	for _, fp := range fps {
+		if _, err := os.Stat(fp); os.IsNotExist(err) {
+			t.Errorf("File does not exist: %s\n", fp)
+		}
+	}
+	cleanFiles(fps...)
+}
+
 func TestConnectBackwards(t *testing.T) {
 	initTestLogs()
 
