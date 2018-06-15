@@ -7,11 +7,11 @@ func main() {
 	wf := sp.NewWorkflow("minimal_wf", 4)
 
 	// Initialize processes
-	foo := wf.NewProc("fooer", "echo foo > {o:foo}")
-	f2b := wf.NewProc("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	foo := wf.NewProc("fooer", "echo foo > {o:foo.txt}")
+	f2b := wf.NewProc("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar.txt}")
 
 	// Connect
-	f2b.In("foo").From(foo.Out("foo"))
+	f2b.In("foo").From(foo.Out("foo.txt"))
 
 	// Run
 	wf.Run()

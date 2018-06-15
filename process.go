@@ -3,6 +3,7 @@ package scipipe
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -86,20 +87,38 @@ func (p *Process) initDefaultPathFormatters() {
 	for oname := range p.OutPorts() {
 		p.PathFormatters[oname] = func(t *Task) string {
 			inputsStr := ""
-			for _, v := range t.InIPs {
-				inputsStr += filepath.Base(v.Path()) + "."
+			for _, ipName := range sortedFileIPMapKeys(t.InIPs) {
+				inputsStr += filepath.Base(t.InIP(ipName).Path()) + "."
 			}
 			paramsStr := ""
-			for p, v := range t.Params {
-				paramsStr += "." + p + "_" + v
+			for _, paramName := range sortedStringMapKeys(t.Params) {
+				paramsStr += "." + paramName + "_" + t.Param(paramName)
 			}
 			tagsStr := ""
-			for t, v := range t.Tags {
-				tagsStr += "." + t + "_" + v
+			for _, tagName := range sortedStringMapKeys(t.Tags) {
+				tagsStr += "." + tagName + "_" + t.Tag(tagName)
 			}
 			return inputsStr + t.process.Name() + paramsStr + tagsStr + "." + oname
 		}
 	}
+}
+
+func sortedFileIPMapKeys(kv map[string]*FileIP) []string {
+	keys := []string{}
+	for k := range kv {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func sortedStringMapKeys(kv map[string]string) []string {
+	keys := []string{}
+	for k := range kv {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // ------------------------------------------------------------------------
