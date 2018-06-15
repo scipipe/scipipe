@@ -2,15 +2,16 @@ package main
 
 import (
 	sp "github.com/scipipe/scipipe"
+	spc "github.com/scipipe/scipipe/components"
 )
 
 func main() {
 	wf := sp.NewWorkflow("filegenwf", 4)
 
-	fq := NewFileIPGenerator(wf, "hej1.txt", "hej2.txt", "hej3.txt")
+	fq := spc.NewFileSource(wf, "file_src", "hej1.txt", "hej2.txt", "hej3.txt")
 
 	fw := sp.NewProc(wf, "filewriter", "echo {i:in} > {o:out}")
-	fw.SetPathCustom("out", func(t *sp.Task) string { return t.InPath("in") })
+	fw.SetPathPattern("out", "{i:in}")
 	fw.In("in").From(fq.Out())
 
 	wf.Run()

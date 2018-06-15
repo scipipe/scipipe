@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"runtime"
 
 	sci "github.com/scipipe/scipipe"
@@ -16,14 +15,7 @@ func main() {
 	// An abc file printer
 	abc := wf.NewProc("abc", "echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
 	abc.Spawn = true
-	abc.SetPathCustom("out", func(t *sci.Task) string {
-		return fmt.Sprintf(
-			"%s_%s_%s.txt",
-			t.Param("a"),
-			t.Param("b"),
-			t.Param("c"),
-		)
-	})
+	abc.SetPathPattern("out", "{p:a}_{p:b}_{p:c}.txt")
 
 	// A printer task
 	prt := wf.NewProc("printer", "cat {i:in} >> log.txt")
