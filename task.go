@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -268,6 +269,9 @@ func (t *Task) anyOutputsExist() (anyFileExists bool) {
 func (t *Task) createDirs() {
 	for _, oip := range t.OutIPs {
 		oipDir := oip.TempDir() // This will create all out dirs, including the temp dir
+		if oip.doStream {       // Temp dirs are not created for fifo files
+			oipDir = filepath.Dir(oip.FifoPath())
+		}
 		err := os.MkdirAll(oipDir, 0777)
 		CheckWithMsg(err, "Could not create directory: "+oipDir)
 	}
