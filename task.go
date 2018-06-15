@@ -86,8 +86,8 @@ func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*File
 			}
 			// Identify if the place holder represents a reduce-type in-port
 			reduceInputs := false
-			if len(placeHolderMatch) > 3 {
-				sep = placeHolderMatch[5]
+			if len(placeHolderMatch) > 5 {
+				sep = placeHolderMatch[7]
 				reduceInputs = true
 			}
 			if reduceInputs && inIPs[portName].Path() == "" {

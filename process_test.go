@@ -64,7 +64,22 @@ func TestSetPathPattern(t *testing.T) {
 
 	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)
 
-	if p.PathFormatters["bar"](mockTask) != "foo.txt.bar.p1val.txt" {
-		t.Error(`p.PathFormatters["bar"]() != "foo.bar.txt"`)
+	expected := "foo.txt.bar.p1val.txt"
+	if p.PathFormatters["bar"](mockTask) != expected {
+		t.Errorf(`Did not get expected path in TestSetPathPattern. Got:%v Expected:%v`, p.PathFormatters["bar"](mockTask), expected)
+	}
+}
+
+func TestDefaultPattern(t *testing.T) {
+	wf := NewWorkflow("test_wf", 16)
+	p := wf.NewProc("cat_foo", "cat {i:foo} > {o:bar.txt} # {p:p1}")
+	p.InParam("p1").FromStr("p1val")
+
+	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)
+
+	// We expact a filename on the form: input filename . procname . paramname _ val . outport . extension
+	expected := "foo.txt.cat_foo.p1_p1val.bar.txt"
+	if p.PathFormatters["bar"](mockTask) != expected {
+		t.Errorf(`Did not get expected path in TestSetPathPattern. Got:%v Expected:%v`, p.PathFormatters["bar"](mockTask), expected)
 	}
 }

@@ -11,7 +11,7 @@ func main() {
 	f2b := wf.NewProc("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar.txt}")
 
 	// Connect
-	f2b.In("foo").From(foo.Out("foo.txt"))
+	f2b.In("foo").From(foo.Out("foo"))
 
 	// Run
 	wf.Run()

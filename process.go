@@ -12,13 +12,14 @@ import (
 // and parameters received on its in-ports and parameter ports
 type Process struct {
 	BaseProcess
-	CommandPattern   string
-	OutPortsDoStream map[string]bool
-	PathFormatters   map[string]func(*Task) string
-	CustomExecute    func(*Task)
-	CoresPerTask     int
-	Prepend          string
-	Spawn            bool
+	CommandPattern    string
+	OutPortsDoStream  map[string]bool
+	OutFileExtensions map[string]string
+	PathFormatters    map[string]func(*Task) string
+	CustomExecute     func(*Task)
+	CoresPerTask      int
+	Prepend           string
+	Spawn             bool
 }
 
 // ------------------------------------------------------------------------
@@ -33,11 +34,12 @@ func NewProc(workflow *Workflow, name string, cmd string) *Process {
 			workflow,
 			name,
 		),
-		CommandPattern:   cmd,
-		OutPortsDoStream: make(map[string]bool),
-		PathFormatters:   make(map[string]func(*Task) string),
-		Spawn:            true,
-		CoresPerTask:     1,
+		CommandPattern:    cmd,
+		OutPortsDoStream:  make(map[string]bool),
+		OutFileExtensions: make(map[string]string),
+		PathFormatters:    make(map[string]func(*Task) string),
+		Spawn:             true,
+		CoresPerTask:      1,
 	}
 	workflow.AddProc(p)
 	p.initPortsFromCmdPattern(cmd, nil)
@@ -77,28 +79,37 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 				p.inParamPorts[portName].process = p
 			}
 		}
+		if len(m) > 3 {
+			p.OutFileExtensions[portName] = m[4]
+		}
 	}
 }
 
 // initDefaultPathFormatters does exactly what it name says: Initializes default
-// path formatters for processes, that is used if no explicit path is set, usint
+// path formatters for processes, that is used if no explicit path is set, using
 // the proc.SetPath[...] methods
 func (p *Process) initDefaultPathFormatters() {
-	for oname := range p.OutPorts() {
-		p.PathFormatters[oname] = func(t *Task) string {
-			inputsStr := ""
+	for outName := range p.OutPorts() {
+		outName := outName
+		p.PathFormatters[outName] = func(t *Task) string {
+			pathPcs := []string{}
 			for _, ipName := range sortedFileIPMapKeys(t.InIPs) {
-				inputsStr += filepath.Base(t.InIP(ipName).Path()) + "."
+				pathPcs = append(pathPcs, filepath.Base(t.InIP(ipName).Path()))
 			}
-			paramsStr := ""
+			pathPcs = append(pathPcs, t.process.Name())
 			for _, paramName := range sortedStringMapKeys(t.Params) {
-				paramsStr += "." + paramName + "_" + t.Param(paramName)
+				pathPcs = append(pathPcs, paramName+"_"+t.Param(paramName))
 			}
-			tagsStr := ""
 			for _, tagName := range sortedStringMapKeys(t.Tags) {
-				tagsStr += "." + tagName + "_" + t.Tag(tagName)
+				pathPcs = append(pathPcs, tagName+"_"+t.Tag(tagName))
 			}
-			return inputsStr + t.process.Name() + paramsStr + tagsStr + "." + oname
+			pathPcs = append(pathPcs, outName)
+			if opExt, ok := p.OutFileExtensions[outName]; ok {
+				if opExt != "" {
+					pathPcs = append(pathPcs, opExt)
+				}
+			}
+			return strings.Join(pathPcs, ".")
 		}
 	}
 }
