@@ -12,7 +12,7 @@
 
 
 ## Project updates
- 
+
 - <strong>NEW blog post:</strong> [Provenance reports in Scientific Workflows](http://bionics.it/posts/provenance-reports-in-scientific-workflows) - going into details about how SciPipe is addressing provenance
 - <strong>NEW blog post:</strong> [First production workflow run with SciPipe](http://bionics.it/posts/first-production-workflow-run-with-scipipe)
 - <strong>NEW video:</strong> [Watch a screencast on how to write a Hello World workflow in SciPipe [15:28]](https://www.youtube.com/watch?v=kWqkGwDU-Hc)
@@ -68,7 +68,7 @@ Some key benefits of SciPipe, that are not always found in similar systems:
   operating system.
 - **Easy to debug:** As everything in SciPipe is just Go code, you can use some
   of the available debugging tools, or just `println()` statements, to debug
-  your workflow. 
+  your workflow.
 - **Supports streaming:** Can stream outputs via UNIX FIFO files, to avoid temporary storage.
 - **Efficient and Parallel:** Workflows are compiled into statically compiled
   code that runs fast. SciPipe also leverages pipeline parallelism between
@@ -91,15 +91,80 @@ SciPipe looks like:
 package main
 
 import (
-    // Import SciPipe into the main namespace (generally frowned upon but could
-    // be argued to be reasonable for short-lived workflow scripts like this)
-    . "github.com/scipipe/scipipe"
+    // Import SciPipe, aliased to sp
+    sp "github.com/scipipe/scipipe"
 )
 
 func main() {
-    // Init workflow with a name, and max concurrent tasks so we don't overbook
-    // our CPU
-    wf := NewWorkflow("hello_world", 4)
+    // Init workflow and max concurrent tasks
+    wf := sp.NewWorkflow("hello_world", 4)
+
+    // Initialize processes, and file extensions
+    hello := wf.NewProc("hello", "echo 'Hello ' > {o:out.txt}")
+    world := wf.NewProc("world", "echo $(cat {i:in}) World > {o:out.txt}")
+
+    // Define data flow
+    world.In("in").From(hello.Out("out"))
+
+    // Run workflow
+    wf.Run()
+}
+```
+
+## Running the example
+
+Let's put the code in a file named `scipipe_helloworld.go` and run it:
+
+```bash
+$ go run hello_world.go
+AUDIT   2018/06/15 19:04:22 | workflow:hello_world             | Starting workflow (Writing log to log/scipipe-20180615-190422-hello_world.log)
+AUDIT   2018/06/15 19:04:22 | hello                            | Executing: echo 'Hello ' > hello.out.txt.tmp/hello.out.txt
+AUDIT   2018/06/15 19:04:22 | hello                            | Finished:  echo 'Hello ' > hello.out.txt.tmp/hello.out.txt
+AUDIT   2018/06/15 19:04:22 | world                            | Executing: echo $(cat hello.out.txt) World > hello.out.txt.world.out.txt.tmp/hello.out.txt.world.out.txt
+AUDIT   2018/06/15 19:04:22 | world                            | Finished:  echo $(cat hello.out.txt) World > hello.out.txt.world.out.txt.tmp/hello.out.txt.world.out.txt
+AUDIT   2018/06/15 19:04:22 | workflow:hello_world             | Finished workflow (Log written to log/scipipe-20180615-190422-hello_world.log)
+```
+
+Let's check what file SciPipe has generated:
+
+```
+$ ls -1 hello*
+hello.out.txt
+hello.out.txt.audit.json
+hello.out.txt.world.out.txt
+hello.out.txt.world.out.txt.audit.json
+```
+
+As you can see, it has created a file `hello.out.txt`, and `hello.out.world.out.txt`, and
+an accompanying `.audit.json` for each of these files.
+
+Now, let's check the output of the final resulting file:
+
+```bash
+$ cat hello.out.txt.world.out.txt
+Hello World
+```
+
+Now we can rejoice that it contains the text "Hello World", exactly as a proper
+Hello World example should :)
+
+Now, these were a little long and cumbersome filename, weren't they? SciPipe
+gives you very good control over how to name your files, if you don't want to
+rely on the automatic file naming. For example, we could set the first filename
+statically, and then use the first name as a basis for the file name for the
+second process, like so:
+
+```go
+package main
+
+import (
+    // Import the SciPipe package, aliased to 'sp'
+    sp "github.com/scipipe/scipipe"
+)
+
+func main() {
+    // Init workflow with a name, and max concurrent tasks
+    wf := sp.NewWorkflow("hello_world", 4)
 
     // Initialize processes and set output file paths
     hello := wf.NewProc("hello", "echo 'Hello ' > {o:out}")
@@ -116,38 +181,55 @@ func main() {
 }
 ```
 
-## Running the example
-
-Let's put the code in a file named `scipipe_helloworld.go` and run it:
+Now, if we run this, the file names get a little cleaner:
 
 ```bash
-$ go run scipipe_helloworld.go 
-AUDIT   2017/05/04 17:05:15 Task:hello         Executing command: echo 'Hello ' > hello.txt.tmp
-AUDIT   2017/05/04 17:05:15 Task:world         Executing command: echo $(cat hello.txt) World >> hello_world.txt.tmp
-```
-
-Let's check what file SciPipe has generated:
-
-```
-$ ls -1tr hello*
-hello.txt.audit.json
+$ ls -1 hello*
 hello.txt
+hello.txt.audit.json
+hello_world.go
 hello_world.txt
 hello_world.txt.audit.json
 ```
 
-As you can see, it has created a file `hello.txt`, and `hello_world.txt`, and
-an accompanying `.audit.json` for each of these files.
+## The audit logs
 
-Now, let's check the output of the final resulting file:
+Finally, we could have a look at one of those audit file created:
 
 ```bash
-$ cat hello_world.txt
-Hello World
+$ cat hello_world.txt.audit.json
+{
+    "ID": "99i5vxhtd41pmaewc8pr",
+    "ProcessName": "world",
+    "Command": "echo $(cat hello.txt) World \u003e\u003e hello_world.txt.tmp/hello_world.txt",
+    "Params": {},
+    "Tags": {},
+    "StartTime": "2018-06-15T19:10:37.955602979+02:00",
+    "FinishTime": "2018-06-15T19:10:37.959410102+02:00",
+    "ExecTimeMS": 3,
+    "Upstream": {
+        "hello.txt": {
+            "ID": "w4oeiii9h5j7sckq7aqq",
+            "ProcessName": "hello",
+            "Command": "echo 'Hello ' \u003e hello.txt.tmp/hello.txt",
+            "Params": {},
+            "Tags": {},
+            "StartTime": "2018-06-15T19:10:37.950032676+02:00",
+            "FinishTime": "2018-06-15T19:10:37.95468214+02:00",
+            "ExecTimeMS": 4,
+            "Upstream": {}
+        }
+    }
 ```
 
-Now we can rejoice that it contains the text "Hello World", exactly as a proper
-Hello World example should :)
+Each such audit-file contains a hierarchic JSON-representation of the full
+workflow path that was executed in order to produce this file. On the first
+level is the command that directly produced the corresponding file, and then,
+indexed by their filenames, under "Upstream", there is a similar chunk
+describing how all of its input files were generated. This process will be
+repeated in a recursive way for large workflows, so that, for each file
+generated by the workflow, there is always a full, hierarchic, history of all
+the commands run - with their associated metadata - to produce that file.
 
 You can find many more examples in the [examples folder](https://github.com/scipipe/scipipe/tree/master/examples) in the GitHub repo.
 
