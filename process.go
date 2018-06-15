@@ -204,9 +204,10 @@ func (p *Process) SetPathReplace(inPortName string, outPortName string, old stri
 // {t:tagname}
 // An example might be: {i:foo}.replace_with_{p:replacement}.txt
 func (p *Process) SetPathPattern(outPortName string, pathPattern string) {
-	p.PathFormatters[outPortName] = func(t *Task) string {
+	p.SetPathCustom(outPortName, func(t *Task) string {
+		path := pathPattern // Avoiding reusing the same variable in multiple instances of this func
 		r := getShellCommandPlaceHolderRegex()
-		matches := r.FindAllStringSubmatch(pathPattern, -1)
+		matches := r.FindAllStringSubmatch(path, -1)
 		for _, match := range matches {
 			var replacement string
 
@@ -216,18 +217,18 @@ func (p *Process) SetPathPattern(outPortName string, pathPattern string) {
 
 			switch phType {
 			case "i":
-				replacement = t.InIP(phName).Path()
+				replacement = t.InPath(phName)
 			case "p":
 				replacement = t.Param(phName)
 			case "t":
 				replacement = t.Tag(phName)
 			default:
-				Fail("Replace failed for placeholder ", phName, " for path patterh '", pathPattern, "'")
+				Fail("Replace failed for placeholder ", phName, " for path patterh '", path, "'")
 			}
-			pathPattern = strings.Replace(pathPattern, placeHolder, replacement, -1)
+			path = strings.Replace(path, placeHolder, replacement, -1)
 		}
-		return pathPattern
-	}
+		return path
+	})
 }
 
 // SetPathCustom takes a function which produces a file path based on data
