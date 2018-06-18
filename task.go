@@ -288,6 +288,7 @@ func (t *Task) createDirs() {
 
 // executeCommand executes the shell command cmd via bash
 func (t *Task) executeCommand(cmd string) {
+	// cd into the task's tempdir, execute the command, and cd back
 	out, err := exec.Command("bash", "-c", "cd "+t.TempDir()+" && "+cmd+" && cd ..").CombinedOutput()
 	if err != nil {
 		Failf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\nOriginal error:%s\n", cmd, string(out), err.Error())
