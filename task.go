@@ -1,6 +1,8 @@
 package scipipe
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"os/exec"
@@ -62,15 +64,24 @@ func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, i
 func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*FileIP, params map[string]string, tags map[string]string, prepend string) string {
 	r := getShellCommandPlaceHolderRegex()
 	placeHolderMatches := r.FindAllStringSubmatch(cmd, -1)
+	portInfos := map[string]map[string]string{}
 	for _, placeHolderMatch := range placeHolderMatches {
-		var filePath string
-
-		placeHolderStr := placeHolderMatch[0]
-		portType := placeHolderMatch[1]
 		portName := placeHolderMatch[2]
-		sep := " " // Default
+		portInfos[portName] = map[string]string{}
+		portInfos[portName]["match"] = placeHolderMatch[0]
+		portInfos[portName]["port_type"] = placeHolderMatch[1]
+		portInfos[portName]["port_name"] = portName
+		portInfos[portName]["reduce_inputs"] = "false"
+		// Identify if the place holder represents a reduce-type in-port
+		if len(placeHolderMatch) > 5 {
+			portInfos[portName]["reduce_inputs"] = "true"
+			portInfos[portName]["sep"] = placeHolderMatch[7]
+		}
+	}
 
-		switch portType {
+	for portName, portInfo := range portInfos {
+		var filePath string
+		switch portInfo["port_type"] {
 		case "o":
 			if outIPs[portName] == nil {
 				Fail("Missing outpath for outport '", portName, "' for command '", cmd, "'")
@@ -85,13 +96,7 @@ func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*File
 			if inIPs[portName] == nil {
 				Fail("Missing in-IP for inport '", portName, "' for command '", cmd, "'")
 			}
-			// Identify if the place holder represents a reduce-type in-port
-			reduceInputs := false
-			if len(placeHolderMatch) > 5 {
-				sep = placeHolderMatch[7]
-				reduceInputs = true
-			}
-			if reduceInputs && inIPs[portName].Path() == "" {
+			if portInfo["reduce_inputs"] == "true" && inIPs[portName].Path() == "" {
 				// Merge multiple input paths from a substream on the IP, into one string
 				ips := []*FileIP{}
 				for ip := range inIPs[portName].SubStream.Chan {
@@ -99,17 +104,17 @@ func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*File
 				}
 				paths := []string{}
 				for _, ip := range ips {
-					paths = append(paths, ip.Path())
+					paths = append(paths, parentDirPath(ip.Path()))
 				}
-				filePath = strings.Join(paths, sep)
+				filePath = strings.Join(paths, portInfo["sep"])
 			} else {
 				if inIPs[portName].Path() == "" {
 					Fail("Missing inpath for inport '", portName, "', and no substream, for command '", cmd, "'")
 				}
 				if inIPs[portName].doStream {
-					filePath = inIPs[portName].FifoPath()
+					filePath = parentDirPath(inIPs[portName].FifoPath())
 				} else {
-					filePath = inIPs[portName].Path()
+					filePath = parentDirPath(inIPs[portName].Path())
 				}
 			}
 		case "p":
@@ -129,7 +134,7 @@ func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*File
 		default:
 			Fail("Replace failed for port ", portName, " for command '", cmd, "'")
 		}
-		cmd = strings.Replace(cmd, placeHolderStr, filePath, -1)
+		cmd = strings.Replace(cmd, portInfo["match"], filePath, -1)
 	}
 
 	// Add prepend string to the command
@@ -267,10 +272,13 @@ func (t *Task) anyOutputsExist() (anyFileExists bool) {
 
 // createDirs creates directories for out-IPs of the task
 func (t *Task) createDirs() {
+	os.MkdirAll(t.TempDir(), 0777)
 	for _, oip := range t.OutIPs {
 		oipDir := oip.TempDir() // This will create all out dirs, including the temp dir
 		if oip.doStream {       // Temp dirs are not created for fifo files
 			oipDir = filepath.Dir(oip.FifoPath())
+		} else {
+			oipDir = t.TempDir() + "/" + oipDir
 		}
 		err := os.MkdirAll(oipDir, 0777)
 		CheckWithMsg(err, "Could not create directory: "+oipDir)
@@ -280,7 +288,7 @@ func (t *Task) createDirs() {
 
 // executeCommand executes the shell command cmd via bash
 func (t *Task) executeCommand(cmd string) {
-	out, err := exec.Command("bash", "-c", cmd).CombinedOutput()
+	out, err := exec.Command("bash", "-c", "cd "+t.TempDir()+" && "+cmd+" && cd ..").CombinedOutput()
 	if err != nil {
 		Failf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\nOriginal error:%s\n", cmd, string(out), err.Error())
 	}
@@ -311,11 +319,60 @@ func (t *Task) writeAuditLogs(startTime time.Time, finishTime time.Time) {
 	}
 }
 
-// Rename temporary output files to their proper file names
+// atomizeIPs renames temporary output files/directories to their proper paths
 func (t *Task) atomizeIPs() {
 	for _, oip := range t.OutIPs {
+		// Move paths for ports, to final destinations
 		if !oip.doStream {
-			oip.Atomize()
+			os.Rename(t.TempDir()+"/"+oip.TempPath(), oip.Path())
 		}
 	}
+	// For remaining paths in temporary execution dir, just move out of it
+	filepath.Walk(t.TempDir(), func(tempPath string, fileInfo os.FileInfo, err error) error {
+		if !fileInfo.IsDir() {
+			newPath := strings.Replace(tempPath, t.TempDir()+"/", "", 1)
+			newPath = strings.Replace(newPath, AbsPathPlaceholder+"/", "/", 1)
+			newPathDir := filepath.Dir(newPath)
+			if _, err := os.Stat(newPathDir); os.IsNotExist(err) {
+				os.MkdirAll(newPathDir, 0777)
+			}
+			Debug.Println("Moving: ", tempPath, " -> ", newPath)
+			renameErr := os.Rename(tempPath, newPath)
+			CheckWithMsg(renameErr, "Could not rename file "+tempPath+" to "+newPath)
+		}
+		return err
+	})
+	// Remove temporary execution dir
+	remErr := os.RemoveAll(t.TempDir())
+	CheckWithMsg(remErr, "Could not remove temp dir: "+t.TempDir())
+}
+
+// TempDir returns a string that is unique to a task, suitable for use
+// in file paths. It is built up by merging all input filenames and parameter
+// values that a task takes as input, joined with dots.
+func (t *Task) TempDir() string {
+	pathPcs := []string{"tmp." + t.Name}
+	for _, ipName := range sortedFileIPMapKeys(t.InIPs) {
+		pathPcs = append(pathPcs, filepath.Base(t.InIP(ipName).Path()))
+	}
+	for _, paramName := range sortedStringMapKeys(t.Params) {
+		pathPcs = append(pathPcs, paramName+"_"+t.Param(paramName))
+	}
+	for _, tagName := range sortedStringMapKeys(t.Tags) {
+		pathPcs = append(pathPcs, tagName+"_"+t.Tag(tagName))
+	}
+	pathSegment := strings.Join(pathPcs, ".")
+	if len(pathSegment) > 255 {
+		sha1sum := sha1.Sum([]byte(pathSegment))
+		pathSegment = t.Name + "." + hex.EncodeToString(sha1sum[:])
+	}
+	return pathSegment
+}
+
+func parentDirPath(path string) string {
+	if path[0] == '/' {
+		return path
+	}
+	// For relative paths, add ".." to get out of current dir
+	return "../" + path
 }

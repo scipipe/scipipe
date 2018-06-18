@@ -1,7 +1,6 @@
 package scipipe
 
 import (
-	"path/filepath"
 	"testing"
 )
 
@@ -12,7 +11,7 @@ const (
 func TestIPPaths(t *testing.T) {
 	ip := NewFileIP(TESTPATH)
 	assertPathsEqual(t, ip.Path(), TESTPATH)
-	assertPathsEqual(t, ip.TempPath(), TESTPATH+".tmp/"+filepath.Base(TESTPATH))
+	assertPathsEqual(t, ip.TempPath(), TESTPATH)
 	assertPathsEqual(t, ip.FifoPath(), TESTPATH+".fifo")
 }
 

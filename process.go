@@ -58,29 +58,33 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 	// Find in/out port names and params and set up ports
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
-	if len(ms) == 0 {
-		Fail("No placeholders found in command: " + cmd)
-	}
+
+	portInfos := map[string]map[string]string{}
 	for _, m := range ms {
 		portType := m[1]
 		portName := m[2]
-		if portType == "o" || portType == "os" {
-			p.outPorts[portName] = NewOutPort(portName)
-			p.outPorts[portName].process = p
-			if portType == "os" {
+		portInfos[portName] = map[string]string{}
+		portInfos[portName]["type"] = portType
+		if len(m) > 3 {
+			portInfos[portName]["extension"] = m[4]
+		}
+	}
+
+	for portName, portInfo := range portInfos {
+		if portInfo["type"] == "o" || portInfo["type"] == "os" {
+			p.InitOutPort(p, portName)
+			if portInfo["type"] == "os" {
 				p.OutPortsDoStream[portName] = true
 			}
-		} else if portType == "i" {
-			p.inPorts[portName] = NewInPort(portName)
-			p.inPorts[portName].process = p
-		} else if portType == "p" {
+		} else if portInfo["type"] == "i" {
+			p.InitInPort(p, portName)
+		} else if portInfo["type"] == "p" {
 			if params == nil || params[portName] == "" {
-				p.inParamPorts[portName] = NewInParamPort(portName)
-				p.inParamPorts[portName].process = p
+				p.InitInParamPort(p, portName)
 			}
 		}
-		if len(m) > 3 {
-			p.OutFileExtensions[portName] = m[4]
+		if ext, ok := portInfo["extension"]; ok {
+			p.OutFileExtensions[portName] = ext
 		}
 	}
 }
@@ -197,13 +201,19 @@ func (p *Process) SetPathReplace(inPortName string, outPortName string, old stri
 	}
 }
 
-// SetPathPattern allows setting the path of outputs using a pattern similar to the
+// SetOut allows setting the path of outputs using a pattern similar to the
 // command pattern used to create new processes. Available patterns to use are:
 // {i:inport}
 // {p:paramname}
 // {t:tagname}
 // An example might be: {i:foo}.replace_with_{p:replacement}.txt
-func (p *Process) SetPathPattern(outPortName string, pathPattern string) {
+// If an out-port with the specified name does not exist, it will be created.
+// This allows to create out-ports for filenames that are created without explicitly
+// stating a filename on the commandline, such as when only submitting a prefix.
+func (p *Process) SetOut(outPortName string, pathPattern string) {
+	if _, ok := p.outPorts[outPortName]; !ok {
+		p.InitOutPort(p, outPortName)
+	}
 	p.SetPathCustom(outPortName, func(t *Task) string {
 		path := pathPattern // Avoiding reusing the same variable in multiple instances of this func
 		r := getShellCommandPlaceHolderRegex()

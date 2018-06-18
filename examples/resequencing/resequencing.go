@@ -15,20 +15,20 @@ package main
 import (
 	"fmt"
 
-	. "github.com/scipipe/scipipe"
+	sp "github.com/scipipe/scipipe"
 )
 
 // ------------------------------------------------------------------------------------
 // Set up static stuff like paths
 // ------------------------------------------------------------------------------------
 const (
-	fastq_base_url = "http://bioinfo.perdanauniversity.edu.my/tein4ngs/ngspractice/"
-	fastq_file_pat = "%s.ILLUMINA.low_coverage.4p_%s.fq"
-	ref_base_url   = "http://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/dna/"
-	ref_file       = "Homo_sapiens.GRCh37.75.dna.chromosome.17.fa"
-	ref_file_gz    = "Homo_sapiens.GRCh37.75.dna.chromosome.17.fa.gz"
-	vcf_base_url   = "http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/integrated_call_sets/"
-	vcf_file       = "ALL.chr17.integrated_phase1_v3.20101123.snps_indels_svs.genotypes.vcf.gz"
+	fastqBaseUrl = "http://bioinfo.perdanauniversity.edu.my/tein4ngs/ngspractice/"
+	fastQFilePtn = "%s.ILLUMINA.low_coverage.4p_%s.fq"
+	refBaseUrl   = "http://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/dna/"
+	refFile      = "Homo_sapiens.GRCh37.75.dna.chromosome.17.fa"
+	refFileGz    = "Homo_sapiens.GRCh37.75.dna.chromosome.17.fa.gz"
+	vcfBaseUrl   = "http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/integrated_call_sets/"
+	vcfFile      = "ALL.chr17.integrated_phase1_v3.20101123.snps_indels_svs.genotypes.vcf.gz"
 )
 
 // ------------------------------------------------------------------------------------
@@ -43,77 +43,72 @@ func main() {
 	// --------------------------------------------------------------------------------
 	// Initialize Workflow
 	// --------------------------------------------------------------------------------
-	wf := NewWorkflow("resequencing_wf", 4)
+	wf := sp.NewWorkflow("resequencing_workflow", 4)
 
 	// --------------------------------------------------------------------------------
 	// Download Reference Genome
 	// --------------------------------------------------------------------------------
-	downloadRefCmd := "wget -O {o:outfile} " + ref_base_url + ref_file_gz
-	downloadRef := wf.NewProc("download_ref", downloadRefCmd)
-	downloadRef.SetPathStatic("outfile", ref_file_gz)
+	dlRef := wf.NewProc("download_ref", "wget -O {o:outfile} "+refBaseUrl+refFileGz)
+	dlRef.SetOut("outfile", refFileGz)
 
 	// --------------------------------------------------------------------------------
 	// Unzip ref file
 	// --------------------------------------------------------------------------------
-	ungzipRefCmd := "gunzip -c {i:in} > {o:out}"
-	ungzipRef := wf.NewProc("ugzip_ref", ungzipRefCmd)
-	ungzipRef.SetPathReplace("in", "out", ".gz", "")
-	ungzipRef.In("in").From(downloadRef.Out("outfile"))
+	ungzipRef := wf.NewProc("ugzip_ref", "gunzip -c {i:in} > {o:out}")
+	ungzipRef.In("in").From(dlRef.Out("outfile"))
+	ungzipRef.SetOut("out", "{i:in|s/.gz//}")
 
 	// --------------------------------------------------------------------------------
 	// Index Reference Genome
 	// --------------------------------------------------------------------------------
 	indexRef := wf.NewProc("index_ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
-	indexRef.SetPathExtend("index", "done", ".indexed")
 	indexRef.In("index").From(ungzipRef.Out("out"))
+	indexRef.SetOut("done", "{i:index}.indexed")
 
 	// Create (multi-level) maps where we can gather outports from processes
 	// for each for loop iteration and access them in the merge step later
-	outPorts := map[string]map[string]map[string]*OutPort{}
-	for _, indv := range individuals {
-		outPorts[indv] = map[string]map[string]*OutPort{}
-		for _, smpl := range samples {
-			outPorts[indv][smpl] = map[string]*OutPort{}
-			indv_smpl := "_" + indv + "_" + smpl
+	outs := map[string]map[string]map[string]*sp.OutPort{}
+	for _, ind := range individuals {
+		outs[ind] = map[string]map[string]*sp.OutPort{}
+		for _, spl := range samples {
+			outs[ind][spl] = map[string]*sp.OutPort{}
+			indSpl := "_" + ind + "_" + spl
 
 			// ------------------------------------------------------------------------
 			// Download FastQ component
 			// ------------------------------------------------------------------------
-			file_name := fmt.Sprintf(fastq_file_pat, indv, smpl)
-			downloadFastQCmd := "wget -O {o:fastq} " + fastq_base_url + file_name
-			downloadFastQ := wf.NewProc("download_fastq"+indv_smpl, downloadFastQCmd)
-			downloadFastQ.SetPathStatic("fastq", file_name)
+			fastqFile := fmt.Sprintf(fastQFilePtn, ind, spl)
+			dlFastq := wf.NewProc("download_fastq"+indSpl, "wget -O {o:fastq} "+fastqBaseUrl+fastqFile)
+			dlFastq.SetOut("fastq", fastqFile)
 
 			// Save outPorts for later use
-			outPorts[indv][smpl]["fastq"] = downloadFastQ.Out("fastq")
+			outs[ind][spl]["fastq"] = dlFastq.Out("fastq")
 
 			// ------------------------------------------------------------------------
 			// BWA Align
 			// ------------------------------------------------------------------------
-			bwaAlignCmd := "bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}"
-			bwaAlign := wf.NewProc("bwa_aln"+indv_smpl, bwaAlignCmd)
-			bwaAlign.SetPathExtend("fastq", "sai", ".sai")
-			bwaAlign.In("ref").From(ungzipRef.Out("out"))
-			bwaAlign.In("idxdone").From(indexRef.Out("done"))
-			bwaAlign.In("fastq").From(downloadFastQ.Out("fastq"))
+			align := wf.NewProc("bwa_aln"+indSpl, "bwa aln {i:ref} {i:fastq} > {o:sai} # {i:idxdone}")
+			align.In("ref").From(ungzipRef.Out("out"))
+			align.In("idxdone").From(indexRef.Out("done"))
+			align.In("fastq").From(dlFastq.Out("fastq"))
+			align.SetOut("sai", "{i:fastq}.sai")
 
 			// Save outPorts for later use
-			outPorts[indv][smpl]["sai"] = bwaAlign.Out("sai")
+			outs[ind][spl]["sai"] = align.Out("sai")
 		}
 
 		// ---------------------------------------------------------------------------
 		// Merge
 		// ---------------------------------------------------------------------------
-		bwaMergeCmd := "bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:indv}"
-		bwaMerge := wf.NewProc("merge_"+indv, bwaMergeCmd)
-		bwaMerge.SetPathPattern("merged", "{p:indv}.merged.sam")
-		bwaMerge.InParamPort("indv").FromStr(indv)
-		bwaMerge.In("ref").From(ungzipRef.Out("out"))
-		bwaMerge.In("refdone").From(indexRef.Out("done"))
-		bwaMerge.In("sai1").From(outPorts[indv]["1"]["sai"])
-		bwaMerge.In("sai2").From(outPorts[indv]["2"]["sai"])
-		bwaMerge.In("fq1").From(outPorts[indv]["1"]["fastq"])
-		bwaMerge.In("fq2").From(outPorts[indv]["2"]["fastq"])
+		merge := wf.NewProc("merge_"+ind, "bwa sampe {i:ref} {i:sai1} {i:sai2} {i:fq1} {i:fq2} > {o:merged} # {i:refdone} {p:ind}")
+		merge.InParam("ind").FromStr(ind)
+		merge.In("ref").From(ungzipRef.Out("out"))
+		merge.In("refdone").From(indexRef.Out("done"))
+		merge.In("sai1").From(outs[ind]["1"]["sai"])
+		merge.In("sai2").From(outs[ind]["2"]["sai"])
+		merge.In("fq1").From(outs[ind]["1"]["fastq"])
+		merge.In("fq2").From(outs[ind]["2"]["fastq"])
+		merge.SetOut("merged", "{p:ind}.merged.sam")
 	}
 
 	// -------------------------------------------------------------------------------

@@ -15,7 +15,7 @@ func main() {
 	// An abc file printer
 	abc := wf.NewProc("abc", "echo {p:a} {p:b} {p:c} > {o:out}; sleep 1")
 	abc.Spawn = true
-	abc.SetPathPattern("out", "{p:a}_{p:b}_{p:c}.txt")
+	abc.SetOut("out", "{p:a}_{p:b}_{p:c}.txt")
 
 	// A printer task
 	prt := wf.NewProc("printer", "cat {i:in} >> log.txt")

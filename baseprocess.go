@@ -40,7 +40,7 @@ func (p *BaseProcess) Workflow() *Workflow {
 
 // InPort returns the in-port with name portName
 func (p *BaseProcess) InPort(portName string) *InPort {
-	if p.inPorts[portName] == nil {
+	if _, ok := p.inPorts[portName]; !ok {
 		Failf("No such in-port ('%s') for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	return p.inPorts[portName]
@@ -48,7 +48,7 @@ func (p *BaseProcess) InPort(portName string) *InPort {
 
 // InitInPort adds the in-port port to the process, with name portName
 func (p *BaseProcess) InitInPort(proc WorkflowProcess, portName string) {
-	if p.inPorts[portName] != nil {
+	if _, ok := p.inPorts[portName]; ok {
 		Failf("Such an in-port ('%s') already exists for process '%s'. Please check your workflow code!\n", portName, p.name)
 	}
 	ipt := NewInPort(portName)

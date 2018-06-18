@@ -112,13 +112,20 @@ func (ip *FileIP) Path() string {
 
 // TempDir returns the path to a temporary directory where outputs are written
 func (ip *FileIP) TempDir() string {
-	return ip.path + ".tmp"
+	return filepath.Dir(ip.TempPath())
 }
 
 // TempPath returns the temporary path of the physical file
 func (ip *FileIP) TempPath() string {
-	return ip.TempDir() + "/" + filepath.Base(ip.path)
+	if ip.path[0] == '/' {
+		return AbsPathPlaceholder + ip.path
+	}
+	return ip.path
 }
+
+// AbsPathPlaceholder is a string to use instead of an initial '/', to indicate
+// a path that belongs to the absolute root
+const AbsPathPlaceholder = "__abs"
 
 // FifoPath returns the path to use when a FIFO file is used instead of a
 // normal file

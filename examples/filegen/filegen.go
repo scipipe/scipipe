@@ -11,7 +11,7 @@ func main() {
 	fq := spc.NewFileSource(wf, "file_src", "hej1.txt", "hej2.txt", "hej3.txt")
 
 	fw := sp.NewProc(wf, "filewriter", "echo {i:in} > {o:out}")
-	fw.SetPathPattern("out", "{i:in}")
+	fw.SetOut("out", "{i:in}")
 	fw.In("in").From(fq.Out())
 
 	wf.Run()

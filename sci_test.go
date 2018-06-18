@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"sync"
 	"testing"
@@ -79,36 +80,33 @@ func TestConnectBackwards(t *testing.T) {
 
 func TestParameterCommand(t *testing.T) {
 	initTestLogs()
-	wf := NewWorkflow("TestParameterCommandWf", 16)
+
+	wf := NewWorkflow("TestParameterCommandWf", 4)
 
 	cmb := NewCombinatoricsProcess("cmb")
 	wf.AddProc(cmb)
 
 	// An abc file printer
 	abc := wf.NewProc("abc", "echo {p:a} {p:b} {p:c} > {o:out}")
-	abc.SetPathCustom("out", func(task *Task) string {
-		return fmt.Sprintf(
-			"/tmp/%s_%s_%s.txt",
-			task.Param("a"),
-			task.Param("b"),
-			task.Param("c"),
-		)
-	})
+	abc.SetOut("out", "/tmp/abc_{p:a}_{p:b}_{p:c}.txt")
 	abc.InParam("a").From(cmb.A)
 	abc.InParam("b").From(cmb.B)
 	abc.InParam("c").From(cmb.C)
 
 	// A printer process
-	prt := wf.NewProc("prt", "cat {i:in} >> /tmp/log.txt; rm {i:in} {i:in}.audit.json")
+	prt := wf.NewProc("prt", "cat {i:in} >> /tmp/log.txt")
 	prt.In("in").From(abc.Out("out"))
 
 	wf.Run()
 
 	// Run tests
-	_, err := os.Stat("/tmp/log.txt")
-	assertNil(t, err)
+	filePath := "/tmp/log.txt"
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		t.Errorf("File does not exist: %s\n", filePath)
+	}
 
-	cleanFiles("/tmp/log.txt")
+	cleanFiles(filePath)
+	cleanFilePatterns("/tmp/abc_*_*_*.txt*")
 }
 
 func TestDontOverWriteExistingOutputs(t *testing.T) {
@@ -385,6 +383,20 @@ func cleanFiles(fileNames ...string) {
 		if _, err := os.Stat(auditFileName); err == nil {
 			os.Remove(auditFileName)
 			Debug.Println("Successfully removed audit.json file", auditFileName)
+		}
+	}
+}
+
+func cleanFilePatterns(filePatterns ...string) {
+	for _, pattern := range filePatterns {
+		if matches, err := filepath.Glob(pattern); err == nil {
+			for _, file := range matches {
+				if err := os.Remove(file); err != nil {
+					Failf("Could not remove file: %s\nError: %v\n", file, err)
+				}
+			}
+		} else {
+			Failf("Could not glob pattern: %s\nError: %v\n", pattern, err)
 		}
 	}
 }
