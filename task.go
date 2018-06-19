@@ -245,7 +245,7 @@ func (t *Task) anyTempfileExists() (anyTempfileExists bool) {
 	anyTempfileExists = false
 	for _, oip := range t.OutIPs {
 		if !oip.doStream {
-			otmpPath := oip.TempPath()
+			otmpPath := t.TempDir() + "/" + oip.TempPath()
 			if _, err := os.Stat(otmpPath); err == nil {
 				Warning.Printf("| %-32s | Temp file already exists: %s (Note: If resuming from a failed run, clean up .tmp files first. Also, make sure that two processes don't produce the same output files!).\n", t.Name, otmpPath)
 				anyTempfileExists = true
