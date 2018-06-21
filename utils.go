@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	re "regexp"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // ExecCmd executes the command cmd, as a shell command via bash
@@ -23,7 +25,8 @@ func ExecCmd(cmd string) string {
 // custom one provided in errMsg
 func CheckWithMsg(err error, errMsg string) {
 	if err != nil {
-		Fail("Custom Error Message: " + errMsg + "\n" + "Original Error Message: " + err.Error())
+		err = errors.Wrap(err, errMsg)
+		Fail(err)
 	}
 }
 

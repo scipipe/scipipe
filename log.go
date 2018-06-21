@@ -151,3 +151,22 @@ func InitLogError() {
 		os.Stderr,
 	)
 }
+
+// auditLogPattern decides the format of Audit log messages across SciPipe
+const auditLogPattern = "| %-32s | %s\n"
+
+// LogAuditln logs a pretty printed log message with the AUDIT log level, where
+// componentName is a name of a process, task, workflow or similar that
+// generates the message, while message is a custom message (can be specified as
+// multiple strings, which will then be formatted in the manner of fmt.Println).
+func LogAuditln(componentName string, message string) {
+	Audit.Printf(auditLogPattern, componentName, message)
+}
+
+// LogAuditf logs a pretty printed log message with the AUDIT log level, where
+// componentName is a name of a process, task, workflow or similar that
+// generates the message, while message and values are formatted in the manner
+// of fmt.Printf
+func LogAuditf(componentName string, message string, values ...interface{}) {
+	Audit.Printf(auditLogPattern, componentName, fmt.Sprintf(message, values...))
+}

@@ -118,14 +118,14 @@ func (ip *FileIP) TempDir() string {
 // TempPath returns the temporary path of the physical file
 func (ip *FileIP) TempPath() string {
 	if ip.path[0] == '/' {
-		return AbsPathPlaceholder + ip.path
+		return FSRootPlaceHolder + ip.path
 	}
 	return ip.path
 }
 
-// AbsPathPlaceholder is a string to use instead of an initial '/', to indicate
+// FSRootPlaceHolder is a string to use instead of an initial '/', to indicate
 // a path that belongs to the absolute root
-const AbsPathPlaceholder = "__abs"
+const FSRootPlaceHolder = "__fsroot__"
 
 // FifoPath returns the path to use when a FIFO file is used instead of a
 // normal file
@@ -197,6 +197,7 @@ func (ip *FileIP) OpenTemp() *os.File {
 
 // OpenWriteTemp opens the file for writing, and returns a file handle (*os.File)
 func (ip *FileIP) OpenWriteTemp() *os.File {
+	Warning.Println("OpenWriteTemp() is deprecated - You should stop using it!")
 	ip.createDirs()
 	f, err := os.Create(ip.TempPath())
 	CheckWithMsg(err, "Could not open temp file for writing: "+ip.TempPath())

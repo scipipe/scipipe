@@ -1,10 +1,15 @@
 package components
 
 import (
+	"bufio"
 	"fmt"
+	"log"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/scipipe/scipipe"
 )
 
@@ -38,55 +43,62 @@ func (p *FileSplitter) OutSplitFile() *scipipe.OutPort { return p.OutPort("split
 func (p *FileSplitter) Run() {
 	defer p.CloseAllOutPorts()
 
-	fileReader := NewFileReader(p.Workflow(), p.Name()+"_filereader_"+getRandString(7))
-	pop := scipipe.NewOutParamPort(p.Name() + "_temp_filepath_feeder")
-	pop.SetProcess(p)
-	fileReader.InFilePath().From(pop)
-
-	for ft := range p.InFile().Chan {
-		scipipe.Audit.Println("FileSplitter                          Now processing input file ", ft.Path(), "...")
-
-		go func() {
-			defer pop.Close()
-			pop.Send(ft.Path())
-		}()
-
-		pip := scipipe.NewInParamPort(p.Name() + "temp_line_reader")
-		pip.SetProcess(p)
-		pip.From(fileReader.OutLine())
-
-		go fileReader.Run()
-
+	for inIP := range p.InFile().Chan {
 		lineNo := 1
-		splitIdx := 1
-		splitIP := newSplitIPFromIndex(ft.Path(), splitIdx)
+		splitNo := 1
+		splitIP := newSplitIPFromIndex(inIP.Path(), splitNo)
 		if !splitIP.Exists() {
-			splitfile := splitIP.OpenWriteTemp()
-			for line := range pip.Chan {
-				// If we have not yet reached the number of lines per split ...
-				/// ... then just continue to write ...
-				if lineNo < splitIdx*p.LinesPerSplit {
-					splitfile.Write([]byte(line))
-					lineNo++
-				} else {
-					splitfile.Close()
-					splitIP.Atomize()
-					scipipe.Audit.Println("FileSplitter      Created split file", splitIP.Path())
-					p.OutSplitFile().Send(splitIP)
-					splitIdx++
-
-					splitIP = newSplitIPFromIndex(ft.Path(), splitIdx)
-					splitfile = splitIP.OpenWriteTemp()
-				}
+			inFile, err := os.Open(inIP.Path())
+			if err != nil {
+				err = errors.Wrapf(err, "[FileSplitter] Could not open file %s", inIP.Path())
+				log.Fatal(err)
 			}
-			splitfile.Close()
-			splitIP.Atomize()
-			scipipe.Audit.Println("FileSplitter      Created split file", splitIP.Path())
+			defer inFile.Close()
+			taskDir := "_scipipe_tmp_" + p.Name() + "." + filepath.Base(inIP.Path())
+			_, splitFile := p.createNewSplitFile(splitIP, taskDir)
+
+			scanner := bufio.NewScanner(inFile)
+			for scanner.Scan() {
+				line := scanner.Text() + "\n"
+				splitFile.WriteString(line)
+				if lineNo == splitNo*p.LinesPerSplit {
+					splitFile.Close()
+					scipipe.AtomizeIPs(taskDir, splitIP)
+					p.OutSplitFile().Send(splitIP)
+					// Create new IP
+					splitNo++
+					splitIP = newSplitIPFromIndex(inIP.Path(), splitNo)
+					_, splitFile = p.createNewSplitFile(splitIP, taskDir)
+				}
+				lineNo++
+			}
+			splitFile.Close()
+			scipipe.AtomizeIPs(taskDir, splitIP)
 			p.OutSplitFile().Send(splitIP)
+
+			if scanner.Err() != nil {
+				err = errors.Wrapf(scanner.Err(), "[FileSplitter] Error when scanning input file %s", inIP.Path())
+				log.Fatal(err)
+			}
 		} else {
 			scipipe.Audit.Printf("Split file already exists: %s, so skipping.\n", splitIP.Path())
 		}
 	}
+}
+
+func (p *FileSplitter) createNewSplitFile(ip *scipipe.FileIP, basePath string) (tempDir string, tempFile *os.File) {
+	tempPath := basePath + "/" + ip.TempPath()
+	tempDir = filepath.Dir(tempPath)
+	err := os.MkdirAll(tempDir, 0777)
+	if err != nil {
+		err = errors.Wrapf(err, "[FileSplitter] Could not create dirs for file %s", tempPath)
+		log.Fatal(err)
+	}
+	tempFile, err = os.Create(tempPath)
+	if err != nil {
+		scipipe.CheckWithMsg(err, "Could not create temp file "+tempPath)
+	}
+	return
 }
 
 var chars = []rune("abcdefghijklmnopqrstuvwxyz")

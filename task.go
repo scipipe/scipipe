@@ -220,13 +220,13 @@ func (t *Task) Execute() {
 		for oipName, oip := range t.OutIPs {
 			outputsStr += " " + oipName + ": " + oip.Path()
 		}
-		Audit.Printf("| %-32s | Executing: Custom Go function with outputs: %s\n", t.Name, outputsStr)
+		LogAuditf(t.Name, "Executing: Custom Go function with outputs: %s", outputsStr)
 		t.CustomExecute(t)
-		Audit.Printf("| %-32s | Finished:  Custom Go function with outputs: %s\n", t.Name, outputsStr)
+		LogAuditf(t.Name, "Executing: Custom Go function with outputs: %s", outputsStr)
 	} else {
-		Audit.Printf("| %-32s | Executing: %s\n", t.Name, t.Command)
+		LogAuditf(t.Name, "Executing: %s", t.Command)
 		t.executeCommand(t.Command)
-		Audit.Printf("| %-32s | Finished:  %s\n", t.Name, t.Command)
+		LogAuditf(t.Name, "Finished: %s", t.Command)
 	}
 	finishTime := time.Now()
 	t.writeAuditLogs(startTime, finishTime)
@@ -320,19 +320,29 @@ func (t *Task) writeAuditLogs(startTime time.Time, finishTime time.Time) {
 	}
 }
 
-// atomizeIPs renames temporary output files/directories to their proper paths
 func (t *Task) atomizeIPs() {
-	for _, oip := range t.OutIPs {
+	outIPs := []*FileIP{}
+	for _, ip := range t.OutIPs {
+		outIPs = append(outIPs, ip)
+	}
+	AtomizeIPs(t.TempDir(), outIPs...)
+}
+
+// AtomizeIPs renames temporary output files/directories to their proper paths.
+// It is called both from Task, and from Process that implement cutom execution
+// schedule.
+func AtomizeIPs(tempExecDir string, ips ...*FileIP) {
+	for _, oip := range ips {
 		// Move paths for ports, to final destinations
 		if !oip.doStream {
-			os.Rename(t.TempDir()+"/"+oip.TempPath(), oip.Path())
+			os.Rename(tempExecDir+"/"+oip.TempPath(), oip.Path())
 		}
 	}
 	// For remaining paths in temporary execution dir, just move out of it
-	filepath.Walk(t.TempDir(), func(tempPath string, fileInfo os.FileInfo, err error) error {
+	filepath.Walk(tempExecDir, func(tempPath string, fileInfo os.FileInfo, err error) error {
 		if !fileInfo.IsDir() {
-			newPath := strings.Replace(tempPath, t.TempDir()+"/", "", 1)
-			newPath = strings.Replace(newPath, AbsPathPlaceholder+"/", "/", 1)
+			newPath := strings.Replace(tempPath, tempExecDir+"/", "", 1)
+			newPath = strings.Replace(newPath, FSRootPlaceHolder+"/", "/", 1)
 			newPathDir := filepath.Dir(newPath)
 			if _, err := os.Stat(newPathDir); os.IsNotExist(err) {
 				os.MkdirAll(newPathDir, 0777)
@@ -344,8 +354,8 @@ func (t *Task) atomizeIPs() {
 		return err
 	})
 	// Remove temporary execution dir
-	remErr := os.RemoveAll(t.TempDir())
-	CheckWithMsg(remErr, "Could not remove temp dir: "+t.TempDir())
+	remErr := os.RemoveAll(tempExecDir)
+	CheckWithMsg(remErr, "Could not remove temp dir: "+tempExecDir)
 }
 
 // TempDir returns a string that is unique to a task, suitable for use
