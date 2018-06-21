@@ -57,34 +57,34 @@ func (p *FileSplitter) Run() {
 
 		go fileReader.Run()
 
-		i := 1
+		lineNo := 1
 		splitIdx := 1
-		splitFt := newSplitIPFromIndex(ft.Path(), splitIdx)
-		if !splitFt.Exists() {
-			splitfile := splitFt.OpenWriteTemp()
+		splitIP := newSplitIPFromIndex(ft.Path(), splitIdx)
+		if !splitIP.Exists() {
+			splitfile := splitIP.OpenWriteTemp()
 			for line := range pip.Chan {
 				// If we have not yet reached the number of lines per split ...
 				/// ... then just continue to write ...
-				if i < splitIdx*p.LinesPerSplit {
+				if lineNo < splitIdx*p.LinesPerSplit {
 					splitfile.Write([]byte(line))
-					i++
+					lineNo++
 				} else {
 					splitfile.Close()
-					splitFt.Atomize()
-					scipipe.Audit.Println("FileSplitter      Created split file", splitFt.Path())
-					p.OutSplitFile().Send(splitFt)
+					splitIP.Atomize()
+					scipipe.Audit.Println("FileSplitter      Created split file", splitIP.Path())
+					p.OutSplitFile().Send(splitIP)
 					splitIdx++
 
-					splitFt = newSplitIPFromIndex(ft.Path(), splitIdx)
-					splitfile = splitFt.OpenWriteTemp()
+					splitIP = newSplitIPFromIndex(ft.Path(), splitIdx)
+					splitfile = splitIP.OpenWriteTemp()
 				}
 			}
 			splitfile.Close()
-			splitFt.Atomize()
-			scipipe.Audit.Println("FileSplitter      Created split file", splitFt.Path())
-			p.OutSplitFile().Send(splitFt)
+			splitIP.Atomize()
+			scipipe.Audit.Println("FileSplitter      Created split file", splitIP.Path())
+			p.OutSplitFile().Send(splitIP)
 		} else {
-			scipipe.Audit.Printf("Split file already exists: %s, so skipping.\n", splitFt.Path())
+			scipipe.Audit.Printf("Split file already exists: %s, so skipping.\n", splitIP.Path())
 		}
 	}
 }
