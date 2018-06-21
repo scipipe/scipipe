@@ -26,19 +26,19 @@ func TestBasicRun(t *testing.T) {
 	initTestLogs()
 	wf := NewWorkflow("TestBasicRunWf", 16)
 
-	t1 := wf.NewProc("t1", "echo foo > {o:foo}")
-	assertIsType(t, t1.Out("foo"), NewOutPort("foo"))
-	t1.SetPathCustom("foo", func(t *Task) string { return "foo.txt" })
+	p1 := wf.NewProc("p1", "echo foo > {o:foo}")
+	assertIsType(t, p1.Out("foo"), NewOutPort("foo"))
+	p1.SetPathCustom("foo", func(t *Task) string { return "foo.txt" })
 
-	t2 := wf.NewProc("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	assertIsType(t, t2.In("foo"), NewInPort("foo"))
-	assertIsType(t, t2.Out("bar"), NewOutPort("bar"))
-	t2.SetPathExtend("foo", "bar", ".bar.txt")
+	p2 := wf.NewProc("p2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	assertIsType(t, p2.In("foo"), NewInPort("foo"))
+	assertIsType(t, p2.Out("bar"), NewOutPort("bar"))
+	p2.SetPathExtend("foo", "bar", ".bar.txt")
 
-	t2.In("foo").From(t1.Out("foo"))
+	p2.In("foo").From(p1.Out("foo"))
 
-	assertIsType(t, t2.In("foo"), NewInPort("foo"))
-	assertIsType(t, t2.Out("bar"), NewOutPort("bar"))
+	assertIsType(t, p2.In("foo"), NewInPort("foo"))
+	assertIsType(t, p2.Out("bar"), NewOutPort("bar"))
 
 	wf.Run()
 	cleanFiles("foo.txt", "foo.txt.bar.txt")
@@ -65,13 +65,13 @@ func TestConnectBackwards(t *testing.T) {
 
 	wf := NewWorkflow("TestConnectBackwards", 16)
 
-	t1 := wf.NewProc("t1", "echo foo > {o:foo}")
-	t1.SetPathCustom("foo", func(t *Task) string { return "foo.txt" })
+	p1 := wf.NewProc("p1", "echo foo > {o:foo}")
+	p1.SetPathCustom("foo", func(t *Task) string { return "foo.txt" })
 
-	t2 := wf.NewProc("t2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	t2.SetPathCustom("bar", func(t *Task) string { return t.InPath("foo") + ".bar.txt" })
+	p2 := wf.NewProc("p2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	p2.SetPathCustom("bar", func(t *Task) string { return t.InPath("foo") + ".bar.txt" })
 
-	t1.Out("foo").To(t2.In("foo"))
+	p1.Out("foo").To(p2.In("foo"))
 
 	wf.Run()
 
