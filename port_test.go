@@ -161,3 +161,21 @@ func TestOutParamPortFrom(t *testing.T) {
 		t.Errorf("OutParamPort not among remote ports in InParamPort")
 	}
 }
+
+func TestConnectBackwards(t *testing.T) {
+	initTestLogs()
+
+	wf := NewWorkflow("TestConnectBackwards", 16)
+
+	p1 := wf.NewProc("p1", "echo foo > {o:foo}")
+	p1.SetPathCustom("foo", func(t *Task) string { return "foo.txt" })
+
+	p2 := wf.NewProc("p2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
+	p2.SetPathCustom("bar", func(t *Task) string { return t.InPath("foo") + ".bar.txt" })
+
+	p1.Out("foo").To(p2.In("foo"))
+
+	wf.Run()
+
+	cleanFiles("foo.txt", "foo.txt.bar.txt")
+}
