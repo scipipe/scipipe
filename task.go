@@ -353,9 +353,11 @@ func AtomizeIPs(tempExecDir string, ips ...*FileIP) {
 		}
 		return err
 	})
-	// Remove temporary execution dir
-	remErr := os.RemoveAll(tempExecDir)
-	CheckWithMsg(remErr, "Could not remove temp dir: "+tempExecDir)
+	// Remove temporary execution dir (but not for absolute paths, or current dir)
+	if tempExecDir != "" && tempExecDir != "." && tempExecDir[0] != '/' {
+		remErr := os.RemoveAll(tempExecDir)
+		CheckWithMsg(remErr, "Could not remove temp dir: "+tempExecDir)
+	}
 }
 
 // TempDir returns a string that is unique to a task, suitable for use
