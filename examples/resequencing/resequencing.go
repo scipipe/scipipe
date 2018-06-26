@@ -56,7 +56,7 @@ func main() {
 	// --------------------------------------------------------------------------------
 	ungzipRef := wf.NewProc("ugzip_ref", "gunzip -c {i:in} > {o:out}")
 	ungzipRef.In("in").From(dlRef.Out("outfile"))
-	ungzipRef.SetOut("out", "{i:in|s/.gz//}")
+	ungzipRef.SetPathReplace("in", "out", ".gz", "")
 
 	// --------------------------------------------------------------------------------
 	// Index Reference Genome
@@ -110,7 +110,6 @@ func main() {
 		merge.In("fq2").From(outs[ind]["2"]["fastq"])
 		merge.SetOut("merged", "{p:ind}.merged.sam")
 	}
-
 	// -------------------------------------------------------------------------------
 	// Run Workflow
 	// -------------------------------------------------------------------------------

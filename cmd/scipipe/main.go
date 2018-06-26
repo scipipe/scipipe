@@ -115,8 +115,8 @@ func convertAudit2Html(inFilePath string, outFilePath string) error {
 	ip := scipipe.NewFileIP(strings.Replace(inFilePath, ".audit.json", "", 1))
 	ai := ip.AuditInfo()
 
-	outHTML := fmt.Sprintf(`<html><head><style>body { font-family: arial, helvetica, sans-serif; } table { border: 1px solid #ccc; } th { text-align: right; vertical-align: top; padding: .2em .8em; } td { vertical-align: top; }</style><title>Audit info for: %s</title></head><body><h2>Audit Info for: %s</h2>`, ip.Path(), ip.Path())
-	outHTML += formatAuditInfoHTML(ai)
+	outHTML := fmt.Sprintf(`<html><head><style>body { font-family: arial, helvetica, sans-serif; } table { border: 1px solid #ccc; } th { text-align: right; vertical-align: top; padding: .2em .8em; } td { vertical-align: top; }</style><title>Audit info for: %s</title></head><body>`, ip.Path())
+	outHTML += formatAuditInfoHTML(ip.Path(), ai)
 	outHTML += `</body></html>`
 
 	if _, err := os.Stat(outFilePath); os.IsExist(err) {
@@ -131,10 +131,11 @@ func convertAudit2Html(inFilePath string, outFilePath string) error {
 	return nil
 }
 
-func formatAuditInfoHTML(ai *scipipe.AuditInfo) (outHTML string) {
+func formatAuditInfoHTML(fileName string, ai *scipipe.AuditInfo) (outHTML string) {
 	outHTML = "<table>\n"
+	outHTML += fmt.Sprintf(`<tr><td colspan="2" style="font-size: 1.2em; font-weight: bold; text-align: left; padding: .2em .4em; ">%s</td></tr>`, fileName)
 	outHTML += fmt.Sprintf("<tr><th>ID:</th><td>%s</td></tr>\n", ai.ID)
-	outHTML += fmt.Sprintf("<tr><th>Process name:</th><td>%s</td></tr>\n", ai.ProcessName)
+	outHTML += fmt.Sprintf("<tr><th>Process:</th><td>%s</td></tr>\n", ai.ProcessName)
 	outHTML += fmt.Sprintf("<tr><th>Command:</th><td><pre>%s</pre></td></tr>\n", ai.Command)
 
 	params := []string{}
@@ -153,8 +154,7 @@ func formatAuditInfoHTML(ai *scipipe.AuditInfo) (outHTML string) {
 	outHTML += fmt.Sprintf("<tr><th>Execution time:</th><td>%d ms</td></tr>\n", ai.ExecTimeMS)
 	upStreamHTML := ""
 	for filePath, uai := range ai.Upstream {
-		upStreamHTML += `<h4> Audit info for: ` + filePath + `</h4>`
-		upStreamHTML += formatAuditInfoHTML(uai)
+		upStreamHTML += formatAuditInfoHTML(filePath, uai)
 	}
 	if outHTML != "" {
 		outHTML += "<tr><th>Upstreams:</th><td>" + upStreamHTML + "</td></tr>\n"
