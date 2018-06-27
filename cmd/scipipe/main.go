@@ -6,7 +6,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/scipipe/scipipe"
@@ -38,7 +40,7 @@ func parseFlags(args []string) error {
 			return errors.New("No infile specified")
 		}
 		writeNewWorkflowFile(args[1])
-	case "audit2html":
+	case "audit2html", "audit2htmlflat":
 		if len(args) < 2 {
 			return errors.New("No infile specified")
 		}
@@ -47,7 +49,12 @@ func parseFlags(args []string) error {
 			return errors.New("No outfile specified")
 		}
 		outFile := args[2]
-		err := auditInfoToHTML(inFile, outFile, false)
+		err := errors.New("")
+		if cmd == "audit2htmlflat" {
+			err = auditInfoToHTML(inFile, outFile, true)
+		} else {
+			err = auditInfoToHTML(inFile, outFile, false)
+		}
 		if err != nil {
 			return errors.Wrap(err, "Could not convert Audit file to HTML")
 		}
@@ -82,6 +89,7 @@ $ scipipe <command> [command options]
 Available commands:
 $ scipipe new <filename.go>
 $ scipipe audit2html <infile.audit.json> [<outfile.html>]
+$ scipipe audit2htmlflat <infile.audit.json> [<outfile.html>]
 ________________________________________________________________________
 `, scipipe.Version)
 }
@@ -103,15 +111,17 @@ func auditInfoToHTML(inFilePath string, outFilePath string, flatten bool) error 
 	ip := scipipe.NewFileIP(strings.Replace(inFilePath, ".audit.json", "", 1))
 	auditInfo := ip.AuditInfo()
 
+	outHTML := fmt.Sprintf(`<html><head><style>body { font-family: arial, helvetica, sans-serif; } table { border: 1px solid #ccc; width: 100%%; margin: 1em; } th { text-align: right; vertical-align: top; padding: .2em .8em; width: 140px; } td { vertical-align: top; }</style><title>Audit info for: %s</title></head><body>`, ip.Path())
 	if flatten {
 		auditInfosByID := extractAuditInfosByID(auditInfo)
-		for k, v := range auditInfosByID {
-			fmt.Printf("%s: %s\n", k, v)
+		auditInfosByStartTime := sortAuditInfosByStartTime(auditInfosByID)
+		for _, ai := range auditInfosByStartTime {
+			ai.Upstream = nil
+			outHTML += formatTaskHTML(ai.ProcessName, ai)
 		}
+	} else {
+		outHTML += formatTaskHTML(ip.Path(), auditInfo)
 	}
-
-	outHTML := fmt.Sprintf(`<html><head><style>body { font-family: arial, helvetica, sans-serif; } table { border: 1px solid #ccc; } th { text-align: right; vertical-align: top; padding: .2em .8em; } td { vertical-align: top; }</style><title>Audit info for: %s</title></head><body>`, ip.Path())
-	outHTML += formatTaskHTML(ip.Path(), auditInfo)
 	outHTML += `</body></html>`
 
 	if _, err := os.Stat(outFilePath); os.IsExist(err) {
@@ -177,6 +187,21 @@ func mergeStringAuditInfoMaps(ms ...map[string]*scipipe.AuditInfo) (merged map[s
 	return merged
 }
 
+func sortAuditInfosByStartTime(auditInfosByID map[string]*scipipe.AuditInfo) []*scipipe.AuditInfo {
+	sorted := []*scipipe.AuditInfo{}
+
+	auditInfosByStartTime := map[time.Time]*scipipe.AuditInfo{}
+	startTimes := []time.Time{}
+	for _, ai := range auditInfosByID {
+		auditInfosByStartTime[ai.StartTime] = ai
+		startTimes = append(startTimes, ai.StartTime)
+	}
+	sort.Slice(startTimes, func(i, j int) bool { return startTimes[i].Before(startTimes[j]) })
+	for _, t := range startTimes {
+		sorted = append(sorted, auditInfosByStartTime[t])
+	}
+	return sorted
+}
 func initLogs() {
 	Info = log.New(os.Stdout, "", 0)
 }

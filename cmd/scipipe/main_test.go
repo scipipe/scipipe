@@ -109,7 +109,7 @@ const (
 		}
 	}
 }`
-	htmlContent = `<html><head><style>body { font-family: arial, helvetica, sans-serif; } table { border: 1px solid #ccc; } th { text-align: right; vertical-align: top; padding: .2em .8em; } td { vertical-align: top; }</style><title>Audit info for: /tmp/fooer.foo.txt.foo2bar.bar.txt</title></head><body><table>
+	htmlContent = `<html><head><style>body { font-family: arial, helvetica, sans-serif; } table { border: 1px solid #ccc; width: 100%; margin: 1em; } th { text-align: right; vertical-align: top; padding: .2em .8em; width: 140px; } td { vertical-align: top; }</style><title>Audit info for: /tmp/fooer.foo.txt.foo2bar.bar.txt</title></head><body><table>
 <tr><td colspan="2" style="font-size: 1.2em; font-weight: bold; text-align: left; padding: .2em .4em; ">/tmp/fooer.foo.txt.foo2bar.bar.txt</td></tr><tr><th>ID:</th><td>omlcgx0izet4bprr7e5f</td></tr>
 <tr><th>Process:</th><td>foo2bar</td></tr>
 <tr><th>Command:</th><td><pre>sed 's/foo/bar/g' ../fooer.foo.txt > fooer.foo.txt.foo2bar.bar.txt</pre></td></tr>
