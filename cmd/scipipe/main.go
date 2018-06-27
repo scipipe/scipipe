@@ -47,7 +47,7 @@ func parseFlags(args []string) error {
 			return errors.New("No outfile specified")
 		}
 		outFile := args[2]
-		err := auditInfoToHTML(inFile, outFile)
+		err := auditInfoToHTML(inFile, outFile, false)
 		if err != nil {
 			return errors.Wrap(err, "Could not convert Audit file to HTML")
 		}
@@ -99,9 +99,16 @@ func writeNewWorkflowFile(fileName string) {
 	Info.Println("Successfully wrote new workflow file to:", fileName, "\n\nNow you can run it with:\ngo run ", fileName)
 }
 
-func auditInfoToHTML(inFilePath string, outFilePath string) error {
+func auditInfoToHTML(inFilePath string, outFilePath string, flatten bool) error {
 	ip := scipipe.NewFileIP(strings.Replace(inFilePath, ".audit.json", "", 1))
 	auditInfo := ip.AuditInfo()
+
+	if flatten {
+		auditInfosByID := extractAuditInfosByID(auditInfo)
+		for k, v := range auditInfosByID {
+			fmt.Printf("%s: %s\n", k, v)
+		}
+	}
 
 	outHTML := fmt.Sprintf(`<html><head><style>body { font-family: arial, helvetica, sans-serif; } table { border: 1px solid #ccc; } th { text-align: right; vertical-align: top; padding: .2em .8em; } td { vertical-align: top; }</style><title>Audit info for: %s</title></head><body>`, ip.Path())
 	outHTML += formatTaskHTML(ip.Path(), auditInfo)
@@ -149,6 +156,25 @@ func formatTaskHTML(fileName string, auditInfo *scipipe.AuditInfo) (outHTML stri
 	}
 	outHTML += "</table>\n"
 	return
+}
+
+func extractAuditInfosByID(auditInfo *scipipe.AuditInfo) (auditInfosByID map[string]*scipipe.AuditInfo) {
+	auditInfosByID = make(map[string]*scipipe.AuditInfo)
+	auditInfosByID[auditInfo.ID] = auditInfo
+	for _, ai := range auditInfo.Upstream {
+		auditInfosByID = mergeStringAuditInfoMaps(auditInfosByID, extractAuditInfosByID(ai))
+	}
+	return auditInfosByID
+}
+
+func mergeStringAuditInfoMaps(ms ...map[string]*scipipe.AuditInfo) (merged map[string]*scipipe.AuditInfo) {
+	merged = make(map[string]*scipipe.AuditInfo)
+	for _, m := range ms {
+		for k, v := range m {
+			merged[k] = v
+		}
+	}
+	return merged
 }
 
 func initLogs() {

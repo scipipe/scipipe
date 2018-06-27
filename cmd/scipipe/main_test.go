@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/scipipe/scipipe"
 )
 
 func TestNewCmd(t *testing.T) {
@@ -57,6 +58,31 @@ func TestAudit2HTMLCmd(t *testing.T) {
 	}
 
 	//cleanFiles(t, jsonFile, htmlFile)
+}
+
+func TestExtractAuditInfosByID(t *testing.T) {
+	ai1 := scipipe.NewAuditInfo()
+	ai1Cmd := "echo foo > foo.txt"
+	ai1.Command = ai1Cmd
+
+	ai2 := scipipe.NewAuditInfo()
+	ai2Cmd := "sed 's/foo/bar/g' foo.txt > bar.txt"
+	ai2.Command = ai2Cmd
+	ai2.Upstream["foo.txt"] = ai1
+
+	aiByID := extractAuditInfosByID(ai2)
+	if aiByID == nil {
+		t.Errorf("Extracted audit info by ID map is nil: %v", aiByID)
+	}
+	aiByIDExpectedLength := 2
+	if len(aiByID) != aiByIDExpectedLength {
+		t.Errorf("Extracted audit info by ID map has wrong length.\nExpected: %d, Actual: %d\n", aiByIDExpectedLength, len(aiByID))
+	}
+	for _, ai := range aiByID {
+		if ai.Command != ai1Cmd && ai.Command != ai2Cmd {
+			t.Errorf("Command in extracted audit info by ID was wrong.\nExpected: '%s' OR '%s'\nActual: '%s'\n", ai1Cmd, ai2Cmd, ai.Command)
+		}
+	}
 }
 
 const (
