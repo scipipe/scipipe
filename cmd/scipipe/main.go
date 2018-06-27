@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 
@@ -10,12 +12,16 @@ import (
 	"github.com/scipipe/scipipe"
 )
 
+var (
+	Info *log.Logger
+)
+
 func main() {
-	scipipe.InitLogError()
+	initLogs()
 	flag.Parse()
 	err := parseFlags(flag.Args())
 	if err != nil {
-		fmt.Println("ERROR:", err.Error())
+		log.Fatalln(err.Error())
 		os.Exit(1)
 	}
 }
@@ -52,20 +58,19 @@ func parseFlags(args []string) error {
 }
 
 func printNewUsage() {
-	fmt.Print(`
+	Info.Println(`
 Usage:
-$ scipipe new <filename.go>
-`)
+$ scipipe new <filename.go>`)
 }
 func printAudit2HTMLUsage() {
-	fmt.Print(`
+	Info.Print(`
 Usage:
 $ scipipe audit2html <infile.audit.json> [<outfile.html>]
 `)
 }
 
 func printHelp() {
-	fmt.Printf(`________________________________________________________________________
+	Info.Printf(`________________________________________________________________________
 
 SciPipe (http://scipipe.org)
 Version: %s
@@ -91,7 +96,7 @@ func writeNewWorkflowFile(fileName string) {
 	if err != nil {
 		scipipe.Fail("Could not write to file:", fileName)
 	}
-	fmt.Println("Successfully wrote new workflow file to:", fileName, "\n\nNow you can run it with:\ngo run ", fileName)
+	Info.Println("Successfully wrote new workflow file to:", fileName, "\n\nNow you can run it with:\ngo run ", fileName)
 }
 
 func auditInfoToHTML(inFilePath string, outFilePath string) error {
@@ -144,6 +149,14 @@ func formatTaskHTML(fileName string, auditInfo *scipipe.AuditInfo) (outHTML stri
 	}
 	outHTML += "</table>\n"
 	return
+}
+
+func initLogs() {
+	Info = log.New(os.Stdout, "", 0)
+}
+
+func initLogsTest() {
+	Info = log.New(ioutil.Discard, "", 0)
 }
 
 const (
