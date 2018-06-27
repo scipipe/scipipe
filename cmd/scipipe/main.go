@@ -12,37 +12,43 @@ import (
 
 func main() {
 	scipipe.InitLogError()
-
 	flag.Parse()
-	cmd := flag.Arg(0)
+	err := parseFlags(flag.Args())
+	if err != nil {
+		fmt.Println("ERROR:", err.Error())
+		os.Exit(1)
+	}
+}
+
+func parseFlags(args []string) error {
+	if len(args) < 1 {
+		printHelp()
+		return nil
+	}
+	cmd := args[0]
 	switch cmd {
 	case "new":
-		if len(flag.Args()) < 2 {
-			fmt.Println("ERROR: No filename specified!")
-			printNewUsage()
-			os.Exit(1)
+		if len(args) < 2 {
+			return errors.New("No infile specified")
 		}
-		writeNewWorkflowFile(flag.Arg(1))
+		writeNewWorkflowFile(args[1])
 	case "audit2html":
-		if len(flag.Args()) < 2 {
-			fmt.Println("ERROR: No infile specified!")
-			printAudit2HTMLUsage()
-			os.Exit(1)
+		if len(args) < 2 {
+			return errors.New("No infile specified")
 		}
-		inFile := flag.Arg(1)
-		if len(flag.Args()) < 3 {
-			fmt.Println("ERROR: No outfile specified!")
-			printAudit2HTMLUsage()
-			os.Exit(1)
+		inFile := args[1]
+		if len(args) < 3 {
+			return errors.New("No outfile specified")
 		}
-		outFile := flag.Arg(2)
+		outFile := args[2]
 		err := auditInfoToHTML(inFile, outFile)
 		if err != nil {
-			scipipe.CheckWithMsg(err, "Could not convert Audit file to HTML")
+			return errors.Wrap(err, "Could not convert Audit file to HTML")
 		}
 	default:
-		printHelp()
+		return errors.New("Unknown command: " + cmd)
 	}
+	return nil
 }
 
 func printNewUsage() {
