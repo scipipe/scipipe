@@ -235,7 +235,7 @@ func main() {
 <head>
 <style>
 	body { font-family: arial, helvetica, sans-serif; }
-	table { color: #546E7A; background: #EFF2F5; border: none; width: 760px; margin: 1em 1em 2em 1em; padding: 1.2em; font-size: 10pt; opacity: 1; }
+	table { color: #546E7A; background: #EFF2F5; border: none; width: 960px; margin: 1em 1em 2em 1em; padding: 1.2em; font-size: 10pt; opacity: 1; }
 	table:hover { color: black; background: #FFFFEF; }
 	th { text-align: right; vertical-align: top; padding: .2em .8em; width: 9em; }
 	td { vertical-align: top; }
