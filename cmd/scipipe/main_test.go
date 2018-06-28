@@ -32,32 +32,34 @@ func TestAudit2HTMLCmd(t *testing.T) {
 
 	jsonFile := "/tmp/fooer.foo.txt.foo2bar.bar.txt.audit.json"
 	htmlFile := "/tmp/fooer.foo.txt.foo2bar.bar.txt.audit.html"
-
 	err := ioutil.WriteFile(jsonFile, []byte(jsonContent), 0644)
 	if err != nil {
 		t.Error("Could not create infile needed in test: " + jsonFile)
 	}
 
-	args := []string{"audit2html", jsonFile, htmlFile}
-	err = parseFlags(args)
-	if err != nil {
-		t.Error("Could not parse flags:", err.Error())
+	// Test both audit2html commands
+	for cmd, expectedContent := range map[string]string{
+		"audit2html":     htmlContent,
+		"audit2htmlflat": htmlContentFlat,
+	} {
+		args := []string{cmd, jsonFile, htmlFile}
+		err = parseFlags(args)
+		if err != nil {
+			t.Error("Could not parse flags:", err.Error())
+		}
+		if _, err := os.Stat(htmlFile); os.IsNotExist(err) {
+			t.Error("`scipipe audit2html` command failed to create HTML file: " + htmlFile)
+		}
+		htmlBytes, err := ioutil.ReadFile(htmlFile)
+		if err != nil {
+			t.Error(errors.Wrap(err, "Could not read HTML file:"+htmlFile).Error())
+		}
+		if string(htmlBytes) != expectedContent {
+			t.Errorf("Converted HTML content of %s was not as expected.\nEXPECTED:\n%s\nACTUAL:\n%s\n", htmlFile, expectedContent, string(htmlBytes))
+		}
+		cleanFiles(t, htmlFile)
 	}
-
-	if _, err := os.Stat(htmlFile); os.IsNotExist(err) {
-		t.Error("`scipipe audit2html` command failed to create HTML file: " + htmlFile)
-	}
-
-	htmlBytes, err := ioutil.ReadFile(htmlFile)
-	if err != nil {
-		t.Error(errors.Wrap(err, "Could not read HTML file:"+htmlFile).Error())
-	}
-
-	if string(htmlBytes) != htmlContent {
-		t.Errorf("Converted HTML content of %s was not as expected.\nEXPECTED:\n%s\nACTUAL:\n%s\n", htmlFile, htmlContent, string(htmlBytes))
-	}
-
-	cleanFiles(t, jsonFile, htmlFile)
+	cleanFiles(t, jsonFile)
 }
 
 func TestExtractAuditInfosByID(t *testing.T) {
@@ -130,6 +132,30 @@ const (
 <tr><th>Upstreams:</th><td></td></tr>
 </table>
 </td></tr>
+</table>
+</body></html>`
+
+	htmlContentFlat = `<html><head><style>body { font-family: arial, helvetica, sans-serif; } table { border: 1px solid #ccc; width: 100%; margin: 1em; } th { text-align: right; vertical-align: top; padding: .2em .8em; width: 140px; } td { vertical-align: top; }</style><title>Audit info for: /tmp/fooer.foo.txt.foo2bar.bar.txt</title></head><body><table>
+<tr><td colspan="2" style="font-size: 1.2em; font-weight: bold; text-align: left; padding: .2em .4em; ">fooer</td></tr><tr><th>ID:</th><td>y23kkipm4p4y7kgdzuc1</td></tr>
+<tr><th>Process:</th><td>fooer</td></tr>
+<tr><th>Command:</th><td><pre>echo foo > fooer.foo.txt</pre></td></tr>
+<tr><th>Parameters:</th><td></td></tr>
+<tr><th>Tags:</th><td><pre></pre></td></tr>
+<tr><th>Start time:</th><td>2018-06-27 17:50:51.437331897 +0200 CEST</td></tr>
+<tr><th>Finish time:</th><td>2018-06-27 17:50:51.44444825 +0200 CEST</td></tr>
+<tr><th>Execution time:</th><td>7 ms</td></tr>
+<tr><th>Upstreams:</th><td></td></tr>
+</table>
+<table>
+<tr><td colspan="2" style="font-size: 1.2em; font-weight: bold; text-align: left; padding: .2em .4em; ">foo2bar</td></tr><tr><th>ID:</th><td>omlcgx0izet4bprr7e5f</td></tr>
+<tr><th>Process:</th><td>foo2bar</td></tr>
+<tr><th>Command:</th><td><pre>sed 's/foo/bar/g' ../fooer.foo.txt > fooer.foo.txt.foo2bar.bar.txt</pre></td></tr>
+<tr><th>Parameters:</th><td></td></tr>
+<tr><th>Tags:</th><td><pre></pre></td></tr>
+<tr><th>Start time:</th><td>2018-06-27 17:50:51.445311702 +0200 CEST</td></tr>
+<tr><th>Finish time:</th><td>2018-06-27 17:50:51.451388569 +0200 CEST</td></tr>
+<tr><th>Execution time:</th><td>6 ms</td></tr>
+<tr><th>Upstreams:</th><td></td></tr>
 </table>
 </body></html>`
 )

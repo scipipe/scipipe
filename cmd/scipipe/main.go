@@ -19,7 +19,6 @@ var (
 )
 
 func main() {
-	scipipe.InitLogError()
 	flag.Parse()
 	err := parseFlags(flag.Args())
 	if err != nil {
@@ -29,6 +28,7 @@ func main() {
 }
 
 func parseFlags(args []string) error {
+	scipipe.InitLogError()
 	if len(args) < 1 {
 		printHelp()
 		return nil
