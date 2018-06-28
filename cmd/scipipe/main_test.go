@@ -57,7 +57,7 @@ func TestAudit2HTMLCmd(t *testing.T) {
 		t.Errorf("Converted HTML content of %s was not as expected.\nEXPECTED:\n%s\nACTUAL:\n%s\n", htmlFile, htmlContent, string(htmlBytes))
 	}
 
-	//cleanFiles(t, jsonFile, htmlFile)
+	cleanFiles(t, jsonFile, htmlFile)
 }
 
 func TestExtractAuditInfosByID(t *testing.T) {
