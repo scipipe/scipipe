@@ -19,7 +19,7 @@ var (
 )
 
 func main() {
-	initLogs()
+	scipipe.InitLogError()
 	flag.Parse()
 	err := parseFlags(flag.Args())
 	if err != nil {
