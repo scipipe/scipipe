@@ -40,7 +40,7 @@ func parseFlags(args []string) error {
 			return errors.New("No infile specified")
 		}
 		writeNewWorkflowFile(args[1])
-	case "audit2html", "audit2htmlflat":
+	case "audit2html":
 		if len(args) < 2 {
 			return errors.New("No infile specified")
 		}
@@ -53,11 +53,7 @@ func parseFlags(args []string) error {
 		}
 		outFile := args[2]
 		err := errors.New("")
-		if cmd == "audit2htmlflat" {
-			err = auditInfoToHTML(inFile, outFile, true)
-		} else {
-			err = auditInfoToHTML(inFile, outFile, false)
-		}
+		err = auditInfoToHTML(inFile, outFile, true)
 		if err != nil {
 			return errors.Wrap(err, "Could not convert Audit file to HTML")
 		}
@@ -92,7 +88,6 @@ $ scipipe <command> [command options]
 Available commands:
 $ scipipe new <filename.go>
 $ scipipe audit2html <infile.audit.json> [<outfile.html>]
-$ scipipe audit2htmlflat <infile.audit.json> [<outfile.html>]
 ________________________________________________________________________
 `, scipipe.Version)
 }
@@ -114,7 +109,7 @@ func auditInfoToHTML(inFilePath string, outFilePath string, flatten bool) error 
 	ip := scipipe.NewFileIP(strings.Replace(inFilePath, ".audit.json", "", 1))
 	auditInfo := ip.AuditInfo()
 
-	outHTML := fmt.Sprintf(`<html><head><style>body { font-family: arial, helvetica, sans-serif; } table { border: 1px solid #ccc; width: 100%%; margin: 1em; } th { text-align: right; vertical-align: top; padding: .2em .8em; width: 140px; } td { vertical-align: top; }</style><title>Audit info for: %s</title></head><body>`, ip.Path())
+	outHTML := fmt.Sprintf(headHTMLPattern, ip.Path())
 	if flatten {
 		auditInfosByID := extractAuditInfosByID(auditInfo)
 		auditInfosByStartTime := sortAuditInfosByStartTime(auditInfosByID)
@@ -125,7 +120,7 @@ func auditInfoToHTML(inFilePath string, outFilePath string, flatten bool) error 
 	} else {
 		outHTML += formatTaskHTML(ip.Path(), auditInfo)
 	}
-	outHTML += `</body></html>`
+	outHTML += bottomHTML
 
 	if _, err := os.Stat(outFilePath); os.IsExist(err) {
 		return errors.Wrap(err, "File already exists:"+outFilePath)
@@ -141,32 +136,31 @@ func auditInfoToHTML(inFilePath string, outFilePath string, flatten bool) error 
 
 func formatTaskHTML(fileName string, auditInfo *scipipe.AuditInfo) (outHTML string) {
 	outHTML = "<table>\n"
-	outHTML += fmt.Sprintf(`<tr><td colspan="2" style="font-size: 1.2em; font-weight: bold; text-align: left; padding: .2em .4em; ">%s</td></tr>`, fileName)
-	outHTML += fmt.Sprintf("<tr><th>ID:</th><td>%s</td></tr>\n", auditInfo.ID)
-	outHTML += fmt.Sprintf("<tr><th>Process:</th><td>%s</td></tr>\n", auditInfo.ProcessName)
-	outHTML += fmt.Sprintf("<tr><th>Command:</th><td><pre>%s</pre></td></tr>\n", auditInfo.Command)
+	outHTML += fmt.Sprintf("	<tr><td colspan=\"2\" class=\"task-title\"><strong>%s</strong> / <a name=\"%s\" href=\"#%s\"><code>%s</code></a></td></tr>\n", auditInfo.ProcessName, auditInfo.ID, auditInfo.ID, auditInfo.ID)
+	outHTML += fmt.Sprintf("	<tr><td colspan=\"2\"><div class=\"cmdbox\">%s</div></td></tr>\n", auditInfo.Command)
 
 	params := []string{}
 	for pname, p := range auditInfo.Params {
 		params = append(params, fmt.Sprintf("%s: %s", pname, p))
 	}
-	outHTML += fmt.Sprintf("<tr><th>Parameters:</th><td>%s</td></tr>\n", strings.Join(params, ", "))
+	outHTML += fmt.Sprintf("	<tr><th>Parameters:</th><td>%s</td></tr>\n", strings.Join(params, ", "))
 	tags := []string{}
 	for pname, p := range auditInfo.Tags {
 		tags = append(tags, fmt.Sprintf("%s: %s", pname, p))
 	}
-	outHTML += fmt.Sprintf("<tr><th>Tags:</th><td><pre>%v</pre></td></tr>\n", strings.Join(tags, ", "))
+	outHTML += fmt.Sprintf("	<tr><th>Tags:</th><td><pre>%v</pre></td></tr>\n", strings.Join(tags, ", "))
 
-	outHTML += fmt.Sprintf("<tr><th>Start time:</th><td>%v</td></tr>\n", auditInfo.StartTime)
-	outHTML += fmt.Sprintf("<tr><th>Finish time:</th><td>%v</td></tr>\n", auditInfo.FinishTime)
-	outHTML += fmt.Sprintf("<tr><th>Execution time:</th><td>%d ms</td></tr>\n", auditInfo.ExecTimeMS)
-	upStreamHTML := ""
-	for filePath, uai := range auditInfo.Upstream {
-		upStreamHTML += formatTaskHTML(filePath, uai)
-	}
-	if outHTML != "" {
-		outHTML += "<tr><th>Upstreams:</th><td>" + upStreamHTML + "</td></tr>\n"
-	}
+	outHTML += fmt.Sprintf("	<tr><th>Start time:</th><td>%s</td></tr>\n", auditInfo.StartTime.Format(`2006-01-02 15:04:05<span class="greyout">.000 -0700 MST</span>`))
+	outHTML += fmt.Sprintf("	<tr><th>Finish time:</th><td>%s</td></tr>\n", auditInfo.FinishTime.Format(`2006-01-02 15:04:05<span class="greyout">.000 -0700 MST</span>`))
+	et := auditInfo.ExecTimeNS
+	outHTML += fmt.Sprintf("	<tr><th>Execution time:</th><td>%s</td></tr>\n", et.Truncate(time.Millisecond).String())
+	//upStreamHTML := ""
+	//for filePath, uai := range auditInfo.Upstream {
+	//	upStreamHTML += formatTaskHTML(filePath, uai)
+	//}
+	//if outHTML != "" {
+	//	outHTML += "<tr><th>Upstreams:</th><td>" + upStreamHTML + "</td></tr>\n"
+	//}
 	outHTML += "</table>\n"
 	return
 }
@@ -237,4 +231,25 @@ func main() {
 	// Run the workflow
 	wf.Run()
 }`
+	headHTMLPattern = `<html>
+<head>
+<style>
+	body { font-family: arial, helvetica, sans-serif; }
+	table { color: #546E7A; background: #EFF2F5; border: none; width: 760px; margin: 1em 1em 2em 1em; padding: 1.2em; font-size: 10pt; opacity: 1; }
+	table:hover { color: black; background: #FFFFEF; }
+	th { text-align: right; vertical-align: top; padding: .2em .8em; width: 9em; }
+	td { vertical-align: top; }
+	.task-title { font-size: 12pt; font-weight: normal; }
+	.cmdbox { border: rgb(156, 184, 197) 0px solid; background: #D2DBE0; font-family: 'Ubuntu mono', Monospace, 'Courier New'; padding: .8em 1em; margin: 0.4em 0; font-size: 12pt; }
+	table:hover .cmdbox { background: #EFEFCC; }
+	.greyout { color: #999; }
+	a, a:link, a:visited { color: inherit; text-decoration: none; }
+	a:hover { text-decoration: underline; }
+</style>
+<title>Audit info for: %s</title>
+</head>
+<body>
+`
+	bottomHTML = `</body>
+</html>`
 )

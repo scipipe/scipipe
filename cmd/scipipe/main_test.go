@@ -30,8 +30,8 @@ func TestNewCmd(t *testing.T) {
 func TestAudit2HTMLCmd(t *testing.T) {
 	initLogsTest()
 
-	jsonFile := "/tmp/fooer.foo.txt.foo2bar.bar.txt.audit.json"
-	htmlFile := "/tmp/fooer.foo.txt.foo2bar.bar.txt.audit.html"
+	jsonFile := "/tmp/f.audit.json"
+	htmlFile := "/tmp/f.audit.html"
 	err := ioutil.WriteFile(jsonFile, []byte(jsonContent), 0644)
 	if err != nil {
 		t.Error("Could not create infile needed in test: " + jsonFile)
@@ -39,8 +39,7 @@ func TestAudit2HTMLCmd(t *testing.T) {
 
 	// Test both audit2html commands
 	for cmd, expectedContent := range map[string]string{
-		"audit2html":     htmlContent,
-		"audit2htmlflat": htmlContentFlat,
+		"audit2html": htmlContent,
 	} {
 		args := []string{cmd, jsonFile, htmlFile}
 		err = parseFlags(args)
@@ -111,53 +110,45 @@ const (
 		}
 	}
 }`
-	htmlContent = `<html><head><style>body { font-family: arial, helvetica, sans-serif; } table { border: 1px solid #ccc; width: 100%; margin: 1em; } th { text-align: right; vertical-align: top; padding: .2em .8em; width: 140px; } td { vertical-align: top; }</style><title>Audit info for: /tmp/fooer.foo.txt.foo2bar.bar.txt</title></head><body><table>
-<tr><td colspan="2" style="font-size: 1.2em; font-weight: bold; text-align: left; padding: .2em .4em; ">/tmp/fooer.foo.txt.foo2bar.bar.txt</td></tr><tr><th>ID:</th><td>omlcgx0izet4bprr7e5f</td></tr>
-<tr><th>Process:</th><td>foo2bar</td></tr>
-<tr><th>Command:</th><td><pre>sed 's/foo/bar/g' ../fooer.foo.txt > fooer.foo.txt.foo2bar.bar.txt</pre></td></tr>
-<tr><th>Parameters:</th><td></td></tr>
-<tr><th>Tags:</th><td><pre></pre></td></tr>
-<tr><th>Start time:</th><td>2018-06-27 17:50:51.445311702 +0200 CEST</td></tr>
-<tr><th>Finish time:</th><td>2018-06-27 17:50:51.451388569 +0200 CEST</td></tr>
-<tr><th>Execution time:</th><td>6 ms</td></tr>
-<tr><th>Upstreams:</th><td><table>
-<tr><td colspan="2" style="font-size: 1.2em; font-weight: bold; text-align: left; padding: .2em .4em; ">fooer.foo.txt</td></tr><tr><th>ID:</th><td>y23kkipm4p4y7kgdzuc1</td></tr>
-<tr><th>Process:</th><td>fooer</td></tr>
-<tr><th>Command:</th><td><pre>echo foo > fooer.foo.txt</pre></td></tr>
-<tr><th>Parameters:</th><td></td></tr>
-<tr><th>Tags:</th><td><pre></pre></td></tr>
-<tr><th>Start time:</th><td>2018-06-27 17:50:51.437331897 +0200 CEST</td></tr>
-<tr><th>Finish time:</th><td>2018-06-27 17:50:51.44444825 +0200 CEST</td></tr>
-<tr><th>Execution time:</th><td>7 ms</td></tr>
-<tr><th>Upstreams:</th><td></td></tr>
-</table>
-</td></tr>
-</table>
-</body></html>`
 
-	htmlContentFlat = `<html><head><style>body { font-family: arial, helvetica, sans-serif; } table { border: 1px solid #ccc; width: 100%; margin: 1em; } th { text-align: right; vertical-align: top; padding: .2em .8em; width: 140px; } td { vertical-align: top; }</style><title>Audit info for: /tmp/fooer.foo.txt.foo2bar.bar.txt</title></head><body><table>
-<tr><td colspan="2" style="font-size: 1.2em; font-weight: bold; text-align: left; padding: .2em .4em; ">fooer</td></tr><tr><th>ID:</th><td>y23kkipm4p4y7kgdzuc1</td></tr>
-<tr><th>Process:</th><td>fooer</td></tr>
-<tr><th>Command:</th><td><pre>echo foo > fooer.foo.txt</pre></td></tr>
-<tr><th>Parameters:</th><td></td></tr>
-<tr><th>Tags:</th><td><pre></pre></td></tr>
-<tr><th>Start time:</th><td>2018-06-27 17:50:51.437331897 +0200 CEST</td></tr>
-<tr><th>Finish time:</th><td>2018-06-27 17:50:51.44444825 +0200 CEST</td></tr>
-<tr><th>Execution time:</th><td>7 ms</td></tr>
-<tr><th>Upstreams:</th><td></td></tr>
+	htmlContent = `<html>
+<head>
+<style>
+	body { font-family: arial, helvetica, sans-serif; }
+	table { color: #546E7A; background: #EFF2F5; border: none; width: 760px; margin: 1em 1em 2em 1em; padding: 1.2em; font-size: 10pt; opacity: 1; }
+	table:hover { color: black; background: #FFFFEF; }
+	th { text-align: right; vertical-align: top; padding: .2em .8em; width: 9em; }
+	td { vertical-align: top; }
+	.task-title { font-size: 12pt; font-weight: normal; }
+	.cmdbox { border: rgb(156, 184, 197) 0px solid; background: #D2DBE0; font-family: 'Ubuntu mono', Monospace, 'Courier New'; padding: .8em 1em; margin: 0.4em 0; font-size: 12pt; }
+	table:hover .cmdbox { background: #EFEFCC; }
+	.greyout { color: #999; }
+	a, a:link, a:visited { color: inherit; text-decoration: none; }
+	a:hover { text-decoration: underline; }
+</style>
+<title>Audit info for: /tmp/f</title>
+</head>
+<body>
+<table>
+	<tr><td colspan="2" class="task-title"><strong>fooer</strong> / <a name="y23kkipm4p4y7kgdzuc1" href="#y23kkipm4p4y7kgdzuc1"><code>y23kkipm4p4y7kgdzuc1</code></a></td></tr>
+	<tr><td colspan="2"><div class="cmdbox">echo foo > fooer.foo.txt</div></td></tr>
+	<tr><th>Parameters:</th><td></td></tr>
+	<tr><th>Tags:</th><td><pre></pre></td></tr>
+	<tr><th>Start time:</th><td>2018-06-27 17:50:51<span class="greyout">.437 +0200 CEST</span></td></tr>
+	<tr><th>Finish time:</th><td>2018-06-27 17:50:51<span class="greyout">.444 +0200 CEST</span></td></tr>
+	<tr><th>Execution time:</th><td>7ms</td></tr>
 </table>
 <table>
-<tr><td colspan="2" style="font-size: 1.2em; font-weight: bold; text-align: left; padding: .2em .4em; ">foo2bar</td></tr><tr><th>ID:</th><td>omlcgx0izet4bprr7e5f</td></tr>
-<tr><th>Process:</th><td>foo2bar</td></tr>
-<tr><th>Command:</th><td><pre>sed 's/foo/bar/g' ../fooer.foo.txt > fooer.foo.txt.foo2bar.bar.txt</pre></td></tr>
-<tr><th>Parameters:</th><td></td></tr>
-<tr><th>Tags:</th><td><pre></pre></td></tr>
-<tr><th>Start time:</th><td>2018-06-27 17:50:51.445311702 +0200 CEST</td></tr>
-<tr><th>Finish time:</th><td>2018-06-27 17:50:51.451388569 +0200 CEST</td></tr>
-<tr><th>Execution time:</th><td>6 ms</td></tr>
-<tr><th>Upstreams:</th><td></td></tr>
+	<tr><td colspan="2" class="task-title"><strong>foo2bar</strong> / <a name="omlcgx0izet4bprr7e5f" href="#omlcgx0izet4bprr7e5f"><code>omlcgx0izet4bprr7e5f</code></a></td></tr>
+	<tr><td colspan="2"><div class="cmdbox">sed 's/foo/bar/g' ../fooer.foo.txt > fooer.foo.txt.foo2bar.bar.txt</div></td></tr>
+	<tr><th>Parameters:</th><td></td></tr>
+	<tr><th>Tags:</th><td><pre></pre></td></tr>
+	<tr><th>Start time:</th><td>2018-06-27 17:50:51<span class="greyout">.445 +0200 CEST</span></td></tr>
+	<tr><th>Finish time:</th><td>2018-06-27 17:50:51<span class="greyout">.451 +0200 CEST</span></td></tr>
+	<tr><th>Execution time:</th><td>6ms</td></tr>
 </table>
-</body></html>`
+</body>
+</html>`
 )
 
 func cleanFiles(t *testing.T, files ...string) {
