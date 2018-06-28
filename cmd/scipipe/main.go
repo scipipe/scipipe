@@ -45,6 +45,9 @@ func parseFlags(args []string) error {
 			return errors.New("No infile specified")
 		}
 		inFile := args[1]
+		if len(inFile) < 12 || (inFile[len(inFile)-11:] != ".audit.json") {
+			return errors.New("Infile does not look like an audit file (does not end with .audit.json): " + inFile)
+		}
 		if len(args) < 3 {
 			return errors.New("No outfile specified")
 		}
