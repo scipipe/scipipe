@@ -14,7 +14,7 @@ type AuditInfo struct {
 	Tags        map[string]string
 	StartTime   time.Time
 	FinishTime  time.Time
-	ExecTimeMS  time.Duration
+	ExecTimeNS  time.Duration
 	Upstream    map[string]*AuditInfo
 }
 
@@ -26,7 +26,7 @@ func NewAuditInfo() *AuditInfo {
 		Command:     "",
 		Params:      make(map[string]string),
 		Tags:        make(map[string]string),
-		ExecTimeMS:  -1,
+		ExecTimeNS:  -1,
 		Upstream:    make(map[string]*AuditInfo),
 	}
 }

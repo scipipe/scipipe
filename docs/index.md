@@ -206,7 +206,7 @@ $ cat hello_world.txt.audit.json
     "Tags": {},
     "StartTime": "2018-06-15T19:10:37.955602979+02:00",
     "FinishTime": "2018-06-15T19:10:37.959410102+02:00",
-    "ExecTimeMS": 3,
+    "ExecTimeNS": 3000000,
     "Upstream": {
         "hello.txt": {
             "ID": "w4oeiii9h5j7sckq7aqq",
@@ -216,7 +216,7 @@ $ cat hello_world.txt.audit.json
             "Tags": {},
             "StartTime": "2018-06-15T19:10:37.950032676+02:00",
             "FinishTime": "2018-06-15T19:10:37.95468214+02:00",
-            "ExecTimeMS": 4,
+            "ExecTimeNS": 4000000,
             "Upstream": {}
         }
     }

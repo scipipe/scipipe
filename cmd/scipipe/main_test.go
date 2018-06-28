@@ -96,7 +96,7 @@ const (
 	"Tags": {},
 	"StartTime": "2018-06-27T17:50:51.445311702+02:00",
 	"FinishTime": "2018-06-27T17:50:51.451388569+02:00",
-	"ExecTimeMS": 6,
+	"ExecTimeNS": 6000000,
 	"Upstream": {
 		"fooer.foo.txt": {
 			"ID": "y23kkipm4p4y7kgdzuc1",
@@ -106,7 +106,7 @@ const (
 			"Tags": {},
 			"StartTime": "2018-06-27T17:50:51.437331897+02:00",
 			"FinishTime": "2018-06-27T17:50:51.44444825+02:00",
-			"ExecTimeMS": 7,
+			"ExecTimeNS": 7000000,
 			"Upstream": {}
 		}
 	}
