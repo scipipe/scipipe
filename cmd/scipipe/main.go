@@ -48,10 +48,13 @@ func parseFlags(args []string) error {
 		if len(inFile) < 12 || (inFile[len(inFile)-11:] != ".audit.json") {
 			return errors.New("Infile does not look like an audit file (does not end with .audit.json): " + inFile)
 		}
-		if len(args) < 3 {
-			return errors.New("No outfile specified")
+		outFile := strings.Replace(inFile, ".audit.json", ".audit.html", 1)
+		if len(args) > 3 {
+			return errors.New("Extra arguments found: " + args[3])
 		}
-		outFile := args[2]
+		if len(args) == 3 {
+			outFile = args[2]
+		}
 		err := errors.New("")
 		err = auditInfoToHTML(inFile, outFile, true)
 		if err != nil {
