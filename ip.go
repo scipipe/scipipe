@@ -373,20 +373,25 @@ func (ip *FileIP) AuditInfo() *AuditInfo {
 	defer ip.lock.Unlock()
 	ip.lock.Lock()
 	if ip.auditInfo == nil {
-		ip.auditInfo = NewAuditInfo()
-		auditFileData, readFileErr := ioutil.ReadFile(ip.AuditFilePath())
-		if readFileErr != nil {
-			if os.IsNotExist(readFileErr) {
-				Info.Printf("Audit file not found, so not unmarshalling: %s\n", ip.AuditFilePath())
-			} else {
-				Failf("Could not read audit file, which does exist: %s", ip.AuditFilePath())
-			}
-		} else {
-			unmarshalErr := json.Unmarshal(auditFileData, ip.auditInfo)
-			CheckWithMsg(unmarshalErr, "Could not unmarshal audit log file content: "+ip.AuditFilePath())
-		}
+		ip.auditInfo = unmarshalAuditInfo(ip.AuditFilePath())
 	}
 	return ip.auditInfo
+}
+
+func unmarshalAuditInfo(fileName string) (auditInfo *AuditInfo) {
+	auditInfo = NewAuditInfo()
+	auditFileData, readFileErr := ioutil.ReadFile(fileName)
+	if readFileErr != nil {
+		if os.IsNotExist(readFileErr) {
+			Info.Printf("Audit file not found, so not unmarshalling: %s\n", fileName)
+		} else {
+			Failf("Could not read audit file, which does exist: %s", fileName)
+		}
+	} else {
+		unmarshalErr := json.Unmarshal(auditFileData, auditInfo)
+		CheckWithMsg(unmarshalErr, "Could not unmarshal audit log file content: "+fileName)
+	}
+	return auditInfo
 }
 
 // ------------------------------------------------------------------------
