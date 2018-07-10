@@ -373,12 +373,14 @@ func (ip *FileIP) AuditInfo() *AuditInfo {
 	defer ip.lock.Unlock()
 	ip.lock.Lock()
 	if ip.auditInfo == nil {
-		ip.auditInfo = unmarshalAuditInfo(ip.AuditFilePath())
+		ip.auditInfo = UnmarshalAuditInfoJSONFile(ip.AuditFilePath())
 	}
 	return ip.auditInfo
 }
 
-func unmarshalAuditInfo(fileName string) (auditInfo *AuditInfo) {
+// UnmarshalAuditInfoJSONFile returns an AuditInfo object from an AuditInfo
+// .json file
+func UnmarshalAuditInfoJSONFile(fileName string) (auditInfo *AuditInfo) {
 	auditInfo = NewAuditInfo()
 	auditFileData, readFileErr := ioutil.ReadFile(fileName)
 	if readFileErr != nil {
