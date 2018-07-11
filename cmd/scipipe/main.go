@@ -196,9 +196,9 @@ func auditInfoToTeX(inFilePath string, outFilePath string, flatten bool) error {
 
 	texTpl := template.New("TeX").Funcs(
 		template.FuncMap{
-			"replace": func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) },
-			"sub":     func(val1 int, val2 int) int { return val1 - val2 },
-			"tonanos": func(exact time.Duration) (rounded time.Duration) { return exact.Truncate(1e6 * time.Nanosecond) },
+			"strrepl":  func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) },
+			"sub":      func(val1 int, val2 int) int { return val1 - val2 },
+			"tomillis": func(exact time.Duration) (rounded time.Duration) { return exact.Truncate(1e6 * time.Nanosecond) },
 		})
 	texTpl, err = texTpl.Parse(texTemplate)
 	scipipe.CheckWithMsg(err, "Could not parse TeX template")
@@ -350,13 +350,13 @@ start,end,Name,color
 {\huge\textbf{SciPipe Audit Report}} \\
 \vspace{10pt}
 
-    \begin{tcolorbox}[ title=Workflow for file: {{ replace .FileName ".audit.json" "" }} ]
+    \begin{tcolorbox}[ title=Workflow for file: {{ strrepl .FileName ".audit.json" "" }} ]
     \small
 \begin{tabular}{rp{0.72\linewidth}}
 SciPipe version: & {{ .ScipipeVer }} \\
 Start time:  & {{ (index .AuditInfos 0).StartTime }} \\
 Finish time: & {{ (index .AuditInfos (sub (len .AuditInfos) 1)).FinishTime }} \\
-Run time: & {{ tonanos .RunTime }}  \\
+Run time: & {{ tomillis .RunTime }}  \\
 \end{tabular}
     \end{tcolorbox}
 
@@ -403,44 +403,25 @@ Run time: & {{ tonanos .RunTime }}  \\
             postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
             aboveskip=-8pt,belowskip=-12pt}
 
-   \begin{tcolorbox}[ title=fooer,
+{{ range .AuditInfos }}
+   \begin{tcolorbox}[ title={{ (strrepl .ProcessName "_" "\\_") }},
                       colbacktitle=color1,
                       colback=color1!50!white,
                       coltitle=black ]
        \small
        \begin{tabular}{rp{0.72\linewidth}}
-ID: & y23kkipm4p4y7kgdzuc1 \\
-Process: & fooer \\
+ID: & {{ .ID }} \\
+Process: & {{ (strrepl .ProcessName "_" "\\_") }} \\
 Command: & \begin{lstlisting}
-echo foo > fooer.foo.txt
+{{ strrepl .Command "_" "\\_" }}
 \end{lstlisting} \\
-Parameters:& \\
-Tags: & \\
-Start time:  & 2018-06-28 8:40:00.000000000 +0200 CEST \\
-Finish time: & 2018-06-28 8:50:00.000000000 +0200 CEST \\
-Execution time: & 7 ms \\
-Upstreams: & \\
+Parameters:& {{ range $k, $v := .Params }}{{- $k -}}={{- $v -}}{{ end }} \\
+Tags: & {{ range $k, $v := .Tags }}{{- $k -}}={{- $v -}}{{ end }} \\
+Start time:  & {{ .StartTime }} \\
+Finish time: & {{ .FinishTime }} \\
+Execution time: & {{ tomillis .ExecTimeNS }} \\
         \end{tabular}
-    \end{tcolorbox}
-
-    \begin{tcolorbox}[ title=foo2bar,
-                       colbacktitle=color2,
-                       colback=color2!50!white,
-                       coltitle=black ]
-        \small
-        \begin{tabular}{rp{0.72\linewidth}}
-ID: & omlcgx0izet4bprr7e5f \\
-Process: & foo2bar \\
-Command: & \begin{lstlisting}
-sed 's/foo/bar/g' ../fooer.foo.txt > fooer.foo.txt.foo2bar.bar.txt
-\end{lstlisting} \\
-Parameters:& \\
-Tags: & \\
-Start time: & 2018-06-28 8:50:00.000000000 +0200 CEST \\
-Finish time: & 2018-06-28 8:50:00.000000000 +0200 CEST \\
-Execution time: & 6 ms \\
-Upstreams: & \\
-        \end{tabular}
-    \end{tcolorbox}
+	\end{tcolorbox}
+{{ end }}
 
 \end{document}`
