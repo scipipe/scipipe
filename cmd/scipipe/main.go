@@ -194,13 +194,19 @@ func auditInfoToTeX(inFilePath string, outFilePath string, flatten bool) error {
 	auditInfosByID := extractAuditInfosByID(auditInfo)
 	auditInfosByStartTime := sortAuditInfosByStartTime(auditInfosByID)
 
-	texTpl := template.New("TeX").Funcs(template.FuncMap{"replace": func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) }})
+	texTpl := template.New("TeX").Funcs(
+		template.FuncMap{
+			"replace": func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) },
+			"sub":     func(val1 int, val2 int) int { return val1 - val2 },
+			"tonanos": func(exact time.Duration) (rounded time.Duration) { return exact.Truncate(1e6 * time.Nanosecond) },
+		})
 	texTpl, err = texTpl.Parse(texTemplate)
 	scipipe.CheckWithMsg(err, "Could not parse TeX template")
 
 	report := auditReport{
 		FileName:   inFilePath,
 		ScipipeVer: scipipe.Version,
+		RunTime:    auditInfosByStartTime[len(auditInfosByStartTime)-1].FinishTime.Sub(auditInfosByStartTime[0].StartTime),
 		AuditInfos: auditInfosByStartTime,
 	}
 
@@ -329,6 +335,7 @@ start,end,Name,color
 600000,1020000,foo2bar,color2
 }\loadedtable
 \pgfplotstablegetrowsof{\loadedtable}
+\pgfplotsset{compat=1.13}
 \pgfmathsetmacro{\tablerows}{int(\pgfplotsretval-1)}
 
 \begin{document}
@@ -336,20 +343,20 @@ start,end,Name,color
 \noindent
 \begin{minipage}{\textwidth}
     \vspace{-8em}\hspace{-8em}
-    \includegraphics[width=9em]{images/scipipe_logo_bluegrey.png}
+    %\includegraphics[width=9em]{images/scipipe_logo_bluegrey.png}
 \end{minipage}
 
 \noindent
-{\huge\textbf{SciPipe workflow report}}
+{\huge\textbf{SciPipe Audit Report}} \\
 \vspace{10pt}
 
-    \begin{tcolorbox}[ title=My workflow, ]
+    \begin{tcolorbox}[ title=Workflow for file: {{ replace .FileName ".audit.json" "" }} ]
     \small
 \begin{tabular}{rp{0.72\linewidth}}
-SciPipe version: & 0.7 \\
-Start time:  & 2018-06-28 8:40:00.000000000 +0200 CEST \\
-Finish time: & 2018-06-28 8:50:00.000000000 +0200 CEST \\
-Run time: &   \\
+SciPipe version: & {{ .ScipipeVer }} \\
+Start time:  & {{ (index .AuditInfos 0).StartTime }} \\
+Finish time: & {{ (index .AuditInfos (sub (len .AuditInfos) 1)).FinishTime }} \\
+Run time: & {{ tonanos .RunTime }}  \\
 \end{tabular}
     \end{tcolorbox}
 
@@ -357,7 +364,7 @@ Run time: &   \\
 
 \setlength{\fboxsep}{0pt}
 \noindent
-\hspace{-0.1725\textwidth}\fbox{\includegraphics[width=1.35\textwidth]{images/cawpre.pdf}}
+%\hspace{-0.1725\textwidth}\fbox{\includegraphics[width=1.35\textwidth]{images/cawpre.pdf}}
 \vfill
 \newpage
 
