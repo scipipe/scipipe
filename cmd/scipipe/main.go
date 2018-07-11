@@ -187,14 +187,24 @@ func formatTaskHTML(fileName string, auditInfo *scipipe.AuditInfo) (outHTML stri
 }
 
 func auditInfoToTeX(inFilePath string, outFilePath string, flatten bool) error {
-	texTpl, err := template.New("TeX").Parse(texTemplate)
-	scipipe.CheckWithMsg(err, "Could not parse TeX template")
-
 	outFile, err := os.Create(outFilePath)
 	scipipe.CheckWithMsg(err, "Could not create TeX file")
 
 	auditInfo := scipipe.UnmarshalAuditInfoJSONFile(inFilePath)
-	texTpl.Execute(outFile, auditInfo)
+	auditInfosByID := extractAuditInfosByID(auditInfo)
+	auditInfosByStartTime := sortAuditInfosByStartTime(auditInfosByID)
+
+	texTpl := template.New("TeX").Funcs(template.FuncMap{"replace": func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) }})
+	texTpl, err = texTpl.Parse(texTemplate)
+	scipipe.CheckWithMsg(err, "Could not parse TeX template")
+
+	report := auditReport{
+		FileName:   inFilePath,
+		ScipipeVer: scipipe.Version,
+		AuditInfos: auditInfosByStartTime,
+	}
+
+	texTpl.Execute(outFile, report)
 	return nil
 }
 
