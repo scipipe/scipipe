@@ -11,6 +11,7 @@ import (
 	"text/template"
 	"time"
 
+	colorful "github.com/lucasb-eyer/go-colorful"
 	"github.com/pkg/errors"
 	"github.com/scipipe/scipipe"
 )
@@ -211,6 +212,15 @@ func auditInfoToTeX(inFilePath string, outFilePath string, flatten bool) error {
 		AuditInfos: auditInfosByStartTime,
 	}
 
+	palette, err1 := colorful.WarmPalette(len(report.AuditInfos))
+	if err1 != nil {
+		scipipe.CheckWithMsg(err1, "Could not create color palette")
+	}
+	for i, col := range palette {
+		r, g, b := col.RGB255()
+		report.ColorDef += fmt.Sprintf("\\definecolor{color%d}{RGB}{%d,%d,%d}\n", i, r, g, b)
+	}
+
 	texTpl.Execute(outFile, report)
 	return nil
 }
@@ -319,8 +329,7 @@ const texTemplate = `\documentclass[11pt,oneside,openright]{memoir}
 \usepackage{pgfplotstable}
 \usepackage{xcolor}
 
-\definecolor{color1}{RGB}{146,200,180}
-\definecolor{color2}{RGB}{124,206,89}
+{{ .ColorDef }}
 
 % from https://tex.stackexchange.com/a/128040/110842
 % filter to only get the current row in \pgfplotsinvokeforeach
@@ -404,23 +413,23 @@ Run time: & {{ durtomillis .RunTime }}  \\
             postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
             aboveskip=-8pt,belowskip=-12pt}
 
-{{ range .AuditInfos }}
-   \begin{tcolorbox}[ title={{ (strrepl .ProcessName "_" "\\_") }},
-                      colbacktitle=color1,
-                      colback=color1!50!white,
+{{ range $i, $v := .AuditInfos }}
+   \begin{tcolorbox}[ title={{ (strrepl $v.ProcessName "_" "\\_") }},
+                      colbacktitle=color{{ $i }}!63!white,
+                      colback=color{{ $i }}!37!white,
                       coltitle=black ]
        \small
        \begin{tabular}{rp{0.72\linewidth}}
-ID: & {{ .ID }} \\
-Process: & {{ (strrepl .ProcessName "_" "\\_") }} \\
+ID: & {{ $v.ID }} \\
+Process: & {{ (strrepl $v.ProcessName "_" "\\_") }} \\
 Command: & \begin{lstlisting}
-{{ strrepl .Command "_" "\\_" }}
+{{ strrepl $v.Command "_" "\\_" }}
 \end{lstlisting} \\
-Parameters:& {{ range $k, $v := .Params }}{{- $k -}}={{- $v -}}{{ end }} \\
-Tags: & {{ range $k, $v := .Tags }}{{- $k -}}={{- $v -}}{{ end }} \\
-Start time:  & {{ timetomillis .StartTime }} \\
-Finish time: & {{ timetomillis .FinishTime }} \\
-Execution time: & {{ durtomillis .ExecTimeNS }} \\
+Parameters:& {{ range $k, $v := $v.Params }}{{- $k -}}={{- $v -}}{{ end }} \\
+Tags: & {{ range $k, $v := $v.Tags }}{{- $k -}}={{- $v -}}{{ end }} \\
+Start time:  & {{ timetomillis $v.StartTime }} \\
+Finish time: & {{ timetomillis $v.FinishTime }} \\
+Execution time: & {{ durtomillis $v.ExecTimeNS }} \\
         \end{tabular}
 	\end{tcolorbox}
 {{ end }}

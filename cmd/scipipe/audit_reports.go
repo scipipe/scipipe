@@ -13,4 +13,5 @@ type auditReport struct {
 	ScipipeVer string
 	RunTime    time.Duration
 	AuditInfos []*scipipe.AuditInfo
+	ColorDef   string
 }
