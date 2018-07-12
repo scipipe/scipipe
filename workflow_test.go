@@ -72,12 +72,20 @@ func TestDotGraph(t *testing.T) {
 }
 `
 	actual := wf.DotGraph(false)
-
 	if expected != actual {
 		t.Errorf("Dot graph is not as expected!\nEXPECTED:\n%s\nACTUAL:\n%s\n", expected, actual)
 	}
 
-	cleanFilePatterns("/tmp/p1.txt*")
+	expectedTailLabels := `digraph "testwf" {
+  "p1" [shape=box];
+  "p2" [shape=box];
+  "p1" -> "p2" [taillabel="out", headlabel="in"];
+}
+`
+	actualTailLabels := wf.DotGraph(true)
+	if actualTailLabels != expectedTailLabels {
+		t.Errorf("Dot graph with tail label is not as expected!\nEXPECTED:\n%s\nACTUAL:\n%s\n", expectedTailLabels, actualTailLabels)
+	}
 }
 
 func TestRunToProc(t *testing.T) {
