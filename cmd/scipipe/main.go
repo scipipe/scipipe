@@ -196,9 +196,10 @@ func auditInfoToTeX(inFilePath string, outFilePath string, flatten bool) error {
 
 	texTpl := template.New("TeX").Funcs(
 		template.FuncMap{
-			"strrepl":  func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) },
-			"sub":      func(val1 int, val2 int) int { return val1 - val2 },
-			"tomillis": func(exact time.Duration) (rounded time.Duration) { return exact.Truncate(1e6 * time.Nanosecond) },
+			"strrepl":      func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) },
+			"sub":          func(val1 int, val2 int) int { return val1 - val2 },
+			"durtomillis":  func(exact time.Duration) (rounded time.Duration) { return exact.Truncate(1e6 * time.Nanosecond) },
+			"timetomillis": func(exact time.Time) (rounded time.Time) { return exact.Truncate(1e6 * time.Nanosecond) },
 		})
 	texTpl, err = texTpl.Parse(texTemplate)
 	scipipe.CheckWithMsg(err, "Could not parse TeX template")
@@ -354,9 +355,9 @@ start,end,Name,color
     \small
 \begin{tabular}{rp{0.72\linewidth}}
 SciPipe version: & {{ .ScipipeVer }} \\
-Start time:  & {{ (index .AuditInfos 0).StartTime }} \\
-Finish time: & {{ (index .AuditInfos (sub (len .AuditInfos) 1)).FinishTime }} \\
-Run time: & {{ tomillis .RunTime }}  \\
+Start time:  & {{ timetomillis (index .AuditInfos 0).StartTime }} \\
+Finish time: & {{ timetomillis (index .AuditInfos (sub (len .AuditInfos) 1)).FinishTime }} \\
+Run time: & {{ durtomillis .RunTime }}  \\
 \end{tabular}
     \end{tcolorbox}
 
@@ -417,9 +418,9 @@ Command: & \begin{lstlisting}
 \end{lstlisting} \\
 Parameters:& {{ range $k, $v := .Params }}{{- $k -}}={{- $v -}}{{ end }} \\
 Tags: & {{ range $k, $v := .Tags }}{{- $k -}}={{- $v -}}{{ end }} \\
-Start time:  & {{ .StartTime }} \\
-Finish time: & {{ .FinishTime }} \\
-Execution time: & {{ tomillis .ExecTimeNS }} \\
+Start time:  & {{ timetomillis .StartTime }} \\
+Finish time: & {{ timetomillis .FinishTime }} \\
+Execution time: & {{ durtomillis .ExecTimeNS }} \\
         \end{tabular}
 	\end{tcolorbox}
 {{ end }}
