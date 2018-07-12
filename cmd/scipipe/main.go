@@ -197,20 +197,22 @@ func auditInfoToTeX(inFilePath string, outFilePath string, flatten bool) error {
 
 	texTpl := template.New("TeX").Funcs(
 		template.FuncMap{
-			"strrepl":         func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) },
-			"sub":             func(val1 int, val2 int) int { return val1 - val2 },
-			"durtomillis":     func(exact time.Duration) (rounded time.Duration) { return exact.Truncate(1e6 * time.Nanosecond) },
-			"timetomillis":    func(exact time.Time) (rounded time.Time) { return exact.Truncate(1e6 * time.Nanosecond) },
-			"timetomillisint": func(exact time.Time) (millis int) { return int(exact.Nanosecond() / 1000000) },
+			"strrepl":        func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) },
+			"sub":            func(val1 int, val2 int) int { return val1 - val2 },
+			"timesub":        func(t1 time.Time, t2 time.Time) time.Duration { return t1.Sub(t2) },
+			"durtomillis":    func(exact time.Duration) (rounded time.Duration) { return exact.Truncate(1e6 * time.Nanosecond) },
+			"timetomillis":   func(exact time.Time) (rounded time.Time) { return exact.Truncate(1e6 * time.Nanosecond) },
+			"durtomillisint": func(exact time.Duration) (millis int) { return int(exact.Nanoseconds() / 1000000) },
 		})
 	texTpl, err = texTpl.Parse(texTemplate)
 	scipipe.CheckWithMsg(err, "Could not parse TeX template")
 
 	report := auditReport{
-		FileName:   inFilePath,
-		ScipipeVer: scipipe.Version,
-		RunTime:    auditInfosByStartTime[len(auditInfosByStartTime)-1].FinishTime.Sub(auditInfosByStartTime[0].StartTime),
-		AuditInfos: auditInfosByStartTime,
+		FileName:    inFilePath,
+		ScipipeVer:  scipipe.Version,
+		RunTime:     auditInfosByStartTime[len(auditInfosByStartTime)-1].FinishTime.Sub(auditInfosByStartTime[0].StartTime),
+		AuditInfos:  auditInfosByStartTime,
+		ChartHeight: fmt.Sprintf("%.0f", float64(len(auditInfosByStartTime))*0.6),
 	}
 
 	palette, err1 := colorful.WarmPalette(len(report.AuditInfos))
@@ -342,7 +344,8 @@ const texTemplate = `\documentclass[11pt,oneside,openright]{memoir}
 
 \pgfplotstableread[col sep=comma]{
 start,end,Name,color
-{{ range $i, $v := .AuditInfos }}{{ timetomillisint $v.StartTime }},{{ timetomillisint $v.FinishTime }},proc\_{{ $i }},color{{ $i }}
+{{ $startTime := (index .AuditInfos 0).StartTime }}
+{{ range $i, $v := .AuditInfos }}{{ durtomillisint (timesub $v.StartTime $startTime) }},{{ durtomillisint (timesub $v.FinishTime $startTime) }},{{ strrepl .ProcessName "_" "\\_" }},color{{ $i }}
 {{ end }}
 }\loadedtable
 \pgfplotstablegetrowsof{\loadedtable}
@@ -371,13 +374,10 @@ Run time: & {{ durtomillis .RunTime }}  \\
 \end{tabular}
     \end{tcolorbox}
 
-\vfill
-
 \setlength{\fboxsep}{0pt}
 \noindent
+
 %\hspace{-0.1725\textwidth}\fbox{\includegraphics[width=1.35\textwidth]{images/cawpre.pdf}}
-\vfill
-\newpage
 
 \section*{Execution timeline}
 
@@ -386,15 +386,16 @@ Run time: & {{ durtomillis .RunTime }}  \\
     xbar, xmin=0,
     y axis line style = { opacity = 0 },
     tickwidth         = 0pt,
-    width=12cm, height=3.5cm, enlarge y limits=0.5,
+	width=10cm,
+	height={{ .ChartHeight }}cm,
     % next two lines also from https://tex.stackexchange.com/a/128040/110842,
     ytick={0,...,\tablerows},
     yticklabels from table={\loadedtable}{Name},
     xbar stacked,
     bar shift=0pt,
     y dir=reverse,
-    xtick={1, 300000, 600000, 900000, 1200000},
-    xticklabels={0, 5 min, 10 min, 15 min, 20 min},
+    xtick={1, 60000, 120000, 180000, 240000, 300000, 600000, 900000, 1200000},
+    xticklabels={0, 1 min, 2 min, 3 min, 4 min, 5 min, 10 min, 15 min, 20 min},
     scaled x ticks=false,
 ]
 
@@ -409,10 +410,12 @@ Run time: & {{ durtomillis .RunTime }}  \\
 \end{axis}
 \end{tikzpicture}
 
+\newpage
+
 \section*{Tasks}
     \lstset{ breaklines=true,
             postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
-            aboveskip=-8pt,belowskip=-12pt}
+            aboveskip=8pt,belowskip=8pt}
 
 {{ range $i, $v := .AuditInfos }}
    \begin{tcolorbox}[ title={{ (strrepl $v.ProcessName "_" "\\_") }},
