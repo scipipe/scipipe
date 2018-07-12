@@ -212,7 +212,7 @@ func auditInfoToTeX(inFilePath string, outFilePath string, flatten bool) error {
 		ScipipeVer:  scipipe.Version,
 		RunTime:     auditInfosByStartTime[len(auditInfosByStartTime)-1].FinishTime.Sub(auditInfosByStartTime[0].StartTime),
 		AuditInfos:  auditInfosByStartTime,
-		ChartHeight: fmt.Sprintf("%.0f", float64(len(auditInfosByStartTime))*0.6),
+		ChartHeight: fmt.Sprintf("%.03f", 1.0+float64(len(auditInfosByStartTime))*0.6),
 	}
 
 	palette, err1 := colorful.WarmPalette(len(report.AuditInfos))
