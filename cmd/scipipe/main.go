@@ -197,10 +197,11 @@ func auditInfoToTeX(inFilePath string, outFilePath string, flatten bool) error {
 
 	texTpl := template.New("TeX").Funcs(
 		template.FuncMap{
-			"strrepl":      func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) },
-			"sub":          func(val1 int, val2 int) int { return val1 - val2 },
-			"durtomillis":  func(exact time.Duration) (rounded time.Duration) { return exact.Truncate(1e6 * time.Nanosecond) },
-			"timetomillis": func(exact time.Time) (rounded time.Time) { return exact.Truncate(1e6 * time.Nanosecond) },
+			"strrepl":         func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) },
+			"sub":             func(val1 int, val2 int) int { return val1 - val2 },
+			"durtomillis":     func(exact time.Duration) (rounded time.Duration) { return exact.Truncate(1e6 * time.Nanosecond) },
+			"timetomillis":    func(exact time.Time) (rounded time.Time) { return exact.Truncate(1e6 * time.Nanosecond) },
+			"timetomillisint": func(exact time.Time) (millis int) { return int(exact.Nanosecond() / 1000000) },
 		})
 	texTpl, err = texTpl.Parse(texTemplate)
 	scipipe.CheckWithMsg(err, "Could not parse TeX template")
@@ -341,8 +342,8 @@ const texTemplate = `\documentclass[11pt,oneside,openright]{memoir}
 
 \pgfplotstableread[col sep=comma]{
 start,end,Name,color
-0,600000,fooer,color1
-600000,1020000,foo2bar,color2
+{{ range $i, $v := .AuditInfos }}{{ timetomillisint $v.StartTime }},{{ timetomillisint $v.FinishTime }},proc\_{{ $i }},color{{ $i }}
+{{ end }}
 }\loadedtable
 \pgfplotstablegetrowsof{\loadedtable}
 \pgfplotsset{compat=1.13}
