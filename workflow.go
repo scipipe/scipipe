@@ -173,7 +173,21 @@ func (wf *Workflow) DecConcurrentTasks(slots int) {
 // If edgeLabels is set to true, a label containing the in-port and out-port
 // to which edges are connected to, will be printed.
 func (wf *Workflow) PlotGraph(filePath string, edgeLabels bool, createPdf bool) {
-	dot := fmt.Sprintf(`digraph "%s" {`+"\n", wf.Name())
+	dot := wf.DotGraph(edgeLabels)
+	dotFile, err := os.Create(filePath)
+	CheckWithMsg(err, "Could not create dot file "+filePath)
+	dotFile.WriteString(dot)
+	if createPdf {
+		ExecCmd(fmt.Sprintf("dot -Tpdf %s -o %s.pdf", filePath, filePath))
+	}
+}
+
+// DotGraph generates a graph description in DOT format
+// (See https://en.wikipedia.org/wiki/DOT_%28graph_description_language%29)
+// If edgeLabels is set to true, a label containing the in-port and out-port to
+// which edges are connected to, will be printed.
+func (wf *Workflow) DotGraph(edgeLabels bool) (dot string) {
+	dot = fmt.Sprintf(`digraph "%s" {`+"\n", wf.Name())
 	con := ""
 	remToDotPtn, err := regexp.Compile(`^[^\.]+\.`)
 	Check(err)
@@ -202,12 +216,7 @@ func (wf *Workflow) PlotGraph(filePath string, edgeLabels bool, createPdf bool) 
 	}
 	dot += con
 	dot += "}\n"
-	dotIP := NewFileIP(filePath)
-	dotIP.Write([]byte(dot))
-	dotIP.Atomize()
-	if createPdf {
-		ExecCmd(fmt.Sprintf("dot -Tpdf %s -o %s.pdf", filePath, filePath))
-	}
+	return
 }
 
 // ----------------------------------------------------------------------------

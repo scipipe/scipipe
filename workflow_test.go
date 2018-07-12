@@ -54,6 +54,32 @@ func TestAddProc(t *testing.T) {
 	}
 }
 
+func TestDotGraph(t *testing.T) {
+	initTestLogs()
+	wf := NewWorkflow("testwf", 4)
+
+	p1 := wf.NewProc("p1", "echo p1 > {o:out}")
+	p1.SetOut("out", "/tmp/p1.txt")
+
+	p2 := wf.NewProc("p2", "cat {i:in} > {o:out}")
+	p2.SetOut("out", "{i:in}.p2.txt")
+	p2.In("in").From(p1.Out("out"))
+
+	expected := `digraph "testwf" {
+  "p1" [shape=box];
+  "p2" [shape=box];
+  "p1" -> "p2";
+}
+`
+	actual := wf.DotGraph(false)
+
+	if expected != actual {
+		t.Errorf("Dot graph is not as expected!\nEXPECTED:\n%s\nACTUAL:\n%s\n", expected, actual)
+	}
+
+	cleanFilePatterns("/tmp/p1.txt*")
+}
+
 func TestRunToProc(t *testing.T) {
 	initTestLogs()
 
@@ -79,7 +105,7 @@ func TestRunToProc(t *testing.T) {
 		t.Errorf("Replaced (merge) file (/tmp/foo.txt.bar.rpl.txt) is not created, which it should (at this point): %v", err)
 	}
 
-	cleanFiles("/tmp/*.txt*")
+	cleanFilePatterns("/tmp/foo.txt*")
 }
 
 func getWorkflowForTestRunToProc(wfName string) *Workflow {
