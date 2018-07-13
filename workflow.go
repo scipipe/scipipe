@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -113,6 +114,22 @@ func (wf *Workflow) Proc(procName string) WorkflowProcess {
 	return wf.procs[procName]
 }
 
+// ProcsSorted returns the processes of the workflow, in an array, sorted by the
+// process names
+func (wf *Workflow) ProcsSorted() []WorkflowProcess {
+	keys := []string{}
+	for k := range wf.Procs() {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	procs := []WorkflowProcess{}
+	for _, k := range keys {
+		procs = append(procs, wf.Proc(k))
+	}
+	return procs
+}
+
 // Procs returns a map of all processes keyed by their names in the workflow
 func (wf *Workflow) Procs() map[string]WorkflowProcess {
 	return wf.procs
@@ -191,8 +208,8 @@ func (wf *Workflow) DotGraph(edgeLabels bool) (dot string) {
 	con := ""
 	remToDotPtn, err := regexp.Compile(`^[^\.]+\.`)
 	Check(err)
-	for pName, p := range wf.Procs() {
-		dot += fmt.Sprintf(`  "%s" [shape=box];`+"\n", pName)
+	for _, p := range wf.ProcsSorted() {
+		dot += fmt.Sprintf(`  "%s" [shape=box];`+"\n", p.Name())
 		// File connections
 		for opname, op := range p.OutPorts() {
 			for rpname, rp := range op.RemotePorts {

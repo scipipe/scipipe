@@ -32,6 +32,27 @@ func TestMaxConcurrentTasksCapacity(t *testing.T) {
 	}
 }
 
+func TestProcsSorted(t *testing.T) {
+	wf := NewWorkflow("testwf", 4)
+	wf.NewProc("p1", "#p1")
+	wf.NewProc("p2", "#p2")
+	wf.NewProc("p3", "#p3")
+	wf.NewProc("p4", "#p4")
+
+	actualNames := []string{}
+	for _, p := range wf.ProcsSorted() {
+		actualNames = append(actualNames, p.Name())
+	}
+
+	expectedNames := []string{"p1", "p2", "p3", "p4"}
+
+	for i := range actualNames {
+		if actualNames[i] != expectedNames[i] {
+			t.Errorf("Presumedly sorted array wasnt as expected.\nEXPECTED:%v\nACTUAL:\n%v\n", expectedNames, actualNames)
+		}
+	}
+}
+
 func TestAddProc(t *testing.T) {
 	initTestLogs()
 
