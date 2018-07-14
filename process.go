@@ -100,7 +100,8 @@ func (p *Process) initDefaultPathFormatters() {
 			for _, ipName := range sortedFileIPMapKeys(t.InIPs) {
 				pathPcs = append(pathPcs, filepath.Base(t.InIP(ipName).Path()))
 			}
-			pathPcs = append(pathPcs, t.process.Name())
+			procName := sanitizePathFragment(t.process.Name())
+			pathPcs = append(pathPcs, procName)
 			for _, paramName := range sortedStringMapKeys(t.Params) {
 				pathPcs = append(pathPcs, paramName+"_"+t.Param(paramName))
 			}

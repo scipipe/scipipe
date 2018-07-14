@@ -489,6 +489,17 @@ func TestReceiveBothIPsAndParams(t *testing.T) {
 	cleanFiles(files...)
 }
 
+func TestSanitizePathFragments(t *testing.T) {
+	for input, expected := range map[string]string{
+		"Base Complement": "base_complement",
+	} {
+		actual := sanitizePathFragment(input)
+		if actual != expected {
+			t.Errorf("Result was not as expected:\nEXPECTED:\n%s\nACTUAL:\n%s", expected, actual)
+		}
+	}
+}
+
 // --------------------------------------------------------------------------------
 // CombinatoricsProcess helper process
 // --------------------------------------------------------------------------------

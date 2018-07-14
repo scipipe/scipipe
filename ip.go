@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 )
@@ -418,4 +420,14 @@ func (ip *FileIP) createDirs() {
 	dir := filepath.Dir(ip.Path())
 	err := os.MkdirAll(dir, 0777)
 	CheckWithMsg(err, "Could not create directory: "+dir)
+}
+
+func sanitizePathFragment(s string) (sanitized string) {
+	s = strings.ToLower(s)
+	disallowedChars, err := regexp.Compile("[^a-z0-9_\\-\\.]+")
+	if err != nil {
+		panic(err)
+	}
+	sanitized = disallowedChars.ReplaceAllString(s, "_")
+	return
 }

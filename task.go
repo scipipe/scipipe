@@ -364,7 +364,7 @@ func AtomizeIPs(tempExecDir string, ips ...*FileIP) {
 // in file paths. It is built up by merging all input filenames and parameter
 // values that a task takes as input, joined with dots.
 func (t *Task) TempDir() string {
-	pathPcs := []string{"tmp." + t.Name}
+	pathPcs := []string{"tmp." + sanitizePathFragment(t.Name)}
 	for _, ipName := range sortedFileIPMapKeys(t.InIPs) {
 		pathPcs = append(pathPcs, filepath.Base(t.InIP(ipName).Path()))
 	}
