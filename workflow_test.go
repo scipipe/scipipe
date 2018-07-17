@@ -86,26 +86,27 @@ func TestDotGraph(t *testing.T) {
 	p2.SetOut("out", "{i:in}.p2.txt")
 	p2.In("in").From(p1.Out("out"))
 
-	expected := `digraph "testwf" {
-  "p1" [shape=box];
-  "p2" [shape=box];
-  "p1" -> "p2";
-}
-`
-	actual := wf.DotGraph(false)
-	if expected != actual {
-		t.Errorf("Dot graph is not as expected!\nEXPECTED:\n%s\nACTUAL:\n%s\n", expected, actual)
-	}
-
 	expectedTailLabels := `digraph "testwf" {
   "p1" [shape=box];
   "p2" [shape=box];
   "p1" -> "p2" [taillabel="out", headlabel="in"];
 }
 `
-	actualTailLabels := wf.DotGraph(true)
+	actualTailLabels := wf.DotGraph()
 	if actualTailLabels != expectedTailLabels {
 		t.Errorf("Dot graph with tail label is not as expected!\nEXPECTED:\n%s\nACTUAL:\n%s\n", expectedTailLabels, actualTailLabels)
+	}
+
+	wf.PlotConf.EdgeLabels = false
+	expected := `digraph "testwf" {
+  "p1" [shape=box];
+  "p2" [shape=box];
+  "p1" -> "p2";
+}
+`
+	actual := wf.DotGraph()
+	if expected != actual {
+		t.Errorf("Dot graph is not as expected!\nEXPECTED:\n%s\nACTUAL:\n%s\n", expected, actual)
 	}
 }
 

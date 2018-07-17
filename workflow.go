@@ -33,6 +33,13 @@ type Workflow struct {
 	sink              *Sink
 	driver            WorkflowProcess
 	logFile           string
+	PlotConf          WorkflowPlotConf
+}
+
+// WorkflowPlotConf contains configuraiton for plotting the workflow as a graph
+// with graphviz
+type WorkflowPlotConf struct {
+	EdgeLabels bool
 }
 
 // WorkflowProcess is an interface for processes to be handled by Workflow
@@ -82,6 +89,7 @@ func newWorkflowWithoutLogging(name string, maxConcurrentTasks int) *Workflow {
 		name:            name,
 		procs:           map[string]WorkflowProcess{},
 		concurrentTasks: make(chan struct{}, maxConcurrentTasks),
+		PlotConf:        WorkflowPlotConf{EdgeLabels: true},
 	}
 	sink := NewSink(wf, name+"_default_sink")
 	wf.sink = sink
@@ -185,25 +193,27 @@ func (wf *Workflow) DecConcurrentTasks(slots int) {
 	}
 }
 
-// PlotGraph writes the workflow structure to a dot file, and optionally to a
-// PDF file (requires graphviz, with the dot command, installed on the system)
-// If edgeLabels is set to true, a label containing the in-port and out-port
-// to which edges are connected to, will be printed.
-func (wf *Workflow) PlotGraph(filePath string, edgeLabels bool, createPdf bool) {
-	dot := wf.DotGraph(edgeLabels)
+// PlotGraph writes the workflow structure to a dot file
+func (wf *Workflow) PlotGraph(filePath string) {
+	dot := wf.DotGraph()
 	dotFile, err := os.Create(filePath)
 	CheckWithMsg(err, "Could not create dot file "+filePath)
 	dotFile.WriteString(dot)
-	if createPdf {
-		ExecCmd(fmt.Sprintf("dot -Tpdf %s -o %s.pdf", filePath, filePath))
-	}
+}
+
+// PlotGraphPDF writes the workflow structure to a dot file, and also runs the
+// graphviz dot command to produce a PDF file (requires graphviz, with the dot
+// command, installed on the system)
+func (wf *Workflow) PlotGraphPDF(filePath string) {
+	wf.PlotGraph(filePath)
+	ExecCmd(fmt.Sprintf("dot -Tpdf %s -o %s.pdf", filePath, filePath))
 }
 
 // DotGraph generates a graph description in DOT format
 // (See https://en.wikipedia.org/wiki/DOT_%28graph_description_language%29)
-// If edgeLabels is set to true, a label containing the in-port and out-port to
-// which edges are connected to, will be printed.
-func (wf *Workflow) DotGraph(edgeLabels bool) (dot string) {
+// If Workflow.PlotConf.EdgeLabels is set to true, a label containing the
+// in-port and out-port to which edges are connected to, will be printed.
+func (wf *Workflow) DotGraph() (dot string) {
 	dot = fmt.Sprintf(`digraph "%s" {`+"\n", wf.Name())
 	con := ""
 	remToDotPtn, err := regexp.Compile(`^[^\.]+\.`)
@@ -213,7 +223,7 @@ func (wf *Workflow) DotGraph(edgeLabels bool) (dot string) {
 		// File connections
 		for opname, op := range p.OutPorts() {
 			for rpname, rp := range op.RemotePorts {
-				if edgeLabels {
+				if wf.PlotConf.EdgeLabels {
 					con += fmt.Sprintf(`  "%s" -> "%s" [taillabel="%s", headlabel="%s"];`+"\n", op.Process().Name(), rp.Process().Name(), remToDotPtn.ReplaceAllString(opname, ""), remToDotPtn.ReplaceAllString(rpname, ""))
 				} else {
 					con += fmt.Sprintf(`  "%s" -> "%s";`+"\n", op.Process().Name(), rp.Process().Name())
@@ -223,7 +233,7 @@ func (wf *Workflow) DotGraph(edgeLabels bool) (dot string) {
 		// Parameter connections
 		for popname, pop := range p.OutParamPorts() {
 			for rpname, rp := range pop.RemotePorts {
-				if edgeLabels {
+				if wf.PlotConf.EdgeLabels {
 					con += fmt.Sprintf(`  "%s" -> "%s" [style="dashed", taillabel="%s", headlabel="%s"];`+"\n", pop.Process().Name(), rp.Process().Name(), remToDotPtn.ReplaceAllString(popname, ""), remToDotPtn.ReplaceAllString(rpname, ""))
 				} else {
 					con += fmt.Sprintf(`  "%s" -> "%s" [style="dashed"];`+"\n", pop.Process().Name(), rp.Process().Name())
