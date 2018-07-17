@@ -100,8 +100,8 @@ func main() {
     wf := sp.NewWorkflow("hello_world", 4)
 
     // Initialize processes, and file extensions
-    hello := wf.NewProc("hello", "echo 'Hello ' > {o:out.txt}")
-    world := wf.NewProc("world", "echo $(cat {i:in}) World > {o:out.txt}")
+    hello := wf.NewProc("hello", "echo 'Hello ' > {o:out|.txt}")
+    world := wf.NewProc("world", "echo $(cat {i:in}) World > {o:out|.txt}")
 
     // Define data flow
     world.In("in").From(hello.Out("out"))
@@ -116,13 +116,13 @@ func main() {
 Let's put the code in a file named `scipipe_helloworld.go` and run it:
 
 ```bash
-$ go run hello_world.go
-AUDIT   2018/06/15 19:04:22 | workflow:hello_world             | Starting workflow (Writing log to log/scipipe-20180615-190422-hello_world.log)
-AUDIT   2018/06/15 19:04:22 | hello                            | Executing: echo 'Hello ' > hello.out.txt.tmp/hello.out.txt
-AUDIT   2018/06/15 19:04:22 | hello                            | Finished:  echo 'Hello ' > hello.out.txt.tmp/hello.out.txt
-AUDIT   2018/06/15 19:04:22 | world                            | Executing: echo $(cat hello.out.txt) World > hello.out.txt.world.out.txt.tmp/hello.out.txt.world.out.txt
-AUDIT   2018/06/15 19:04:22 | world                            | Finished:  echo $(cat hello.out.txt) World > hello.out.txt.world.out.txt.tmp/hello.out.txt.world.out.txt
-AUDIT   2018/06/15 19:04:22 | workflow:hello_world             | Finished workflow (Log written to log/scipipe-20180615-190422-hello_world.log)
+$ go run minimal.go
+AUDIT   2018/07/17 21:42:26 | workflow:hello_world             | Starting workflow (Writing log to log/scipipe-20180717-214226-hello_world.log)
+AUDIT   2018/07/17 21:42:26 | hello                            | Executing: echo 'Hello ' > hello.out.txt
+AUDIT   2018/07/17 21:42:26 | hello                            | Finished: echo 'Hello ' > hello.out.txt
+AUDIT   2018/07/17 21:42:26 | world                            | Executing: echo $(cat ../hello.out.txt) World > hello.out.txt.world.out.txt
+AUDIT   2018/07/17 21:42:26 | world                            | Finished: echo $(cat ../hello.out.txt) World > hello.out.txt.world.out.txt
+AUDIT   2018/07/17 21:42:26 | workflow:hello_world             | Finished workflow (Log written to log/scipipe-20180717-214226-hello_world.log)
 ```
 
 Let's check what file SciPipe has generated:
@@ -148,11 +148,11 @@ Hello World
 Now we can rejoice that it contains the text "Hello World", exactly as a proper
 Hello World example should :)
 
-Now, these were a little long and cumbersome filename, weren't they? SciPipe
+Now, these were a little long and cumbersome filenames, weren't they? SciPipe
 gives you very good control over how to name your files, if you don't want to
 rely on the automatic file naming. For example, we could set the first filename
-statically, and then use the first name as a basis for the file name for the
-second process, like so:
+to a static one, and then use the first name as a basis for the file name for
+the second process, like so:
 
 ```go
 package main
@@ -171,7 +171,8 @@ func main() {
     hello.SetOut("out", "hello.txt")
 
     world := wf.NewProc("world", "echo $(cat {i:in}) World >> {o:out}")
-    world.SetOut("out", "{i:in}.world.txt")
+    // The modifier 's/.txt//' will replace '.txt' in the input path with ''
+    world.SetOut("out", "{i:in|s/.txt//}_world.txt")
 
     // Connect network
     world.In("in").From(hello.Out("out"))

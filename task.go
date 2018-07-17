@@ -32,7 +32,7 @@ type Task struct {
 // ------------------------------------------------------------------------
 
 // NewTask instantiates and initializes a new Task
-func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, inIPs map[string]*FileIP, outPathFuncs map[string]func(*Task) string, outPortsDoStream map[string]bool, params map[string]string, tags map[string]string, prepend string, customExecute func(*Task), cores int) *Task {
+func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, inIPs map[string]*FileIP, outPathFuncs map[string]func(*Task) string, portInfo map[string]*PortInfo, params map[string]string, tags map[string]string, prepend string, customExecute func(*Task), cores int) *Task {
 	t := &Task{
 		Name:          name,
 		InIPs:         inIPs,
@@ -50,38 +50,33 @@ func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, i
 	// Create Out-IPs
 	for oname, outPathFunc := range outPathFuncs {
 		oip := NewFileIP(outPathFunc(t))
-		if outPortsDoStream[oname] {
-			oip.doStream = true
+		if ptInfo, ok := portInfo[oname]; ok {
+			if ptInfo.doStream {
+				oip.doStream = true
+			}
 		}
 		t.OutIPs[oname] = oip
 	}
-	t.Command = formatCommand(cmdPat, inIPs, t.OutIPs, params, tags, prepend)
+	t.Command = formatCommand(cmdPat, portInfo, inIPs, t.OutIPs, params, tags, prepend)
 	return t
 }
 
 // formatCommand is a helper function for NewTask, that formats a shell command
 // based on concrete file paths and parameter values
-func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*FileIP, params map[string]string, tags map[string]string, prepend string) string {
+func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]*FileIP, outIPs map[string]*FileIP, params map[string]string, tags map[string]string, prepend string) string {
 	r := getShellCommandPlaceHolderRegex()
 	placeHolderMatches := r.FindAllStringSubmatch(cmd, -1)
-	portInfos := map[string]map[string]string{}
+	placeholders := map[string]string{}
 	for _, placeHolderMatch := range placeHolderMatches {
-		portName := placeHolderMatch[2]
-		portInfos[portName] = map[string]string{}
-		portInfos[portName]["match"] = placeHolderMatch[0]
-		portInfos[portName]["port_type"] = placeHolderMatch[1]
-		portInfos[portName]["port_name"] = portName
-		portInfos[portName]["reduce_inputs"] = "false"
-		// Identify if the place holder represents a reduce-type in-port
-		if len(placeHolderMatch) > 5 {
-			portInfos[portName]["reduce_inputs"] = "true"
-			portInfos[portName]["sep"] = placeHolderMatch[7]
-		}
+		rest := placeHolderMatch[2]
+		restParts := strings.Split(rest, "|")
+		portName := restParts[0]
+		placeholders[portName] = placeHolderMatch[0]
 	}
 
 	for portName, portInfo := range portInfos {
 		var filePath string
-		switch portInfo["port_type"] {
+		switch portInfo.portType {
 		case "o":
 			if outIPs[portName] == nil {
 				Fail("Missing outpath for outport '", portName, "' for command '", cmd, "'")
@@ -96,7 +91,7 @@ func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*File
 			if inIPs[portName] == nil {
 				Fail("Missing in-IP for inport '", portName, "' for command '", cmd, "'")
 			}
-			if portInfo["reduce_inputs"] == "true" && inIPs[portName].Path() == "" {
+			if portInfo.join && portInfo.joinSep != "" {
 				// Merge multiple input paths from a substream on the IP, into one string
 				ips := []*FileIP{}
 				for ip := range inIPs[portName].SubStream.Chan {
@@ -106,7 +101,7 @@ func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*File
 				for _, ip := range ips {
 					paths = append(paths, parentDirPath(ip.Path()))
 				}
-				filePath = strings.Join(paths, portInfo["sep"])
+				filePath = strings.Join(paths, portInfo.joinSep)
 			} else {
 				if inIPs[portName].Path() == "" {
 					Fail("Missing inpath for inport '", portName, "', and no substream, for command '", cmd, "'")
@@ -134,7 +129,7 @@ func formatCommand(cmd string, inIPs map[string]*FileIP, outIPs map[string]*File
 		default:
 			Fail("Replace failed for port ", portName, " for command '", cmd, "'")
 		}
-		cmd = strings.Replace(cmd, portInfo["match"], filePath, -1)
+		cmd = strings.Replace(cmd, placeholders[portName], filePath, -1)
 	}
 
 	// Add prepend string to the command

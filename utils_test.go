@@ -19,10 +19,11 @@ func TestRegexPatternMatchesCases(t *testing.T) {
 		"{i:hej}",
 		"{is:hej}",
 		"{o:hej}",
+		"{o:hej|.txt}",
 		"{os:hej}",
-		"{i:hej:r}",
-		"{i:hej:r: }",
-		"{i:hej:r:,}",
+		"{i:hej|join}",
+		"{i:hej|join: }",
+		"{i:hej|join:,}",
 	}
 	for _, ph := range placeHolders {
 		if !r.Match([]byte(ph)) {

@@ -3,6 +3,7 @@ package scipipe
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -12,14 +13,13 @@ import (
 // and parameters received on its in-ports and parameter ports
 type Process struct {
 	BaseProcess
-	CommandPattern    string
-	OutPortsDoStream  map[string]bool
-	OutFileExtensions map[string]string
-	PathFormatters    map[string]func(*Task) string
-	CustomExecute     func(*Task)
-	CoresPerTask      int
-	Prepend           string
-	Spawn             bool
+	CommandPattern string
+	PathFormatters map[string]func(*Task) string
+	CustomExecute  func(*Task)
+	CoresPerTask   int
+	Prepend        string
+	Spawn          bool
+	PortInfo       map[string]*PortInfo
 }
 
 // ------------------------------------------------------------------------
@@ -34,17 +34,25 @@ func NewProc(workflow *Workflow, name string, cmd string) *Process {
 			workflow,
 			name,
 		),
-		CommandPattern:    cmd,
-		OutPortsDoStream:  make(map[string]bool),
-		OutFileExtensions: make(map[string]string),
-		PathFormatters:    make(map[string]func(*Task) string),
-		Spawn:             true,
-		CoresPerTask:      1,
+		CommandPattern: cmd,
+		PathFormatters: make(map[string]func(*Task) string),
+		Spawn:          true,
+		CoresPerTask:   1,
+		PortInfo:       map[string]*PortInfo{},
 	}
 	workflow.AddProc(p)
 	p.initPortsFromCmdPattern(cmd, nil)
 	p.initDefaultPathFormatters()
 	return p
+}
+
+// PortInfo is a container for various information about process ports
+type PortInfo struct {
+	portType  string
+	extension string
+	doStream  bool
+	join      bool
+	joinSep   string
 }
 
 // initPortsFromCmdPattern is a helper function for NewProc, that sets up in-
@@ -59,34 +67,43 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 
-	portInfos := map[string]map[string]string{}
 	for _, m := range ms {
 		portType := m[1]
-		portName := m[2]
-		portInfos[portName] = map[string]string{}
-		portInfos[portName]["type"] = portType
-		if len(m) > 3 {
-			portInfos[portName]["extension"] = m[4]
+		portRest := m[2]
+		splitParts := strings.Split(portRest, "|")
+		portName := splitParts[0]
+
+		p.PortInfo[portName] = &PortInfo{portType: portType}
+
+		for _, part := range splitParts[1:] {
+			fileExtPtn := regexp.MustCompile("\\.([a-z0-9\\.\\-\\_]+)")
+			if fileExtPtn.MatchString(part) {
+				m := fileExtPtn.FindStringSubmatch(part)
+				p.PortInfo[portName].extension = m[1]
+			}
+			joinPtn := regexp.MustCompile("join:([^{}|]+)")
+			if joinPtn.MatchString(part) {
+				m := joinPtn.FindStringSubmatch(part)
+				p.PortInfo[portName].join = true
+				p.PortInfo[portName].joinSep = m[1]
+			}
 		}
 	}
 
-	for portName, portInfo := range portInfos {
-		if portInfo["type"] == "o" || portInfo["type"] == "os" {
+	for portName, pInfo := range p.PortInfo {
+		if pInfo.portType == "o" || pInfo.portType == "os" {
 			p.InitOutPort(p, portName)
-			if portInfo["type"] == "os" {
-				p.OutPortsDoStream[portName] = true
+			if pInfo.portType == "os" {
+				p.PortInfo[portName].doStream = true
 			}
-		} else if portInfo["type"] == "i" {
+		} else if pInfo.portType == "i" {
 			p.InitInPort(p, portName)
-		} else if portInfo["type"] == "p" {
+		} else if pInfo.portType == "p" {
 			if params == nil {
 				p.InitInParamPort(p, portName)
 			} else if _, ok := params[portName]; !ok {
 				p.InitInParamPort(p, portName)
 			}
-		}
-		if ext, ok := portInfo["extension"]; ok {
-			p.OutFileExtensions[portName] = ext
 		}
 	}
 }
@@ -111,10 +128,9 @@ func (p *Process) initDefaultPathFormatters() {
 				pathPcs = append(pathPcs, tagName+"_"+t.Tag(tagName))
 			}
 			pathPcs = append(pathPcs, outName)
-			if opExt, ok := p.OutFileExtensions[outName]; ok {
-				if opExt != "" {
-					pathPcs = append(pathPcs, opExt)
-				}
+			fileExt := p.PortInfo[outName].extension
+			if fileExt != "" {
+				pathPcs = append(pathPcs, fileExt)
 			}
 			return strings.Join(pathPcs, ".")
 		}
@@ -200,6 +216,7 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 	}
 	p.SetPathCustom(outPortName, func(t *Task) string {
 		path := pathPattern // Avoiding reusing the same variable in multiple instances of this func
+
 		r := getShellCommandPlaceHolderRegex()
 		matches := r.FindAllStringSubmatch(path, -1)
 		for _, match := range matches {
@@ -207,7 +224,11 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 
 			placeHolder := match[0]
 			phType := match[1]
-			phName := match[2]
+			restMatch := match[2]
+
+			parts := strings.Split(restMatch, "|")
+			phName := parts[0]
+			restParts := parts[1:]
 
 			switch phType {
 			case "i":
@@ -219,6 +240,21 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 			default:
 				Fail("Replace failed for placeholder ", phName, " for path patterh '", path, "'")
 			}
+
+			if len(restParts) > 0 {
+				ptn := regexp.MustCompile("s\\/([^\\/]+)\\/([^\\/]*)\\/")
+
+				for _, restPart := range restParts {
+					if ptn.MatchString(restPart) {
+						mbits := ptn.FindStringSubmatch(restPart)
+						search := mbits[1]
+						replace := mbits[2]
+						replacement = strings.Replace(replacement, search, replace, 1)
+					}
+				}
+			}
+
+			// Replace placeholder with concrete value
 			path = strings.Replace(path, placeHolder, replacement, -1)
 		}
 		return path
@@ -329,7 +365,7 @@ func (p *Process) createTasks() (ch chan *Task) {
 			}
 
 			// Create task and send on the channel we are about to return
-			ch <- NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.OutPortsDoStream, params, tags, p.Prepend, p.CustomExecute, p.CoresPerTask)
+			ch <- NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.PortInfo, params, tags, p.Prepend, p.CustomExecute, p.CoresPerTask)
 
 			// If we have no in-ports nor param in-ports, we should break after the first iteration
 			if len(p.inPorts) == 0 && len(p.inParamPorts) == 0 {

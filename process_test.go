@@ -31,8 +31,10 @@ func TestSetOut(t *testing.T) {
 		nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)
 
 	inputsAndOutputs := map[string]string{
-		"{i:foo}":                "foo.txt",
-		"{i:foo}.bar.{p:p1}.txt": "foo.txt.bar.p1val.txt",
+		"{i:foo}":                  "foo.txt",
+		"{i:foo}.bar.{p:p1}.txt":   "foo.txt.bar.p1val.txt",
+		"{i:foo|s/.txt//}_bar.txt": "foo_bar.txt",
+		"{i:foo|s/.txt/.bar/}.txt": "foo.bar.txt",
 	}
 	for pathPattern, expectedPath := range inputsAndOutputs {
 		// Set a path format for the "bar" out-port
@@ -61,7 +63,7 @@ func TestSetPathReplace(t *testing.T) {
 
 func TestDefaultPattern(t *testing.T) {
 	wf := NewWorkflow("test_wf", 16)
-	p := wf.NewProc("cat_foo", "cat {i:foo} > {o:bar.txt} # {p:p1}")
+	p := wf.NewProc("cat_foo", "cat {i:foo} > {o:bar|.txt} # {p:p1}")
 	p.InParam("p1").FromStr("p1val")
 
 	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)

@@ -353,14 +353,14 @@ func TestStreaming(t *testing.T) {
 	cleanFiles("/tmp/lsl.txt", "/tmp/lsl.txt.grepped.txt")
 }
 
-func TestSubStreamReduceInPlaceHolder(t *testing.T) {
+func TestSubStreamJoinInPlaceHolder(t *testing.T) {
 	initTestLogs()
 
 	exec.Command("bash", "-c", "echo 1 > /tmp/file1.txt").CombinedOutput()
 	exec.Command("bash", "-c", "echo 2 > /tmp/file2.txt").CombinedOutput()
 	exec.Command("bash", "-c", "echo 3 > /tmp/file3.txt").CombinedOutput()
 
-	wf := NewWorkflow("TestSubStreamReduceInPlaceHolderWf", 16)
+	wf := NewWorkflow("TestSubStreamJoinInPlaceHolderWf", 16)
 
 	// Create some input files
 
@@ -369,7 +369,7 @@ func TestSubStreamReduceInPlaceHolder(t *testing.T) {
 	sts := NewStreamToSubStream(wf, "str_to_substr")
 	sts.In().From(ipg.Out())
 
-	cat := wf.NewProc("concatenate", "cat {i:infiles:r: } > {o:merged}")
+	cat := wf.NewProc("concatenate", "cat {i:infiles|join: } > {o:merged}")
 	cat.SetOut("merged", "/tmp/substream_merged.txt")
 	cat.In("infiles").From(sts.OutSubStream())
 
