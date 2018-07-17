@@ -56,7 +56,7 @@ func main() {
 	// --------------------------------------------------------------------------------
 	ungzipRef := wf.NewProc("ugzip_ref", "gunzip -c {i:in} > {o:out}")
 	ungzipRef.In("in").From(dlRef.Out("outfile"))
-	ungzipRef.SetPathReplace("in", "out", ".gz", "")
+	ungzipRef.SetOut("out", "{i:in|%.gz}")
 
 	// --------------------------------------------------------------------------------
 	// Index Reference Genome

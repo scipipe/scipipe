@@ -23,7 +23,7 @@ func main() {
     hello.SetOut("out", "hello.txt")
 
     world := wf.NewProc("world", "echo $(cat {i:in}) World >> {o:out}")
-    world.SetPathReplace("in", "out", ".txt", "_world.txt")
+    world.SetOut("out", "{i:in|%.txt}_world.txt")
 
     // Connect network
     world.In("in").From(hello.Out("out"))
@@ -73,7 +73,7 @@ be done using special convenience methods on the processes, starting with
 ```go
 // Configure output file path formatters for the processes created above
 hello.SetOut("out", "hello.txt")
-world.SetPathReplace("in", "out", ".txt", "_world.txt")
+world.SetOut("out", "{i:in|%.txt}_world.txt")
 ```
 
 `SetOut` takes a pattern similar to the shell command pattern, with
@@ -83,10 +83,13 @@ placeholders that can be used are: `{i:INPORTNAME}`, `{p:PARAMNAME}` and
 `{i:foo}.replace_with_{p:replacement}.txt`, but can also be used for
 simple, static paths, like in the example above.
 
-`SetPathReplace` takes an in-port name, and out-port name, and then a
-search-pattern in the input-filename, and a replace-pattern for the output
-filename.  With the example above, our input file named `hello.txt` will be
-converted into `hello_world.txt` by this path pattern.
+The placeholders can also take certain extra commands, separated from the
+placeholder name by pipe characters, and of which the one used above is
+probably the most important one: `%STRING`. It will remove the specified
+string from the _end_ of the path, which is useful when we want to avoid
+getting too long paths when re-using previous processes' paths. With the
+example above, our input file named `hello.txt` will be converted into
+`hello_world.txt` by this path pattern.
 
 ## Even more control over file formatting
 

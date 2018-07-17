@@ -171,7 +171,7 @@ func main() {
     hello.SetOut("out", "hello.txt")
 
     world := wf.NewProc("world", "echo $(cat {i:in}) World >> {o:out}")
-    world.SetPathReplace("in", "out", ".txt", "_world.txt")
+    world.SetOut("out", "{i:in|%.txt}_world.txt")
 
     // Connect network
     world.In("in").From(hello.Out("out"))
@@ -180,6 +180,10 @@ func main() {
     wf.Run()
 }
 ```
+
+In the `{i:in...` part, we are re-using the file path from the file received on
+the in-port named 'in', and then running a Bash-style trim-from-end command on
+it to remove the `.txt` extension.
 
 Now, if we run this, the file names get a little cleaner:
 

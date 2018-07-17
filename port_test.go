@@ -17,7 +17,7 @@ func TestMultiInPort(t *testing.T) {
 	tjena.SetOut("tjenafile", "/tmp/tjena.txt")
 
 	world := wf.NewProc("append_world", "echo $(cat {i:infile}) world > {o:worldfile}")
-	world.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")
+	world.SetOut("worldfile", "{i:infile|%.txt}_world.txt")
 	world.In("infile").From(hello.Out("hellofile"))
 	world.In("infile").From(tjena.Out("tjenafile"))
 

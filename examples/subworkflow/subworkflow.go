@@ -35,7 +35,7 @@ func NewFooBarSubWorkflow(wf *sp.Workflow, name string) *FooBarSubWorkflow {
 	fbn.Procs["foo"].SetOut("foo", "foo.txt")
 
 	fbn.Procs["f2b"] = sp.NewProc(wf, "f2b", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	fbn.Procs["f2b"].SetPathReplace("foo", "bar", ".txt", ".bar.txt")
+	fbn.Procs["f2b"].SetOut("bar", "{i:foo|%.txt}.bar.txt")
 
 	// Connect together inner processes
 	fbn.Procs["foo"].Out("foo").To(fbn.Procs["f2b"].In("foo"))

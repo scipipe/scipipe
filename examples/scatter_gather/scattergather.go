@@ -18,14 +18,14 @@ func main() {
 	wget.SetOut("chry_zipped", "chry.fa.gz")
 
 	// Ungzip the fasta file
-	unzip := wf.NewProc("ungzip", "gunzip -c {i:gzipped} > {o:ungzipped}")
-	unzip.SetPathReplace("gzipped", "ungzipped", ".gz", "")
-	unzip.In("gzipped").From(wget.Out("chry_zipped"))
+	unzip := wf.NewProc("ungzip", "gunzip -c {i:gz} > {o:ungz}")
+	unzip.SetOut("ungz", "{i:gz|%.gz}")
+	unzip.In("gz").From(wget.Out("chry_zipped"))
 
 	// Split the fasta file in to parts with 100000 lines in each
 	linesPerSplit := 100000
 	split := comp.NewFileSplitter(wf, "file_splitter", linesPerSplit)
-	split.InFile().From(unzip.Out("ungzipped"))
+	split.InFile().From(unzip.Out("ungz"))
 
 	// Count GC & AT characters in the fasta file
 	charCountCommand := "cat {i:infile} | fold -w 1 | grep '[%s]' | wc -l | awk '{ print $1 }' > {o:%s}"

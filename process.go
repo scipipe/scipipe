@@ -269,14 +269,6 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 	})
 }
 
-// SetPathReplace creates an (output) path formatter that uses an input's path
-// but replaces parts of it.
-func (p *Process) SetPathReplace(inPortName string, outPortName string, old string, new string) {
-	p.PathFormatters[outPortName] = func(t *Task) string {
-		return strings.Replace(t.InPath(inPortName), old, new, -1)
-	}
-}
-
 // SetPathCustom takes a function which produces a file path based on data
 // available in *Task, such as concrete file paths and parameter values,
 func (p *Process) SetPathCustom(outPortName string, pathFmtFunc func(task *Task) (path string)) {
