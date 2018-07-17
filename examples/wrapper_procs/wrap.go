@@ -31,7 +31,7 @@ type Fooer struct {
 
 func NewFooer(wf *sci.Workflow, name string) *Fooer {
 	innerFoo := sci.NewProc(wf, "fooer", "echo foo > {o:foo}")
-	innerFoo.SetPathStatic("foo", "foo.txt")
+	innerFoo.SetOut("foo", "foo.txt")
 	return &Fooer{innerFoo, name}
 }
 
@@ -51,7 +51,7 @@ type Foo2Barer struct {
 
 func NewFoo2Barer(wf *sci.Workflow, name string) *Foo2Barer {
 	innerFoo2Bar := sci.NewProc(wf, "foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	innerFoo2Bar.SetPathExtend("foo", "bar", ".bar.txt")
+	innerFoo2Bar.SetOut("bar", "{i:foo}.bar.txt")
 	return &Foo2Barer{innerFoo2Bar, name}
 }
 

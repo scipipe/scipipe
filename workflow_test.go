@@ -142,10 +142,10 @@ func getWorkflowForTestRunToProc(wfName string) *Workflow {
 	wf := NewWorkflow(wfName, 4)
 
 	foo := wf.NewProc("foo", "echo foo > {o:out}")
-	foo.SetPathStatic("out", "/tmp/foo.txt")
+	foo.SetOut("out", "/tmp/foo.txt")
 
 	bar := wf.NewProc("bar", "echo bar > {o:out}")
-	bar.SetPathStatic("out", "/tmp/bar.txt")
+	bar.SetOut("out", "/tmp/bar.txt")
 
 	mrg := wf.NewProc("mrg", "cat {i:in1} {i:in2} > {o:mgd}")
 	mrg.SetPathCustom("mgd", func(tk *Task) string {
@@ -155,7 +155,7 @@ func getWorkflowForTestRunToProc(wfName string) *Workflow {
 	mrg.In("in2").From(bar.Out("out"))
 
 	rpl := wf.NewProc("rpl", "cat {i:in} | sed 's/bar/baz/' > {o:out}")
-	rpl.SetPathExtend("in", "out", ".rpl.txt")
+	rpl.SetOut("out", "{i:in}.rpl.txt")
 	rpl.In("in").From(mrg.Out("mgd"))
 
 	return wf
@@ -172,7 +172,7 @@ func TestBasicRun(t *testing.T) {
 	p2 := wf.NewProc("p2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	assertIsType(t, p2.In("foo"), NewInPort("foo"))
 	assertIsType(t, p2.Out("bar"), NewOutPort("bar"))
-	p2.SetPathExtend("foo", "bar", ".bar.txt")
+	p2.SetOut("bar", "{i:foo}.bar.txt")
 
 	p2.In("foo").From(p1.Out("foo"))
 
@@ -243,9 +243,9 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 	// Run pipeline a first time
 	wf1 := NewWorkflow("TestDontOverWriteExistingOutputsWf1", 16)
 	tsk := wf1.NewProc("tsk", "echo hej > {o:hej1}")
-	tsk.SetPathStatic("hej1", f)
+	tsk.SetOut("hej1", f)
 	prt := wf1.NewProc("prt", "cat {i:in1} > {o:done}")
-	prt.SetPathExtend("in1", "done", ".done.txt")
+	prt.SetOut("done", "{i:in1}.done.txt")
 	prt.In("in1").From(tsk.Out("hej1"))
 	wf1.Run()
 
@@ -262,7 +262,7 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 	tsk = wf2.NewProc("tsk", "echo hej > {o:hej2}")
 	tsk.SetPathCustom("hej2", func(task *Task) string { return f })
 	prt = wf2.NewProc("prt", "cat {i:in1} > {o:done}")
-	prt.SetPathExtend("in1", "done", ".done.txt")
+	prt.SetOut("done", "{i:in1}.done.txt")
 	prt.In("in1").From(tsk.Out("hej2"))
 	wf2.Run()
 
@@ -293,11 +293,11 @@ func TestSendOrderedOutputs(t *testing.T) {
 	ig := NewFileSource(wf, "ipgen", fnames...)
 
 	fc := wf.NewProc("fc", "echo {i:in} > {o:out}")
-	fc.SetPathExtend("in", "out", "")
+	fc.SetOut("out", "{i:in}")
 	fc.In("in").From(ig.Out())
 
 	sl := wf.NewProc("sl", "cat {i:in} > {o:out}")
-	sl.SetPathExtend("in", "out", ".copy.txt")
+	sl.SetOut("out", "{i:in}.copy.txt")
 	sl.In("in").From(fc.Out("out"))
 
 	assertNotNil(t, sl.Out)
@@ -339,9 +339,9 @@ func TestStreaming(t *testing.T) {
 	// Set up and run workflow
 	wf := NewWorkflow("TestStreamingWf", 16)
 	ls := wf.NewProc("ls", "ls -l / > {os:lsl}")
-	ls.SetPathStatic("lsl", "/tmp/lsl.txt")
+	ls.SetOut("lsl", "/tmp/lsl.txt")
 	grp := wf.NewProc("grp", "grep etc {i:in} > {o:grepped}")
-	grp.SetPathExtend("in", "grepped", ".grepped.txt")
+	grp.SetOut("grepped", "{i:in}.grepped.txt")
 	grp.In("in").From(ls.Out("lsl"))
 	wf.Run()
 
@@ -370,7 +370,7 @@ func TestSubStreamReduceInPlaceHolder(t *testing.T) {
 	sts.In().From(ipg.Out())
 
 	cat := wf.NewProc("concatenate", "cat {i:infiles:r: } > {o:merged}")
-	cat.SetPathStatic("merged", "/tmp/substream_merged.txt")
+	cat.SetOut("merged", "/tmp/substream_merged.txt")
 	cat.In("infiles").From(sts.OutSubStream())
 
 	wf.Run()
@@ -398,10 +398,10 @@ func TestMultipleLastProcs(t *testing.T) {
 
 	for _, str := range strs {
 		writeStr := wf.NewProc("writestr_"+str, "echo "+str+" > {o:out}")
-		writeStr.SetPathStatic("out", "/tmp/"+str+".txt")
+		writeStr.SetOut("out", "/tmp/"+str+".txt")
 
 		catStr := wf.NewProc("catstr_"+str, "cat {i:in} > {o:out}")
-		catStr.SetPathExtend("in", "out", ".cat.txt")
+		catStr.SetOut("out", "{i:in}.cat.txt")
 		catStr.In("in").From(writeStr.Out("out"))
 	}
 
@@ -427,7 +427,7 @@ func TestPassOnTags(t *testing.T) {
 	wf := NewWorkflow("TestPassOnTags_WF", 4)
 
 	hey := wf.NewProc("create_file", "echo hey > {o:heyfile}")
-	hey.SetPathStatic("heyfile", "/tmp/hey.txt")
+	hey.SetOut("heyfile", "/tmp/hey.txt")
 
 	tag := NewMapToTags(wf, "add_tag", func(ip *FileIP) map[string]string {
 		return map[string]string{"hey": "you"}
@@ -435,7 +435,7 @@ func TestPassOnTags(t *testing.T) {
 	tag.In().From(hey.Out("heyfile"))
 
 	you := wf.NewProc("add_you", "echo '$(cat {i:infile}) you' > {o:youfile}")
-	you.SetPathExtend("infile", "youfile", ".you.txt")
+	you.SetOut("youfile", "{i:infile}.you.txt")
 	you.In("infile").From(tag.Out())
 
 	wf.Run()
@@ -459,7 +459,7 @@ func TestReceiveBothIPsAndParams(t *testing.T) {
 	wf := NewWorkflow("multiout", 4)
 
 	echo := wf.NewProc("echo", "echo hej > {o:hej}")
-	echo.SetPathStatic("hej", "/tmp/ipsparams.hej.txt")
+	echo.SetOut("hej", "/tmp/ipsparams.hej.txt")
 
 	params := NewParamSource(wf, "params", "tjo", "hej", "hopp")
 

@@ -79,7 +79,9 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 		} else if portInfo["type"] == "i" {
 			p.InitInPort(p, portName)
 		} else if portInfo["type"] == "p" {
-			if params == nil || params[portName] == "" {
+			if params == nil {
+				p.InitInParamPort(p, portName)
+			} else if _, ok := params[portName]; !ok {
 				p.InitInParamPort(p, portName)
 			}
 		}
@@ -179,35 +181,16 @@ func (p *Process) OutParam(portName string) *OutParamPort {
 // Main API methods: Configure path formatting
 // ------------------------------------------------------------------------
 
-// SetPathStatic creates an (output) path formatter returning a static string file name
-func (p *Process) SetPathStatic(outPortName string, path string) {
-	p.PathFormatters[outPortName] = func(t *Task) string {
-		return path
-	}
-}
-
-// SetPathExtend creates an (output) path formatter that extends the path of
-// an input IP
-func (p *Process) SetPathExtend(inPortName string, outPortName string, extension string) {
-	p.PathFormatters[outPortName] = func(t *Task) string {
-		return t.InPath(inPortName) + extension
-	}
-}
-
-// SetPathReplace creates an (output) path formatter that uses an input's path
-// but replaces parts of it.
-func (p *Process) SetPathReplace(inPortName string, outPortName string, old string, new string) {
-	p.PathFormatters[outPortName] = func(t *Task) string {
-		return strings.Replace(t.InPath(inPortName), old, new, -1)
-	}
-}
-
-// SetOut allows setting the path of outputs using a pattern similar to the
-// command pattern used to create new processes. Available patterns to use are:
-// {i:inport}
-// {p:paramname}
-// {t:tagname}
+// SetOut initializes a port (if it does not already exist), and takes a
+// configuration for its outputs paths via a pattern similar to the command
+// pattern used to create new processes, with placeholder tags. Available
+// placeholder tags to use are:
+// {i:inport_name}
+// {p:param_name}
+// {t:tag_name}
 // An example might be: {i:foo}.replace_with_{p:replacement}.txt
+// ... given that the process contains an in-port named 'foo', and a parameter
+// named 'replacement'.
 // If an out-port with the specified name does not exist, it will be created.
 // This allows to create out-ports for filenames that are created without explicitly
 // stating a filename on the commandline, such as when only submitting a prefix.
@@ -240,6 +223,14 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 		}
 		return path
 	})
+}
+
+// SetPathReplace creates an (output) path formatter that uses an input's path
+// but replaces parts of it.
+func (p *Process) SetPathReplace(inPortName string, outPortName string, old string, new string) {
+	p.PathFormatters[outPortName] = func(t *Task) string {
+		return strings.Replace(t.InPath(inPortName), old, new, -1)
+	}
 }
 
 // SetPathCustom takes a function which produces a file path based on data

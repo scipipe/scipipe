@@ -11,10 +11,10 @@ func TestMultiInPort(t *testing.T) {
 
 	wf := NewWorkflow("test_multiinport_wf", 4)
 	hello := wf.NewProc("write_hello", "echo hello > {o:hellofile}")
-	hello.SetPathStatic("hellofile", "/tmp/hello.txt")
+	hello.SetOut("hellofile", "/tmp/hello.txt")
 
 	tjena := wf.NewProc("write_tjena", "echo tjena > {o:tjenafile}")
-	tjena.SetPathStatic("tjenafile", "/tmp/tjena.txt")
+	tjena.SetOut("tjenafile", "/tmp/tjena.txt")
 
 	world := wf.NewProc("append_world", "echo $(cat {i:infile}) world > {o:worldfile}")
 	world.SetPathReplace("infile", "worldfile", ".txt", "_world.txt")

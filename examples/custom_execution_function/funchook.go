@@ -33,7 +33,7 @@ func NewFooer(wf *Workflow, name string) *Fooer {
 	// just specify the out-port foo
 	innerFoo := NewProc(wf, "fooer", "{o:foo}")
 	// Set the output formatter to a static string
-	innerFoo.SetPathStatic("foo", "foo.txt")
+	innerFoo.SetOut("foo", "foo.txt")
 	// Create the custom execute function, with pure Go code
 	innerFoo.CustomExecute = func(task *Task) {
 		task.OutIP("foo").Write([]byte("foo\n"))
@@ -60,7 +60,7 @@ func NewFoo2Barer(wf *Workflow, name string) *Foo2Barer {
 	// just specify the in-port foo and the out-port bar
 	innerProc := NewProc(wf, "foo2bar", "{i:foo}{o:bar}")
 	// Set the output formatter to extend the path on the "bar"" in-port
-	innerProc.SetPathExtend("foo", "bar", ".bar.txt")
+	innerProc.SetOut("bar", "{i:foo}.bar.txt")
 	// Create the custom execute function, with pure Go code
 	innerProc.CustomExecute = func(task *Task) {
 		task.OutIP("bar").Write(bytes.Replace(task.InIP("foo").Read(), []byte("foo"), []byte("bar"), 1))

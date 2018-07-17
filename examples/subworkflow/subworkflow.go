@@ -32,7 +32,7 @@ func NewFooBarSubWorkflow(wf *sp.Workflow, name string) *FooBarSubWorkflow {
 	}
 
 	fbn.Procs["foo"] = sp.NewProc(wf, "foo", "echo foo > {o:foo}")
-	fbn.Procs["foo"].SetPathStatic("foo", "foo.txt")
+	fbn.Procs["foo"].SetOut("foo", "foo.txt")
 
 	fbn.Procs["f2b"] = sp.NewProc(wf, "f2b", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	fbn.Procs["f2b"].SetPathReplace("foo", "bar", ".txt", ".bar.txt")

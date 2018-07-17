@@ -15,7 +15,7 @@ func main() {
 	// Download a zipped Chromosome Y fasta file
 	fastaURL := "ftp://ftp.ensembl.org/pub/release-84/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.Y.fa.gz"
 	wget := wf.NewProc("wget", "wget "+fastaURL+" -O {o:chry_zipped}")
-	wget.SetPathStatic("chry_zipped", "chry.fa.gz")
+	wget.SetOut("chry_zipped", "chry.fa.gz")
 
 	// Ungzip the fasta file
 	unzip := wf.NewProc("ungzip", "gunzip -c {i:gzipped} > {o:ungzipped}")
@@ -30,11 +30,11 @@ func main() {
 	// Count GC & AT characters in the fasta file
 	charCountCommand := "cat {i:infile} | fold -w 1 | grep '[%s]' | wc -l | awk '{ print $1 }' > {o:%s}"
 	gccnt := wf.NewProc("gccount", fmt.Sprintf(charCountCommand, "GC", "gccount"))
-	gccnt.SetPathExtend("infile", "gccount", ".gccnt")
+	gccnt.SetOut("gccount", "{i:infile}.gccnt")
 	gccnt.In("infile").From(split.OutSplitFile())
 
 	atcnt := wf.NewProc("atcount", fmt.Sprintf(charCountCommand, "AT", "atcount"))
-	atcnt.SetPathExtend("infile", "atcount", ".atcnt")
+	atcnt.SetOut("atcount", "{i:infile}.atcnt")
 	atcnt.In("infile").From(split.OutSplitFile())
 
 	// Concatenate GC & AT counts
@@ -47,16 +47,16 @@ func main() {
 	// Sum up the GC & AT counts on the concatenated file
 	sumCommand := "awk '{ SUM += $1 } END { print SUM }' {i:in} > {o:sum}"
 	gcsum := wf.NewProc("gcsum", sumCommand)
-	gcsum.SetPathExtend("in", "sum", ".sum")
+	gcsum.SetOut("sum", "{i:in}.sum")
 	gcsum.In("in").From(gccat.Out())
 
 	atsum := wf.NewProc("atsum", sumCommand)
-	atsum.SetPathExtend("in", "sum", ".sum")
+	atsum.SetOut("sum", "{i:in}.sum")
 	atsum.In("in").From(atcat.Out())
 
 	// Finally, calculate the ratio between GC chars, vs. GC+AT chars
 	gcrat := wf.NewProc("gcratio", "gc=$(cat {i:gcsum}); at=$(cat {i:atsum}); calc \"$gc/($gc+$at)\" > {o:gcratio}")
-	gcrat.SetPathStatic("gcratio", "gcratio.txt")
+	gcrat.SetOut("gcratio", "gcratio.txt")
 	gcrat.In("gcsum").From(gcsum.Out("sum"))
 	gcrat.In("atsum").From(atsum.Out("sum"))
 

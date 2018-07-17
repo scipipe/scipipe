@@ -142,10 +142,10 @@ func main() {
 
 	// Initialize processes
 	foo := wf.NewProc("fooer", "echo foo > {o:foo}")
-	foo.SetPathStatic("foo", "foo.txt")
+	foo.SetOut("foo", "foo.txt")
 
 	f2b := wf.NewProc("foo2bar", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	f2b.SetPathExtend("foo", "bar", ".bar.txt")
+	f2b.SetOut("bar", "{i:foo}.bar.txt")
 
 	// From workflow dependency network
 	f2b.In("foo").From(foo.Out("foo"))

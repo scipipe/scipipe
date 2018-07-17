@@ -36,7 +36,7 @@ type HiWriter struct {
 func NewHiWriter() *HiWriter {
     // Initialize a normal "Process" to use as an "inner" process
 	innerHiWriter := sci.NewProc("hiwriter", "echo hi > {o:hifile}")
-	innerHiWriter.SetPathStatic("hifile", "hi.txt")
+	innerHiWriter.SetOut("hifile", "hi.txt")
 
     // Create a new HiWriter process with the inner process embedded into it
 	return &HiWriter{innerHiWriter}

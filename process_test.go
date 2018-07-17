@@ -22,27 +22,17 @@ func TestNewProc(t *testing.T) {
 	}
 }
 
-func TestSetPathStatic(t *testing.T) {
+func TestSetOut(t *testing.T) {
 	wf := NewWorkflow("test_wf", 16)
-	p := NewProc(wf, "echo_foo", "echo foo > {o:bar}")
-	p.SetPathStatic("bar", "bar.txt")
+	p := wf.NewProc("cat_foo", "cat {i:foo} > {o:bar} # {p:p1}")
+	p.InParam("p1").FromStr("p1val")
+	p.SetOut("bar", "{i:foo}.bar.{p:p1}.txt")
 
-	mockTask := NewTask(wf, p, "echo_foo_task", "", nil, nil, nil, nil, nil, "", nil, 1)
+	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)
 
-	if p.PathFormatters["bar"](mockTask) != "bar.txt" {
-		t.Error(`p.PathFormatters["bar"]() != "bar.txt"`)
-	}
-}
-
-func TestSetPathExtend(t *testing.T) {
-	wf := NewWorkflow("test_wf", 16)
-	p := NewProc(wf, "cat_foo", "cat {i:foo} > {o:bar}")
-	p.SetPathExtend("foo", "bar", ".bar.txt")
-
-	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, nil, nil, "", nil, 1)
-
-	if p.PathFormatters["bar"](mockTask) != "foo.txt.bar.txt" {
-		t.Error(`p.PathFormatters["bar"]() != "foo.txt.bar.txt"`)
+	expected := "foo.txt.bar.p1val.txt"
+	if p.PathFormatters["bar"](mockTask) != expected {
+		t.Errorf(`Did not get expected path in SetOut. Got:%v Expected:%v`, p.PathFormatters["bar"](mockTask), expected)
 	}
 }
 
@@ -55,20 +45,6 @@ func TestSetPathReplace(t *testing.T) {
 
 	if p.PathFormatters["bar"](mockTask) != "foo.bar.txt" {
 		t.Error(`p.PathFormatters["bar"]() != "foo.bar.txt"`)
-	}
-}
-
-func TestSetPathPattern(t *testing.T) {
-	wf := NewWorkflow("test_wf", 16)
-	p := wf.NewProc("cat_foo", "cat {i:foo} > {o:bar} # {p:p1}")
-	p.InParam("p1").FromStr("p1val")
-	p.SetOut("bar", "{i:foo}.bar.{p:p1}.txt")
-
-	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)
-
-	expected := "foo.txt.bar.p1val.txt"
-	if p.PathFormatters["bar"](mockTask) != expected {
-		t.Errorf(`Did not get expected path in SetOut. Got:%v Expected:%v`, p.PathFormatters["bar"](mockTask), expected)
 	}
 }
 

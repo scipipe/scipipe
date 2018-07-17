@@ -168,10 +168,10 @@ func main() {
 
     // Initialize processes and set output file paths
     hello := wf.NewProc("hello", "echo 'Hello ' > {o:out}")
-    hello.SetPathStatic("out", "hello.txt")
+    hello.SetOut("out", "hello.txt")
 
     world := wf.NewProc("world", "echo $(cat {i:in}) World >> {o:out}")
-    world.SetPathReplace("in", "out", ".txt", "_world.txt")
+    world.SetOut("out", "{i:in}.world.txt")
 
     // Connect network
     world.In("in").From(hello.Out("out"))
@@ -187,9 +187,9 @@ Now, if we run this, the file names get a little cleaner:
 $ ls -1 hello*
 hello.txt
 hello.txt.audit.json
-hello_world.go
-hello_world.txt
-hello_world.txt.audit.json
+hello.txt.world.go
+hello.txt.world.txt
+hello.txt.world.txt.audit.json
 ```
 
 ## The audit logs
@@ -197,11 +197,11 @@ hello_world.txt.audit.json
 Finally, we could have a look at one of those audit file created:
 
 ```bash
-$ cat hello_world.txt.audit.json
+$ cat hello.txt.world.txt.audit.json
 {
     "ID": "99i5vxhtd41pmaewc8pr",
     "ProcessName": "world",
-    "Command": "echo $(cat hello.txt) World \u003e\u003e hello_world.txt.tmp/hello_world.txt",
+    "Command": "echo $(cat hello.txt) World \u003e\u003e hello.txt.world.txt.tmp/hello.txt.world.txt",
     "Params": {},
     "Tags": {},
     "StartTime": "2018-06-15T19:10:37.955602979+02:00",

@@ -12,15 +12,15 @@ func main() {
 
 	// lsl processes
 	lsl := sp.NewProc(wf, "lsl", "ls -l / > {os:lsl}")
-	lsl.SetPathStatic("lsl", "lsl.txt")
+	lsl.SetOut("lsl", "lsl.txt")
 
 	// grep process
 	grp := sp.NewProc(wf, "grp", "grep etc {i:in} > {o:grep}")
-	grp.SetPathExtend("in", "grep", ".grepped.txt")
+	grp.SetOut("grep", "{i:in}.grepped.txt")
 
 	// cat process
 	cat := sp.NewProc(wf, "cat", "cat {i:in} > {o:out}")
-	cat.SetPathExtend("in", "out", ".out.txt")
+	cat.SetOut("out", "{i:in}.out.txt")
 
 	// connect network
 	grp.In("in").From(lsl.Out("lsl"))

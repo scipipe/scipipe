@@ -20,7 +20,7 @@ func main() {
 
     // Initialize processes and set output file paths
     hello := wf.NewProc("hello", "echo 'Hello ' > {o:out}")
-    hello.SetPathStatic("out", "hello.txt")
+    hello.SetOut("out", "hello.txt")
 
     world := wf.NewProc("world", "echo $(cat {i:in}) World >> {o:out}")
     world.SetPathReplace("in", "out", ".txt", "_world.txt")
@@ -72,25 +72,21 @@ be done using special convenience methods on the processes, starting with
 
 ```go
 // Configure output file path formatters for the processes created above
-hello.SetPathStatic("out", "hello.txt")
+hello.SetOut("out", "hello.txt")
 world.SetPathReplace("in", "out", ".txt", "_world.txt")
 ```
 
-`SetPathStatic` just takes an out-port name and a static file name to use, and
-is suitable for processes which produce only one single output for a whole
-workflow run.
+`SetOut` takes a pattern similar to the shell command pattern, with
+placeholders, used to define new (shell-based) processes. The available
+placeholders that can be used are: `{i:INPORTNAME}`, `{p:PARAMNAME}` and
+`{t:TAGNAME}`. An example of a full pattern might be:
+`{i:foo}.replace_with_{p:replacement}.txt`, but can also be used for
+simple, static paths, like in the example above.
 
-`SetPathReplace` is slightly more advanced: It takes an in-port name, and
-out-port name, and then a search-pattern in the input-filename, and a
-replace-pattern for the output filename.  With the example above, our input
-file named `hello.txt` will be converted into `hello_world.txt` by this path
-pattern.
-
-`SetPathPattern` is the most advanced: It takes a pattern similar to the
-shell command pattern, with placeholders, used to define new (shell-based)
-processes. The available placeholders that can be used are: `{i:INPORTNAME}`,
-`{p:PARAMNAME}` and `{t:TAGNAME}`. An example of a full pattern might be:
-`{i:foo}.replace_with_{p:replacement}.txt`.
+`SetPathReplace` takes an in-port name, and out-port name, and then a
+search-pattern in the input-filename, and a replace-pattern for the output
+filename.  With the example above, our input file named `hello.txt` will be
+converted into `hello_world.txt` by this path pattern.
 
 ## Even more control over file formatting
 

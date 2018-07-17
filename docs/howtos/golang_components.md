@@ -16,7 +16,7 @@ In short, it can be done like this:
 fooWriter := sci.NewProc("fooer", "{o:foo}")
 
 // Set the output formatter to a static string
-fooWriter.SetPathStatic("foo", "foo.txt")
+fooWriter.SetOut("foo", "foo.txt")
 
 // Create the custom execute function, with pure Go code and
 // add it to the CustomExecute field of the fooWriter process

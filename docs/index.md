@@ -168,7 +168,7 @@ func main() {
 
     // Initialize processes and set output file paths
     hello := wf.NewProc("hello", "echo 'Hello ' > {o:out}")
-    hello.SetPathStatic("out", "hello.txt")
+    hello.SetOut("out", "hello.txt")
 
     world := wf.NewProc("world", "echo $(cat {i:in}) World >> {o:out}")
     world.SetPathReplace("in", "out", ".txt", "_world.txt")
