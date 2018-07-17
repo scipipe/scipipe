@@ -242,14 +242,22 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 			}
 
 			if len(restParts) > 0 {
-				ptn := regexp.MustCompile("s\\/([^\\/]+)\\/([^\\/]*)\\/")
+				substPtn := regexp.MustCompile("s\\/([^\\/]+)\\/([^\\/]*)\\/")
+				trimEndPtn := regexp.MustCompile("%(.*)")
 
 				for _, restPart := range restParts {
-					if ptn.MatchString(restPart) {
-						mbits := ptn.FindStringSubmatch(restPart)
+					if substPtn.MatchString(restPart) {
+						mbits := substPtn.FindStringSubmatch(restPart)
 						search := mbits[1]
 						replace := mbits[2]
 						replacement = strings.Replace(replacement, search, replace, 1)
+					}
+					if trimEndPtn.MatchString(restPart) {
+						mbits := trimEndPtn.FindStringSubmatch(restPart)
+						end := mbits[1]
+						if end == replacement[len(replacement)-len(end):] {
+							replacement = replacement[:len(replacement)-len(end)]
+						}
 					}
 				}
 			}

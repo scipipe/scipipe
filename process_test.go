@@ -35,6 +35,8 @@ func TestSetOut(t *testing.T) {
 		"{i:foo}.bar.{p:p1}.txt":   "foo.txt.bar.p1val.txt",
 		"{i:foo|s/.txt//}_bar.txt": "foo_bar.txt",
 		"{i:foo|s/.txt/.bar/}.txt": "foo.bar.txt",
+		"{i:foo|%.txt}.bar.txt":    "foo.bar.txt", // Bash style strip from end of string
+		"{i:foo|%oo.txt}.txt":      "f.txt",       // Bash style strip from end of string
 	}
 	for pathPattern, expectedPath := range inputsAndOutputs {
 		// Set a path format for the "bar" out-port
