@@ -26,13 +26,24 @@ func TestSetOut(t *testing.T) {
 	wf := NewWorkflow("test_wf", 16)
 	p := wf.NewProc("cat_foo", "cat {i:foo} > {o:bar} # {p:p1}")
 	p.InParam("p1").FromStr("p1val")
-	p.SetOut("bar", "{i:foo}.bar.{p:p1}.txt")
 
-	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)
+	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")},
+		nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)
 
-	expected := "foo.txt.bar.p1val.txt"
-	if p.PathFormatters["bar"](mockTask) != expected {
-		t.Errorf(`Did not get expected path in SetOut. Got:%v Expected:%v`, p.PathFormatters["bar"](mockTask), expected)
+	inputsAndOutputs := map[string]string{
+		"{i:foo}":                "foo.txt",
+		"{i:foo}.bar.{p:p1}.txt": "foo.txt.bar.p1val.txt",
+	}
+	for pathPattern, expectedPath := range inputsAndOutputs {
+		// Set a path format for the "bar" out-port
+		p.SetOut("bar", pathPattern)
+
+		// Check that the result from running the configured path func (stored in
+		// p.PathFormatters) is as expected
+		actualPath := p.PathFormatters["bar"](mockTask)
+		if actualPath != expectedPath {
+			t.Errorf(`Wrong path in SetOut. Got:%v Expected:%v`, actualPath, expectedPath)
+		}
 	}
 }
 
