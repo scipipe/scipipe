@@ -62,11 +62,7 @@ func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
 	wf := newWorkflowWithoutLogging(name, maxConcurrentTasks)
 
 	// Set up logging
-	allowedCharsPtrn, err := regexp.Compile("[^a-z0-9_]")
-	if err != nil {
-		fmt.Println("Could not compile regex for workflow name")
-		os.Exit(1)
-	}
+	allowedCharsPtrn := regexp.MustCompile("[^a-z0-9_]")
 	wfNameNormalized := allowedCharsPtrn.ReplaceAllString(strings.ToLower(name), "-")
 	wf.logFile = "log/scipipe-" + time.Now().Format("20060102-150405") + "-" + wfNameNormalized + ".log"
 	InitLogAuditToFile(wf.logFile)
@@ -216,8 +212,7 @@ func (wf *Workflow) PlotGraphPDF(filePath string) {
 func (wf *Workflow) DotGraph() (dot string) {
 	dot = fmt.Sprintf(`digraph "%s" {`+"\n", wf.Name())
 	con := ""
-	remToDotPtn, err := regexp.Compile(`^[^\.]+\.`)
-	Check(err)
+	remToDotPtn := regexp.MustCompile(`^[^\.]+\.`)
 	for _, p := range wf.ProcsSorted() {
 		dot += fmt.Sprintf(`  "%s" [shape=box];`+"\n", p.Name())
 		// File connections
@@ -270,8 +265,7 @@ func (wf *Workflow) RunTo(finalProcNames ...string) {
 func (wf *Workflow) RunToRegex(procNamePatterns ...string) {
 	procsToRun := []WorkflowProcess{}
 	for _, pattern := range procNamePatterns {
-		regexpPtrn, err := regexp.Compile(pattern)
-		CheckWithMsg(err, fmt.Sprintf("Regex pattern doesn't work: %s", pattern))
+		regexpPtrn := regexp.MustCompile(pattern)
 		for procName, proc := range wf.Procs() {
 			matches := regexpPtrn.MatchString(procName)
 			if matches {

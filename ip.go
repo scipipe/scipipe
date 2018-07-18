@@ -424,10 +424,7 @@ func (ip *FileIP) createDirs() {
 
 func sanitizePathFragment(s string) (sanitized string) {
 	s = strings.ToLower(s)
-	disallowedChars, err := regexp.Compile("[^a-z0-9_\\-\\.]+")
-	if err != nil {
-		panic(err)
-	}
+	disallowedChars := regexp.MustCompile("[^a-z0-9_\\-\\.]+")
 	sanitized = disallowedChars.ReplaceAllString(s, "_")
 	return
 }
