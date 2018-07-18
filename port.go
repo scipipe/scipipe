@@ -1,6 +1,7 @@
 package scipipe
 
 import (
+	"strconv"
 	"sync"
 )
 
@@ -273,8 +274,7 @@ func (pip *InParamPort) From(pop *OutParamPort) {
 	pop.SetReady(true)
 }
 
-// FromStr connects a parameter port with a new go-routine feeding the
-// strings in strings, on the fly, to the parameter port
+// FromStr feeds one or more parameters of type string to a port
 func (pip *InParamPort) FromStr(strings ...string) {
 	pop := NewOutParamPort("string_feeder")
 	pop.process = pip.Process()
@@ -285,6 +285,15 @@ func (pip *InParamPort) FromStr(strings ...string) {
 			pop.Send(str)
 		}
 	}()
+}
+
+// FromInt feeds one or more parameters of type int to a port
+func (pip *InParamPort) FromInt(ints ...int) {
+	params := []string{}
+	for _, i := range ints {
+		params = append(params, strconv.Itoa(i))
+	}
+	pip.FromStr(params...)
 }
 
 // SetReady sets the ready status of the InParamPort
