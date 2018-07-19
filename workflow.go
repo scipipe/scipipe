@@ -211,6 +211,7 @@ func (wf *Workflow) PlotGraphPDF(filePath string) {
 // in-port and out-port to which edges are connected to, will be printed.
 func (wf *Workflow) DotGraph() (dot string) {
 	dot = fmt.Sprintf(`digraph "%s" {`+"\n", wf.Name())
+	dot += `  rankdir=LR;` + "\n"
 	dot += `  graph [fontname="Arial",fontsize=13,color="#384A52",fontcolor="#384A52"];` + "\n"
 	dot += `  node  [fontname="Arial",fontsize=11,color="#384A52",fontcolor="#384A52",fillcolor="#EFF2F5",shape=box,style=filled];` + "\n"
 	dot += `  edge  [fontname="Arial",fontsize=9, color="#384A52",fontcolor="#384A52"];` + "\n"
