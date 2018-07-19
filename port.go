@@ -287,11 +287,20 @@ func (pip *InParamPort) FromStr(strings ...string) {
 	}()
 }
 
-// FromInt feeds one or more parameters of type int to a port
+// FromInt feeds one or more parameters of type int to the param port
 func (pip *InParamPort) FromInt(ints ...int) {
 	params := []string{}
 	for _, i := range ints {
 		params = append(params, strconv.Itoa(i))
+	}
+	pip.FromStr(params...)
+}
+
+// FromFloat feeds one or more parameters of type float64 to the param port
+func (pip *InParamPort) FromFloat(floats ...float64) {
+	params := []string{}
+	for _, f := range floats {
+		params = append(params, strconv.FormatFloat(f, 'f', -1, 64))
 	}
 	pip.FromStr(params...)
 }
