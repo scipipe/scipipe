@@ -68,7 +68,7 @@ will be pulled in on the out-ports, and so on.
 Now we need to provide some way for scipipe to figure out a suitable file name
 for each of the files propagating through the "network" of processes.  This can
 be done using special convenience methods on the processes, starting with
-`SetPath...`. There are a few variants, of which two of them are shown here.
+`SetOut...`. There are a few variants, of which two of them are shown here.
 
 ```go
 // Configure output file path formatters for the processes created above

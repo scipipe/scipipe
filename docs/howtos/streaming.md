@@ -10,8 +10,8 @@ Note that when streaming, you will not get an output file for the output in
 question.
 
 Note also that you still have to provide a path formatting strategy (via some
-of the `Process.SetPath...()` functions, or by manually adding one to
-`Process.PathFormatters`. This is because a uniqe file name is needed in
+of the `Process.SetOut...()` functions, or by manually adding one to
+`Process.PathFuncs`. This is because a uniqe file name is needed in
 order to create any audit files, as well as to give a unique name for the named
 pipe.
 
