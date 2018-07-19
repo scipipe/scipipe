@@ -184,6 +184,9 @@ func (p *Process) Out(portName string) *OutPort {
 // InParam is a short-form for InParamPort() (of BaseProcess), which works only on Process
 // processes
 func (p *Process) InParam(portName string) *InParamPort {
+	if _, ok := p.inParamPorts[portName]; !ok {
+		p.InitInParamPort(p, portName)
+	}
 	return p.InParamPort(portName)
 }
 
@@ -211,9 +214,6 @@ func (p *Process) OutParam(portName string) *OutParamPort {
 // This allows to create out-ports for filenames that are created without explicitly
 // stating a filename on the commandline, such as when only submitting a prefix.
 func (p *Process) SetOut(outPortName string, pathPattern string) {
-	if _, ok := p.outPorts[outPortName]; !ok {
-		p.InitOutPort(p, outPortName)
-	}
 	p.SetOutFunc(outPortName, func(t *Task) string {
 		path := pathPattern // Avoiding reusing the same variable in multiple instances of this func
 
@@ -272,6 +272,9 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 // SetOutFunc takes a function which produces a file path based on data
 // available in *Task, such as concrete file paths and parameter values,
 func (p *Process) SetOutFunc(outPortName string, pathFmtFunc func(task *Task) (path string)) {
+	if _, ok := p.outPorts[outPortName]; !ok {
+		p.InitOutPort(p, outPortName)
+	}
 	p.PathFormatters[outPortName] = pathFmtFunc
 }
 
