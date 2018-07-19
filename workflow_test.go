@@ -87,6 +87,9 @@ func TestDotGraph(t *testing.T) {
 	p2.In("in").From(p1.Out("out"))
 
 	expectedTailLabels := `digraph "testwf" {
+  graph [fontname="Arial",fontsize=13,color="#384A52",fontcolor="#384A52"];
+  node  [fontname="Arial",fontsize=11,color="#384A52",fontcolor="#384A52",fillcolor="#EFF2F5",shape=box,style=filled];
+  edge  [fontname="Arial",fontsize=9, color="#384A52",fontcolor="#384A52"];
   "p1" [shape=box];
   "p2" [shape=box];
   "p1" -> "p2" [taillabel="out", headlabel="in"];
@@ -99,6 +102,9 @@ func TestDotGraph(t *testing.T) {
 
 	wf.PlotConf.EdgeLabels = false
 	expected := `digraph "testwf" {
+  graph [fontname="Arial",fontsize=13,color="#384A52",fontcolor="#384A52"];
+  node  [fontname="Arial",fontsize=11,color="#384A52",fontcolor="#384A52",fillcolor="#EFF2F5",shape=box,style=filled];
+  edge  [fontname="Arial",fontsize=9, color="#384A52",fontcolor="#384A52"];
   "p1" [shape=box];
   "p2" [shape=box];
   "p1" -> "p2";
