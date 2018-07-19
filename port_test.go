@@ -168,10 +168,10 @@ func TestConnectBackwards(t *testing.T) {
 	wf := NewWorkflow("TestConnectBackwards", 16)
 
 	p1 := wf.NewProc("p1", "echo foo > {o:foo}")
-	p1.SetPathCustom("foo", func(t *Task) string { return "foo.txt" })
+	p1.SetOutFunc("foo", func(t *Task) string { return "foo.txt" })
 
 	p2 := wf.NewProc("p2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
-	p2.SetPathCustom("bar", func(t *Task) string { return t.InPath("foo") + ".bar.txt" })
+	p2.SetOutFunc("bar", func(t *Task) string { return t.InPath("foo") + ".bar.txt" })
 
 	p1.Out("foo").To(p2.In("foo"))
 

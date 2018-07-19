@@ -103,10 +103,10 @@ would write like this:
 
 ```go
 // Configure output file path formatters for the processes created above
-hello.SetPathCustom("out", func(t *sp.Task) string {
+hello.SetOutFunc("out", func(t *sp.Task) string {
     return "hello.txt"
 })
-world.SetPathCustom("out", func(t *sp.Task) string {
+world.SetOutFunc("out", func(t *sp.Task) string {
     return strings.Replace(t.InPath("in"), ".txt", "_world.txt", -1)
 })
 ```
@@ -127,7 +127,7 @@ functions in a loop, that uses a shared variable, like this:
 ```go
 for _, val := range []string{"foo", "bar"} {
     proc := scipipe.NewProc(val + "_proc", "cat {p:val} > {o:out}")
-    proc.SetPathCustom("out", func(t *sp.Task) string {
+    proc.SetOutFunc("out", func(t *sp.Task) string {
         return val + ".txt"
     })
 }
@@ -145,7 +145,7 @@ generally recommended:
     for _, val := range []string{"foo", "bar"} {
         proc := scipipe.NewProc(val + "_proc", "cat {p:val} > {o:out}")
         val := val // <- Here we create a new copy of the variable
-        proc.SetPathCustom("out", func(t *sp.Task) string {
+        proc.SetOutFunc("out", func(t *sp.Task) string {
             return val + ".txt"
         })
     }
@@ -156,7 +156,7 @@ generally recommended:
     ```go
     for _, val := range []string{"foo", "bar"} {
         proc := scipipe.NewProc(val + "_proc", "cat {p:val} > {o:out}")
-        proc.SetPathCustom("out", func(t *sp.Task) string {
+        proc.SetOutFunc("out", func(t *sp.Task) string {
             return t.Param("val") + ".txt" // Access param via the task (`t`)
         })
     }

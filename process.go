@@ -214,7 +214,7 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 	if _, ok := p.outPorts[outPortName]; !ok {
 		p.InitOutPort(p, outPortName)
 	}
-	p.SetPathCustom(outPortName, func(t *Task) string {
+	p.SetOutFunc(outPortName, func(t *Task) string {
 		path := pathPattern // Avoiding reusing the same variable in multiple instances of this func
 
 		r := getShellCommandPlaceHolderRegex()
@@ -269,9 +269,9 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 	})
 }
 
-// SetPathCustom takes a function which produces a file path based on data
+// SetOutFunc takes a function which produces a file path based on data
 // available in *Task, such as concrete file paths and parameter values,
-func (p *Process) SetPathCustom(outPortName string, pathFmtFunc func(task *Task) (path string)) {
+func (p *Process) SetOutFunc(outPortName string, pathFmtFunc func(task *Task) (path string)) {
 	p.PathFormatters[outPortName] = pathFmtFunc
 }
 

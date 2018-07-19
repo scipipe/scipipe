@@ -148,7 +148,7 @@ func getWorkflowForTestRunToProc(wfName string) *Workflow {
 	bar.SetOut("out", "/tmp/bar.txt")
 
 	mrg := wf.NewProc("mrg", "cat {i:in1} {i:in2} > {o:mgd}")
-	mrg.SetPathCustom("mgd", func(tk *Task) string {
+	mrg.SetOutFunc("mgd", func(tk *Task) string {
 		return tk.InPath("in1") + "." + filepath.Base(tk.InPath("in2"))
 	})
 	mrg.In("in1").From(foo.Out("out"))
@@ -167,7 +167,7 @@ func TestBasicRun(t *testing.T) {
 
 	p1 := wf.NewProc("p1", "echo foo > {o:foo}")
 	assertIsType(t, p1.Out("foo"), NewOutPort("foo"))
-	p1.SetPathCustom("foo", func(t *Task) string { return "foo.txt" })
+	p1.SetOutFunc("foo", func(t *Task) string { return "foo.txt" })
 
 	p2 := wf.NewProc("p2", "sed 's/foo/bar/g' {i:foo} > {o:bar}")
 	assertIsType(t, p2.In("foo"), NewInPort("foo"))
@@ -260,7 +260,7 @@ func TestDontOverWriteExistingOutputs(t *testing.T) {
 	// Run again with different output
 	wf2 := NewWorkflow("TestDontOverWriteExistingOutputsWf2", 16)
 	tsk = wf2.NewProc("tsk", "echo hej > {o:hej2}")
-	tsk.SetPathCustom("hej2", func(task *Task) string { return f })
+	tsk.SetOutFunc("hej2", func(task *Task) string { return f })
 	prt = wf2.NewProc("prt", "cat {i:in1} > {o:done}")
 	prt.SetOut("done", "{i:in1}.done.txt")
 	prt.In("in1").From(tsk.Out("hej2"))
@@ -467,7 +467,7 @@ func TestReceiveBothIPsAndParams(t *testing.T) {
 	for _, str := range strs {
 		add := wf.NewProc("add_"+str, `echo {i:infile} {p:param} > {o:out}`)
 		str := str
-		add.SetPathCustom("out", func(t *Task) string {
+		add.SetOutFunc("out", func(t *Task) string {
 			return t.InPath("infile") + "." + str + ".txt"
 		})
 		add.InParam("param").From(params.Out())
