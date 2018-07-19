@@ -43,8 +43,8 @@ func TestSetOut(t *testing.T) {
 		p.SetOut("bar", pathPattern)
 
 		// Check that the result from running the configured path func (stored in
-		// p.PathFormatters) is as expected
-		actualPath := p.PathFormatters["bar"](mockTask)
+		// p.PathFuncs) is as expected
+		actualPath := p.PathFuncs["bar"](mockTask)
 		if actualPath != expectedPath {
 			t.Errorf(`Wrong path in SetOut. Got:%v Expected:%v`, actualPath, expectedPath)
 		}
@@ -60,8 +60,8 @@ func TestDefaultPattern(t *testing.T) {
 
 	// We expact a filename on the form: input filename . procname . paramname _ val . outport . extension
 	expected := "foo.txt.cat_foo.p1_p1val.bar.txt"
-	if p.PathFormatters["bar"](mockTask) != expected {
-		t.Errorf(`Did not get expected path in SetOut. Got:%v Expected:%v`, p.PathFormatters["bar"](mockTask), expected)
+	if p.PathFuncs["bar"](mockTask) != expected {
+		t.Errorf(`Did not get expected path in SetOut. Got:%v Expected:%v`, p.PathFuncs["bar"](mockTask), expected)
 	}
 }
 

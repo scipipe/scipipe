@@ -14,7 +14,7 @@ import (
 type Process struct {
 	BaseProcess
 	CommandPattern string
-	PathFormatters map[string]func(*Task) string
+	PathFuncs      map[string]func(*Task) string
 	CustomExecute  func(*Task)
 	CoresPerTask   int
 	Prepend        string
@@ -35,14 +35,14 @@ func NewProc(workflow *Workflow, name string, cmd string) *Process {
 			name,
 		),
 		CommandPattern: cmd,
-		PathFormatters: make(map[string]func(*Task) string),
+		PathFuncs:      make(map[string]func(*Task) string),
 		Spawn:          true,
 		CoresPerTask:   1,
 		PortInfo:       map[string]*PortInfo{},
 	}
 	workflow.AddProc(p)
 	p.initPortsFromCmdPattern(cmd, nil)
-	p.initDefaultPathFormatters()
+	p.initDefaultPathFuncs()
 	return p
 }
 
@@ -108,13 +108,13 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 	}
 }
 
-// initDefaultPathFormatters does exactly what it name says: Initializes default
+// initDefaultPathFuncs does exactly what it name says: Initializes default
 // path formatters for processes, that is used if no explicit path is set, using
 // the proc.SetPath[...] methods
-func (p *Process) initDefaultPathFormatters() {
+func (p *Process) initDefaultPathFuncs() {
 	for outName := range p.OutPorts() {
 		outName := outName
-		p.PathFormatters[outName] = func(t *Task) string {
+		p.PathFuncs[outName] = func(t *Task) string {
 			pathPcs := []string{}
 			for _, ipName := range sortedFileIPMapKeys(t.InIPs) {
 				pathPcs = append(pathPcs, filepath.Base(t.InIP(ipName).Path()))
@@ -275,7 +275,7 @@ func (p *Process) SetOutFunc(outPortName string, pathFmtFunc func(task *Task) (p
 	if _, ok := p.outPorts[outPortName]; !ok {
 		p.InitOutPort(p, outPortName)
 	}
-	p.PathFormatters[outPortName] = pathFmtFunc
+	p.PathFuncs[outPortName] = pathFmtFunc
 }
 
 // ------------------------------------------------------------------------
@@ -368,7 +368,7 @@ func (p *Process) createTasks() (ch chan *Task) {
 			}
 
 			// Create task and send on the channel we are about to return
-			ch <- NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFormatters, p.PortInfo, params, tags, p.Prepend, p.CustomExecute, p.CoresPerTask)
+			ch <- NewTask(p.workflow, p, p.Name(), p.CommandPattern, inIPs, p.PathFuncs, p.PortInfo, params, tags, p.Prepend, p.CustomExecute, p.CoresPerTask)
 
 			// If we have no in-ports nor param in-ports, we should break after the first iteration
 			if len(p.inPorts) == 0 && len(p.inParamPorts) == 0 {
