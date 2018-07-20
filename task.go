@@ -159,10 +159,11 @@ func (t *Task) InPath(portName string) string {
 
 // OutIP returns an IP for the in-port with name portName
 func (t *Task) OutIP(portName string) *FileIP {
-	if t.OutIPs[portName] == nil {
-		Failf("No such out-portname (%s) in task (%s)\n", portName, t.Name)
+	if ip, ok := t.OutIPs[portName]; ok {
+		return ip
 	}
-	return t.OutIPs[portName]
+	Failf("No such out-portname (%s) in task (%s)\n", portName, t.Name)
+	return nil
 }
 
 // OutPath returns the path name of an input file for the task

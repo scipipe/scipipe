@@ -233,6 +233,11 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 			switch phType {
 			case "i":
 				replacement = t.InPath(phName)
+			case "o":
+				if _, ok := t.process.PathFuncs[phName]; !ok {
+					Fail("No such pathfunc for out-port " + phName + " in task " + t.Name)
+				}
+				replacement = t.process.PathFuncs[phName](t)
 			case "p":
 				replacement = t.Param(phName)
 			case "t":
