@@ -25,6 +25,7 @@ type Task struct {
 	cores         int
 	workflow      *Workflow
 	process       *Process
+	subStreamIPs  map[string][]*FileIP
 }
 
 // ------------------------------------------------------------------------
@@ -32,7 +33,7 @@ type Task struct {
 // ------------------------------------------------------------------------
 
 // NewTask instantiates and initializes a new Task
-func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, inIPs map[string]*FileIP, outPathFuncs map[string]func(*Task) string, portInfo map[string]*PortInfo, params map[string]string, tags map[string]string, prepend string, customExecute func(*Task), cores int) *Task {
+func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, inIPs map[string]*FileIP, outPathFuncs map[string]func(*Task) string, portInfos map[string]*PortInfo, params map[string]string, tags map[string]string, prepend string, customExecute func(*Task), cores int) *Task {
 	t := &Task{
 		Name:          name,
 		InIPs:         inIPs,
@@ -45,25 +46,37 @@ func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, i
 		cores:         cores,
 		workflow:      workflow,
 		process:       process,
+		subStreamIPs:  make(map[string][]*FileIP),
 	}
 
+	// Collect substream IPs
+	for ptName, ptInfo := range portInfos {
+		if ptInfo.join && ptInfo.joinSep != "" {
+			// Merge multiple input paths from a substream on the IP, into one string
+			ips := []*FileIP{}
+			for ip := range inIPs[ptName].SubStream.Chan {
+				ips = append(ips, ip)
+			}
+			t.subStreamIPs[ptName] = ips
+		}
+	}
 	// Create Out-IPs
 	for oname, outPathFunc := range outPathFuncs {
 		oip := NewFileIP(outPathFunc(t))
-		if ptInfo, ok := portInfo[oname]; ok {
+		if ptInfo, ok := portInfos[oname]; ok {
 			if ptInfo.doStream {
 				oip.doStream = true
 			}
 		}
 		t.OutIPs[oname] = oip
 	}
-	t.Command = formatCommand(cmdPat, portInfo, inIPs, t.OutIPs, params, tags, prepend)
+	t.Command = formatCommand(cmdPat, portInfos, inIPs, t.subStreamIPs, t.OutIPs, params, tags, prepend)
 	return t
 }
 
 // formatCommand is a helper function for NewTask, that formats a shell command
 // based on concrete file paths and parameter values
-func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]*FileIP, outIPs map[string]*FileIP, params map[string]string, tags map[string]string, prepend string) string {
+func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]*FileIP, subStreamIPs map[string][]*FileIP, outIPs map[string]*FileIP, params map[string]string, tags map[string]string, prepend string) string {
 	r := getShellCommandPlaceHolderRegex()
 	placeHolderMatches := r.FindAllStringSubmatch(cmd, -1)
 	placeholders := map[string]string{}
@@ -93,12 +106,8 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 			}
 			if portInfo.join && portInfo.joinSep != "" {
 				// Merge multiple input paths from a substream on the IP, into one string
-				ips := []*FileIP{}
-				for ip := range inIPs[portName].SubStream.Chan {
-					ips = append(ips, ip)
-				}
 				paths := []string{}
-				for _, ip := range ips {
+				for _, ip := range subStreamIPs[portName] {
 					paths = append(paths, parentDirPath(ip.Path()))
 				}
 				filePath = strings.Join(paths, portInfo.joinSep)
