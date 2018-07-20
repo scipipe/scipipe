@@ -26,6 +26,7 @@ import (
 // methods for creating new processes, that automatically gets plugged in to the
 // workflow on creation
 type Workflow struct {
+	BaseProcess
 	name              string
 	procs             map[string]WorkflowProcess
 	concurrentTasks   chan struct{}
@@ -82,6 +83,7 @@ func NewWorkflowCustomLogFile(name string, maxConcurrentTasks int, logFile strin
 
 func newWorkflowWithoutLogging(name string, maxConcurrentTasks int) *Workflow {
 	wf := &Workflow{
+		BaseProcess:     BaseProcess{inPorts: make(map[string]*InPort), outPorts: make(map[string]*OutPort)},
 		name:            name,
 		procs:           map[string]WorkflowProcess{},
 		concurrentTasks: make(chan struct{}, maxConcurrentTasks),
@@ -290,6 +292,84 @@ func (wf *Workflow) RunToProcs(finalProcs ...WorkflowProcess) {
 		procsToRun[finalProc.Name()] = finalProc
 	}
 	wf.runProcs(procsToRun)
+}
+
+// ----------------------------------------------------------------------------
+// API methods making Workflow implement WorkflowProcess interface
+// ----------------------------------------------------------------------------
+
+// Ready tells whether the workflow is ready to run as a component in an outer
+// workflow
+func (wf *Workflow) Ready() bool {
+	//for _, inPort := range wf.InPorts() {
+	//	if !inPort.Ready() {
+	//		return false
+	//	}
+	//}
+	//for _, outPort := range wf.OutPorts() {
+	//	if !outPort.Ready() {
+	//		return false
+	//	}
+	//}
+	//for _, inParamPort := range wf.InParamPorts() {
+	//	if !inParamPort.Ready() {
+	//		return false
+	//	}
+	//}
+	//for _, outParamPort := range wf.OutParamPorts() {
+	//	if !outParamPort.Ready() {
+	//		return false
+	//	}
+	//}
+	return true
+}
+
+// ----------------------------------------------------------------------------
+// API methods making Workflow implement WorkflowProcess interface
+// ----------------------------------------------------------------------------
+
+// InPorts returns the in-ports of the workflow
+func (wf *Workflow) InPorts() map[string]*InPort {
+	return wf.inPorts
+}
+
+// OutPorts returns the out-ports of the workflow
+func (wf *Workflow) OutPorts() map[string]*OutPort {
+	return wf.outPorts
+}
+
+// InParamPorts returns the in-ports of the workflow
+func (wf *Workflow) InParamPorts() map[string]*InParamPort {
+	return wf.inParamPorts
+}
+
+// OutParamPorts returns the out-ports of the workflow
+func (wf *Workflow) OutParamPorts() map[string]*OutParamPort {
+	return wf.outParamPorts
+}
+
+// ----------------------------------------------------------------------------
+// Helper methods for making Workflow work as an WorkflowProcess interface
+// ----------------------------------------------------------------------------
+
+// SetInPort sets an in-port
+func (wf *Workflow) SetInPort(portName string, port *InPort) {
+	wf.inPorts[portName] = port
+}
+
+// SetOutPort sets an out-port
+func (wf *Workflow) SetOutPort(portName string, port *OutPort) {
+	wf.outPorts[portName] = port
+}
+
+// SetInParamPort sets an in-paramport
+func (wf *Workflow) SetInParamPort(portName string, port *InParamPort) {
+	wf.inParamPorts[portName] = port
+}
+
+// SetOutParamPort sets an in-paramport
+func (wf *Workflow) SetOutParamPort(portName string, port *OutParamPort) {
+	wf.outParamPorts[portName] = port
 }
 
 // ----------------------------------------------------------------------------
