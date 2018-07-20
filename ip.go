@@ -292,7 +292,7 @@ func (ip *FileIP) Atomize() {
 			Warning.Printf("Expected .tmp file missing: %s\nSleeping for %d seconds before checking again ...\n", ip.TempPath(), sleepDurationSec)
 			time.Sleep(time.Duration(sleepDurationSec) * time.Second)
 			sleepDurationSec *= backoffFactor
-			tries += 1
+			tries++
 		}
 	}
 }
