@@ -25,6 +25,7 @@ type Task struct {
 	cores         int
 	workflow      *Workflow
 	process       *Process
+	portInfos     map[string]*PortInfo
 	subStreamIPs  map[string][]*FileIP
 }
 
@@ -46,6 +47,7 @@ func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, i
 		cores:         cores,
 		workflow:      workflow,
 		process:       process,
+		portInfos:     portInfos,
 		subStreamIPs:  make(map[string][]*FileIP),
 	}
 
@@ -310,7 +312,13 @@ func (t *Task) writeAuditLogs(startTime time.Time, finishTime time.Time) {
 	auditInfo.FinishTime = finishTime
 	auditInfo.ExecTimeNS = finishTime.Sub(startTime)
 	// Set the audit infos from incoming IPs into the "Upstream" map
-	for _, iip := range t.InIPs {
+	for inpName, iip := range t.InIPs {
+		if t.portInfos[inpName].join {
+			for _, subIP := range t.subStreamIPs[inpName] {
+				auditInfo.Upstream[subIP.Path()] = subIP.AuditInfo()
+			}
+			continue
+		}
 		auditInfo.Upstream[iip.Path()] = iip.AuditInfo()
 	}
 	// Add the current audit info to output ips and write them to file
