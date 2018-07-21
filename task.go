@@ -24,7 +24,7 @@ type Task struct {
 	Done          chan int
 	cores         int
 	workflow      *Workflow
-	process       *Process
+	Process       *Process
 	portInfos     map[string]*PortInfo
 	subStreamIPs  map[string][]*FileIP
 }
@@ -46,7 +46,7 @@ func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, i
 		Done:          make(chan int),
 		cores:         cores,
 		workflow:      workflow,
-		process:       process,
+		Process:       process,
 		portInfos:     portInfos,
 		subStreamIPs:  make(map[string][]*FileIP),
 	}
@@ -306,7 +306,7 @@ func (t *Task) writeAuditLogs(startTime time.Time, finishTime time.Time) {
 	// Append audit info for the task to all its output IPs
 	auditInfo := NewAuditInfo()
 	auditInfo.Command = t.Command
-	auditInfo.ProcessName = t.process.Name()
+	auditInfo.ProcessName = t.Process.Name()
 	auditInfo.Params = t.Params
 	auditInfo.StartTime = startTime
 	auditInfo.FinishTime = finishTime

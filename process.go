@@ -119,7 +119,7 @@ func (p *Process) initDefaultPathFuncs() {
 			for _, ipName := range sortedFileIPMapKeys(t.InIPs) {
 				pathPcs = append(pathPcs, filepath.Base(t.InIP(ipName).Path()))
 			}
-			procName := sanitizePathFragment(t.process.Name())
+			procName := sanitizePathFragment(t.Process.Name())
 			pathPcs = append(pathPcs, procName)
 			for _, paramName := range sortedStringMapKeys(t.Params) {
 				pathPcs = append(pathPcs, paramName+"_"+t.Param(paramName))
@@ -234,10 +234,10 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 			case "i":
 				replacement = t.InPath(phName)
 			case "o":
-				if _, ok := t.process.PathFuncs[phName]; !ok {
+				if _, ok := t.Process.PathFuncs[phName]; !ok {
 					Fail("No such pathfunc for out-port " + phName + " in task " + t.Name)
 				}
-				replacement = t.process.PathFuncs[phName](t)
+				replacement = t.Process.PathFuncs[phName](t)
 			case "p":
 				replacement = t.Param(phName)
 			case "t":
