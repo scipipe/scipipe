@@ -217,7 +217,7 @@ func (wf *Workflow) DotGraph() (dot string) {
 	dot += `  edge  [fontname="Arial",fontsize=9, color="#384A52",fontcolor="#384A52"];` + "\n"
 
 	con := ""
-	remToDotPtn := regexp.MustCompile(`^[^\.]+\.`)
+	remToDotPtn := regexp.MustCompile(`^.*\.`)
 	for _, p := range wf.ProcsSorted() {
 		dot += fmt.Sprintf(`  "%s" [shape=box];`+"\n", p.Name())
 		// File connections
