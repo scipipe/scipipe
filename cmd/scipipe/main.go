@@ -17,7 +17,8 @@ var (
 )
 
 func main() {
-	scipipe.InitLogError()
+	initLogs()
+	initHelp()
 	flag.Parse()
 	err := parseFlags(flag.Args())
 	if err != nil {
@@ -94,20 +95,7 @@ $ scipipe audit2html <infile.audit.json> [<outfile.html>]
 }
 
 func printHelp() {
-	fmt.Printf(`________________________________________________________________________
-
-SciPipe (http://scipipe.org)
-Version: %s
-________________________________________________________________________
-
-Usage:
-$ scipipe <command> [command options]
-
-Available commands:
-$ scipipe new <filename.go>
-$ scipipe audit2html <infile.audit.json> [<outfile.html>]
-________________________________________________________________________
-`, scipipe.Version)
+	flag.Usage()
 }
 
 func writeNewWorkflowFile(fileName string) {
@@ -121,6 +109,25 @@ func writeNewWorkflowFile(fileName string) {
 		scipipe.Fail("Could not write to file:", fileName)
 	}
 	Info.Println("Successfully wrote new workflow file to:", fileName, "\n\nNow you can run it with:\ngo run ", fileName)
+}
+
+func initHelp() {
+	flag.Usage = func() {
+		fmt.Printf(`________________________________________________________________________
+
+SciPipe (http://scipipe.org)
+Version: %s
+________________________________________________________________________
+
+Usage:
+$ scipipe <command> [command options]
+
+Available commands:
+$ scipipe new <filename.go>
+$ scipipe audit2html <infile.audit.json> [<outfile.html>]
+________________________________________________________________________
+`, scipipe.Version)
+	}
 }
 
 func initLogs() {
