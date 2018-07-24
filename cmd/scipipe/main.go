@@ -125,6 +125,7 @@ $ scipipe <command> [command options]
 Available commands:
 $ scipipe new <filename.go>
 $ scipipe audit2html <infile.audit.json> [<outfile.html>]
+$ scipipe audit2tex <infile.audit.json> [<outfile.tex>]
 ________________________________________________________________________
 `, scipipe.Version)
 	}
