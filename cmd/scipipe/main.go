@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -16,6 +17,7 @@ var (
 )
 
 func main() {
+	scipipe.InitLogError()
 	flag.Parse()
 	err := parseFlags(flag.Args())
 	if err != nil {
@@ -25,7 +27,6 @@ func main() {
 }
 
 func parseFlags(args []string) error {
-	scipipe.InitLogError()
 	if len(args) < 1 {
 		printHelp()
 		return nil
@@ -93,7 +94,7 @@ $ scipipe audit2html <infile.audit.json> [<outfile.html>]
 }
 
 func printHelp() {
-	Info.Printf(`________________________________________________________________________
+	fmt.Printf(`________________________________________________________________________
 
 SciPipe (http://scipipe.org)
 Version: %s
