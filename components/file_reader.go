@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/scipipe/scipipe"
 )
 
@@ -37,7 +36,7 @@ func (p *FileReader) Run() {
 
 	file, err := os.Open(p.filePath)
 	if err != nil {
-		err = errors.Wrapf(err, "[FileReader] Could not open file %s", p.filePath)
+		err = errWrapf(err, "[FileReader] Could not open file %s", p.filePath)
 		log.Fatal(err)
 	}
 	defer file.Close()
@@ -47,7 +46,7 @@ func (p *FileReader) Run() {
 		p.OutLine().Send(scan.Text() + "\n")
 	}
 	if scan.Err() != nil {
-		err = errors.Wrapf(scan.Err(), "[FileReader] Error when scanning input file %s", p.filePath)
+		err = errWrapf(scan.Err(), "[FileReader] Error when scanning input file %s", p.filePath)
 		log.Fatal(err)
 	}
 }

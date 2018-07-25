@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/scipipe/scipipe"
 )
 
@@ -50,7 +49,7 @@ func (p *FileSplitter) Run() {
 		if !splitIP.Exists() {
 			inFile, err := os.Open(inIP.Path())
 			if err != nil {
-				err = errors.Wrapf(err, "[FileSplitter] Could not open file %s", inIP.Path())
+				err = errWrapf(err, "[FileSplitter] Could not open file %s", inIP.Path())
 				log.Fatal(err)
 			}
 			defer inFile.Close()
@@ -77,7 +76,7 @@ func (p *FileSplitter) Run() {
 			p.OutSplitFile().Send(splitIP)
 
 			if scanner.Err() != nil {
-				err = errors.Wrapf(scanner.Err(), "[FileSplitter] Error when scanning input file %s", inIP.Path())
+				err = errWrapf(scanner.Err(), "[FileSplitter] Error when scanning input file %s", inIP.Path())
 				log.Fatal(err)
 			}
 		} else {
@@ -91,7 +90,7 @@ func (p *FileSplitter) createNewSplitFile(ip *scipipe.FileIP, basePath string) (
 	tempDir = filepath.Dir(tempPath)
 	err := os.MkdirAll(tempDir, 0777)
 	if err != nil {
-		err = errors.Wrapf(err, "[FileSplitter] Could not create dirs for file %s", tempPath)
+		err = errWrapf(err, "[FileSplitter] Could not create dirs for file %s", tempPath)
 		log.Fatal(err)
 	}
 	tempFile, err = os.Create(tempPath)

@@ -43,20 +43,20 @@ func parseFlags(args []string) error {
 	case "audit2html":
 		inFile, outFile, err := parseArgsAudit2X(args, "html")
 		if err != nil {
-			return wrapErr(err, "Could not parse filenames from arguments")
+			return errWrap(err, "Could not parse filenames from arguments")
 		}
 		err = auditInfoToHTML(inFile, outFile, true)
 		if err != nil {
-			return wrapErr(err, "Could not convert Audit file to HTML")
+			return errWrap(err, "Could not convert Audit file to HTML")
 		}
 	case "audit2tex":
 		inFile, outFile, err := parseArgsAudit2X(args, "tex")
 		if err != nil {
-			return wrapErr(err, "Could not parse filenames from arguments")
+			return errWrap(err, "Could not parse filenames from arguments")
 		}
 		err = auditInfoToTeX(inFile, outFile, true)
 		if err != nil {
-			return wrapErr(err, "Could not convert Audit file to TeX")
+			return errWrap(err, "Could not convert Audit file to TeX")
 		}
 	default:
 		return errors.New("Unknown command: " + cmd)
@@ -164,6 +164,10 @@ func main() {
 	wf.Run()
 }`
 
-func wrapErr(err error, message string) error {
-	return errors.New(message + "\nOriginal error: " + err.Error())
+func errWrap(err error, msg string) error {
+	return errors.New(msg + "\nOriginal error: " + err.Error())
+}
+
+func errWrapf(err error, msg string, v ...interface{}) error {
+	return errors.New(fmt.Sprintf(msg, v...) + "\nOriginal error: " + err.Error())
 }

@@ -8,7 +8,7 @@ import (
 	re "regexp"
 	"time"
 
-	"github.com/pkg/errors"
+	"errors"
 )
 
 // ExecCmd executes the command cmd, as a shell command via bash
@@ -25,7 +25,7 @@ func ExecCmd(cmd string) string {
 // custom one provided in errMsg
 func CheckWithMsg(err error, errMsg string) {
 	if err != nil {
-		err = errors.Wrap(err, errMsg)
+		err = errWrap(err, errMsg)
 		Fail(err)
 	}
 }
@@ -71,4 +71,12 @@ func randSeqLC(n int) string {
 		b[i] = letters[arand.Intn(len(letters))]
 	}
 	return string(b)
+}
+
+func errWrap(err error, msg string) error {
+	return errors.New(msg + "\nOriginal error: " + err.Error())
+}
+
+func errWrapf(err error, msg string, v ...interface{}) error {
+	return errors.New(fmt.Sprintf(msg, v...) + "\nOriginal error: " + err.Error())
 }
