@@ -8,7 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/pkg/errors"
+	"errors"
+
 	"github.com/scipipe/scipipe"
 )
 
@@ -42,20 +43,20 @@ func parseFlags(args []string) error {
 	case "audit2html":
 		inFile, outFile, err := parseArgsAudit2X(args, "html")
 		if err != nil {
-			return errors.Wrap(err, "Could not parse filenames from arguments")
+			return wrapErr(err, "Could not parse filenames from arguments")
 		}
 		err = auditInfoToHTML(inFile, outFile, true)
 		if err != nil {
-			return errors.Wrap(err, "Could not convert Audit file to HTML")
+			return wrapErr(err, "Could not convert Audit file to HTML")
 		}
 	case "audit2tex":
 		inFile, outFile, err := parseArgsAudit2X(args, "tex")
 		if err != nil {
-			return errors.Wrap(err, "Could not parse filenames from arguments")
+			return wrapErr(err, "Could not parse filenames from arguments")
 		}
 		err = auditInfoToTeX(inFile, outFile, true)
 		if err != nil {
-			return errors.Wrap(err, "Could not convert Audit file to TeX")
+			return wrapErr(err, "Could not convert Audit file to TeX")
 		}
 	default:
 		return errors.New("Unknown command: " + cmd)
@@ -162,3 +163,7 @@ func main() {
 	// Run the workflow
 	wf.Run()
 }`
+
+func wrapErr(err error, message string) error {
+	return errors.New(message + "\nOriginal error: " + err.Error())
+}

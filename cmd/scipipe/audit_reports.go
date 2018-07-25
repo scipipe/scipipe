@@ -9,7 +9,6 @@ import (
 	"time"
 
 	colorful "github.com/lucasb-eyer/go-colorful"
-	"github.com/pkg/errors"
 	"github.com/scipipe/scipipe"
 )
 
@@ -42,11 +41,11 @@ func auditInfoToHTML(inFilePath string, outFilePath string, flatten bool) error 
 	outHTML += bottomHTML
 
 	if _, err := os.Stat(outFilePath); os.IsExist(err) {
-		return errors.Wrap(err, "File already exists:"+outFilePath)
+		return wrapErr(err, "File already exists:"+outFilePath)
 	}
 	outFile, err := os.Create(outFilePath)
 	if err != nil {
-		return errors.Wrap(err, "Could not create file:"+outFilePath)
+		return wrapErr(err, "Could not create file:"+outFilePath)
 	}
 	outFile.WriteString(outHTML)
 	outFile.Close()
