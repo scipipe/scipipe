@@ -48,6 +48,7 @@ func auditInfoToHTML(inFilePath string, outFilePath string, flatten bool) error 
 	}
 	outFile.WriteString(outHTML)
 	outFile.Close()
+	fmt.Println("Wrote audit HTML file to: " + outFilePath)
 	return nil
 }
 
@@ -121,6 +122,7 @@ func auditInfoToTeX(inFilePath string, outFilePath string, flatten bool) error {
 	}
 
 	texTpl.Execute(outFile, report)
+	fmt.Println("Wrote audit TeX file to: " + outFilePath)
 	return nil
 }
 
