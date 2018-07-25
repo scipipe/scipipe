@@ -50,7 +50,7 @@ func TestAudit2HTMLCmd(t *testing.T) {
 		}
 		htmlBytes, err := ioutil.ReadFile(htmlFile)
 		if err != nil {
-			t.Error(wrapErr(err, "Could not read HTML file:"+htmlFile).Error())
+			t.Error(errWrap(err, "Could not read HTML file:"+htmlFile).Error())
 		}
 		if string(htmlBytes) != expectedContent {
 			t.Errorf("Converted HTML content of %s was not as expected.\nEXPECTED:\n%s\nACTUAL:\n%s\n", htmlFile, expectedContent, string(htmlBytes))

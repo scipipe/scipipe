@@ -58,6 +58,15 @@ func parseFlags(args []string) error {
 		if err != nil {
 			return errWrap(err, "Could not convert Audit file to TeX")
 		}
+	case "audit2bash":
+		inFile, outFile, err := parseArgsAudit2X(args, "sh")
+		if err != nil {
+			return errWrap(err, "Could not parse filenames from arguments")
+		}
+		err = auditInfoToBash(inFile, outFile, true)
+		if err != nil {
+			return errWrap(err, "Could not convert Audit file to Bash")
+		}
 	default:
 		return errors.New("Unknown command: " + cmd)
 	}
@@ -127,6 +136,7 @@ Available commands:
 $ scipipe new <filename.go>
 $ scipipe audit2html <infile.audit.json> [<outfile.html>]
 $ scipipe audit2tex <infile.audit.json> [<outfile.tex>]
+$ scipipe audit2bash <infile.audit.json> [<outfile.sh>]
 ________________________________________________________________________
 `, scipipe.Version)
 	}
