@@ -321,6 +321,10 @@ func (t *Task) writeAuditLogs(startTime time.Time, finishTime time.Time) {
 		}
 		auditInfo.Upstream[iip.Path()] = iip.AuditInfo()
 	}
+	// Add output paths generated for this task
+	for oipName, oip := range t.OutIPs {
+		auditInfo.OutFiles[oipName] = oip.Path()
+	}
 	// Add the current audit info to output ips and write them to file
 	for _, oip := range t.OutIPs {
 		oip.SetAuditInfo(auditInfo)
