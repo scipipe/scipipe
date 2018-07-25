@@ -8,7 +8,6 @@ import (
 	"text/template"
 	"time"
 
-	colorful "github.com/lucasb-eyer/go-colorful"
 	"github.com/scipipe/scipipe"
 )
 
@@ -111,13 +110,14 @@ func auditInfoToTeX(inFilePath string, outFilePath string, flatten bool) error {
 		ChartHeight: fmt.Sprintf("%.03f", 1.0+float64(len(auditInfosByStartTime))*0.6),
 	}
 
-	palette, err1 := colorful.WarmPalette(len(report.AuditInfos))
-	if err1 != nil {
-		scipipe.CheckWithMsg(err1, "Could not create color palette")
+	palette := palettes[1]
+	if len(report.AuditInfos) <= 50 {
+		palette = palettes[len(report.AuditInfos)]
+	} else {
+		palette = palettes[len(report.AuditInfos)%50]
 	}
-	for i, col := range palette {
-		r, g, b := col.RGB255()
-		report.ColorDef += fmt.Sprintf("\\definecolor{color%d}{RGB}{%d,%d,%d}\n", i, r, g, b)
+	for i, p := range palette {
+		report.ColorDef += fmt.Sprintf("\\definecolor{color%d}{RGB}{%d,%d,%d}\n", i, p.r, p.g, p.b)
 	}
 
 	texTpl.Execute(outFile, report)
