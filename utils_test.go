@@ -21,6 +21,8 @@ func TestRegexPatternMatchesCases(t *testing.T) {
 		"{o:hej}",
 		"{o:hej|.txt}",
 		"{os:hej}",
+		"{o:hej|%.txt}",
+		"{i:hej|%.txt}",
 		"{i:hej|join}",
 		"{i:hej|join: }",
 		"{i:hej|join:,}",
