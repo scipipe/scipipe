@@ -22,6 +22,17 @@ type auditReport struct {
 	ChartHeight string
 }
 
+var (
+	tplFuncs = template.FuncMap{
+		"strrepl":        func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) },
+		"sub":            func(val1 int, val2 int) int { return val1 - val2 },
+		"timesub":        func(t1 time.Time, t2 time.Time) time.Duration { return t1.Sub(t2) },
+		"durtomillis":    func(exact time.Duration) (rounded time.Duration) { return exact.Truncate(1e6 * time.Nanosecond) },
+		"timetomillis":   func(exact time.Time) (rounded time.Time) { return exact.Truncate(1e6 * time.Nanosecond) },
+		"durtomillisint": func(exact time.Duration) (millis int) { return int(exact.Nanoseconds() / 1000000) },
+	}
+)
+
 func auditInfoToHTML(inFilePath string, outFilePath string, flatten bool) error {
 	ip := scipipe.NewFileIP(strings.Replace(inFilePath, ".audit.json", "", 1))
 	auditInfo := ip.AuditInfo()
@@ -91,24 +102,21 @@ func auditInfoToTeX(inFilePath string, outFilePath string, flatten bool) error {
 	auditInfosByID := extractAuditInfosByID(auditInfo)
 	auditInfosByStartTime := sortAuditInfosByStartTime(auditInfosByID)
 
-	texTpl := template.New("TeX").Funcs(
-		template.FuncMap{
-			"strrepl":        func(subj string, find string, repl string) string { return strings.Replace(subj, find, repl, -1) },
-			"sub":            func(val1 int, val2 int) int { return val1 - val2 },
-			"timesub":        func(t1 time.Time, t2 time.Time) time.Duration { return t1.Sub(t2) },
-			"durtomillis":    func(exact time.Duration) (rounded time.Duration) { return exact.Truncate(1e6 * time.Nanosecond) },
-			"timetomillis":   func(exact time.Time) (rounded time.Time) { return exact.Truncate(1e6 * time.Nanosecond) },
-			"durtomillisint": func(exact time.Duration) (millis int) { return int(exact.Nanoseconds() / 1000000) },
-		})
+	texTpl := template.New("TeX").Funcs(tplFuncs)
 	texTpl, err = texTpl.Parse(texTemplate)
 	scipipe.CheckWithMsg(err, "Could not parse TeX template")
+
+	runTime := time.Duration(0)
+	for _, auInfo := range auditInfosByStartTime {
+		runTime += auInfo.ExecTimeNS
+	}
 
 	report := auditReport{
 		FileName:    inFilePath,
 		ScipipeVer:  scipipe.Version,
-		RunTime:     auditInfosByStartTime[len(auditInfosByStartTime)-1].FinishTime.Sub(auditInfosByStartTime[0].StartTime),
+		RunTime:     runTime,
 		AuditInfos:  auditInfosByStartTime,
-		ChartHeight: fmt.Sprintf("%.03f", 1.0+float64(len(auditInfosByStartTime))*0.6),
+		ChartHeight: fmt.Sprintf("%.03f", 1.0+float64(len(auditInfosByStartTime))*0.5),
 	}
 
 	palette := palettes[1]
