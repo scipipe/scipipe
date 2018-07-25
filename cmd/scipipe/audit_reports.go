@@ -236,9 +236,10 @@ start,end,Name,color
 
 \noindent
 {\huge\textbf{SciPipe Audit Report}} \\
+{\large\textbf{For file: {{ (strrepl (strrepl .FileName ".audit.json" "") "_" "\\_") }}} \\
 \vspace{10pt}
 
-    \begin{tcolorbox}[ title=Workflow for file: {{ (strrepl (strrepl .FileName ".audit.json" "") "_" "\\_") }} ]
+    \begin{tcolorbox}[ title=Summary information ]
     \small
 \begin{tabular}{rp{0.72\linewidth}}
 SciPipe version: & {{ .ScipipeVer }} \\
