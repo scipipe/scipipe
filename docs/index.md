@@ -100,8 +100,8 @@ func main() {
     wf := sp.NewWorkflow("hello_world", 4)
 
     // Initialize processes, and file extensions
-    hello := wf.NewProc("hello", "echo 'Hello ' > {o:out.txt}")
-    world := wf.NewProc("world", "echo $(cat {i:in}) World > {o:out.txt}")
+    hello := wf.NewProc("hello", "echo 'Hello ' > {o:out|.txt}")
+    world := wf.NewProc("world", "echo $(cat {i:in}) World > {o:out|.txt}")
 
     // Define data flow
     world.In("in").From(hello.Out("out"))
