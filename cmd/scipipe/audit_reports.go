@@ -164,7 +164,7 @@ func auditInfoToTeX(inFilePath string, outFilePath string, flatten bool) error {
 		SciPipeVer:  scipipe.Version,
 		RunTime:     runTime,
 		AuditInfos:  auditInfosByStartTime,
-		ChartHeight: fmt.Sprintf("%.03f", 1.0+float64(len(auditInfosByStartTime))*0.5),
+		ChartHeight: fmt.Sprintf("%.03f", 1.2+float64(len(auditInfosByStartTime))*0.6),
 	}
 
 	palette := palettes[1]
@@ -320,8 +320,8 @@ Run time: & {{ durtomillis .RunTime }}  \\
     xbar stacked,
     bar shift=0pt,
     y dir=reverse,
-    xtick={1, 60000, 120000, 180000, 240000, 300000, 600000, 900000, 1200000},
-    xticklabels={0, 1 min, 2 min, 3 min, 4 min, 5 min, 10 min, 15 min, 20 min},
+    xtick={1, 10, 1000, 60000, 120000, 180000, 240000, 300000, 600000, 900000, 1200000},
+    xticklabels={0, 10 ms, 1 s, 1 min, 2 min, 3 min, 4 min, 5 min, 10 min, 15 min, 20 min},
     scaled x ticks=false,
 ]
 
@@ -335,8 +335,6 @@ Run time: & {{ durtomillis .RunTime }}  \\
 }
 \end{axis}
 \end{tikzpicture}
-
-\newpage
 
 \section*{Tasks}
     \lstset{ breaklines=true,
