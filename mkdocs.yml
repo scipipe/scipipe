@@ -20,6 +20,8 @@ pages:
     - 'Implement scatter/gather workflows': 'howtos/scatter_gather.md'
     - 'Interacting with an HPC resource manager': 'howtos/hpc.md'
     - 'Constrain resource usage': 'howtos/constrain_resource_usage.md'
+    - 'Plotting workflow graphs': 'howtos/plot_workflow_graph.md'
+    - 'Convert audit logs to other formats': 'howtos/convert_audit_logs.md'
   - 'Examples': 'examples.md'
   - 'Other Resources': 'other_resources.md'
   - 'Acknowledgements': 'acknowledgements.md'

@@ -28,25 +28,6 @@ you could create your processes with this string added manually:
 helloWriter := scipipe.NewProc("helloWriter", "echo hello > {o:outfile}")
 ```
 
-If you have a lot of various parameters, and want a little more flexible way
-to add their values to a command, you can use the [ExpandParams](https://godoc.org/github.com/scipipe/scipipe#ExpandParams)
-helper function, to add the parameter values:
-
-```go
-// Create a shell command pattern
-cmd := "echo {p:p1} {p:p2} {p:p3} > {o:outfile}"
-
-// Create a map from parameter names (p1, p2, p3) to parameter values
-// (one, two, three)
-paramVals := map[string]string{"p1": "one", "p2": "two", "p3": "three"}
-
-// Expand the parameters into the shell command pattern
-cmd = scipipe.ExpandParams(cmd, paramVals)
-
-// Create a new process with the resulting command
-write123 := scipipe.NewProc("write123", cmd)
-```
-
 ### See also
 
 - [Static parameters example](https://github.com/scipipe/scipipe/blob/master/examples/static_params/staticparams.go)
