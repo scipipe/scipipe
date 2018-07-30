@@ -61,9 +61,9 @@ func main() {
 	// --------------------------------------------------------------------------------
 	// Index Reference Genome
 	// --------------------------------------------------------------------------------
-	indexRef := wf.NewProc("index_ref", "bwa index -a bwtsw {i:index}; echo done > {o:done}")
-	indexRef.In("index").From(ungzipRef.Out("out"))
-	indexRef.SetOut("done", "{i:index}.indexed")
+	indexRef := wf.NewProc("index_ref", "bwa index -a bwtsw {i:ref}; echo done > {o:done}")
+	indexRef.In("ref").From(ungzipRef.Out("out"))
+	indexRef.SetOut("done", "{i:ref}.indexed")
 
 	// Create (multi-level) maps where we can gather outports from processes
 	// for each for loop iteration and access them in the merge step later
