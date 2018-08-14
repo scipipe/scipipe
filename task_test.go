@@ -1,13 +1,26 @@
 package scipipe
 
 import (
+	"os"
 	"testing"
 )
+
+func TestTempDirsExist(t *testing.T) {
+	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{"in1": NewFileIP("infile.txt"), "in2": NewFileIP("infile2.txt")}, nil, nil, map[string]string{"p1": "p1val", "p2": "p2val"}, nil, "", nil, 4)
+	err := os.Mkdir(tsk.TempDir(), 0644)
+	Check(err)
+	exists := tsk.tempDirsExist()
+	if !exists {
+		t.Errorf("TempDirsExist returned false, even though directory exists: %s\n", tsk.TempDir())
+	}
+	err = os.Remove(tsk.TempDir())
+	Check(err)
+}
 
 func TestTempDir(t *testing.T) {
 	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{"in1": NewFileIP("infile.txt"), "in2": NewFileIP("infile2.txt")}, nil, nil, map[string]string{"p1": "p1val", "p2": "p2val"}, nil, "", nil, 4)
 
-	expected := "tmp.test_task.infile.txt.infile2.txt.p1_p1val.p2_p2val"
+	expected := tempDirPrefix + ".test_task.infile.txt.infile2.txt.p1_p1val.p2_p2val"
 	actual := tsk.TempDir()
 	if actual != expected {
 		t.Errorf("TempDir() was %s Expected: %s", actual, expected)

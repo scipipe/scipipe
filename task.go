@@ -209,8 +209,8 @@ func (t *Task) Execute() {
 	defer close(t.Done)
 
 	// Do some sanity checks
-	if t.anyTempfileExists() {
-		Failf("| %-32s | Existing temp files found so existing. Clean up .tmp files before restarting the workflow!", t.Name)
+	if t.tempDirsExist() {
+		Failf("| %-32s | Existing temp folders found, so existing. Clean up temporary folders (starting with '%s') before restarting the workflow!", t.Name, tempDirPrefix)
 	}
 
 	if t.anyOutputsExist() {
@@ -248,18 +248,11 @@ func (t *Task) Execute() {
 // ------------------------------------------------------------------------
 
 // anyTempFileExists checks if any temporary workflow files exist and if so, returns true
-func (t *Task) anyTempfileExists() (anyTempfileExists bool) {
-	anyTempfileExists = false
-	for _, oip := range t.OutIPs {
-		if !oip.doStream {
-			otmpPath := t.TempDir() + "/" + oip.TempPath()
-			if _, err := os.Stat(otmpPath); err == nil {
-				Warning.Printf("| %-32s | Temp file already exists: %s (Note: If resuming from a failed run, clean up .tmp files first. Also, make sure that two processes don't produce the same output files!).\n", t.Name, otmpPath)
-				anyTempfileExists = true
-			}
-		}
+func (t *Task) tempDirsExist() bool {
+	if _, err := os.Stat(t.TempDir()); os.IsNotExist(err) {
+		return false
 	}
-	return
+	return true
 }
 
 // anyOutputsExist if any output file IP, or temporary file IPs, exist
@@ -375,11 +368,13 @@ func AtomizeIPs(tempExecDir string, ips ...*FileIP) {
 	}
 }
 
+var tempDirPrefix = "_scipipe_tmp"
+
 // TempDir returns a string that is unique to a task, suitable for use
 // in file paths. It is built up by merging all input filenames and parameter
 // values that a task takes as input, joined with dots.
 func (t *Task) TempDir() string {
-	pathPcs := []string{"tmp." + sanitizePathFragment(t.Name)}
+	pathPcs := []string{tempDirPrefix + "." + sanitizePathFragment(t.Name)}
 	for _, ipName := range sortedFileIPMapKeys(t.InIPs) {
 		pathPcs = append(pathPcs, filepath.Base(t.InIP(ipName).Path()))
 	}
