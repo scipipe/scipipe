@@ -12,9 +12,9 @@
 
 ## Project updates
 
-- <strong>NEW blog post:</strong> [Provenance reports in Scientific Workflows](http://bionics.it/posts/provenance-reports-in-scientific-workflows) - going into details about how SciPipe is addressing provenance
-- <strong>NEW blog post:</strong> [First production workflow run with SciPipe](http://bionics.it/posts/first-production-workflow-run-with-scipipe)
-- <strong>NEW video:</strong> [Watch a screencast on how to write a Hello World workflow in SciPipe [15:28]](https://www.youtube.com/watch?v=kWqkGwDU-Hc)
+- <strong>NEW - preprint on SciPipe: [SciPipe - A workflow library for agile development of complex and dynamic bioinformatics pipelines](https://www.biorxiv.org/content/early/2018/08/01/380808) - explaining the background, motivations and technical aspects in depth. Freely available via bioRxiv.</strong>
+- <strong>Blog post:</strong> [Provenance reports in Scientific Workflows](http://bionics.it/posts/provenance-reports-in-scientific-workflows) - going into details about how SciPipe is addressing provenance
+- <strong>Blog post:</strong> [First production workflow run with SciPipe](http://bionics.it/posts/first-production-workflow-run-with-scipipe)
 
 ## Introduction
 
