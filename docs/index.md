@@ -8,7 +8,7 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/scipipe/scipipe)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1157941.svg)](https://doi.org/10.5281/zenodo.1157941)
 
-<strong><small>Project links: [GitHub repo](http://github.com/scipipe/scipipe) | [Issue Tracker](https://github.com/scipipe/scipipe/issues) | [Mailing List](https://groups.google.com/forum/#!forum/scipipe) | [Chat](https://gitter.im/scipipe/scipipe)</small></strong>
+<strong><small>Project links: [GitHub repo](http://github.com/scipipe/scipipe) | [Issue Tracker](https://github.com/scipipe/scipipe/issues) | [Chat](https://gitter.im/scipipe/scipipe)</small></strong>
 
 
 ## Project updates
