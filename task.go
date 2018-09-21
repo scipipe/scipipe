@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -389,7 +390,13 @@ func (t *Task) TempDir() string {
 		sha1sum := sha1.Sum([]byte(pathSegment))
 		pathSegment = t.Name + "." + hex.EncodeToString(sha1sum[:])
 	}
+	pathSegment = cleanFilename(pathSegment)
 	return pathSegment
+}
+
+func cleanFilename(orig string) string {
+	allowedPtn := regexp.MustCompile(`[^a-zA-Z0-9\_\-\.]+`)
+	return allowedPtn.ReplaceAllString(orig, "_")
 }
 
 func parentDirPath(path string) string {

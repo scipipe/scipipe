@@ -326,6 +326,11 @@ func (ip *FileIP) Param(key string) string {
 	return val
 }
 
+// Params returns the audit info's params
+func (ip *FileIP) Params() map[string]string {
+	return ip.AuditInfo().Params
+}
+
 // ------------------------------------------------------------------------
 // Tags stuff
 // ------------------------------------------------------------------------

@@ -383,9 +383,19 @@ func (p *Process) createTasks() (ch chan *Task) {
 				}
 			}
 
+			// Add tags and params stored in incoming IPs to the new task's tags, to be accessible with a syntax of:
+			// {t:inport.tagname} and {t:inport.params.paramname} respectively
 			for iname, ip := range inIPs {
-				for k, v := range ip.Tags() {
-					tags[iname+"."+k] = v
+				for tk, tv := range ip.Tags() {
+					tags[iname+"."+tk] = tv
+				}
+
+				for pk, pv := range ip.Params() {
+					paramTagName := iname + ".params." + pk
+					//if _, ok := tags[paramTagName]; ok {
+					//	Failf("p:%s: Conflicting tag and param name (can't be the same): %s\n", p.Name(), paramTagName)
+					//}
+					tags[paramTagName] = pv
 				}
 			}
 
