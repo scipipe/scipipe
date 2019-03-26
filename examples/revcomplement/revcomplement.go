@@ -15,9 +15,11 @@ func main() {
 	// makeDNA writes a DNA string to a file
 	makeDNA := wf.NewProc("Make DNA", "echo "+dna+" > {o:dna}")
 	makeDNA.SetOut("dna", "dna.txt")
+
 	// complmt computes the base complement of a DNA string
 	complmt := wf.NewProc("Base Complement", "cat {i:in} | tr ATCG TAGC > {o:compl}")
 	complmt.SetOut("compl", "{i:in|%.txt}.compl.txt")
+
 	// reverse reverses the input DNA string
 	reverse := wf.NewProc("Reverse", "cat {i:in} | rev > {o:rev}")
 	reverse.SetOut("rev", "{i:in|%.txt}.rev.txt")
