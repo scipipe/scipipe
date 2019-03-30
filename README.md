@@ -12,7 +12,8 @@
 
 ## Project updates
 
-- <strong>NEW - preprint on SciPipe:</strong> [SciPipe - A workflow library for agile development of complex and dynamic bioinformatics pipelines](https://www.biorxiv.org/content/early/2018/08/01/380808) - explaining the background, motivations and technical aspects in depth. Freely available via bioRxiv.</strong>
+- <strong>NEW - Slides:</strong> [Presentation on SciPipe and more at Go Stockholm Conference](https://pharmb.io/blog/saml-gostockholm2018/)
+- <strong>Preprint paper on SciPipe:</strong> [SciPipe - A workflow library for agile development of complex and dynamic bioinformatics pipelines](https://www.biorxiv.org/content/early/2018/08/01/380808) - explaining the background, motivations and technical aspects in depth. Freely available via bioRxiv.</strong>
 - <strong>Blog post:</strong> [Provenance reports in Scientific Workflows](http://bionics.it/posts/provenance-reports-in-scientific-workflows) - going into details about how SciPipe is addressing provenance
 - <strong>Blog post:</strong> [First production workflow run with SciPipe](http://bionics.it/posts/first-production-workflow-run-with-scipipe)
 
