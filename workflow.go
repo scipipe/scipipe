@@ -8,6 +8,7 @@ package scipipe
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -56,6 +57,24 @@ type WorkflowProcess interface {
 // ----------------------------------------------------------------------------
 // Factory function(s)
 // ----------------------------------------------------------------------------
+
+// NewWorkflow returns a new Workflow
+func NewWorkflowWithPath(name string, maxConcurrentTasks int, workflowPath string) *Workflow {
+	wf := newWorkflowWithoutLogging(name, maxConcurrentTasks)
+
+	// Set up logging
+	allowedCharsPtrn := regexp.MustCompile("[^a-z0-9_]")
+	wfNameNormalized := allowedCharsPtrn.ReplaceAllString(strings.ToLower(name), "-")
+	logFilePathRelative := fmt.Sprintf("log/scipipe-%s-%s.log", time.Now().Format("20060102-150405"), wfNameNormalized)
+	fmt.Println("logFilePathRelative", logFilePathRelative)
+	logFilePathAbsolute, err := filepath.Abs(filepath.Join(workflowPath,logFilePathRelative))
+	fmt.Println("logFilePathAbsolute", logFilePathAbsolute)
+	CheckWithMsg(err, "Could not find filepath "+logFilePathAbsolute)
+	wf.logFile = logFilePathAbsolute
+	InitLogAuditToFile(wf.logFile)
+
+	return wf
+}
 
 // NewWorkflow returns a new Workflow
 func NewWorkflow(name string, maxConcurrentTasks int) *Workflow {
