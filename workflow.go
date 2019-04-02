@@ -58,7 +58,7 @@ type WorkflowProcess interface {
 // Factory function(s)
 // ----------------------------------------------------------------------------
 
-// NewWorkflow returns a new Workflow
+// NewWorkflowWithPath returns a new Workflow, the workflowPath defines the directory in which all files of this workflow, even temporary files will be created
 func NewWorkflowWithPath(name string, maxConcurrentTasks int, workflowPath string) *Workflow {
 	wf := newWorkflowWithoutLogging(name, maxConcurrentTasks)
 
