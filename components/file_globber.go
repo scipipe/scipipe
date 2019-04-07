@@ -1,8 +1,9 @@
 package components
 
 import (
-	"github.com/scipipe/scipipe"
 	"path/filepath"
+
+	"github.com/scipipe/scipipe"
 )
 
 // FileGlobber is initiated with a set of glob patterns paths, which it will
@@ -27,13 +28,36 @@ func NewFileGlobber(wf *scipipe.Workflow, name string, globPatterns ...string) *
 	return p
 }
 
+// NewFileGlobberDependent returns a new FileGlobber that depends on upstream
+// files to be received on the InPort InDependency() before it starts globbing files.
+func NewFileGlobberDependent(wf *scipipe.Workflow, name string, globPatterns ...string) *FileGlobber {
+	p := NewFileGlobber(wf, name, globPatterns...)
+	p.InitInPort(p, "in_dep")
+	return p
+}
+
 // Out returns the out-port, on which file IPs based on the file paths the
 // process was initialized with, will be retrieved.
 func (p *FileGlobber) Out() *scipipe.OutPort { return p.OutPort("out") }
 
+// InDependency takes files which it will wait for before it starts to execute.
+func (p *FileGlobber) InDependency() *scipipe.InPort { return p.InPort("in_dep") }
+
 // Run runs the FileGlobber process
 func (p *FileGlobber) Run() {
 	defer p.CloseAllOutPorts()
+	// If we have an InDependency in-port, then loop on the in-channel of that, to make
+	// the process wait for IPs on that.
+	if _, ok := p.InPorts()["in_dep"]; ok {
+		for range p.InDependency().Chan {
+			p.globFiles()
+		}
+		return
+	}
+	p.globFiles()
+}
+
+func (p *FileGlobber) globFiles() {
 	for _, globPtn := range p.globPatterns {
 		scipipe.Audit.Printf("%s: Globbing for files, with pattern: %s", p.Name(), globPtn)
 		matches, err := filepath.Glob(globPtn)
