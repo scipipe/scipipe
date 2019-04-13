@@ -13,13 +13,13 @@
 - **Flexible:** Wrapped command-line programs or scripts can be combined with
   processes coded in Go
 - **Convenient:** Full control over how your files are named
-- **Portable:** Workflows can be distributed either as Go code to be run with
-  `go run`, or as stand-alone executable files
-- **Easy to debug:** Use available debugging tools or even just `println()`
-- **Supports streaming:** Can stream outputs via UNIX named pipes
 - **Efficient:** Workflows consist of statically compiled code that runs fast
 - **Parallel:** Pipeline paralellism between processes as well as task
   parallelism for multiple inputs, making efficient use of multiple CPU cores
+- **Supports streaming:** Can stream outputs via UNIX named pipes
+- **Easy to debug:** Use available debugging tools or even just `println()`
+- **Portable:** Workflows can be distributed either as Go code to be run with
+  `go run`, or as stand-alone executable files
 
 <strong><small>Project links: [GitHub repo](http://github.com/scipipe/scipipe) | [Issue Tracker](https://github.com/scipipe/scipipe/issues) | [Chat](https://gitter.im/scipipe/scipipe)</small></strong>
 
