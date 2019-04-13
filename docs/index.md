@@ -76,6 +76,15 @@ to the latest API).
   for details.
 - There is not (yet) support for the [Common Workflow Language](http://common-workflow-language.github.io).
 
+## Installing
+
+1. [Download](https://golang.org/dl/) and [install](https://golang.org/doc/install) Go
+2. Run the following command, to install the scipipe Go library (don't miss the trailing dots!):
+
+```bash
+go get github.com/scipipe/scipipe/...
+```
+
 ## Hello World example
 
 Let's look at an example workflow to get a feel for what writing workflows in
