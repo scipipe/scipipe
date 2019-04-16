@@ -76,11 +76,16 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 		p.PortInfo[portName] = &PortInfo{portType: portType}
 
 		for _, part := range splitParts[1:] {
+			// If the |-separated part starts with a dot, treat it as a
+			// configuration for file extenion to use
 			fileExtPtn := regexp.MustCompile("\\.([a-z0-9\\.\\-\\_]+)")
 			if fileExtPtn.MatchString(part) {
 				m := fileExtPtn.FindStringSubmatch(part)
 				p.PortInfo[portName].extension = m[1]
 			}
+			// If the |-separated part starts with "join:"
+			// then treat the character following that as the character to use
+			// when joining multiple files received on a sub-stream
 			joinPtn := regexp.MustCompile("join:([^{}|]+)")
 			if joinPtn.MatchString(part) {
 				m := joinPtn.FindStringSubmatch(part)
@@ -227,23 +232,23 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 			restMatch := match[2]
 
 			parts := strings.Split(restMatch, "|")
-			phName := parts[0]
+			portName := parts[0]
 			restParts := parts[1:]
 
 			switch phType {
 			case "i":
-				replacement = t.InPath(phName)
+				replacement = t.InPath(portName)
 			case "o":
-				if _, ok := t.Process.PathFuncs[phName]; !ok {
-					Fail("No such pathfunc for out-port " + phName + " in task " + t.Name)
+				if _, ok := t.Process.PathFuncs[portName]; !ok {
+					Fail("No such pathfunc for out-port " + portName + " in task " + t.Name)
 				}
-				replacement = t.Process.PathFuncs[phName](t)
+				replacement = t.Process.PathFuncs[portName](t)
 			case "p":
-				replacement = t.Param(phName)
+				replacement = t.Param(portName)
 			case "t":
-				replacement = t.Tag(phName)
+				replacement = t.Tag(portName)
 			default:
-				Fail("Replace failed for placeholder ", phName, " for path patterh '", path, "'")
+				Fail("Replace failed for placeholder ", portName, " for path patterh '", path, "'")
 			}
 
 			if len(restParts) > 0 {
@@ -251,12 +256,18 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 				trimEndPtn := regexp.MustCompile("%(.*)")
 
 				for _, restPart := range restParts {
+					// If the |-separated part looks like a search/replace
+					// pattern on the form of: s/SEARCHSTRING/REPLACESTRING/
+					// then execute the replacement.
 					if substPtn.MatchString(restPart) {
 						mbits := substPtn.FindStringSubmatch(restPart)
 						search := mbits[1]
 						replace := mbits[2]
 						replacement = strings.Replace(replacement, search, replace, 1)
 					}
+					// If the |-separated part starts iwth a %-character, then
+					// trim everything following that character, from the end
+					// of the path.
 					if trimEndPtn.MatchString(restPart) {
 						mbits := trimEndPtn.FindStringSubmatch(restPart)
 						end := mbits[1]
