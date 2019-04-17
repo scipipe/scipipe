@@ -254,6 +254,7 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 			if len(restParts) > 0 {
 				substPtn := regexp.MustCompile("s\\/([^\\/]+)\\/([^\\/]*)\\/")
 				trimEndPtn := regexp.MustCompile("%(.*)")
+				basenamePtn := regexp.MustCompile(`.*\/`)
 
 				for _, restPart := range restParts {
 					// If the |-separated part looks like a search/replace
@@ -274,6 +275,11 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 						if end == replacement[len(replacement)-len(end):] {
 							replacement = replacement[:len(replacement)-len(end)]
 						}
+					}
+					// If the |-separated part is "basename", then remove all leading
+					// folders up to the actual file name.
+					if restPart == "basename" {
+						replacement = basenamePtn.ReplaceAllString(replacement, "")
 					}
 				}
 			}

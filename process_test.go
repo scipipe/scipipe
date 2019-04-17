@@ -27,16 +27,17 @@ func TestSetOut(t *testing.T) {
 	p := wf.NewProc("cat_foo", "cat {i:foo} > {o:bar} # {p:p1}")
 	p.InParam("p1").FromStr("p1val")
 
-	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")},
+	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("data/foo.txt")},
 		nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)
 
 	inputsAndOutputs := map[string]string{
-		"{i:foo}":                  "foo.txt",
-		"{i:foo}.bar.{p:p1}.txt":   "foo.txt.bar.p1val.txt",
-		"{i:foo|s/.txt//}_bar.txt": "foo_bar.txt",
-		"{i:foo|s/.txt/.bar/}.txt": "foo.bar.txt",
-		"{i:foo|%.txt}.bar.txt":    "foo.bar.txt", // Bash style strip from end of string
-		"{i:foo|%oo.txt}.txt":      "f.txt",       // Bash style strip from end of string
+		"{i:foo}":                  "data/foo.txt",
+		"{i:foo}.bar.{p:p1}.txt":   "data/foo.txt.bar.p1val.txt",
+		"{i:foo|s/.txt//}_bar.txt": "data/foo_bar.txt",
+		"{i:foo|s/.txt/.bar/}.txt": "data/foo.bar.txt",
+		"{i:foo|%.txt}.bar.txt":    "data/foo.bar.txt", // Bash style strip from end of string
+		"{i:foo|%oo.txt}.txt":      "data/f.txt",       // Bash style strip from end of string
+		"{i:foo|basename}":         "foo.txt",
 	}
 	for pathPattern, expectedPath := range inputsAndOutputs {
 		// Set a path format for the "bar" out-port
