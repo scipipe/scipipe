@@ -89,6 +89,7 @@ type FileIP struct {
 
 // NewFileIP creates a new FileIP
 func NewFileIP(path string) *FileIP {
+	checkFilename(path)
 	ip := &FileIP{
 		BaseIP:    NewBaseIP(path),
 		lock:      &sync.Mutex{},
@@ -101,6 +102,17 @@ func NewFileIP(path string) *FileIP {
 	//buf := make([]byte, 0, 128)
 	//ip.buffer = bytes.NewBuffer(buf)
 	return ip
+}
+
+func checkFilename(path string) {
+	expr := `[A-Za-z\/\.-_]+`
+	ptn, err := regexp.Compile(expr)
+	if err != nil {
+		Fail("Could not compile regex")
+	}
+	if !ptn.MatchString(path) {
+		Failf(`Filename "%s" does not match expression %s`, path, expr)
+	}
 }
 
 // ------------------------------------------------------------------------

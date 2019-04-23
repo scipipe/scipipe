@@ -8,45 +8,45 @@ import (
 	"github.com/scipipe/scipipe"
 )
 
-// FileReader takes a file path on its FilePath in-port, and returns the file
+// FileToParamReader takes a file path on its FilePath in-port, and returns the file
 // content as []byte on its out-port Out
-type FileReader struct {
+type FileToParamReader struct {
 	scipipe.BaseProcess
 	filePath string
 }
 
-// NewFileReader returns an initialized new FileReader
-func NewFileReader(wf *scipipe.Workflow, name string, filePath string) *FileReader {
-	p := &FileReader{
+// NewFileToParamReader returns an initialized new FileToParamReader
+func NewFileToParamReader(wf *scipipe.Workflow, name string, filePath string) *FileToParamReader {
+	p := &FileToParamReader{
 		BaseProcess: scipipe.NewBaseProcess(wf, name),
 		filePath:    filePath,
 	}
-	p.InitInParamPort(p, "filepath")
 	p.InitOutParamPort(p, "line")
 	wf.AddProc(p)
 	return p
 }
 
 // OutLine returns an parameter out-port with lines of the files being read
-func (p *FileReader) OutLine() *scipipe.OutParamPort { return p.OutParamPort("line") }
+func (p *FileToParamReader) OutLine() *scipipe.OutParamPort { return p.OutParamPort("line") }
 
-// Run the FileReader
-func (p *FileReader) Run() {
+// Run the FileToParamReader
+func (p *FileToParamReader) Run() {
 	defer p.CloseAllOutPorts()
 
 	file, err := os.Open(p.filePath)
 	if err != nil {
-		err = errWrapf(err, "[FileReader] Could not open file %s", p.filePath)
+		err = errWrapf(err, "[FileToParamReader] Could not open file %s", p.filePath)
 		log.Fatal(err)
 	}
 	defer file.Close()
 
 	scan := bufio.NewScanner(file)
 	for scan.Scan() {
-		p.OutLine().Send(scan.Text() + "\n")
+		strToSend := scan.Text()
+		p.OutLine().Send(strToSend)
 	}
 	if scan.Err() != nil {
-		err = errWrapf(scan.Err(), "[FileReader] Error when scanning input file %s", p.filePath)
+		err = errWrapf(scan.Err(), "[FileToParamReader] Error when scanning input file %s", p.filePath)
 		log.Fatal(err)
 	}
 }

@@ -599,7 +599,7 @@ func (p *StreamToSubStream) OutSubStream() *OutPort { return p.OutPort("substrea
 func (p *StreamToSubStream) Run() {
 	defer p.OutSubStream().Close()
 
-	subStreamIP := NewFileIP("")
+	subStreamIP := NewFileIP("/tmp/scipipe_streamtosubstream_dummyfile")
 	subStreamIP.SubStream = p.In()
 
 	p.OutSubStream().Send(subStreamIP)
