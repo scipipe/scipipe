@@ -11,7 +11,7 @@ func TestCommandToParams(tt *testing.T) {
 	// always "abc"
 	wf := scipipe.NewWorkflow("wf", 4)
 
-	cmdToParams := NewCommandToParams(wf, "cmdtoparams", "echo foo; echo bar; echo baz;")
+	cmdToParams := NewCommandToParams(wf, "cmdtoparams", "{ echo foo; echo bar; echo baz; }")
 
 	checker := wf.NewProc("checker", "# {p:param}")
 	checker.CustomExecute = func(t *scipipe.Task) {
