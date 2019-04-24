@@ -7,7 +7,7 @@ import (
 	"github.com/scipipe/scipipe"
 )
 
-func TestFileToParamReader(tt *testing.T) {
+func TestFileToParamsReader(tt *testing.T) {
 	// Create file to read
 	filePath := "/tmp/filereader_testfile.txt"
 	f, err := os.Create("/tmp/filereader_testfile.txt")
@@ -22,7 +22,7 @@ func TestFileToParamReader(tt *testing.T) {
 	// Run test workflow and make sure that the parameter read from the file is
 	// always "abc"
 	wf := scipipe.NewWorkflow("wf", 4)
-	rd := NewFileToParamReader(wf, "reader", filePath)
+	rd := NewFileToParamsReader(wf, "reader", filePath)
 	checker := wf.NewProc("checker", "# {p:testparam}")
 	checker.InParam("testparam").From(rd.OutLine())
 	checker.CustomExecute = func(t *scipipe.Task) {

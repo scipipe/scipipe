@@ -35,7 +35,7 @@ func (p *Concatenator) Run() {
 	outIP := scipipe.NewFileIP(p.OutPath)
 	outFh := outIP.OpenWriteTemp()
 	for inIP := range p.In().Chan {
-		fr := NewFileToParamReader(p.Workflow(), p.Name()+"_filereader_"+getRandString(7), inIP.Path())
+		fr := NewFileToParamsReader(p.Workflow(), p.Name()+"_filereader_"+getRandString(7), inIP.Path())
 
 		pip := scipipe.NewInParamPort(p.Name() + "temp_line_reader")
 		pip.SetProcess(p)
