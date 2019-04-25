@@ -1,5 +1,4 @@
 site_name: SciPipe Docs
-theme: material
 pages:
   - 'Introduction': 'index.md'
   - 'Installing': 'install.md'
@@ -28,8 +27,10 @@ pages:
   - 'Related Tools': 'related_tools.md'
 repo_name: 'scipipe/scipipe'
 repo_url: 'https://github.com/scipipe/scipipe'
-extra:
+theme:
+    name: material
     logo: 'images/scipipe_logo_bluegrey.svg'
+extra:
     palette:
         primary: 'blue grey'
         accent: 'cyan'
