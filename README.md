@@ -1,5 +1,4 @@
-<img src="docs/images/fbp_factory.png" style="width: 30%; float: right; margin: 1em;">
-<h1 style="margin-bottom: 0;"><img src="docs/images/scipipe_logo_bluegrey_horiz.svg" style="width: 240px; margin-left: -10px; margin-bottom: 0;" alt="SciPipe"></h1>
+<h1 style="margin-bottom: 0;"><img src="docs/images/scipipe_logo_bluegrey_horiz_240px.png" alt="SciPipe"></h1>
 
 <big>Robust, flexible and resource-efficient pipelines using Go and the commandline</big>
 
