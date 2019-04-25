@@ -1,4 +1,5 @@
-# SciPipe
+<img src="images/fbp_factory.png" style="width: 30%; float: right; margin: 1em;">
+<h1 style="margin-bottom: 0;"><img src="images/scipipe_logo_bluegrey_horiz.svg" style="width: 240px; margin-left: -10px; margin-bottom: 0;" alt="SciPipe"></h1>
 
 <big>Robust, flexible and resource-efficient pipelines using Go and the commandline</big>
 
@@ -11,6 +12,22 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1157941.svg)](https://doi.org/10.5281/zenodo.1157941)
 
 <strong>Project links: [Documentation & Main Website](http://scipipe.org) | [Issue Tracker](https://github.com/scipipe/scipipe/issues) | [Chat](https://gitter.im/scipipe/scipipe)</strong>
+
+## Why SciPipe?
+
+- **Intuitive:** SciPipe works by flowing data through a network of channels
+  and processes
+- **Flexible:** Wrapped command-line programs can be combined with processes in
+  Go
+- **Convenient:** Full control over how your files are named
+- **Efficient:** Workflows are compiled to binary code that run fast
+- **Parallel:** Pipeline paralellism between processes as well as task
+  parallelism for multiple inputs, making efficient use of multiple CPU cores
+- **Supports streaming:** Stream data between programs to avoid wasting disk space
+- **Easy to debug:** Use available Go debugging tools or just `println()`
+- **Portable:** Distribute workflows as Go code or as self-contained executable
+  files
+
 
 ## Project updates
 
@@ -54,30 +71,6 @@ changes still happens as we try to streamline the process of writing workflows.
 Please follow the commit history closely for any API updates if you have code
 already written in SciPipe (Let us know if you need any help in migrating code
 to the latest API).
-
-## Benefits
-
-Some key benefits of SciPipe, that are not always found in similar systems:
-
-- **Intuitive behaviour:** SciPipe operates by flowing data (files) through a
-  network of channels and processes, not unlike the conveyor belts and stations
-  in a factory.
-- **Flexible:** Processes that wrap command-line programs or scripts, can be
-  combined with processes coded directly in Golang.
-- **Custom file naming:** SciPipe gives you full control over how files are
-  named, making it easy to find your way among the output files of your
-  workflow.
-- **Portable:** Workflows can be distributed either as Go code to be run with
-  `go run`, or as stand-alone executable files that run on almost any UNIX-like
-  operating system.
-- **Easy to debug:** As everything in SciPipe is just Go code, you can use some
-  of the available debugging tools, or just `println()` statements, to debug
-  your workflow.
-- **Supports streaming:** Can stream outputs via UNIX FIFO files, to avoid temporary storage.
-- **Efficient and Parallel:** Workflows are compiled into statically compiled
-  code that runs fast. SciPipe also leverages pipeline parallelism between
-  processes as well as task parallelism when there are multiple inputs to a
-  process, making efficient use of multiple CPU cores.
 
 ## Known limitations
 
