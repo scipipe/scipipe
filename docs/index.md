@@ -2,9 +2,7 @@
 
 <img src="images/fbp_factory.png" style="width: 30%; float: right; margin: 0 .4em;">
 
-## Scientific Workflow Library written in Go
-
-<big>Run complex series of shell commands, or pipelines, in a flexible, robust & reproducible manner</big>
+<big>Robust, flexible and resource-efficient pipelines using Go and the commandline</big>
 
 ## Why SciPipe?
 
