@@ -30,7 +30,7 @@
 
 ## Project updates
 
-- <strong>NEW - Paper on scientific study using SciPipe:</strong> [Predicting off-target binding profiles with confidence using Conformal Prediction](https://doi.org/10.3389/fphar.2018.01256)
+- <strong>NEW - Scientific study using SciPipe:</strong> [Predicting off-target binding profiles with confidence using Conformal Prediction](https://doi.org/10.3389/fphar.2018.01256)
 - <strong>NEW - Slides:</strong> [Presentation on SciPipe and more at Go Stockholm Conference](https://pharmb.io/blog/saml-gostockholm2018/)
 - <strong>Preprint paper on SciPipe:</strong> [SciPipe - A workflow library for agile development of complex and dynamic bioinformatics pipelines](https://www.biorxiv.org/content/early/2018/08/01/380808) - explaining the background, motivations and technical aspects in depth. Freely available via bioRxiv.</strong>
 - <strong>Blog post:</strong> [Provenance reports in Scientific Workflows](http://bionics.it/posts/provenance-reports-in-scientific-workflows) - going into details about how SciPipe is addressing provenance
