@@ -1,4 +1,4 @@
-<h1 style="margin-bottom: 0;"><img src="docs/images/scipipe_logo_bluegrey_horiz_240px.png" alt="SciPipe"></h1>
+<h1 style="margin-bottom: 0;"><img src="docs/images/scipipe_logo_bluegrey_horiz_320px.png" alt="SciPipe"></h1>
 
 <big>Robust, flexible and resource-efficient pipelines using Go and the commandline</big>
 
