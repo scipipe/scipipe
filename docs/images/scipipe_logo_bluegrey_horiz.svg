@@ -13,10 +13,10 @@
    version="1.1"
    id="svg2"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="scipipe12.graph_text.horiz.svg"
-   inkscape:export-filename="/home/samuel/proj/farmbio/2019/scipipe-logo/scipipe12.graph_text.png"
-   inkscape:export-xdpi="599.9892"
-   inkscape:export-ydpi="599.9892">
+   sodipodi:docname="scipipe_logo_bluegrey_horiz.svg"
+   inkscape:export-filename="/home/samuel/proj/go/src/github.com/scipipe/scipipe/docs/images/scipipe_logo_bluegrey_horiz_320px.png"
+   inkscape:export-xdpi="41.029999"
+   inkscape:export-ydpi="41.029999">
   <metadata
      id="metadata32">
     <rdf:RDF>
@@ -45,7 +45,7 @@
      id="namedview28"
      showgrid="false"
      inkscape:zoom="0.90509668"
-     inkscape:cx="475.26677"
+     inkscape:cx="199.60561"
      inkscape:cy="95.422253"
      inkscape:window-x="0"
      inkscape:window-y="25"

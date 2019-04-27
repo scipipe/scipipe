@@ -31,11 +31,11 @@
 
 <div style="width:37%; float: right; font-size: 0.8em; padding: 1em; margin: 0 0 1em 1em;">
 <h4>Project updates</h4>
-<strong>NEW: Scientific study using SciPipe:</strong><br><a href="https://doi.org/10.3389/fphar.2018.01256">Predicting off-target binding profiles with confidence using Conformal Prediction</a><br>
-<strong>NEW: Slides:</strong> <a href="https://pharmb.io/blog/saml-gostockholm2018">Presentation on SciPipe and more at Go Stockholm Conference</a><br>
-<strong>Preprint paper on SciPipe:</strong><br><a href="https://www.biorxiv.org/content/early/2018/08/01/380808">SciPipe - A workflow library for agile development of complex and dynamic bioinformatics pipelines</a><br>
-<strong>Blog post:</strong> <a href="http://bionics.it/posts/provenance-reports-in-scientific-workflows">Provenance reports in Scientific workflows</a> - going into details about how SciPipe is addressing provenance">Provenance reports in Scientific Workflows<br>
-<strong>Blog post:</strong> <a href="http://bionics.it/posts/first-production-workflow-run-with-scipipe">First production workflow run with SciPipe</a>
+<strong>NEW - The SciPipe paper published open access in GigaScience:</strong> [SciPipe: A workflow library for agile development of complex and dynamic bioinformatics pipelines](https://doi.org/10.1093/gigascience/giz044)
+<strong>Scientific study using SciPipe:</strong> [Predicting off-target binding profiles with confidence using Conformal Prediction](https://doi.org/10.3389/fphar.2018.01256)
+<strong>Slides:</strong> [Presentation on SciPipe and more at Go Stockholm Conference](https://pharmb.io/blog/saml-gostockholm2018/)
+<strong>Blog post:</strong> [Provenance reports in Scientific Workflows](http://bionics.it/posts/provenance-reports-in-scientific-workflows) - going into details about how SciPipe is addressing provenance
+<strong>Blog post:</strong> [First production workflow run with SciPipe](http://bionics.it/posts/first-production-workflow-run-with-scipipe)
 </div>
 
 ## Introduction
