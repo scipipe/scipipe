@@ -243,6 +243,13 @@ see [SciPipe website (scipipe.org)](http://scipipe.org)!
   [this](https://blog.gopheracademy.com/advent-2015/composable-pipelines-improvements/)
   blog posts on Gopher Academy.
 
+## Citing SciPipe
+
+If you use SciPipe in academic or scholarly work, please cite the following paper as source:
+
+Lampa S, Dahlö M, Alvarsson J, Spjuth O. SciPipe: A workflow library for agile development of complex and dynamic bioinformatics pipelines 
+_Gigascience_. 8, 5 (2019). DOI: [10.1093/gigascience/giz044](https://dx.doi.org/10.1093/gigascience/giz044)
+
 ## Acknowledgements
 
 - SciPipe is very heavily dependent on the proven principles form [Flow-Based

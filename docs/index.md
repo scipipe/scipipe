@@ -240,3 +240,10 @@ You can find many more examples in the [examples folder](https://github.com/scip
 
 For more information about how to write workflows using SciPipe, use the menu
 to the left, to browse the various topics!
+
+## Citing SciPipe
+
+If you use SciPipe in academic or scholarly work, please cite the following paper as source:
+
+Lampa S, Dahlö M, Alvarsson J, Spjuth O. SciPipe: A workflow library for agile development of complex and dynamic bioinformatics pipelines
+_Gigascience_. 8, 5 (2019). DOI: [10.1093/gigascience/giz044](https://dx.doi.org/10.1093/gigascience/giz044)
