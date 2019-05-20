@@ -191,6 +191,10 @@ func (ip *FileIP) FifoFileExists() bool {
 	return fifoFileExists
 }
 
+func (ip *FileIP) String() string {
+	return ip.Path()
+}
+
 // ------------------------------------------------------------------------
 // Open file-stuff
 // ------------------------------------------------------------------------
