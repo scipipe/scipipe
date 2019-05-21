@@ -14,6 +14,7 @@ pages:
     - 'Globbing files': 'howtos/globbing.md'
     - 'Splitting files': 'howtos/splitting.md'
     - 'Joining multiple files': 'howtos/joining.md'
+    - 'Creating combinations of files': 'howtos/file_combinations.md'
     - 'Enable streaming between components': 'howtos/streaming.md'
     - 'Creating sub-workflows': 'howtos/subworkflows.md'
     - 'Implement scatter/gather workflows': 'howtos/scatter_gather.md'
