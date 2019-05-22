@@ -2,6 +2,7 @@ package components
 
 import (
 	"github.com/scipipe/scipipe"
+	"sync"
 )
 
 // FileCombinator takes a set of input streams of FileIPs, and returns the same
@@ -63,11 +64,21 @@ func (p *FileCombinator) Run() {
 	outIPs := p.combine(inIPs, keys)
 
 	// Send combinations of all IPs
+	wg := &sync.WaitGroup{}
 	for pName, ips := range outIPs {
-		for _, ip := range ips {
-			p.Out(pName).Send(ip)
-		}
+		wg.Add(1)
+		// Make unique copy of variables for this iteration, so they don't get
+		// overwritten on the next loop iteration
+		pName := pName
+		ips := ips
+		go func() {
+			for _, ip := range ips {
+				p.Out(pName).Send(ip)
+			}
+			wg.Done()
+		}()
 	}
+	wg.Wait()
 }
 
 // combine is a recursive method that creates combinations of all the IPs in the input IP arrays, such that:
