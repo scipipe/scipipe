@@ -12,7 +12,7 @@ import (
 
 func TestFileCombinator(t *testing.T) {
 	letters := []string{"a", "b"}
-	numbers := []string{"1", "2", "3"}
+	numbers := []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"}
 
 	// Create letter files
 	for _, s := range letters {
