@@ -1,0 +1,22 @@
+# Following this guide: https://circleci.com/docs/2.0/language-go/
+version: 2
+jobs:
+    build:
+        docker:
+            - image: circleci/golang:1.12
+        working_directory: /go/src/github.com/scipipe/scipipe
+        environment: # environment variables for the build itself
+            TEST_RESULTS: /tmp/test-results # path to where test results will be saved
+        steps:
+            - checkout
+            - run: go get github.com/jstemmer/go-junit-report
+            - run: go get github.com/axw/gocov/gocov
+            - run: go get github.com/AlekSi/gocov-xml
+            - run:
+                name: Run unit tests
+                command: |
+                    mkdir -p $TEST_RESULTS/go-junit &&
+                    go test -v -race ./... | go-junit-report > $TEST_RESULTS/go-junit/report.xml &&
+                    bash testcov.sh &&
+                    gocov convert cover.out | gocov-xml > coverage.xml &&
+                    bash <(curl -s https://codecov.io/bash)
