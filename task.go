@@ -374,21 +374,25 @@ var tempDirPrefix = "_scipipe_tmp"
 // in file paths. It is built up by merging all input filenames and parameter
 // values that a task takes as input, joined with dots.
 func (t *Task) TempDir() string {
-	pathPcs := []string{tempDirPrefix + "." + sanitizePathFragment(t.Name)}
+	pathPrefix := tempDirPrefix + "." + sanitizePathFragment(t.Name)
+	hashPcs := []string{}
 	for _, ipName := range sortedFileIPMapKeys(t.InIPs) {
-		pathPcs = append(pathPcs, filepath.Base(t.InIP(ipName).Path()))
+		hashPcs = append(hashPcs, splitAllPaths(t.InIP(ipName).Path())...)
 	}
 	for _, paramName := range sortedStringMapKeys(t.Params) {
-		pathPcs = append(pathPcs, paramName+"_"+t.Param(paramName))
+		hashPcs = append(hashPcs, paramName+"_"+t.Param(paramName))
 	}
 	for _, tagName := range sortedStringMapKeys(t.Tags) {
-		pathPcs = append(pathPcs, tagName+"_"+t.Tag(tagName))
+		hashPcs = append(hashPcs, tagName+"_"+t.Tag(tagName))
 	}
-	pathSegment := strings.Join(pathPcs, ".")
-	if len(pathSegment) > 255 {
-		sha1sum := sha1.Sum([]byte(pathSegment))
-		pathSegment = t.Name + "." + hex.EncodeToString(sha1sum[:])
+
+	// If resulting name is longer than 255
+	if len(pathPrefix) > (255 - 40 - 1) {
+		hashPcs = append(hashPcs, pathPrefix)
+		pathPrefix = tempDirPrefix
 	}
+	sha1sum := sha1.Sum([]byte(strings.Join(hashPcs, "")))
+	pathSegment := pathPrefix + "." + hex.EncodeToString(sha1sum[:])
 	return pathSegment
 }
 

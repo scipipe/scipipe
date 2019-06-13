@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 	re "regexp"
 	"time"
 
@@ -79,4 +80,16 @@ func errWrap(err error, msg string) error {
 
 func errWrapf(err error, msg string, v ...interface{}) error {
 	return errors.New(fmt.Sprintf(msg, v...) + "\nOriginal error: " + err.Error())
+}
+
+// splitAllPaths takes in a filepath and returns a list of all its parts
+// e.g. "/a/b/c" becomes ["a" "b" "c'"]
+func splitAllPaths(path string) []string {
+	dir, file := filepath.Dir(path), filepath.Base(path)
+	parts := []string{}
+	for dir != file {
+		parts = append([]string{file}, parts...)
+		dir, file = filepath.Dir(dir), filepath.Base(dir)
+	}
+	return parts
 }
