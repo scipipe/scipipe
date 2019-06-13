@@ -509,11 +509,6 @@ func TestSanitizePathFragments(t *testing.T) {
 	}
 }
 
-// TestEnsureNoDeadlock is testing the fix for issue #77
-func TestEnsureNoDeadlock(t *testing.T) {
-
-}
-
 // --------------------------------------------------------------------------------
 // CombinatoricsProcess helper process
 // --------------------------------------------------------------------------------
