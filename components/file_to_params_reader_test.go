@@ -7,6 +7,8 @@ import (
 	"github.com/scipipe/scipipe"
 )
 
+var params = []string{"abc", "bcd", "cde"}
+
 func TestFileToParamsReader(tt *testing.T) {
 	// Create file to read
 	filePath := "/tmp/filereader_testfile.txt"
@@ -14,7 +16,7 @@ func TestFileToParamsReader(tt *testing.T) {
 	if err != nil {
 		tt.Fatalf("Could not create file: %s", filePath)
 	}
-	for _, s := range []string{"abc", "abc", "abc"} {
+	for _, s := range params {
 		f.WriteString(s + "\n")
 	}
 	f.Close()
@@ -23,20 +25,43 @@ func TestFileToParamsReader(tt *testing.T) {
 	// always "abc"
 	wf := scipipe.NewWorkflow("wf", 4)
 	rd := NewFileToParamsReader(wf, "reader", filePath)
-	checker := wf.NewProc("checker", "# {p:testparam}")
-	checker.InParam("testparam").From(rd.OutLine())
-	checker.CustomExecute = func(t *scipipe.Task) {
-		expected := "abc"
-		actual := t.Param("testparam")
-		if actual != expected {
-			tt.Errorf("Parameter was wrong. Actual: %s. Expected: %s", actual, expected)
-		}
-	}
+	checker := NewFileToParamsChecker(wf, "filetoparams_checker", tt)
+	checker.InParams().From(rd.OutLine())
+
 	wf.Run()
 
 	// Clean up test file
 	err = os.Remove(filePath)
 	if err != nil {
 		tt.Fatalf("Could not remove file: %s", filePath)
+	}
+}
+
+type FileToParamsChecker struct {
+	scipipe.BaseProcess
+	*testing.T
+}
+
+func NewFileToParamsChecker(wf *scipipe.Workflow, pname string, t *testing.T) *FileToParamsChecker {
+	p := &FileToParamsChecker{
+		scipipe.NewBaseProcess(wf, pname),
+		t,
+	}
+	p.InitInParamPort(p, "params")
+	wf.AddProc(p)
+	return p
+}
+
+func (p *FileToParamsChecker) InParams() *scipipe.InParamPort { return p.InParamPort("params") }
+
+func (p *FileToParamsChecker) Run() {
+	i := 0
+	for param := range p.InParams().Chan {
+		expected := params[i]
+		actual := param
+		if actual != expected {
+			p.T.Errorf("actual parameter value (%s) was not as expected (%s) in FileToParamsReader", actual, expected)
+		}
+		i++
 	}
 }
