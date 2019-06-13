@@ -13,7 +13,7 @@ func TestCommandToParams(tt *testing.T) {
 
 	cmdToParams := NewCommandToParams(wf, "cmdtoparams", "{ echo foo; echo bar; echo baz; }")
 
-	checker := wf.NewProc("checker", "# {p:param}")
+	checker := wf.NewProc("cmdtoparams_checker", "# {p:param}")
 	checker.CustomExecute = func(t *scipipe.Task) {
 		expected := []string{"foo", "bar", "baz"}
 		actual := t.Param("param")

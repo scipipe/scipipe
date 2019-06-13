@@ -10,9 +10,10 @@ import (
 	"github.com/scipipe/scipipe"
 )
 
+var letters = []string{"a", "b"}
+var numbers = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"}
+
 func TestFileCombinator(t *testing.T) {
-	letters := []string{"a", "b"}
-	numbers := []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"}
 
 	// Create letter files
 	for _, s := range letters {
@@ -47,13 +48,13 @@ func TestFileCombinator(t *testing.T) {
 	catenator := wf.NewProc("catenator", "cat {i:letters} {i:numbers} > {o:combined}")
 	catenator.In("letters").From(fileCombiner.Out("letters"))
 	catenator.In("numbers").From(fileCombiner.Out("numbers"))
-	catenator.SetOut("combined", "/tmp/{i:letters|basename|%.txt}.{i:numbers|basename|%.txt}.combined.txt")
+	catenator.SetOut("combined", "/tmp/combined/{i:letters|basename|%.txt}.{i:numbers|basename|%.txt}.combined.txt")
 
 	wf.Run()
 
-	for _, l := range []string{"a", "b"} {
-		for _, n := range []string{"1", "2", "3"} {
-			filePath := fmt.Sprintf("/tmp/letterfile_%s.numberfile_%s.combined.txt", l, n)
+	for _, l := range letters {
+		for _, n := range numbers {
+			filePath := fmt.Sprintf("/tmp/combined/letterfile_%s.numberfile_%s.combined.txt", l, n)
 			if _, err := os.Stat(filePath); os.IsNotExist(err) {
 				log.Fatal("File did not exist: " + filePath)
 			}
@@ -68,9 +69,9 @@ func TestFileCombinator(t *testing.T) {
 	for _, s := range numbers {
 		filePaths = append(filePaths, fmt.Sprintf("/tmp/numberfile_%s.txt", s))
 	}
-	for _, l := range []string{"a", "b"} {
-		for _, n := range []string{"1", "2", "3"} {
-			filePaths = append(filePaths, fmt.Sprintf("/tmp/letterfile_%s.numberfile_%s.combined.txt", l, n))
+	for _, l := range letters {
+		for _, n := range numbers {
+			filePaths = append(filePaths, fmt.Sprintf("/tmp/combined/letterfile_%s.numberfile_%s.combined.txt", l, n))
 			filePaths = append(filePaths, filePaths[len(filePaths)-1]+".audit.json")
 		}
 	}
