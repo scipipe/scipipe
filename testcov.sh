@@ -1,7 +1,8 @@
 #!/bin/bash
 set -ex
 echo "mode: count" > cover.out
-for pkg in "github.com/scipipe/scipipe" "github.com/scipipe/scipipe/components" "github.com/scipipe/scipipe/cmd/scipipe"; do
+for pkg in "github.com/scipipe/scipipe" "github.com/scipipe/scipipe/components" "github.com/scipipe/scipipe/cmd/scipipe";
+do
     if [[ -f profile_tmp.cov ]]; then
         rm profile_tmp.cov;
     fi
