@@ -87,8 +87,8 @@ func formatTaskHTML(fileName string, auditInfo *scipipe.AuditInfo) (outHTML stri
 	}
 	outHTML += fmt.Sprintf("	<tr><th>Tags:</th><td><pre>%v</pre></td></tr>\n", strings.Join(tags, ", "))
 
-	outHTML += fmt.Sprintf("	<tr><th>Start time:</th><td>%s</td></tr>\n", auditInfo.StartTime.Format(`2006-01-02 15:04:05<span class="greyout">.000 -0700 MST</span>`))
-	outHTML += fmt.Sprintf("	<tr><th>Finish time:</th><td>%s</td></tr>\n", auditInfo.FinishTime.Format(`2006-01-02 15:04:05<span class="greyout">.000 -0700 MST</span>`))
+	outHTML += fmt.Sprintf("	<tr><th>Start time:</th><td>%s<span class=\"greyout\">%s</span></td></tr>\n", auditInfo.StartTime.Format(`2006-01-02 15:04:05`), auditInfo.StartTime.Format(`.000 -0700 MST`))
+	outHTML += fmt.Sprintf("	<tr><th>Finish time:</th><td>%s<span class=\"greyout\">%s</span></td></tr>\n", auditInfo.FinishTime.Format(`2006-01-02 15:04:05`), auditInfo.FinishTime.Format(`.000 -0700 MST`))
 	et := auditInfo.ExecTimeNS
 	outHTML += fmt.Sprintf("	<tr><th>Execution time:</th><td>%s</td></tr>\n", et.Truncate(time.Millisecond).String())
 	//upStreamHTML := ""

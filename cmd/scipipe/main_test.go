@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/scipipe/scipipe"
+	"regexp"
 )
 
 func TestNewCmd(t *testing.T) {
@@ -52,8 +53,18 @@ func TestAudit2HTMLCmd(t *testing.T) {
 		if err != nil {
 			t.Error(errWrap(err, "Could not read HTML file:"+htmlFile).Error())
 		}
-		if string(htmlBytes) != expectedContent {
-			t.Errorf("Converted HTML content of %s was not as expected.\nEXPECTED:\n%s\nACTUAL:\n%s\n", htmlFile, expectedContent, string(htmlBytes))
+
+		actualContent := string(htmlBytes)
+
+		// Remove timezone dependent part of the date/time strings in both the
+		// expected and actual content, as they will otherwise fail the test in
+		// some timezones
+		re, err := regexp.Compile(`\.\d\d\d[^<]*`)
+		actualContent = re.ReplaceAllString(actualContent, "")
+		expectedContent = re.ReplaceAllString(expectedContent, "")
+
+		if actualContent != expectedContent {
+			t.Errorf("Converted HTML content of %s was not as expected.\nEXPECTED:\n%s\nACTUAL:\n%s\n", htmlFile, expectedContent, actualContent)
 		}
 		cleanFiles(t, htmlFile)
 	}
