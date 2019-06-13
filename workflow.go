@@ -309,7 +309,7 @@ func (wf *Workflow) runProcs(procs map[string]WorkflowProcess) {
 		go proc.Run()
 	}
 
-	Debug.Printf(wf.name + ": Starting driver process in main go-routine")
+	Debug.Printf("%s: Starting driver process (%s) in main go-routine", wf.name, wf.driver.Name())
 	Audit.Printf("| workflow:%-23s | Starting workflow (Writing log to %s)", wf.Name(), wf.logFile)
 	wf.driver.Run()
 	Audit.Printf("| workflow:%-23s | Finished workflow (Log written to %s)", wf.Name(), wf.logFile)
@@ -333,13 +333,14 @@ func (wf *Workflow) readyToRun(procs map[string]WorkflowProcess) bool {
 	return true
 }
 
-// reconnectDeadEndConnections disonnects connections to processes which are not
-// in the set of processes to be run, and, if an out-port for a process that is supposed to be
-// run becomes disconnected, it is connected to the sink instead
+// reconnectDeadEndConnections disonnects connections to processes which are
+// not in the set of processes to be run, and, if an out-port for a process
+// supposed to be run gets disconnected, its out-port(s) will be connected to
+// the sink instead, to make sure it is properly executed.
 func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess) {
 	foundNewDriverProc := false
 
-	for pname, proc := range procs {
+	for _, proc := range procs {
 		// OutPorts
 		for _, opt := range proc.OutPorts() {
 			for iptName, ipt := range opt.RemotePorts {
@@ -382,8 +383,14 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 			}
 			foundNewDriverProc = true
 			wf.driver = proc
-			delete(wf.procs, pname) // A process can't both be the driver, and be included in the main procs map
 		}
+	}
+
+	if foundNewDriverProc {
+		// A process can't both be the driver and be included in the main procs
+		// map, so if we have an alerative driver, it should not be in the main
+		// procs map
+		delete(wf.procs, wf.driver.Name())
 	}
 }
 
