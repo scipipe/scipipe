@@ -316,6 +316,11 @@ func (p *Process) Run() {
 		Failf("%s: CoresPerTask (%d) can't be greater than maxConcurrentTasks of workflow (%d)\n", p.Name(), p.CoresPerTask, cap(p.workflow.concurrentTasks))
 	}
 
+	// By using a channel to preserve Task ordering, completed Tasks can be
+	// reaped while Tasks are still being created. Waiting for all Tasks to be
+	// spawned before processing any can cause deadlock under certain workflow
+	// architectures when there are more than BUFSIZE Tasks per process, see #81.
+	// Note: This effectively limits concurrency to BUFSIZE Tasks per process.
 	tasks := make(chan *Task, BUFSIZE)
 	go func() {
 		defer close(tasks)
