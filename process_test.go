@@ -3,6 +3,7 @@ package scipipe
 import (
 	"io/ioutil"
 	"os"
+	"strconv"
 	"testing"
 )
 
@@ -92,4 +93,39 @@ func TestDontCreatePortInShellCommand(t *testing.T) {
 	}
 
 	cleanFiles("/tmp/foo.txt", "/tmp/footoo.txt")
+}
+
+func TestProcTaskBuffering(t *testing.T) {
+	// An attempt to test the issue in #80.
+
+	numbers := []string{}
+	for i := 0; i < BUFSIZE+1; i++ {
+		numbers = append(numbers, strconv.Itoa(i))
+	}
+
+	// Since it's dependent on map iteration order, we run the test
+	// multiple times in an attempt to trigger.
+	for range [10]int{} {
+
+		wf := NewWorkflow("mwe", 4)
+
+		nSource := NewParamSource(wf, "numbers", numbers...)
+
+		// Make files from params
+		stuffMaker := wf.NewProc("make_stuff", "echo testing_{p:number} > {o:out}")
+		stuffMaker.InParam("number").From(nSource.Out())
+		stuffMaker.SetOut("out", "out/{p:number}.txt")
+
+		// Second Step
+		second := wf.NewProc("second_step", "cat {i:in} > {o:out}")
+		second.In("in").From(stuffMaker.Out("out"))
+		second.SetOut("out", "out/second_{i:in|basename}")
+
+		// Dummy Consumer
+		echo := wf.NewProc("echo", "echo {i:first} {i:second}")
+		echo.In("first").From(stuffMaker.Out("out"))
+		echo.In("second").From(second.Out("out"))
+
+		wf.Run()
+	}
 }
