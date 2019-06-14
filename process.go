@@ -316,44 +316,47 @@ func (p *Process) Run() {
 		Failf("%s: CoresPerTask (%d) can't be greater than maxConcurrentTasks of workflow (%d)\n", p.Name(), p.CoresPerTask, cap(p.workflow.concurrentTasks))
 	}
 
-	// By using a channel to preserve Task ordering, completed Tasks can be
-	// reaped while Tasks are still being created. Waiting for all Tasks to be
-	// spawned before processing any can cause deadlock under certain workflow
-	// architectures when there are more than BUFSIZE Tasks per process, see #81.
-	// Note: This effectively limits concurrency to BUFSIZE Tasks per process.
-	tasks := make(chan *Task, BUFSIZE)
-	go func() {
-		defer close(tasks)
-		for t := range p.createTasks() {
-			tasks <- t
+	// Using a slice to store unprocessed tasks allows us to receive tasks as
+	// they are produced and to maintain the correct order of IPs. This select
+	// allows us to process completed tasks as they become available. Waiting
+	// for all Tasks to be spawned before processing any can cause deadlock
+	// under certain workflow architectures when there are more than BUFSIZE
+	// Tasks per process, see #81.
+	tasksToBeProcessed := taskQueue{}
 
-			// Sending FIFOs for the task
-			for oname, oip := range t.OutIPs {
-				if oip.doStream {
-					if oip.FifoFileExists() {
-						Fail("Fifo file exists, so exiting (clean up fifo files before restarting the workflow): ", oip.FifoPath())
+	var nextTask *Task
+	tasks := p.createTasks()
+	for tasks != nil || len(tasksToBeProcessed) > 0 {
+		select {
+		case t, ok := <-tasks:
+			if !ok {
+				tasks = nil
+			} else {
+				tasksToBeProcessed = append(tasksToBeProcessed, t)
+				// Sending FIFOs for the task
+				for oname, oip := range t.OutIPs {
+					if oip.doStream {
+						if oip.FifoFileExists() {
+							Fail("Fifo file exists, so exiting (clean up fifo files before restarting the workflow): ", oip.FifoPath())
+						}
+						oip.CreateFifo()
+						p.Out(oname).Send(oip)
 					}
-					oip.CreateFifo()
+				}
+
+				// Execute task in separate go-routine
+				go t.Execute()
+			}
+		case <-tasksToBeProcessed.NextSignal():
+			nextTask, tasksToBeProcessed = tasksToBeProcessed[0], tasksToBeProcessed[1:]
+			for oname, oip := range nextTask.OutIPs {
+				if !oip.doStream { // Streaming (FIFO) outputs have been sent earlier
 					p.Out(oname).Send(oip)
 				}
-			}
-
-			// Execute task in separate go-routine
-			go t.Execute()
-		}
-	}()
-
-	// Wait for tasks to finish, in the order they were started (thus maintaining
-	// order of IPs), and then sending output IPs
-	for t := range tasks {
-		<-t.Done
-		for oname, oip := range t.OutIPs {
-			if !oip.doStream { // Streaming (FIFO) outputs have been sent earlier
-				p.Out(oname).Send(oip)
-			}
-			// Remove any FIFO file
-			if oip.doStream && oip.FifoFileExists() {
-				os.Remove(oip.FifoPath())
+				// Remove any FIFO file
+				if oip.doStream && oip.FifoFileExists() {
+					os.Remove(oip.FifoPath())
+				}
 			}
 		}
 	}
@@ -406,4 +409,15 @@ func (p *Process) createTasks() (ch chan *Task) {
 		}
 	}()
 	return ch
+}
+
+type taskQueue []*Task
+
+// NextSignal allows us to wait for the next task to be done if it's available.
+// Otherwise, nil is returned since nil channels always block.
+func (tq taskQueue) NextSignal() chan int {
+	if len(tq) > 0 {
+		return tq[0].Done
+	}
+	return nil
 }
