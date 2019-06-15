@@ -1,0 +1,15 @@
+# appveyor.yml
+build: off
+
+clone_folder: c:\gopath\src\github.com\scipipe\scipipe
+
+environment:
+  GOPATH: c:\gopath
+
+stack: go 1.12
+
+before_test:
+  - go vet ./...
+
+test_script:
+  - go test -v -race ./...
