@@ -347,7 +347,7 @@ func (p *Process) Run() {
 				// Execute task in separate go-routine
 				go t.Execute()
 			}
-		case <-tasksToBeProcessed.NextSignal():
+		case <-tasksToBeProcessed.NextTaskDone():
 			nextTask, tasksToBeProcessed = tasksToBeProcessed[0], tasksToBeProcessed[1:]
 			for oname, oip := range nextTask.OutIPs {
 				if !oip.doStream { // Streaming (FIFO) outputs have been sent earlier
@@ -413,9 +413,9 @@ func (p *Process) createTasks() (ch chan *Task) {
 
 type taskQueue []*Task
 
-// NextSignal allows us to wait for the next task to be done if it's available.
-// Otherwise, nil is returned since nil channels always block.
-func (tq taskQueue) NextSignal() chan int {
+// NextTaskDone allows us to wait for the next task to be done if it's
+// available. Otherwise, nil is returned since nil channels always block.
+func (tq taskQueue) NextTaskDone() chan int {
 	if len(tq) > 0 {
 		return tq[0].Done
 	}
