@@ -2,7 +2,9 @@ package scipipe
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 )
@@ -68,17 +70,21 @@ func TestDefaultPattern(t *testing.T) {
 }
 
 func TestDontCreatePortInShellCommand(t *testing.T) {
+	tmpDir, err := ioutil.TempDir("", "TestDontCreatePortInShellCommand")
+	if err != nil {
+		log.Fatal("could not create tmpDir: ", err)
+	}
 	wf := NewWorkflow("test_wf", 4)
-	ef := wf.NewProc("echo_foo", "echo foo > /tmp/foo.txt")
-	ef.SetOut("foo", "/tmp/foo.txt")
+	ef := wf.NewProc("echo_foo", "echo foo > "+filepath.Join(tmpDir, "foo.txt"))
+	ef.SetOut("foo", filepath.Join(tmpDir, "foo.txt"))
 
 	cf := wf.NewProc("cat_foo", "cat {i:foo} > {o:footoo}")
 	cf.In("foo").From(ef.Out("foo"))
-	cf.SetOut("footoo", "/tmp/footoo.txt")
+	cf.SetOut("footoo", filepath.Join(tmpDir, "footoo.txt"))
 
 	wf.Run()
 
-	fileName := "/tmp/footoo.txt"
+	fileName := filepath.Join(tmpDir, "footoo.txt")
 	f, openErr := os.Open(fileName)
 	if openErr != nil {
 		t.Errorf("Could not open file: %s\n", fileName)
@@ -92,7 +98,7 @@ func TestDontCreatePortInShellCommand(t *testing.T) {
 		t.Errorf("File %s did not contain %s as expected, but %s\n", fileName, expected, string(b))
 	}
 
-	cleanFiles("/tmp/foo.txt", "/tmp/footoo.txt")
+	cleanFiles(filepath.Join(tmpDir, "foo.txt"), filepath.Join(tmpDir, "footoo.txt"))
 }
 
 func TestProcTaskBuffering(t *testing.T) {
