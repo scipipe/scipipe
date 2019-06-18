@@ -349,10 +349,11 @@ func AtomizeIPs(tempExecDir string, ips ...*FileIP) {
 	// For remaining paths in temporary execution dir, just move out of it
 	filepath.Walk(tempExecDir, func(tempPath string, fileInfo os.FileInfo, err error) error {
 		if !fileInfo.IsDir() {
-			newPath := strings.Replace(tempPath, tempExecDir+"/", "", 1)
+			newPath, relErr := filepath.Rel(tempExecDir, tempPath)
+			CheckWithMsg(relErr, fmt.Sprintf("Unable to determine relative pathing for %s and %s", tempExecDir, tempPath))
 			newPath = strings.Replace(newPath, FSRootPlaceHolder+"/", "/", 1)
 			newPathDir := filepath.Dir(newPath)
-			if _, err := os.Stat(newPathDir); os.IsNotExist(err) {
+			if _, statErr := os.Stat(newPathDir); os.IsNotExist(statErr) {
 				os.MkdirAll(newPathDir, 0777)
 			}
 			Debug.Println("Moving: ", tempPath, " -> ", newPath)
@@ -362,7 +363,7 @@ func AtomizeIPs(tempExecDir string, ips ...*FileIP) {
 		return err
 	})
 	// Remove temporary execution dir (but not for absolute paths, or current dir)
-	if tempExecDir != "" && tempExecDir != "." && filepath.IsAbs(tempExecDir) {
+	if tempExecDir != "" && tempExecDir != "." && !filepath.IsAbs(tempExecDir) {
 		remErr := os.RemoveAll(tempExecDir)
 		CheckWithMsg(remErr, "Could not remove temp dir: "+tempExecDir)
 	}

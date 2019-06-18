@@ -131,7 +131,7 @@ func (ip *FileIP) TempDir() string {
 
 // TempPath returns the temporary path of the physical file
 func (ip *FileIP) TempPath() string {
-	if ip.path[0] == '/' {
+	if filepath.IsAbs(ip.path) {
 		return FSRootPlaceHolder + ip.path
 	}
 	return ip.path

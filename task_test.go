@@ -69,7 +69,7 @@ func TestExtraFilesAtomizeAbsolute(t *testing.T) {
 		t.Fatal("could not create tmpDir: ", err)
 	}
 
-	absDir := filepath.Join(tmpDir, FSRootPlaceHolder, tmpDir)
+	absDir := filepath.Join(tmpDir, FSRootPlaceHolder, tmpDir, "1")
 	os.MkdirAll(absDir, 0777)
 	fName := filepath.Join(absDir, "letterfile_a.txt")
 	_, err = os.Create(fName)
@@ -77,7 +77,7 @@ func TestExtraFilesAtomizeAbsolute(t *testing.T) {
 		t.Fatalf("File could not be created: %s\n", fName)
 	}
 	AtomizeIPs(tmpDir)
-	filePath := filepath.Join(tmpDir, "letterfile_a.txt")
+	filePath := filepath.Join(tmpDir, "1", "letterfile_a.txt")
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		t.Error("File did not exist: " + filePath)
 	}
