@@ -28,8 +28,15 @@ func TestMapToTags(t *testing.T) {
 	})
 	tagger.In().From(numberFiles.Out("out"))
 
-	catenator := wf.NewProc("cat", "cat {i:numbers} ../{t:numbers.file}")
-	catenator.In("numbers").From(tagger.Out())
+	checker := wf.NewProc("checker", "# {i:numbers}")
+	checker.CustomExecute = func(tsk *scipipe.Task) {
+		filePath := tsk.InIP("numbers").Path()
+		tag := tsk.Tag("numbers.file")
+		if tag != filePath {
+			t.Errorf("Input filepath was '%s' but tag value was '%s'", filePath, tag)
+		}
+	}
+	checker.In("numbers").From(tagger.Out())
 
 	wf.Run()
 
