@@ -3,19 +3,26 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/scipipe/scipipe"
 	"regexp"
+
+	"github.com/scipipe/scipipe"
 )
 
 func TestNewCmd(t *testing.T) {
 	initLogsTest()
 
-	testWfPath := "/tmp/testwf.go"
+	tmpDir, err := ioutil.TempDir("", "TestNewCmd")
+	if err != nil {
+		t.Error(t, "TestNewCmd: could not create tmpDir:", err)
+	}
+	testWfPath := filepath.Join(tmpDir, "testwf.go")
 
 	args := []string{"new", testWfPath}
-	err := parseFlags(args)
+	err = parseFlags(args)
 	if err != nil {
 		t.Error("Could not parse flags:", err.Error())
 	}
@@ -24,15 +31,20 @@ func TestNewCmd(t *testing.T) {
 		t.Error(t, "`scipipe new` command failed to create new workflow file: "+testWfPath)
 	}
 
-	cleanFiles(t, testWfPath)
+	cleanFiles(t, testWfPath, tmpDir)
 }
 
 func TestAudit2HTMLCmd(t *testing.T) {
 	initLogsTest()
 
-	jsonFile := "/tmp/f.audit.json"
-	htmlFile := "/tmp/f.audit.html"
-	err := ioutil.WriteFile(jsonFile, []byte(jsonContent), 0644)
+	tmpDir, err := ioutil.TempDir("", "TestAudit2HTMLCmd")
+	if err != nil {
+		t.Error(t, "TestAudit2HTMLCmd: could not create tmpDir:", err)
+	}
+
+	jsonFile := filepath.Join(tmpDir, "f.audit.json")
+	htmlFile := filepath.Join(tmpDir, "f.audit.html")
+	err = ioutil.WriteFile(jsonFile, []byte(jsonContent), 0644)
 	if err != nil {
 		t.Error("Could not create infile needed in test: " + jsonFile)
 	}
@@ -63,12 +75,16 @@ func TestAudit2HTMLCmd(t *testing.T) {
 		actualContent = re.ReplaceAllString(actualContent, "")
 		expectedContent = re.ReplaceAllString(expectedContent, "")
 
+		// Insert expected temp dir paths
+		actualContent = strings.ReplaceAll(actualContent, "<TMPDIR>", tmpDir)
+		expectedContent = strings.ReplaceAll(actualContent, "<TMPDIR>", tmpDir)
+
 		if actualContent != expectedContent {
 			t.Errorf("Converted HTML content of %s was not as expected.\nEXPECTED:\n%s\nACTUAL:\n%s\n", htmlFile, expectedContent, actualContent)
 		}
 		cleanFiles(t, htmlFile)
 	}
-	cleanFiles(t, jsonFile)
+	cleanFiles(t, jsonFile, tmpDir)
 }
 
 func TestExtractAuditInfosByID(t *testing.T) {
@@ -136,7 +152,7 @@ const (
 	a, a:link, a:visited { color: inherit; text-decoration: none; }
 	a:hover { text-decoration: underline; }
 </style>
-<title>Audit info for: /tmp/f</title>
+<title>Audit info for: <TMPDIR>f</title>
 </head>
 <body>
 <table>
