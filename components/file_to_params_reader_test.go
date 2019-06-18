@@ -1,7 +1,10 @@
 package components
 
 import (
+	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/scipipe/scipipe"
@@ -10,9 +13,13 @@ import (
 var params = []string{"abc", "bcd", "cde"}
 
 func TestFileToParamsReader(tt *testing.T) {
+	tmpDir, err := ioutil.TempDir("", "TestFileToParamsReader")
+	if err != nil {
+		log.Fatal("could not create tmpDir: ", err)
+	}
 	// Create file to read
-	filePath := "/tmp/filereader_testfile.txt"
-	f, err := os.Create("/tmp/filereader_testfile.txt")
+	filePath := filepath.Join(tmpDir, "filereader_testfile.txt")
+	f, err := os.Create(filePath)
 	if err != nil {
 		tt.Fatalf("Could not create file: %s", filePath)
 	}
