@@ -372,11 +372,12 @@ func (p *Process) createTasks() (ch chan *Task) {
 
 		inIPs := map[string]*FileIP{}
 		params := map[string]string{}
-		tags := map[string]string{}
 
 		inPortsOpen := true
 		paramPortsOpen := true
 		for {
+			// Tags need to be per Task, otherwise they are overwritten by future IPs
+			tags := map[string]string{}
 			// Only read on in-ports if we have any
 			if len(p.inPorts) > 0 {
 				inIPs, inPortsOpen = p.receiveOnInPorts()
