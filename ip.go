@@ -288,12 +288,12 @@ func (ip *FileIP) Atomize() {
 	for !doneAtomizing {
 		if ip.TempFileExists() {
 			ip.lock.Lock()
-			tempPaths, err := filepath.Glob(ip.TempDir() + "/*")
-			CheckWithMsg(err, "Could not blog directory: "+ip.TempDir())
+			tempPaths, err := filepath.Glob(filepath.Join(ip.TempDir(), "*"))
+			CheckWithMsg(err, "Could not glob directory: "+ip.TempDir())
 			for _, tempPath := range tempPaths {
 				origDir := filepath.Dir(ip.TempDir())
 				origFileName := filepath.Base(tempPath)
-				err := os.Rename(tempPath, origDir+"/"+origFileName)
+				err := os.Rename(tempPath, filepath.Join(origDir, origFileName))
 				CheckWithMsg(err, "Could not rename file: "+ip.TempPath())
 			}
 			err = os.Remove(ip.TempDir())
