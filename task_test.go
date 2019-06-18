@@ -1,7 +1,9 @@
 package scipipe
 
 import (
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -35,5 +37,52 @@ func TestTempDirNotOver255(t *testing.T) {
 	maxLen := 255
 	if actual > 256 {
 		t.Errorf("TempDir() generated too long a string: %d chars, should be max %d chars\nString was: %s", actual, maxLen, tsk.TempDir())
+	}
+}
+
+func TestExtraFilesAtomize(t *testing.T) {
+	// Since Atomize calls Debug, the logger needs to be non-nil
+	InitLogError()
+	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{}, nil, nil, map[string]string{}, nil, "", nil, 4)
+	// Create extra file
+	tmpDir := tsk.TempDir()
+	os.MkdirAll(tmpDir, 0777)
+	fName := filepath.Join(tmpDir, "letterfile_a.txt")
+	_, err := os.Create(fName)
+	if err != nil {
+		t.Fatalf("File could not be created: %s\n", fName)
+	}
+	tsk.atomizeIPs()
+	filePath := filepath.Join(".", "letterfile_a.txt")
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		t.Error("File did not exist: " + filePath)
+	}
+}
+
+func TestExtraFilesAtomizeAbsolute(t *testing.T) {
+	// Since Atomize calls Debug, the logger needs to be non-nil
+	InitLogError()
+
+	// Create extra file
+	tmpDir, err := ioutil.TempDir("", "TestExtraFilesAtomizeAbsolute")
+	if err != nil {
+		t.Fatal("could not create tmpDir: ", err)
+	}
+
+	absDir := filepath.Join(tmpDir, FSRootPlaceHolder, tmpDir, "1")
+	os.MkdirAll(absDir, 0777)
+	fName := filepath.Join(absDir, "letterfile_a.txt")
+	_, err = os.Create(fName)
+	if err != nil {
+		t.Fatalf("File could not be created: %s\n", fName)
+	}
+	AtomizeIPs(tmpDir)
+	filePath := filepath.Join(tmpDir, "1", "letterfile_a.txt")
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		t.Error("File did not exist: " + filePath)
+	}
+	// Ensure tmpDir wasn't removed by Atomize
+	if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
+		t.Error("Atomize removed absolute directory")
 	}
 }

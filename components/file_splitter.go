@@ -86,7 +86,7 @@ func (p *FileSplitter) Run() {
 }
 
 func (p *FileSplitter) createNewSplitFile(ip *scipipe.FileIP, basePath string) (tempDir string, tempFile *os.File) {
-	tempPath := basePath + "/" + ip.TempPath()
+	tempPath := filepath.Join(basePath, ip.TempPath())
 	tempDir = filepath.Dir(tempPath)
 	err := os.MkdirAll(tempDir, 0777)
 	if err != nil {

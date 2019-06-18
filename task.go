@@ -278,7 +278,7 @@ func (t *Task) createDirs() {
 		if oip.doStream {       // Temp dirs are not created for fifo files
 			oipDir = filepath.Dir(oip.FifoPath())
 		} else {
-			oipDir = t.TempDir() + "/" + oipDir
+			oipDir = filepath.Join(t.TempDir(), oipDir)
 		}
 		err := os.MkdirAll(oipDir, 0777)
 		CheckWithMsg(err, "Could not create directory: "+oipDir)
@@ -343,16 +343,17 @@ func AtomizeIPs(tempExecDir string, ips ...*FileIP) {
 	for _, oip := range ips {
 		// Move paths for ports, to final destinations
 		if !oip.doStream {
-			os.Rename(tempExecDir+"/"+oip.TempPath(), oip.Path())
+			os.Rename(filepath.Join(tempExecDir, oip.TempPath()), oip.Path())
 		}
 	}
 	// For remaining paths in temporary execution dir, just move out of it
 	filepath.Walk(tempExecDir, func(tempPath string, fileInfo os.FileInfo, err error) error {
 		if !fileInfo.IsDir() {
-			newPath := strings.Replace(tempPath, tempExecDir+"/", "", 1)
+			newPath, relErr := filepath.Rel(tempExecDir, tempPath)
+			CheckWithMsg(relErr, fmt.Sprintf("Unable to determine relative pathing for %s and %s", tempExecDir, tempPath))
 			newPath = strings.Replace(newPath, FSRootPlaceHolder+"/", "/", 1)
 			newPathDir := filepath.Dir(newPath)
-			if _, err := os.Stat(newPathDir); os.IsNotExist(err) {
+			if _, statErr := os.Stat(newPathDir); os.IsNotExist(statErr) {
 				os.MkdirAll(newPathDir, 0777)
 			}
 			Debug.Println("Moving: ", tempPath, " -> ", newPath)
@@ -362,7 +363,7 @@ func AtomizeIPs(tempExecDir string, ips ...*FileIP) {
 		return err
 	})
 	// Remove temporary execution dir (but not for absolute paths, or current dir)
-	if tempExecDir != "" && tempExecDir != "." && tempExecDir[0] != '/' {
+	if tempExecDir != "" && tempExecDir != "." && !filepath.IsAbs(tempExecDir) {
 		remErr := os.RemoveAll(tempExecDir)
 		CheckWithMsg(remErr, "Could not remove temp dir: "+tempExecDir)
 	}

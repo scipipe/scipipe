@@ -1,7 +1,10 @@
 package scipipe
 
 import (
+	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 )
@@ -9,12 +12,17 @@ import (
 func TestMultiInPort(t *testing.T) {
 	initTestLogs()
 
+	tmpDir, err := ioutil.TempDir("", "TestMultiInPort")
+	if err != nil {
+		log.Fatal("could not create tmpDir: ", err)
+	}
+
 	wf := NewWorkflow("test_multiinport_wf", 4)
 	hello := wf.NewProc("write_hello", "echo hello > {o:hellofile}")
-	hello.SetOut("hellofile", "/tmp/hello.txt")
+	hello.SetOut("hellofile", filepath.Join(tmpDir, "hello.txt"))
 
 	tjena := wf.NewProc("write_tjena", "echo tjena > {o:tjenafile}")
-	tjena.SetOut("tjenafile", "/tmp/tjena.txt")
+	tjena.SetOut("tjenafile", filepath.Join(tmpDir, "tjena.txt"))
 
 	world := wf.NewProc("append_world", "echo $(cat {i:infile}) world > {o:worldfile}")
 	world.SetOut("worldfile", "{i:infile|%.txt}_world.txt")
@@ -23,7 +31,7 @@ func TestMultiInPort(t *testing.T) {
 
 	wf.Run()
 
-	resultFiles := []string{"/tmp/hello_world.txt", "/tmp/tjena_world.txt"}
+	resultFiles := []string{filepath.Join(tmpDir, "hello_world.txt"), filepath.Join(tmpDir, "tjena_world.txt")}
 
 	for _, f := range resultFiles {
 		_, err := os.Stat(f)
@@ -32,7 +40,7 @@ func TestMultiInPort(t *testing.T) {
 		}
 	}
 
-	cleanFiles(append(resultFiles, "/tmp/hello.txt", "/tmp/tjena.txt")...)
+	cleanFiles(append(resultFiles, filepath.Join(tmpDir, "hello.txt"), filepath.Join(tmpDir, "tjena.txt"))...)
 }
 
 func TestInPortName(t *testing.T) {
@@ -50,10 +58,15 @@ func TestInPortName(t *testing.T) {
 }
 
 func TestInPortSendRecv(t *testing.T) {
+	tmpDir, err := ioutil.TempDir("", "TestInPortSendRecv")
+	if err != nil {
+		log.Fatal("could not create tmpDir: ", err)
+	}
+
 	inp := NewInPort("test_inport")
 	inp.process = NewBogusProcess("bogus_process")
 
-	ip := NewFileIP("/tmp/test.txt")
+	ip := NewFileIP(filepath.Join(tmpDir, "test.txt"))
 	go func() {
 		inp.Send(ip)
 	}()
