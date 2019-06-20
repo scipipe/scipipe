@@ -160,6 +160,15 @@ func sortedStringMapKeys(kv map[string]string) []string {
 	return keys
 }
 
+func sortedFileIPSliceMapKeys(kv map[string][]*FileIP) []string {
+	keys := []string{}
+	for k := range kv {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // ------------------------------------------------------------------------
 // Main API methods: Port accessor methods
 // ------------------------------------------------------------------------
