@@ -379,6 +379,11 @@ func (t *Task) TempDir() string {
 	for _, ipName := range sortedFileIPMapKeys(t.InIPs) {
 		hashPcs = append(hashPcs, splitAllPaths(t.InIP(ipName).Path())...)
 	}
+	for _, subIPName := range sortedFileIPSliceMapKeys(t.subStreamIPs) {
+		for _, subIPs := range t.subStreamIPs[subIPName] {
+			hashPcs = append(hashPcs, splitAllPaths(subIPs.Path())...)
+		}
+	}
 	for _, paramName := range sortedStringMapKeys(t.Params) {
 		hashPcs = append(hashPcs, paramName+"_"+t.Param(paramName))
 	}
