@@ -229,7 +229,7 @@ func (t *Task) Execute() {
 		}
 		LogAuditf(t.Name, "Executing: Custom Go function with outputs: %s", outputsStr)
 		t.CustomExecute(t)
-		LogAuditf(t.Name, "Executing: Custom Go function with outputs: %s", outputsStr)
+		LogAuditf(t.Name, "Finished: Custom Go function with outputs: %s", outputsStr)
 	} else {
 		LogAuditf(t.Name, "Executing: %s", t.Command)
 		t.executeCommand(t.Command)
