@@ -1,6 +1,8 @@
 package components
 
 import (
+	"io/ioutil"
+	"os"
 	"github.com/scipipe/scipipe"
 )
 
@@ -32,8 +34,15 @@ func (p *StreamToSubStream) OutSubStream() *scipipe.OutPort { return p.OutPort("
 func (p *StreamToSubStream) Run() {
 	defer p.CloseAllOutPorts()
 
+	// create a temporary file, with a _scipipe prefix
+	tmpfile, err := ioutil.TempFile("", "_scipipe_tmp.")
+	if err != nil {
+		panic(err)
+	}
+	defer os.Remove(tmpfile.Name())
+
 	scipipe.Debug.Println("Creating new information packet for the substream...")
-	subStreamIP := scipipe.NewFileIP("")
+	subStreamIP := scipipe.NewFileIP(tmpfile.Name())
 	scipipe.Debug.Printf("Setting in-port of process %s to IP substream field\n", p.Name())
 	subStreamIP.SubStream = p.In()
 
