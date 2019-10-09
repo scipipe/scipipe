@@ -510,6 +510,14 @@ func TestSanitizePathFragments(t *testing.T) {
 	}
 }
 
+func TestSingleProcessWorkflow(t *testing.T) {
+  wf := NewWorkflow("mywf", 4)
+  wf.NewProc("file_creator", "echo foo > foo.txt")
+  wf.Run()
+
+  cleanFiles("foo.txt")
+}
+
 // --------------------------------------------------------------------------------
 // CombinatoricsProcess helper process
 // --------------------------------------------------------------------------------
