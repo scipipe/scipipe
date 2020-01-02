@@ -375,9 +375,9 @@ proc=$(printf '%-32s' "{{ $v.ProcessName }}")
 if [[{{ range $i, $v := (strmaptoslice .OutFiles) }}{{if (gt $i 0)}}||{{end}} -f {{ $v }} {{ end }}]]; then
   echo "$(date '+%Y%m%d %H:%M:%S') | $proc | Some of these output files exist, so skipping:{{ range $i, $v := (strmaptoslice .OutFiles) }}{{if (gt $i 0)}},{{end}} {{ $v }}{{end}}";
 else
-  echo "$(date '+%Y%m%d %H:%M:%S') | $proc | Executing: {{ strrepl (strrepl $v.Command " ../" "") "\"" "\\\"" }}"
-  {{ strrepl $v.Command " ../" "" }}
-  echo "$(date '+%Y%m%d %H:%M:%S') | $proc |  Finished: {{ strrepl (strrepl $v.Command " ../" "") "\"" "\\\"" }}"
+  echo "$(date '+%Y%m%d %H:%M:%S') | $proc | Executing: {{ strrepl (strrepl $v.Command "../" "") "\"" "\\\"" }}"
+  {{ strrepl $v.Command "../" "" }}
+  echo "$(date '+%Y%m%d %H:%M:%S') | $proc |  Finished: {{ strrepl (strrepl $v.Command "../" "") "\"" "\\\"" }}"
 fi;
 {{ end }}
 `
