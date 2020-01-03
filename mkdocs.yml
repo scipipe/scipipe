@@ -23,6 +23,7 @@ pages:
     - 'Plotting workflow graphs': 'howtos/plot_workflow_graph.md'
     - 'Convert audit logs to other formats': 'howtos/convert_audit_logs.md'
   - 'Examples': 'examples.md'
+  - 'Video tutorials': 'videos.md'
   - 'Other Resources': 'other_resources.md'
   - 'Acknowledgements': 'acknowledgements.md'
   - 'Related Tools': 'related_tools.md'

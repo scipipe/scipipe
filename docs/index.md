@@ -31,8 +31,9 @@
 
 <div style="width:37%; float: right; font-size: 0.8em; padding: 1em; margin: 0 0 1em 1em;">
 <h4>Project updates</h4>
-<strong>NEW - The SciPipe paper published open access in GigaScience:</strong> <a href="https://doi.org/10.1093/gigascience/giz044">SciPipe: A workflow library for agile development of complex and dynamic bioinformatics pipelines</a>
-<strong>Scientific study using SciPipe:</strong> <a href="https://doi.org/10.3389/fphar.2018.01256">Predicting off-target binding profiles with confidence using Conformal Prediction</a>
+<strong>Jan 2020: New screencast:</strong> <a href="https://www.youtube.com/watch?v=hi0Uqwddrtg" target="_blank">"Hello World" scientific workflow in SciPipe</a>
+<strong>May 2019: The SciPipe paper published open access in GigaScience:</strong> <a href="https://doi.org/10.1093/gigascience/giz044" target="_blank">SciPipe: A workflow library for agile development of complex and dynamic bioinformatics pipelines</a>
+<strong>Nov 2018: Scientific study using SciPipe:</strong> <a href="https://doi.org/10.3389/fphar.2018.01256" target="_blank">Predicting off-target binding profiles with confidence using Conformal Prediction</a>
 <strong>Slides:</strong> <a href="https://pharmb.io/blog/saml-gostockholm2018/">Presentation on SciPipe and more at Go Stockholm Conference</a>
 <strong>Blog post:</strong> <a href="http://bionics.it/posts/provenance-reports-in-scientific-workflows">Provenance reports in Scientific Workflows</a> - going into details about how SciPipe is addressing provenance.
 <strong>Blog post:</strong> <a href="http://bionics.it/posts/first-production-workflow-run-with-scipipe">First production workflow run with SciPipe</a>
