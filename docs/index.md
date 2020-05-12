@@ -115,7 +115,7 @@ func main() {
 
 ## Running the example
 
-Let's put the code in a file named `scipipe_helloworld.go` and run it:
+Let's put the code in a file named `hello_world.go` and run it:
 
 ```bash
 $ go run hello_world.go
