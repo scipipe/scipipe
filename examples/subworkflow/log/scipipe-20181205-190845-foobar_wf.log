@@ -1,0 +1,6 @@
+AUDIT   2018/12/05 19:08:45 | workflow:foobar_wf               | Starting workflow (Writing log to log/scipipe-20181205-190845-foobar_wf.log)
+AUDIT   2018/12/05 19:08:45 | foo                              | Executing: echo foo > foo.txt
+AUDIT   2018/12/05 19:08:45 | foo                              | Finished: echo foo > foo.txt
+AUDIT   2018/12/05 19:08:45 | f2b                              | Executing: sed 's/foo/bar/g' ../foo.txt > foo.bar.txt
+AUDIT   2018/12/05 19:08:45 | f2b                              | Finished: sed 's/foo/bar/g' ../foo.txt > foo.bar.txt
+AUDIT   2018/12/05 19:08:45 | workflow:foobar_wf               | Finished workflow (Log written to log/scipipe-20181205-190845-foobar_wf.log)
