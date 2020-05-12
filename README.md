@@ -110,10 +110,10 @@ func main() {
 
 ## Running the example
 
-Let's put the code in a file named `scipipe_helloworld.go` and run it:
+Let's put the code in a file named `hello_world.go` and run it:
 
 ```bash
-$ go run minimal.go
+$ go run hello_world.go
 AUDIT   2018/07/17 21:42:26 | workflow:hello_world             | Starting workflow (Writing log to log/scipipe-20180717-214226-hello_world.log)
 AUDIT   2018/07/17 21:42:26 | hello                            | Executing: echo 'Hello ' > hello.out.txt
 AUDIT   2018/07/17 21:42:26 | hello                            | Finished: echo 'Hello ' > hello.out.txt
