@@ -7,16 +7,15 @@ at the example workflow used on the front page again:
 package main
 
 import (
-    // Import SciPipe into the main namespace (generally frowned upon but could
-    // be argued to be reasonable for short-lived workflow scripts like this)
-    . "github.com/scipipe/scipipe"
+    // Import SciPipe
+    "github.com/scipipe/scipipe"
 )
 
 func main() {
     // Init workflow with a name, and a number for max concurrent tasks, so we
     // don't overbook our CPU (it is recommended to set it to the number of CPU
     // cores of your computer)
-    wf := NewWorkflow("hello_world", 4)
+    wf := scipipe.NewWorkflow("hello_world", 4)
 
     // Initialize processes and set output file paths
     hello := wf.NewProc("hello", "echo 'Hello ' > {o:out}")
@@ -40,12 +39,12 @@ actually doing.
 
 ```go
 // Initialize processes from shell command patterns
-hello := sp.NewProc("hello", "echo 'Hello ' > {o:out}")
-world := sp.NewProc("world", "echo $(cat {i:in}) World >> {o:out}")
+hello := wf.NewProc("hello", "echo 'Hello ' > {o:out}")
+world := wf.NewProc("world", "echo $(cat {i:in}) World >> {o:out}")
 ```
 
 Here we are initializing two new processes, both of them based on a shell
-command, using the `scipipe.NewProc()` function, which takes a processname, and
+command, using the `wf.NewProc()` function, which takes a processname, and
 a shell command pattern as input.
 
 ### The shell command pattern
@@ -103,10 +102,10 @@ would write like this:
 
 ```go
 // Configure output file path formatters for the processes created above
-hello.SetOutFunc("out", func(t *sp.Task) string {
+hello.SetOutFunc("out", func(t *scipipe.Task) string {
     return "hello.txt"
 })
-world.SetOutFunc("out", func(t *sp.Task) string {
+world.SetOutFunc("out", func(t *scipipe.Task) string {
     return strings.Replace(t.InPath("in"), ".txt", "_world.txt", -1)
 })
 ```
@@ -127,7 +126,7 @@ functions in a loop, that uses a shared variable, like this:
 ```go
 for _, val := range []string{"foo", "bar"} {
     proc := scipipe.NewProc(val + "_proc", "cat {p:val} > {o:out}")
-    proc.SetOutFunc("out", func(t *sp.Task) string {
+    proc.SetOutFunc("out", func(t *scipipe.Task) string {
         return val + ".txt"
     })
 }
@@ -145,7 +144,7 @@ generally recommended:
 for _, val := range []string{"foo", "bar"} {
     proc := scipipe.NewProc(val + "_proc", "cat {p:val} > {o:out}")
     val := val // <- Here we create a new copy of the variable
-    proc.SetOutFunc("out", func(t *sp.Task) string {
+    proc.SetOutFunc("out", func(t *scipipe.Task) string {
         return val + ".txt"
     })
 }
@@ -156,7 +155,7 @@ for _, val := range []string{"foo", "bar"} {
 ```go
 for _, val := range []string{"foo", "bar"} {
     proc := scipipe.NewProc(val + "_proc", "cat {p:val} > {o:out}")
-    proc.SetOutFunc("out", func(t *sp.Task) string {
+    proc.SetOutFunc("out", func(t *scipipe.Task) string {
         return t.Param("val") + ".txt" // Access param via the task (`t`)
     })
 }
