@@ -1,7 +1,7 @@
 // Implementation (work in progress) of the resequencing analysis pipeline used
 // to teach the introductory NGS bioinformatics analysis course at SciLifeLab
 // as described on this page:
-// http://uppnex.se/twiki/do/view/Courses/NgsIntro1502/ResequencingAnalysis.html
+// https://scilifelab.github.io/courses/ngsintro/1502/labs/resequencing-analysis
 //
 // Prerequisites: Samtools, BWA, Picard, GATK.  You can install all tools
 // except GATK on X/L/K/Ubuntu, with this command:
