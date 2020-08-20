@@ -101,7 +101,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 			if outIPs[portName] == nil {
 				Fail("Missing outpath for outport '", portName, "' for command '", cmd, "'")
 			}
-			filePath = outIPs[portName].FifoPath()
+			filePath = parentDirPath(outIPs[portName].FifoPath())
 		case "i":
 			if inIPs[portName] == nil {
 				Fail("Missing in-IP for inport '", portName, "' for command '", cmd, "'")

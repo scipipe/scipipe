@@ -69,16 +69,16 @@ func TestDefaultPattern(t *testing.T) {
 
 func TestDontCreatePortInShellCommand(t *testing.T) {
 	wf := NewWorkflow("test_wf", 4)
-	ef := wf.NewProc("echo_foo", "echo foo > /tmp/foo.txt")
-	ef.SetOut("foo", "/tmp/foo.txt")
+	ef := wf.NewProc("echo_foo", "echo foo > .tmp/foo.txt")
+	ef.SetOut("foo", ".tmp/foo.txt")
 
 	cf := wf.NewProc("cat_foo", "cat {i:foo} > {o:footoo}")
 	cf.In("foo").From(ef.Out("foo"))
-	cf.SetOut("footoo", "/tmp/footoo.txt")
+	cf.SetOut("footoo", ".tmp/footoo.txt")
 
 	wf.Run()
 
-	fileName := "/tmp/footoo.txt"
+	fileName := ".tmp/footoo.txt"
 	f, openErr := os.Open(fileName)
 	if openErr != nil {
 		t.Errorf("Could not open file: %s\n", fileName)
@@ -92,7 +92,7 @@ func TestDontCreatePortInShellCommand(t *testing.T) {
 		t.Errorf("File %s did not contain %s as expected, but %s\n", fileName, expected, string(b))
 	}
 
-	cleanFiles("/tmp/foo.txt", "/tmp/footoo.txt")
+	cleanFiles(".tmp/foo.txt", ".tmp/footoo.txt")
 }
 
 func TestProcTaskBuffering(t *testing.T) {

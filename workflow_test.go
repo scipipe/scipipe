@@ -80,7 +80,7 @@ func TestDotGraph(t *testing.T) {
 	wf := NewWorkflow("testwf", 4)
 
 	p1 := wf.NewProc("p1", "echo p1 > {o:out}")
-	p1.SetOut("out", "/tmp/p1.txt")
+	p1.SetOut("out", ".tmp/p1.txt")
 
 	p2 := wf.NewProc("p2", "cat {i:in} > {o:out}")
 	p2.SetOut("out", "{i:in}.p2.txt")
@@ -124,12 +124,12 @@ func TestRunToProc(t *testing.T) {
 	wfa := getWorkflowForTestRunToProc("TestRunToProcWF_A")
 	wfa.RunTo("mrg")
 
-	if _, err := os.Stat("/tmp/foo.txt.bar.txt"); err != nil {
-		t.Error("Merged file (/tmp/foo.txt.bar.txt) is not created, which it should")
+	if _, err := os.Stat(".tmp/foo.txt.bar.txt"); err != nil {
+		t.Error("Merged file (.tmp/foo.txt.bar.txt) is not created, which it should")
 	}
 
-	if _, err := os.Stat("/tmp/foo.txt.bar.rpl.txt"); err == nil {
-		t.Error("Replaced (merge) file (/tmp/foo.txt.bar.rpl.txt) exists, which it should not (yet)!")
+	if _, err := os.Stat(".tmp/foo.txt.bar.rpl.txt"); err == nil {
+		t.Error("Replaced (merge) file (.tmp/foo.txt.bar.rpl.txt) exists, which it should not (yet)!")
 	}
 
 	time.Sleep(1 * time.Second)
@@ -139,21 +139,21 @@ func TestRunToProc(t *testing.T) {
 	wfb := getWorkflowForTestRunToProc("TestRunToProcWF_B")
 	wfb.RunTo("rpl")
 
-	if _, err := os.Stat("/tmp/foo.txt.bar.txt.rpl.txt"); err != nil {
-		t.Errorf("Replaced (merge) file (/tmp/foo.txt.bar.rpl.txt) is not created, which it should (at this point): %v", err)
+	if _, err := os.Stat(".tmp/foo.txt.bar.txt.rpl.txt"); err != nil {
+		t.Errorf("Replaced (merge) file (.tmp/foo.txt.bar.rpl.txt) is not created, which it should (at this point): %v", err)
 	}
 
-	cleanFilePatterns("/tmp/foo.txt*")
+	cleanFilePatterns(".tmp/foo.txt*")
 }
 
 func getWorkflowForTestRunToProc(wfName string) *Workflow {
 	wf := NewWorkflow(wfName, 4)
 
 	foo := wf.NewProc("foo", "echo foo > {o:out}")
-	foo.SetOut("out", "/tmp/foo.txt")
+	foo.SetOut("out", ".tmp/foo.txt")
 
 	bar := wf.NewProc("bar", "echo bar > {o:out}")
-	bar.SetOut("out", "/tmp/bar.txt")
+	bar.SetOut("out", ".tmp/bar.txt")
 
 	mrg := wf.NewProc("mrg", "cat {i:in1} {i:in2} > {o:mgd}")
 	mrg.SetOutFunc("mgd", func(tk *Task) string {
@@ -217,32 +217,32 @@ func TestParameterCommand(t *testing.T) {
 
 	// An abc file printer
 	abc := wf.NewProc("abc", "echo {p:a} {p:b} {p:c} > {o:out}")
-	abc.SetOut("out", "/tmp/abc_{p:a}_{p:b}_{p:c}.txt")
+	abc.SetOut("out", ".tmp/abc_{p:a}_{p:b}_{p:c}.txt")
 	abc.InParam("a").From(cmb.A)
 	abc.InParam("b").From(cmb.B)
 	abc.InParam("c").From(cmb.C)
 
 	// A printer process
-	prt := wf.NewProc("prt", "cat {i:in} >> /tmp/log.txt")
+	prt := wf.NewProc("prt", "cat {i:in} >> ../.tmp/log.txt")
 	prt.In("in").From(abc.Out("out"))
 
 	wf.Run()
 
 	// Run tests
-	filePath := "/tmp/log.txt"
+	filePath := ".tmp/log.txt"
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		t.Errorf("File does not exist: %s\n", filePath)
 	}
 
 	cleanFiles(filePath)
-	cleanFilePatterns("/tmp/abc_*_*_*.txt*")
+	cleanFilePatterns(".tmp/abc_*_*_*.txt*")
 }
 
 func TestDontOverWriteExistingOutputs(t *testing.T) {
 	initTestLogs()
 	Debug.Println("Starting test TestDontOverWriteExistingOutputs")
 
-	f := "/tmp/hej.txt"
+	f := ".tmp/hej.txt"
 
 	// Assert file does not exist before running
 	_, e1 := os.Stat(f)
@@ -294,7 +294,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 
 	fnames := []string{}
 	for i := 1; i <= 10; i++ {
-		fnames = append(fnames, fmt.Sprintf("/tmp/f%d.txt", i))
+		fnames = append(fnames, fmt.Sprintf(".tmp/f%d.txt", i))
 	}
 
 	wf := NewWorkflow("test_wf", 16)
@@ -324,7 +324,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 
 	for ft := range tempPort.Chan {
 		Debug.Printf("TestSendOrderedOutputs: Looping over item %d ...\n", i)
-		expFname = fmt.Sprintf("/tmp/f%d.txt.copy.txt", i)
+		expFname = fmt.Sprintf(".tmp/f%d.txt.copy.txt", i)
 		assertEqualValues(t, expFname, ft.Path())
 		Debug.Printf("TestSendOrderedOutputs: Looping over item %d Done.\n", i)
 		i++
@@ -334,7 +334,7 @@ func TestSendOrderedOutputs(t *testing.T) {
 
 	expFnames := []string{}
 	for i := 1; i <= 10; i++ {
-		expFnames = append(expFnames, fmt.Sprintf("/tmp/f%d.txt.copy.txt", i))
+		expFnames = append(expFnames, fmt.Sprintf(".tmp/f%d.txt.copy.txt", i))
 	}
 	cleanFiles(fnames...)
 	cleanFiles(expFnames...)
@@ -347,55 +347,56 @@ func TestStreaming(t *testing.T) {
 	// Set up and run workflow
 	wf := NewWorkflow("TestStreamingWf", 16)
 	ls := wf.NewProc("ls", "ls -l / > {os:lsl}")
-	ls.SetOut("lsl", "/tmp/lsl.txt")
+	ls.SetOut("lsl", ".tmp/lsl.txt")
 	grp := wf.NewProc("grp", "grep etc {i:in} > {o:grepped}")
 	grp.SetOut("grepped", "{i:in}.grepped.txt")
 	grp.In("in").From(ls.Out("lsl"))
 	wf.Run()
 
 	// Assert otuput file exists
-	_, err2 := os.Stat("/tmp/lsl.txt.grepped.txt")
-	assertNil(t, err2, "File missing!")
+	outPath := ".tmp/lsl.txt.grepped.txt"
+	_, err2 := os.Stat(outPath)
+	assertNil(t, err2, "File missing: "+outPath)
 
 	// Clean up
-	cleanFiles("/tmp/lsl.txt", "/tmp/lsl.txt.grepped.txt")
+	cleanFiles(".tmp/lsl.txt.fifo", ".tmp/lsl.txt.grepped.txt")
 }
 
 func TestSubStreamJoinInPlaceHolder(t *testing.T) {
 	initTestLogs()
 
-	exec.Command("bash", "-c", "echo 1 > /tmp/file1.txt").CombinedOutput()
-	exec.Command("bash", "-c", "echo 2 > /tmp/file2.txt").CombinedOutput()
-	exec.Command("bash", "-c", "echo 3 > /tmp/file3.txt").CombinedOutput()
+	exec.Command("bash", "-c", "echo 1 > .tmp/file1.txt").CombinedOutput()
+	exec.Command("bash", "-c", "echo 2 > .tmp/file2.txt").CombinedOutput()
+	exec.Command("bash", "-c", "echo 3 > .tmp/file3.txt").CombinedOutput()
 
 	wf := NewWorkflow("TestSubStreamJoinInPlaceHolderWf", 16)
 
 	// Create some input files
 
-	ipg := NewFileSource(wf, "ipg", "/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt")
+	ipg := NewFileSource(wf, "ipg", ".tmp/file1.txt", ".tmp/file2.txt", ".tmp/file3.txt")
 
 	sts := NewStreamToSubStream(wf, "str_to_substr")
 	sts.In().From(ipg.Out())
 
 	cat := wf.NewProc("concatenate", "cat {i:infiles|join: } > {o:merged}")
-	cat.SetOut("merged", "/tmp/substream_merged.txt")
+	cat.SetOut("merged", ".tmp/substream_merged.txt")
 	cat.In("infiles").From(sts.OutSubStream())
 
 	wf.Run()
 
-	_, err1 := os.Stat("/tmp/file1.txt")
+	_, err1 := os.Stat(".tmp/file1.txt")
 	assertNil(t, err1, "File missing!")
 
-	_, err2 := os.Stat("/tmp/file2.txt")
+	_, err2 := os.Stat(".tmp/file2.txt")
 	assertNil(t, err2, "File missing!")
 
-	_, err3 := os.Stat("/tmp/file3.txt")
+	_, err3 := os.Stat(".tmp/file3.txt")
 	assertNil(t, err3, "File missing!")
 
-	_, err4 := os.Stat("/tmp/substream_merged.txt")
+	_, err4 := os.Stat(".tmp/substream_merged.txt")
 	assertNil(t, err4, "File missing!")
 
-	cleanFiles("/tmp/file1.txt", "/tmp/file2.txt", "/tmp/file3.txt", "/tmp/substream_merged.txt")
+	cleanFiles(".tmp/file1.txt", ".tmp/file2.txt", ".tmp/file3.txt", ".tmp/substream_merged.txt")
 }
 
 func TestMultipleLastProcs(t *testing.T) {
@@ -406,7 +407,7 @@ func TestMultipleLastProcs(t *testing.T) {
 
 	for _, str := range strs {
 		writeStr := wf.NewProc("writestr_"+str, "echo "+str+" > {o:out}")
-		writeStr.SetOut("out", "/tmp/"+str+".txt")
+		writeStr.SetOut("out", ".tmp/"+str+".txt")
 
 		catStr := wf.NewProc("catstr_"+str, "cat {i:in} > {o:out}")
 		catStr.SetOut("out", "{i:in}.cat.txt")
@@ -416,26 +417,26 @@ func TestMultipleLastProcs(t *testing.T) {
 	wf.Run()
 
 	for _, str := range strs {
-		path := "/tmp/" + str + ".txt"
+		path := ".tmp/" + str + ".txt"
 		_, err := os.Stat(path)
 		assertNil(t, err, "File missing: "+path)
 	}
 
 	for _, str := range strs {
-		path := "/tmp/" + str + ".txt.cat.txt"
+		path := ".tmp/" + str + ".txt.cat.txt"
 		_, err := os.Stat(path)
 		assertNil(t, err, "File missing: "+path)
 	}
 
-	cleanFiles("/tmp/hey.txt", "/tmp/how.txt", "/tmp/hoo.txt")
-	cleanFiles("/tmp/hey.txt.cat.txt", "/tmp/how.txt.cat.txt", "/tmp/hoo.txt.cat.txt")
+	cleanFiles(".tmp/hey.txt", ".tmp/how.txt", ".tmp/hoo.txt")
+	cleanFiles(".tmp/hey.txt.cat.txt", ".tmp/how.txt.cat.txt", ".tmp/hoo.txt.cat.txt")
 }
 
 func TestPassOnTags(t *testing.T) {
 	wf := NewWorkflow("TestPassOnTags_WF", 4)
 
 	hey := wf.NewProc("create_file", "echo hey > {o:heyfile}")
-	hey.SetOut("heyfile", "/tmp/hey.txt")
+	hey.SetOut("heyfile", ".tmp/hey.txt")
 
 	tag := NewMapToTags(wf, "add_tag", func(ip *FileIP) map[string]string {
 		return map[string]string{"hey": "you"}
@@ -448,7 +449,7 @@ func TestPassOnTags(t *testing.T) {
 
 	wf.Run()
 
-	dat, err := ioutil.ReadFile("/tmp/hey.txt.you.txt.audit.json")
+	dat, err := ioutil.ReadFile(".tmp/hey.txt.you.txt.audit.json")
 	Check(err)
 	auditInfo := &AuditInfo{}
 	err = json.Unmarshal(dat, auditInfo)
@@ -456,7 +457,7 @@ func TestPassOnTags(t *testing.T) {
 
 	assertEqualValues(t, "you", auditInfo.Tags["hey"], "Audit info does not contain passed on tags")
 
-	cleanFiles("/tmp/hey.txt", "/tmp/hey.txt.you.txt")
+	cleanFiles(".tmp/hey.txt", ".tmp/hey.txt.you.txt")
 }
 
 // TestReceiveBothIPsAndParams makes sure that channels in the process
@@ -467,7 +468,7 @@ func TestReceiveBothIPsAndParams(t *testing.T) {
 	wf := NewWorkflow("multiout", 4)
 
 	echo := wf.NewProc("echo", "echo hej > {o:hej}")
-	echo.SetOut("hej", "/tmp/ipsparams.hej.txt")
+	echo.SetOut("hej", ".tmp/ipsparams.hej.txt")
 
 	params := NewParamSource(wf, "params", "tjo", "hej", "hopp")
 
@@ -484,12 +485,12 @@ func TestReceiveBothIPsAndParams(t *testing.T) {
 
 	wf.Run()
 
-	_, err := os.Stat("/tmp/ipsparams.hej.txt")
+	_, err := os.Stat(".tmp/ipsparams.hej.txt")
 	assertNil(t, err)
 
-	files := []string{"/tmp/ipsparams.hej.txt"}
+	files := []string{".tmp/ipsparams.hej.txt"}
 	for _, str := range strs {
-		file := "/tmp/ipsparams.hej.txt." + str + ".txt"
+		file := ".tmp/ipsparams.hej.txt." + str + ".txt"
 		_, err := os.Stat(file)
 		assertNil(t, err)
 		files = append(files, file)
@@ -599,7 +600,7 @@ func (p *StreamToSubStream) OutSubStream() *OutPort { return p.OutPort("substrea
 func (p *StreamToSubStream) Run() {
 	defer p.OutSubStream().Close()
 
-	subStreamIP := NewFileIP("/tmp/scipipe_streamtosubstream_dummyfile")
+	subStreamIP := NewFileIP(".tmp/scipipe_streamtosubstream_dummyfile")
 	subStreamIP.SubStream = p.In()
 
 	p.OutSubStream().Send(subStreamIP)

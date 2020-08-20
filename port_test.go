@@ -11,10 +11,10 @@ func TestMultiInPort(t *testing.T) {
 
 	wf := NewWorkflow("test_multiinport_wf", 4)
 	hello := wf.NewProc("write_hello", "echo hello > {o:hellofile}")
-	hello.SetOut("hellofile", "/tmp/hello.txt")
+	hello.SetOut("hellofile", ".tmp/hello.txt")
 
 	tjena := wf.NewProc("write_tjena", "echo tjena > {o:tjenafile}")
-	tjena.SetOut("tjenafile", "/tmp/tjena.txt")
+	tjena.SetOut("tjenafile", ".tmp/tjena.txt")
 
 	world := wf.NewProc("append_world", "echo $(cat {i:infile}) world > {o:worldfile}")
 	world.SetOut("worldfile", "{i:infile|%.txt}_world.txt")
@@ -23,7 +23,7 @@ func TestMultiInPort(t *testing.T) {
 
 	wf.Run()
 
-	resultFiles := []string{"/tmp/hello_world.txt", "/tmp/tjena_world.txt"}
+	resultFiles := []string{".tmp/hello_world.txt", ".tmp/tjena_world.txt"}
 
 	for _, f := range resultFiles {
 		_, err := os.Stat(f)
@@ -32,7 +32,7 @@ func TestMultiInPort(t *testing.T) {
 		}
 	}
 
-	cleanFiles(append(resultFiles, "/tmp/hello.txt", "/tmp/tjena.txt")...)
+	cleanFiles(append(resultFiles, ".tmp/hello.txt", ".tmp/tjena.txt")...)
 }
 
 func TestInPortName(t *testing.T) {
@@ -53,7 +53,7 @@ func TestInPortSendRecv(t *testing.T) {
 	inp := NewInPort("test_inport")
 	inp.process = NewBogusProcess("bogus_process")
 
-	ip := NewFileIP("/tmp/test.txt")
+	ip := NewFileIP(".tmp/test.txt")
 	go func() {
 		inp.Send(ip)
 	}()
