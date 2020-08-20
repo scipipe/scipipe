@@ -2,7 +2,7 @@
 
 <big>Robust, flexible and resource-efficient pipelines using Go and the commandline</big>
 
-[![Build Status](https://img.shields.io/circleci/project/github/scipipe/scipipe.svg)](https://circleci.com/gh/scipipe/scipipe)
+[![Build Status](https://img.shields.io/circleci/project/github/scipipe/scipipe.svg)](https://app.circleci.com/pipelines/github/scipipe)
 [![Test Coverage](https://img.shields.io/codecov/c/github/scipipe/scipipe.svg)](https://codecov.io/gh/scipipe/scipipe)
 [![Codebeat Grade](https://codebeat.co/badges/96e93624-2ac8-42c9-9e94-2d6e5325d8ff)](https://codebeat.co/projects/github-com-scipipe-scipipe-master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/scipipe/scipipe)](https://goreportcard.com/report/github.com/scipipe/scipipe)

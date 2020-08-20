@@ -96,7 +96,7 @@ The currently available path modifiers are:
 
 - `basename` - Removes all folders from the path, leaving only the filename.
   - Example: `{i:infile|basename}`, if `infile` has the path `data/file.txt`, will convert it to just `file.txt`.
-- `%.<extension>` - Removes
+- `%.<extension>` - Removes the file extension `<extension>`.
   - Example: `{i:infile|%.txt}`, if `infile` has the path `file.txt`, will convert it to just `file`.
 - `s/<search>/<replacement>/` - Will do a simple search and replace, from `<search>` to `<replacement>`.
   - Example: `{i:infile|s/file/my_file/}`, if `infile` has the path `file.txt`, will convert it to `my_file.txt`.
