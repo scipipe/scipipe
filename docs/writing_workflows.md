@@ -82,13 +82,24 @@ placeholders that can be used are: `{i:INPORTNAME}`, `{p:PARAMNAME}` and
 `{i:foo}.replace_with_{p:replacement}.txt`, but can also be used for
 simple, static paths, like in the example above.
 
-The placeholders can also take certain extra commands, separated from the
+The placeholders can also take certain extra "modifiers", separated from the
 placeholder name by pipe characters, and of which the one used above is
 probably the most important one: `%STRING`. It will remove the specified
-string from the _end_ of the path, which is useful when we want to avoid
+string from the _end_ of the path. This is useful when we want to avoid
 getting too long paths when re-using previous processes' paths. With the
 example above, our input file named `hello.txt` will be converted into
 `hello_world.txt` by this path pattern.
+
+### Available path modifiers
+
+The currently available path modifiers are:
+
+- `basename` - Removes all folders from the path, leaving only the filename.
+  - Example: `{i:infile|basename}`, if `infile` has the path `data/file.txt`, will convert it to just `file.txt`.
+- `%.<extension>` - Removes
+  - Example: `{i:infile|%.txt}`, if `infile` has the path `file.txt`, will convert it to just `file`.
+- `s/<search>/<replacement>/` - Will do a simple search and replace, from `<search>` to `<replacement>`.
+  - Example: `{i:infile|s/file/my_file/}`, if `infile` has the path `file.txt`, will convert it to `my_file.txt`.
 
 ## Even more control over file formatting
 

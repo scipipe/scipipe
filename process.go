@@ -271,42 +271,6 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 	})
 }
 
-func applyPathModifiers(path string, modifiers []string) string {
-	replacement := path
-
-	substPtn := regexp.MustCompile("s\\/([^\\/]+)\\/([^\\/]*)\\/")
-	trimEndPtn := regexp.MustCompile("%(.*)")
-	basenamePtn := regexp.MustCompile(`.*\/`)
-
-	for _, modifier := range modifiers {
-		// If the |-separated part looks like a search/replace
-		// pattern on the form of: s/SEARCHSTRING/REPLACESTRING/
-		// then execute the replacement.
-		if substPtn.MatchString(modifier) {
-			mbits := substPtn.FindStringSubmatch(modifier)
-			search := mbits[1]
-			replace := mbits[2]
-			replacement = strings.Replace(replacement, search, replace, 1)
-		}
-		// If the |-separated part starts iwth a %-character, then
-		// trim everything following that character, from the end
-		// of the path.
-		if trimEndPtn.MatchString(modifier) {
-			mbits := trimEndPtn.FindStringSubmatch(modifier)
-			end := mbits[1]
-			if end == replacement[len(replacement)-len(end):] {
-				replacement = replacement[:len(replacement)-len(end)]
-			}
-		}
-		// If the |-separated part is "basename", then remove all leading
-		// folders up to the actual file name.
-		if modifier == "basename" {
-			replacement = basenamePtn.ReplaceAllString(replacement, "")
-		}
-	}
-	return replacement
-}
-
 // SetOutFunc takes a function which produces a file path based on data
 // available in *Task, such as concrete file paths and parameter values,
 func (p *Process) SetOutFunc(outPortName string, pathFmtFunc func(task *Task) (path string)) {

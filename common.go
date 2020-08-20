@@ -6,7 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	re "regexp"
+	"strings"
 	"time"
 
 	"errors"
@@ -92,4 +94,53 @@ func splitAllPaths(path string) []string {
 		dir, file = filepath.Dir(dir), filepath.Base(dir)
 	}
 	return parts
+}
+
+// applyPathModifiers applies modifiers such as basename and %.ext for trimming
+// file name extensions, which are added at the end of port-placeholders, separated
+// by |-characters, such as: {i:infile|%.txt}, to get the path of "infile", but with the
+// .txt extension trimmed.
+// The full number of replacements are as follows:
+// If the |-separated part looks like a search/replace
+// pattern on the form of: s/SEARCHSTRING/REPLACESTRING/
+// then execute the replacement.
+// If the |-separated part starts iwth a %-character, then
+// trim everything following that character, from the end
+// of the path.
+// If the |-separated part is "basename", then remove all leading
+// folders up to the actual file name.
+func applyPathModifiers(path string, modifiers []string) string {
+	replacement := path
+
+	substPtn := regexp.MustCompile("s\\/([^\\/]+)\\/([^\\/]*)\\/")
+	trimEndPtn := regexp.MustCompile("%(.*)")
+	basenamePtn := regexp.MustCompile(`.*\/`)
+
+	for _, modifier := range modifiers {
+		// If the |-separated part looks like a search/replace
+		// pattern on the form of: s/SEARCHSTRING/REPLACESTRING/
+		// then execute the replacement.
+		if substPtn.MatchString(modifier) {
+			mbits := substPtn.FindStringSubmatch(modifier)
+			search := mbits[1]
+			replace := mbits[2]
+			replacement = strings.Replace(replacement, search, replace, 1)
+		}
+		// If the |-separated part starts iwth a %-character, then
+		// trim everything following that character, from the end
+		// of the path.
+		if trimEndPtn.MatchString(modifier) {
+			mbits := trimEndPtn.FindStringSubmatch(modifier)
+			end := mbits[1]
+			if end == replacement[len(replacement)-len(end):] {
+				replacement = replacement[:len(replacement)-len(end)]
+			}
+		}
+		// If the |-separated part is "basename", then remove all leading
+		// folders up to the actual file name.
+		if modifier == "basename" {
+			replacement = basenamePtn.ReplaceAllString(replacement, "")
+		}
+	}
+	return replacement
 }

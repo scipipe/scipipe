@@ -102,9 +102,8 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 			})
 	}
 
-	for _, placeHolderInfo := range placeHolderInfos {
-		placeHolderMatch := placeHolderInfo.match
-		portName := placeHolderInfo.portName
+	for _, placeHolder := range placeHolderInfos {
+		portName := placeHolder.portName
 		portInfo := portInfos[portName]
 
 		var replacement string
@@ -114,11 +113,14 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 				Fail("Missing outpath for outport '", portName, "' for command '", cmd, "'")
 			}
 			replacement = outIPs[portName].TempPath()
+			replacement = applyPathModifiers(replacement, placeHolder.modifiers)
 		case "os":
 			if outIPs[portName] == nil {
 				Fail("Missing outpath for outport '", portName, "' for command '", cmd, "'")
 			}
-			replacement = parentDirPath(outIPs[portName].FifoPath())
+			replacement = outIPs[portName].FifoPath()
+			replacement = applyPathModifiers(replacement, placeHolder.modifiers)
+			replacement = parentDirPath(replacement)
 		case "i":
 			if inIPs[portName] == nil {
 				Fail("Missing in-IP for inport '", portName, "' for command '", cmd, "'")
@@ -127,7 +129,10 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 				// Merge multiple input paths from a substream on the IP, into one string
 				paths := []string{}
 				for _, ip := range subStreamIPs[portName] {
-					paths = append(paths, parentDirPath(ip.Path()))
+					path := ip.Path()
+					path = applyPathModifiers(path, placeHolder.modifiers)
+					path = parentDirPath(path)
+					paths = append(paths, path)
 				}
 				replacement = strings.Join(paths, portInfo.joinSep)
 			} else {
@@ -135,10 +140,12 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 					Fail("Missing inpath for inport '", portName, "', and no substream, for command '", cmd, "'")
 				}
 				if inIPs[portName].doStream {
-					replacement = parentDirPath(inIPs[portName].FifoPath())
+					replacement = inIPs[portName].FifoPath()
 				} else {
-					replacement = parentDirPath(inIPs[portName].Path())
+					replacement = inIPs[portName].Path()
 				}
+				replacement = applyPathModifiers(replacement, placeHolder.modifiers)
+				replacement = parentDirPath(replacement)
 			}
 		case "p":
 			if params[portName] == "" {
@@ -146,6 +153,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 				Fail(msg)
 			} else {
 				replacement = params[portName]
+				replacement = applyPathModifiers(replacement, placeHolder.modifiers)
 			}
 		case "t":
 			if tags[portName] == "" {
@@ -153,11 +161,13 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 				Fail(msg)
 			} else {
 				replacement = tags[portName]
+				replacement = applyPathModifiers(replacement, placeHolder.modifiers)
 			}
 		default:
 			Fail("Replace failed for port ", portName, " for command '", cmd, "'")
 		}
-		cmd = strings.Replace(cmd, placeHolderMatch, replacement, -1)
+
+		cmd = strings.Replace(cmd, placeHolder.match, replacement, -1)
 	}
 
 	// Add prepend string to the command
