@@ -7,6 +7,54 @@ import (
 	"testing"
 )
 
+func TestFormatCommand(t *testing.T) {
+
+	portInfos := map[string]*PortInfo{
+		"foo": &PortInfo{
+			portType:  "i",
+			extension: "",
+			doStream:  false,
+			join:      false,
+			joinSep:   "",
+		},
+		"bar": &PortInfo{
+			portType:  "i",
+			extension: "",
+			doStream:  false,
+			join:      false,
+			joinSep:   "",
+		},
+		"baz": &PortInfo{
+			portType:  "o",
+			extension: "",
+			doStream:  false,
+			join:      false,
+			joinSep:   "",
+		},
+	}
+	inIPs := map[string]*FileIP{
+		"foo": NewFileIP("data/foofile.txt"),
+		"bar": NewFileIP("barfile.txt"),
+	}
+	outIPs := map[string]*FileIP{
+		"baz": NewFileIP("data/outfile.txt"),
+	}
+
+	for _, tt := range []struct {
+		cmdPat  string
+		wantCmd string
+	}{
+		{cmdPat: "echo {i:foo}", wantCmd: "echo ../data/foofile.txt"},
+		{cmdPat: "echo {i:foo} {i:bar}", wantCmd: "echo ../data/foofile.txt ../barfile.txt"},
+		{cmdPat: "cat {i:foo} {i:foo} > {o:baz}", wantCmd: "cat ../data/foofile.txt ../data/foofile.txt > data/outfile.txt"},
+	} {
+		gotCmd := formatCommand(tt.cmdPat, portInfos, inIPs, nil, outIPs, nil, nil, "")
+		if gotCmd != tt.wantCmd {
+			t.Errorf("Wanted command: '%s', but got: '%s'", tt.wantCmd, gotCmd)
+		}
+	}
+}
+
 func TestTempDirsExist(t *testing.T) {
 	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{"in1": NewFileIP("infile.txt"), "in2": NewFileIP("infile2.txt")}, nil, nil, map[string]string{"p1": "p1val", "p2": "p2val"}, nil, "", nil, 4)
 	err := os.Mkdir(tsk.TempDir(), 0644)
