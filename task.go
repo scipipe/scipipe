@@ -81,15 +81,29 @@ func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, i
 func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]*FileIP, subStreamIPs map[string][]*FileIP, outIPs map[string]*FileIP, params map[string]string, tags map[string]string, prepend string) string {
 	r := getShellCommandPlaceHolderRegex()
 	placeHolderMatches := r.FindAllStringSubmatch(cmd, -1)
-	placeholders := map[string]string{}
+
+	type placeHolderInfo struct {
+		match    string
+		portName string
+	}
+
+	placeHolderInfos := make([]*placeHolderInfo, 0)
 	for _, placeHolderMatch := range placeHolderMatches {
 		rest := placeHolderMatch[2]
 		restParts := strings.Split(rest, "|")
 		portName := restParts[0]
-		placeholders[portName] = placeHolderMatch[0]
+		placeHolderInfos = append(placeHolderInfos,
+			&placeHolderInfo{
+				portName: portName,
+				match:    placeHolderMatch[0],
+			})
 	}
 
-	for portName, portInfo := range portInfos {
+	for _, placeHolderInfo := range placeHolderInfos {
+		placeHolderMatch := placeHolderInfo.match
+		portName := placeHolderInfo.portName
+		portInfo := portInfos[portName]
+
 		var filePath string
 		switch portInfo.portType {
 		case "o":
@@ -140,7 +154,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 		default:
 			Fail("Replace failed for port ", portName, " for command '", cmd, "'")
 		}
-		cmd = strings.Replace(cmd, placeholders[portName], filePath, -1)
+		cmd = strings.Replace(cmd, placeHolderMatch, filePath, -1)
 	}
 
 	// Add prepend string to the command
