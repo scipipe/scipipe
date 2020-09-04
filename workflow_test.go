@@ -511,11 +511,12 @@ func TestSanitizePathFragments(t *testing.T) {
 }
 
 func TestSingleProcessWorkflow(t *testing.T) {
-  wf := NewWorkflow("mywf", 4)
-  wf.NewProc("file_creator", "echo foo > foo.txt")
-  wf.Run()
+	wf := NewWorkflow("TestSingleProcessWF", 4)
+	p := wf.NewProc("file_creator", "echo foo > {o:foo}")
+	p.SetOut("foo", "foo.txt")
+	wf.Run()
 
-  cleanFiles("foo.txt")
+	cleanFiles("foo.txt")
 }
 
 // --------------------------------------------------------------------------------
