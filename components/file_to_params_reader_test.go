@@ -10,9 +10,10 @@ import (
 var params = []string{"abc", "bcd", "cde"}
 
 func TestFileToParamsReader(tt *testing.T) {
+	os.MkdirAll(".tmp", 0744)
 	// Create file to read
-	filePath := "/tmp/filereader_testfile.txt"
-	f, err := os.Create("/tmp/filereader_testfile.txt")
+	filePath := ".tmp/filereader_testfile.txt"
+	f, err := os.Create(".tmp/filereader_testfile.txt")
 	if err != nil {
 		tt.Fatalf("Could not create file: %s", filePath)
 	}

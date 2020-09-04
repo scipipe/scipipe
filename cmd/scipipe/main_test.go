@@ -5,14 +5,16 @@ import (
 	"os"
 	"testing"
 
-	"github.com/scipipe/scipipe"
 	"regexp"
+
+	"github.com/scipipe/scipipe"
 )
 
 func TestNewCmd(t *testing.T) {
 	initLogsTest()
 
-	testWfPath := "/tmp/testwf.go"
+	os.MkdirAll(".tmp", 0744)
+	testWfPath := ".tmp/testwf.go"
 
 	args := []string{"new", testWfPath}
 	err := parseFlags(args)
@@ -25,13 +27,17 @@ func TestNewCmd(t *testing.T) {
 	}
 
 	cleanFiles(t, testWfPath)
+	os.RemoveAll(".tmp")
 }
 
 func TestAudit2HTMLCmd(t *testing.T) {
 	initLogsTest()
 
-	jsonFile := "/tmp/f.audit.json"
-	htmlFile := "/tmp/f.audit.html"
+	os.MkdirAll(".tmp", 0744)
+
+	jsonFile := ".tmp/f.audit.json"
+	htmlFile := ".tmp/f.audit.html"
+
 	err := ioutil.WriteFile(jsonFile, []byte(jsonContent), 0644)
 	if err != nil {
 		t.Error("Could not create infile needed in test: " + jsonFile)
@@ -69,6 +75,7 @@ func TestAudit2HTMLCmd(t *testing.T) {
 		cleanFiles(t, htmlFile)
 	}
 	cleanFiles(t, jsonFile)
+	os.RemoveAll(".tmp")
 }
 
 func TestExtractAuditInfosByID(t *testing.T) {
@@ -136,7 +143,7 @@ const (
 	a, a:link, a:visited { color: inherit; text-decoration: none; }
 	a:hover { text-decoration: underline; }
 </style>
-<title>Audit info for: /tmp/f</title>
+<title>Audit info for: .tmp/f</title>
 </head>
 <body>
 <table>

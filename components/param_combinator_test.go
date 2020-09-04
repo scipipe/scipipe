@@ -11,6 +11,8 @@ import (
 )
 
 func TestParamCombinator(t *testing.T) {
+	os.MkdirAll(".tmp", 0744)
+
 	var letters = []string{"a", "b"}
 	var numbers = []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17"}
 
@@ -27,13 +29,13 @@ func TestParamCombinator(t *testing.T) {
 	catenator := wf.NewProc("catenator", "echo {p:letters} {p:numbers} > {o:combined}")
 	catenator.InParam("letters").From(paramCombiner.OutParam("letters"))
 	catenator.InParam("numbers").From(paramCombiner.OutParam("numbers"))
-	catenator.SetOut("combined", "/tmp/combined/{p:letters}.{p:numbers}.combined.txt")
+	catenator.SetOut("combined", ".tmp/combined/{p:letters}.{p:numbers}.combined.txt")
 
 	wf.Run()
 
 	for _, l := range letters {
 		for _, n := range numbers {
-			filePath := fmt.Sprintf("/tmp/combined/%s.%s.combined.txt", l, n)
+			filePath := fmt.Sprintf(".tmp/combined/%s.%s.combined.txt", l, n)
 			if _, err := os.Stat(filePath); os.IsNotExist(err) {
 				log.Fatal("File did not exist: " + filePath)
 			}
@@ -44,7 +46,7 @@ func TestParamCombinator(t *testing.T) {
 	filePaths := []string{}
 	for _, l := range letters {
 		for _, n := range numbers {
-			filePaths = append(filePaths, fmt.Sprintf("/tmp/combined/%s.%s.combined.txt", l, n))
+			filePaths = append(filePaths, fmt.Sprintf(".tmp/combined/%s.%s.combined.txt", l, n))
 			filePaths = append(filePaths, filePaths[len(filePaths)-1]+".audit.json")
 		}
 	}

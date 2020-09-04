@@ -12,11 +12,13 @@ import (
 )
 
 func TestFileGlobber(t *testing.T) {
+	os.MkdirAll(".tmp", 0744)
+
 	letters := []string{"a", "b", "c"}
 
 	// Create files to glob
 	for _, s := range letters {
-		fName := "/tmp/globfile_" + s + ".txt"
+		fName := ".tmp/globfile_" + s + ".txt"
 		f, err := os.Create(fName)
 		if err != nil {
 			log.Fatalf("File could not be created: %s\n", fName)
@@ -27,7 +29,7 @@ func TestFileGlobber(t *testing.T) {
 	// Create workflow
 	wf := scipipe.NewWorkflow("wf", 4)
 
-	globber := NewFileGlobber(wf, "globber_dependent", "/tmp/globfile_*.txt")
+	globber := NewFileGlobber(wf, "globber_dependent", ".tmp/globfile_*.txt")
 
 	copyer := wf.NewProc("copyer", "cat {i:in} > {o:out}")
 	copyer.SetOut("out", "{i:in}.copy")
@@ -36,7 +38,7 @@ func TestFileGlobber(t *testing.T) {
 	wf.Run()
 
 	for _, s := range letters {
-		filePath := fmt.Sprintf("/tmp/globfile_%s.txt.copy", s)
+		filePath := fmt.Sprintf(".tmp/globfile_%s.txt.copy", s)
 		expectedSArr, err := ioutil.ReadFile(filePath)
 		if err != nil {
 			log.Fatal("File did not exist: " + filePath)
@@ -49,23 +51,24 @@ func TestFileGlobber(t *testing.T) {
 
 	// Clean up files
 	for _, s := range letters {
-		filePath := fmt.Sprintf("/tmp/globfile_%s.txt", s)
+		filePath := fmt.Sprintf(".tmp/globfile_%s.txt", s)
 		os.Remove(filePath)
-		filePath = fmt.Sprintf("/tmp/globfile_%s.txt.audit.json", s)
+		filePath = fmt.Sprintf(".tmp/globfile_%s.txt.audit.json", s)
 		os.Remove(filePath)
-		filePath = fmt.Sprintf("/tmp/globfile_%s.txt.copy", s)
+		filePath = fmt.Sprintf(".tmp/globfile_%s.txt.copy", s)
 		os.Remove(filePath)
-		filePath = fmt.Sprintf("/tmp/globfile_%s.txt.copy.audit.json", s)
+		filePath = fmt.Sprintf(".tmp/globfile_%s.txt.copy.audit.json", s)
 		os.Remove(filePath)
 	}
 }
 
 func TestFileGlobberDependent(t *testing.T) {
+	os.MkdirAll(".tmp", 0744)
 	letters := []string{"a", "b", "c"}
 
 	// Create files to glob
 	for _, s := range letters {
-		fName := "/tmp/globfile_" + s + ".txt"
+		fName := ".tmp/globfile_" + s + ".txt"
 		f, err := os.Create(fName)
 		if err != nil {
 			log.Fatalf("File could not be created: %s\n", fName)
@@ -76,9 +79,9 @@ func TestFileGlobberDependent(t *testing.T) {
 	// Create workflow
 	wf := scipipe.NewWorkflow("wf", 4)
 	flagFile := wf.NewProc("create_flag_file", "echo done > {o:doneflag}")
-	flagFile.SetOut("doneflag", "/tmp/done.txt")
+	flagFile.SetOut("doneflag", ".tmp/done.txt")
 
-	globber := NewFileGlobberDependent(wf, "globber_dependent", "/tmp/globfile_*.txt")
+	globber := NewFileGlobberDependent(wf, "globber_dependent", ".tmp/globfile_*.txt")
 	globber.InDependency().From(flagFile.Out("doneflag"))
 
 	copyer := wf.NewProc("copyer", "cat {i:in} > {o:out}")
@@ -87,13 +90,13 @@ func TestFileGlobberDependent(t *testing.T) {
 
 	wf.Run()
 
-	fileInfoFlagFile, err := os.Stat("/tmp/done.txt")
+	fileInfoFlagFile, err := os.Stat(".tmp/done.txt")
 	if err != nil {
-		log.Fatalf("Could not stat file: /tmp/done/txt")
+		log.Fatalf("Could not stat file: .tmp/done/txt")
 	}
 
 	for _, s := range letters {
-		filePath := fmt.Sprintf("/tmp/globfile_%s.txt.copy", s)
+		filePath := fmt.Sprintf(".tmp/globfile_%s.txt.copy", s)
 		expectedSArr, err := ioutil.ReadFile(filePath)
 		if err != nil {
 			log.Fatal("File did not exist: " + filePath)
@@ -114,15 +117,15 @@ func TestFileGlobberDependent(t *testing.T) {
 
 	// Clean up files
 	for _, s := range letters {
-		filePath := fmt.Sprintf("/tmp/globfile_%s.txt", s)
+		filePath := fmt.Sprintf(".tmp/globfile_%s.txt", s)
 		os.Remove(filePath)
-		filePath = fmt.Sprintf("/tmp/globfile_%s.txt.audit.json", s)
+		filePath = fmt.Sprintf(".tmp/globfile_%s.txt.audit.json", s)
 		os.Remove(filePath)
-		filePath = fmt.Sprintf("/tmp/globfile_%s.txt.copy", s)
+		filePath = fmt.Sprintf(".tmp/globfile_%s.txt.copy", s)
 		os.Remove(filePath)
-		filePath = fmt.Sprintf("/tmp/globfile_%s.txt.copy.audit.json", s)
+		filePath = fmt.Sprintf(".tmp/globfile_%s.txt.copy.audit.json", s)
 		os.Remove(filePath)
 	}
-	os.Remove("/tmp/done.txt")
-	os.Remove("/tmp/done.txt.audit.json")
+	os.Remove(".tmp/done.txt")
+	os.Remove(".tmp/done.txt.audit.json")
 }
