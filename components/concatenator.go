@@ -1,12 +1,22 @@
 package components
 
-import "github.com/scipipe/scipipe"
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+
+	"github.com/scipipe/scipipe"
+)
 
 // Concatenator is a process that concatenates the content of multiple files
-// received in the in-port In, into one file returned on its out-port, Out
+// received in the in-port In, into one file returned on its out-port, Out.
+// You can optionally specify a tag name to GroupByTag, which will make files
+// go into separate output files if they have different values for that tag.
+// These output files will have the tag name appended to the base file name.
 type Concatenator struct {
 	scipipe.BaseProcess
-	OutPath string
+	OutPath    string
+	GroupByTag string
 }
 
 // NewConcatenator returns a new, initialized Concatenator process
@@ -34,19 +44,37 @@ func (p *Concatenator) Run() {
 
 	outIP := scipipe.NewFileIP(p.OutPath)
 	outFh := outIP.OpenWriteTemp()
+
+	outIPsByTag := make(map[string]*scipipe.FileIP)
+	outFhsByTag := make(map[string]*os.File)
+
 	for inIP := range p.In().Chan {
-		fr := NewFileToParamsReader(p.Workflow(), p.Name()+"_filereader_"+getRandString(7), inIP.Path())
-
-		pip := scipipe.NewInParamPort(p.Name() + "temp_line_reader")
-		pip.SetProcess(p)
-		pip.From(fr.OutLine())
-
-		go fr.Run()
-
-		for line := range pip.Chan {
-			outFh.WriteString(line + "\n")
+		tagVal := inIP.Tag(p.GroupByTag)
+		if tagVal != "" {
+			if _, ok := outIPsByTag[tagVal]; !ok {
+				outIPsByTag[tagVal] = scipipe.NewFileIP(fmt.Sprintf("%s.%s_%s", p.OutPath, p.GroupByTag, tagVal))
+				outIPsByTag[tagVal].AddTag(p.GroupByTag, tagVal)
+				outFhsByTag[tagVal] = outIPsByTag[tagVal].OpenWriteTemp()
+			}
+			dat, err := ioutil.ReadFile(inIP.Path())
+			scipipe.Check(err)
+			outFhsByTag[tagVal].Write(dat)
+			outFhsByTag[tagVal].Write([]byte("\n"))
+		} else {
+			dat, err := ioutil.ReadFile(inIP.Path())
+			scipipe.Check(err)
+			outFh.Write(dat)
+			outFh.Write([]byte("\n"))
 		}
 	}
+	// Close file handles
 	outFh.Close()
+	for _, taggedFh := range outFhsByTag {
+		taggedFh.Close()
+	}
+	// Send IPs
 	p.Out().Send(outIP)
+	for _, taggedIP := range outIPsByTag {
+		p.Out().Send(taggedIP)
+	}
 }

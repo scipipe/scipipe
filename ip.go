@@ -334,7 +334,8 @@ func (ip *FileIP) Param(key string) string {
 func (ip *FileIP) Tag(k string) string {
 	v, ok := ip.AuditInfo().Tags[k]
 	if !ok {
-		Failf("Could not find tag %s in ip with path: %s\n", k, ip.Path())
+		Warning.Printf("No such tag, %s, in ip with path: %s\n", k, ip.Path())
+		return ""
 	}
 	return v
 }
