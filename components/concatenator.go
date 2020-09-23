@@ -44,7 +44,7 @@ func (p *Concatenator) Run() {
 		go fr.Run()
 
 		for line := range pip.Chan {
-			outFh.WriteString(line)
+			outFh.WriteString(line + "\n")
 		}
 	}
 	outFh.Close()
