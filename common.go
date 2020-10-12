@@ -115,7 +115,7 @@ func applyPathModifiers(path string, modifiers []string) string {
 	substPtn := regexp.MustCompile("s\\/([^\\/]+)\\/([^\\/]*)\\/")
 	trimEndPtn := regexp.MustCompile("%(.*)")
 	basenamePtn := regexp.MustCompile(`.*\/`)
-	dirnamePth := regexp.MustCompile(`\/[^\/]*$`)
+	dirnamePtn := regexp.MustCompile(`\/[^\/]*$`)
 
 	for _, modifier := range modifiers {
 		// If the |-separated part looks like a search/replace
@@ -137,16 +137,16 @@ func applyPathModifiers(path string, modifiers []string) string {
 				replacement = replacement[:len(replacement)-len(end)]
 			}
 		}
+
+		switch modifier {
 		// If the |-separated part is "basename", then remove all leading
 		// folders up to the actual file name.
-		if modifier == "basename" {
+		case "basename":
 			replacement = basenamePtn.ReplaceAllString(replacement, "")
-		}
-
 		// If the |-separated part is "dirname", then extract only
 		// the directory of the path.
-		if modifier == "dirname" {
-			replacement = dirnamePth.ReplaceAllString(replacement, "")
+		case "dirname":
+			replacement = dirnamePtn.ReplaceAllString(replacement, "")
 		}
 	}
 	return replacement
