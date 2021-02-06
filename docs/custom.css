@@ -1,8 +1,10 @@
 /* Code highlighting customizations */
+.md-logo {
+    padding: 0!important;
+}
 .md-logo img {
-    width: 64px;
-    height: 64px;
-    margin-top: -20px;
+    width: 64px!important;
+    height: 64px!important;
 }
 .codehilite .kn,
 .codehilite .kd {
