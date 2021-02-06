@@ -37,11 +37,11 @@ extra:
         primary: 'blue grey'
         accent: 'cyan'
     social:
-        - type: 'github'
-          link: 'https://github.com/scipipe'
-        - type: 'twitter'
+        - icon: fontawesome/brands/github-alt
+          link: 'https://github.com/scipipe/scipipe'
+        - icon: fontawesome/brands/twitter
           link: 'https://twitter.com/scipipe'
-        - type: 'linkedin'
+        - icon: fontawesome/brands/linkedin
           link: 'https://www.linkedin.com/in/samuellampa/'
 google_analytics:
   - 'UA-48319762-3'
