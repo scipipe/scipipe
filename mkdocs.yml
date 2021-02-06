@@ -27,6 +27,7 @@ pages:
   - 'Other Resources': 'other_resources.md'
   - 'Acknowledgements': 'acknowledgements.md'
   - 'Related Tools': 'related_tools.md'
+  - 'Contributing': 'contributing.md'
 repo_name: 'scipipe/scipipe'
 repo_url: 'https://github.com/scipipe/scipipe'
 theme:
