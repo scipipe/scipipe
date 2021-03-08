@@ -22,6 +22,7 @@ pages:
     - 'Constrain resource usage': 'howtos/constrain_resource_usage.md'
     - 'Plotting workflow graphs': 'howtos/plot_workflow_graph.md'
     - 'Convert audit logs to other formats': 'howtos/convert_audit_logs.md'
+  - 'Settings': 'settings.md'
   - 'Examples': 'examples.md'
   - 'Video tutorials': 'videos.md'
   - 'Other Resources': 'other_resources.md'

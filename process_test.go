@@ -99,7 +99,7 @@ func TestProcTaskBuffering(t *testing.T) {
 	// An attempt to test the issue in #80.
 
 	numbers := []string{}
-	for i := 0; i < BUFSIZE+1; i++ {
+	for i := 0; i < getBufsize()+1; i++ {
 		numbers = append(numbers, strconv.Itoa(i))
 	}
 
