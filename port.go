@@ -26,7 +26,7 @@ func NewInPort(name string) *InPort {
 	inp := &InPort{
 		name:        name,
 		RemotePorts: map[string]*OutPort{},
-		Chan:        make(chan *FileIP, BUFSIZE), // This one will contain merged inputs from inChans
+		Chan:        make(chan *FileIP, getBufsize()), // This one will contain merged inputs from inChans
 		ready:       false,
 	}
 	return inp
@@ -234,7 +234,7 @@ type InParamPort struct {
 func NewInParamPort(name string) *InParamPort {
 	return &InParamPort{
 		name:        name,
-		Chan:        make(chan string, BUFSIZE),
+		Chan:        make(chan string, getBufsize()),
 		RemotePorts: map[string]*OutParamPort{},
 	}
 }

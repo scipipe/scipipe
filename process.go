@@ -300,7 +300,7 @@ func (p *Process) Run() {
 	// they are produced and to maintain the correct order of IPs. This select
 	// allows us to process completed tasks as they become available. Waiting
 	// for all Tasks to be spawned before processing any can cause deadlock
-	// under certain workflow architectures when there are more than BUFSIZE
+	// under certain workflow architectures when there are more than getBufsize()
 	// Tasks per process, see #81.
 	startedTasks := taskQueue{}
 
