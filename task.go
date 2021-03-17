@@ -185,7 +185,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 // InIP returns an IP for the in-port with name portName
 func (t *Task) InIP(portName string) *FileIP {
 	if t.InIPs[portName] == nil {
-		t.failf("No such in-portname (%s)\n", portName)
+		t.failf("No such in-portname '%s'\n", portName)
 	}
 	return t.InIPs[portName]
 }
@@ -200,7 +200,7 @@ func (t *Task) OutIP(portName string) *FileIP {
 	if ip, ok := t.OutIPs[portName]; ok {
 		return ip
 	}
-	t.failf("No such out-portname (%s)\n", portName)
+	t.failf("No such out-portname '%s'\n", portName)
 	return nil
 }
 
@@ -430,8 +430,8 @@ func (t *Task) TempDir() string {
 
 // failf Prints an error message with the process as context, before exiting
 // the program
-func (t *Task) failf(errMsg string, strs ...string) {
-	Failf("[Task:%s]: "+errMsg, append([]string{t.Name}, strs...))
+func (t *Task) failf(errMsg string, strs ...interface{}) {
+	Failf(fmt.Sprintf("[Task:%s]: ", t.Name)+errMsg, strs...)
 }
 
 func parentDirPath(path string) string {
