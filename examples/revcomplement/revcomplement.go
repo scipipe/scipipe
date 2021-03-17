@@ -18,7 +18,7 @@ func main() {
 
 	// complmt computes the base complement of a DNA string
 	complmt := wf.NewProc("Base Complement", "cat {i:in} | tr ATCG TAGC > {o:compl}")
-	complmt.SetOut("compl", "{i:in|%.txt}.compl.txt")
+	complmt.SetOut("compl", "{i:i|%.txt}.compl.txt")
 
 	// reverse reverses the input DNA string
 	reverse := wf.NewProc("Reverse", "cat {i:in} | rev > {o:rev}")

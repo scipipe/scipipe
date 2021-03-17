@@ -185,7 +185,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 // InIP returns an IP for the in-port with name portName
 func (t *Task) InIP(portName string) *FileIP {
 	if t.InIPs[portName] == nil {
-		Failf("No such in-portname (%s) in task (%s)\n", portName, t.Name)
+		t.failf("No such in-portname (%s)\n", portName)
 	}
 	return t.InIPs[portName]
 }
@@ -200,7 +200,7 @@ func (t *Task) OutIP(portName string) *FileIP {
 	if ip, ok := t.OutIPs[portName]; ok {
 		return ip
 	}
-	Failf("No such out-portname (%s) in task (%s)\n", portName, t.Name)
+	t.failf("No such out-portname (%s)\n", portName)
 	return nil
 }
 
@@ -214,7 +214,7 @@ func (t *Task) Param(portName string) string {
 	if param, ok := t.Params[portName]; ok {
 		return param
 	}
-	Failf("No such param port '%s' for task '%s'\n", portName, t.Name)
+	t.failf("No such param port '%s'\n", portName)
 	return "invalid"
 }
 
@@ -223,7 +223,7 @@ func (t *Task) Tag(tagName string) string {
 	if tag, ok := t.Tags[tagName]; ok {
 		return tag
 	}
-	Failf("No such tag '%s' for task '%s'\n", tagName, t.Name)
+	t.failf("No such tag '%s' for task '%s'\n", tagName)
 	return "invalid"
 }
 
@@ -237,7 +237,7 @@ func (t *Task) Execute() {
 
 	// Do some sanity checks
 	if t.tempDirsExist() {
-		Failf("| %-32s | Existing temp folders found, so existing. Clean up temporary folders (starting with '%s') before restarting the workflow!", t.Name, tempDirPrefix)
+		t.failf("Existing temp folders found, so existing. Clean up temporary folders (starting with '%s') before restarting the workflow!", tempDirPrefix)
 	}
 
 	if t.anyOutputsExist() {
@@ -318,7 +318,7 @@ func (t *Task) executeCommand(cmd string) {
 	// cd into the task's tempdir, execute the command, and cd back
 	out, err := exec.Command("bash", "-c", "cd "+t.TempDir()+" && "+cmd+" && cd ..").CombinedOutput()
 	if err != nil {
-		Failf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\nOriginal error:%s\n", cmd, string(out), err.Error())
+		t.failf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\nOriginal error:%s\n", cmd, string(out), err.Error())
 	}
 }
 
@@ -426,6 +426,12 @@ func (t *Task) TempDir() string {
 	sha1sum := sha1.Sum([]byte(strings.Join(hashPcs, "")))
 	pathSegment := pathPrefix + "." + hex.EncodeToString(sha1sum[:])
 	return pathSegment
+}
+
+// failf Prints an error message with the process as context, before exiting
+// the program
+func (t *Task) failf(errMsg string, strs ...string) {
+	Failf("[Task:%s]: "+errMsg, append([]string{t.Name}, strs...))
 }
 
 func parentDirPath(path string) string {
