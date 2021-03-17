@@ -188,25 +188,25 @@ func (p *BaseProcess) Ready() (isReady bool) {
 	isReady = true
 	for portName, port := range p.inPorts {
 		if !port.Ready() {
-			Error.Printf("InPort %s of process %s is not connected - check your workflow code!\n", portName)
+			p.failf("InPort %s is not connected - check your workflow code!\n", portName)
 			isReady = false
 		}
 	}
 	for portName, port := range p.outPorts {
 		if !port.Ready() {
-			Error.Printf("OutPort %s of process %s is not connected - check your workflow code!\n", portName)
+			p.failf("OutPort %s is not connected - check your workflow code!\n", portName)
 			isReady = false
 		}
 	}
 	for portName, port := range p.inParamPorts {
 		if !port.Ready() {
-			Error.Printf("InParamPort %s of process %s is not connected - check your workflow code!\n", portName)
+			p.failf("InParamPort %s is not connected - check your workflow code!\n", portName)
 			isReady = false
 		}
 	}
 	for portName, port := range p.outParamPorts {
 		if !port.Ready() {
-			Error.Printf("OutParamPort %s of process %s is not connected - check your workflow code!\n", portName)
+			p.failf("OutParamPort %s is not connected - check your workflow code!\n", portName)
 			isReady = false
 		}
 	}
