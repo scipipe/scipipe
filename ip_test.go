@@ -20,3 +20,20 @@ func assertPathsEqual(t *testing.T, path1 string, path2 string) {
 		t.Errorf("Wrong path returned. Was %s but should be %s\n", path1, path2)
 	}
 }
+
+func TestPathIsValid(t *testing.T) {
+	for _, tc := range []struct {
+		path      string
+		wantValid bool
+	}{
+		{path: "filename.txt", wantValid: true},
+		{path: "file name.txt", wantValid: false},
+		{path: "./directory/long-file_name.txt", wantValid: true},
+		{path: `\\Server\path`, wantValid: false},
+	} {
+		haveValid := pathIsValid(tc.path)
+		if haveValid != tc.wantValid {
+			t.Fatalf("Valid status for path '%s' was %v, not %v as expected", tc.path, haveValid, tc.wantValid)
+		}
+	}
+}
