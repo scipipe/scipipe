@@ -67,11 +67,18 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 
+	seenPorts := map[string]string{}
+
 	for _, m := range ms {
 		portType := m[1]
 		portRest := m[2]
 		splitParts := strings.Split(portRest, "|")
 		portName := splitParts[0]
+
+		if _, ok := seenPorts[portName]; ok {
+			Failf("Duplicate port-name (%s) in process (%s). Port names must be unique across all the in-, out- and parameter ports for each process.\n", portName, p.Name())
+		}
+		seenPorts[portName] = portName
 
 		p.PortInfo[portName] = &PortInfo{portType: portType}
 
@@ -293,7 +300,7 @@ func (p *Process) Run() {
 	defer p.CloseOutPorts()
 	// Check that CoresPerTask is a sane number
 	if p.CoresPerTask > cap(p.workflow.concurrentTasks) {
-		Failf("%s: CoresPerTask (%d) can't be greater than maxConcurrentTasks of workflow (%d)\n", p.Name(), p.CoresPerTask, cap(p.workflow.concurrentTasks))
+		Failf("CoresPerTask (%d) can't be greater than maxConcurrentTasks of workflow (%d) in process (%s)\n", p.CoresPerTask, cap(p.workflow.concurrentTasks), p.Name())
 	}
 
 	// Using a slice to store unprocessed tasks allows us to receive tasks as
