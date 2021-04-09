@@ -17,35 +17,6 @@ import (
 type IP interface {
 	ID() string
 	Atomize()
-	// ----------------------------------------
-	// Some tentative additions:
-	// ----------------------------------------
-	// Digest() string
-	// URL() string        // Example: file:///proj/cheminf/exp/20180101-logd/dat/rawdata.tsv
-	// StagedPath() string // Example: /proj/cheminf/exp/20180101-logd/dat/rawdata.tsv
-	// TempPath() string
-	// EnsureStaged()
-	// EnsureUnstaged()
-	// ParamType() int // string / int8 / float64 / bool / date? / time?
-	// Param() string
-	// Tag() string
-	// Tags() map[string]string
-	// AddTag(tag string)
-	// AddTags(tags ...string)
-	// AuditInfo()
-	// SetAuditInfo()
-	// AuditInfoFilePath() string
-	// WriteAuditLogToFile()
-	// Params() map[string]string
-	// ----------------------------------------
-	// Persistable() bool // Whether the content or data of the IP can be persisted, e.g. by being written to disk
-	// Read() []byte
-	// Write(data []byte)
-	// OpenR() io.Reader // Return a reader interface to read content directly
-	// OpenW() io.Writer // (Possibly relevant for object storage without staging)
-	// OpenRW() io.ReadWriter
-	// Close()
-	// ----------------------------------------
 }
 
 // ------------------------------------------------------------------------
