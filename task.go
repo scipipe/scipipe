@@ -275,7 +275,10 @@ func (t *Task) Execute() {
 	}
 	finishTime := time.Now()
 	t.writeAuditLogs(startTime, finishTime)
+
+	t.ensureAllOutputsExist()
 	t.atomizeIPs()
+
 	t.workflow.DecConcurrentTasks(t.cores)
 
 	t.Done <- 1
@@ -364,6 +367,15 @@ func (t *Task) writeAuditLogs(startTime time.Time, finishTime time.Time) {
 			oip.AddTags(iip.Tags())
 		}
 		oip.WriteAuditLogToFile()
+	}
+}
+
+func (t *Task) ensureAllOutputsExist() {
+	for _, ip := range t.OutIPs {
+		filePath := filepath.Join(t.TempDir(), ip.TempPath())
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			Failf("Missing output temp-file (%s) for ip with path (%s) in task (%s) of process (%s)\n", filePath, ip.Path(), t.Name, t.Process.Name())
+		}
 	}
 }
 

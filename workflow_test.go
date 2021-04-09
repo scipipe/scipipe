@@ -519,6 +519,18 @@ func TestSingleProcessWorkflow(t *testing.T) {
 	cleanFiles("foo.txt")
 }
 
+// TestEnsureFailOnMissingOutputs ensures that tasks with missing outputs will
+// properly fail with status 1.
+func TestEnsureFailOnMissingOutputs(t *testing.T) {
+	ensureFailsProgram("TestEnsureFailOnMissingOutputs", func() {
+		wf := NewWorkflow("TestSingleProcessWF", 4)
+		p := wf.NewProc("file_creator", "echo foo > {o:foo} # {o:bar}")
+		p.SetOut("foo", "foo.txt")
+		p.SetOut("bar", "bar.txt")
+		wf.Run()
+	}, t)
+}
+
 func TestPlotGraph(t *testing.T) {
 	plotDir := "subdir"
 
@@ -761,4 +773,18 @@ func (p *BogusProcess) Name() string {
 
 func (p *BogusProcess) Ready() bool {
 	return true
+}
+
+func ensureFailsProgram(testName string, crasher func(), t *testing.T) {
+	// After https://talks.golang.org/2014/testing.slide#23
+	if os.Getenv("BE_CRASHER") == "1" {
+		crasher()
+	}
+	cmd := exec.Command(os.Args[0], "-test.run="+testName)
+	cmd.Env = append(os.Environ(), "BE_CRASHER=1")
+	err := cmd.Run()
+	if e, ok := err.(*exec.ExitError); ok && !e.Success() {
+		return
+	}
+	t.Fatalf("process ran with err %v, want exit status 1", err)
 }
