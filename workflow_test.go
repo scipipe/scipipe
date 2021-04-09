@@ -519,6 +519,23 @@ func TestSingleProcessWorkflow(t *testing.T) {
 	cleanFiles("foo.txt")
 }
 
+func TestPlotGraph(t *testing.T) {
+	plotDir := "subdir"
+
+	wf := NewWorkflow("TestPlotGraph", 4)
+	p := wf.NewProc("file_creator", "echo foo > {o:foo}")
+	p.SetOut("foo", "foo.txt")
+
+	wf.PlotGraph(filepath.Join(plotDir, "workflow.dot"))
+
+	if _, err := os.Stat(plotDir); os.IsNotExist(err) {
+		t.Fatalf("Subdirectory was not properly created: %s", plotDir)
+	}
+
+	cleanFiles(filepath.Join(plotDir, "workflow.dot"))
+	cleanFiles(plotDir)
+}
+
 // --------------------------------------------------------------------------------
 // CombinatoricsProcess helper process
 // --------------------------------------------------------------------------------

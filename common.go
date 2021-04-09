@@ -151,3 +151,11 @@ func applyPathModifiers(path string, modifiers []string) string {
 	}
 	return replacement
 }
+
+func createDirs(path string) {
+	dir := filepath.Dir(path)
+	err := os.MkdirAll(dir, 0775)
+	if err != nil {
+		Failf("Could not create directory %s: %v", dir, err)
+	}
+}

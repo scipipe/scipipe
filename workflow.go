@@ -192,6 +192,7 @@ func (wf *Workflow) DecConcurrentTasks(slots int) {
 // PlotGraph writes the workflow structure to a dot file
 func (wf *Workflow) PlotGraph(filePath string) {
 	dot := wf.DotGraph()
+	createDirs(filePath)
 	dotFile, err := os.Create(filePath)
 	CheckWithMsg(err, "Could not create dot file "+filePath)
 	dotFile.WriteString(dot)
@@ -386,7 +387,7 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 		}
 	}
 
-	if foundNewDriverProc && len(procs) > 1 {  // Allow for a workflow with a single process
+	if foundNewDriverProc && len(procs) > 1 { // Allow for a workflow with a single process
 		// A process can't both be the driver and be included in the main procs
 		// map, so if we have an alerative driver, it should not be in the main
 		// procs map
