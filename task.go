@@ -76,6 +76,10 @@ func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, i
 	return t
 }
 
+const (
+	parentDirPlaceHolder = "__parent__"
+)
+
 // formatCommand is a helper function for NewTask, that formats a shell command
 // based on concrete file paths and parameter values
 func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]*FileIP, subStreamIPs map[string][]*FileIP, outIPs map[string]*FileIP, params map[string]string, tags map[string]string, prepend string) string {
@@ -108,12 +112,14 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 
 		var replacement string
 		switch portInfo.portType {
+
 		case "o":
 			if outIPs[portName] == nil {
 				Fail("Missing outpath for outport '", portName, "' for command '", cmd, "'")
 			}
 			replacement = outIPs[portName].TempPath()
 			replacement = applyPathModifiers(replacement, placeHolder.modifiers)
+			replacement = replaceParentDirsWithPlaceholder(replacement)
 
 		case "os":
 			if outIPs[portName] == nil {
@@ -305,6 +311,7 @@ func (t *Task) anyOutputsExist() (anyFileExists bool) {
 // createDirs creates directories for out-IPs of the task
 func (t *Task) createDirs() {
 	os.MkdirAll(t.TempDir(), 0777)
+
 	for _, oip := range t.OutIPs {
 		oipDir := oip.TempDir() // This will create all out dirs, including the temp dir
 		if oip.doStream {       // Temp dirs are not created for fifo files
@@ -383,6 +390,7 @@ func AtomizeIPs(tempExecDir string, ips ...*FileIP) {
 		if !fileInfo.IsDir() {
 			newPath := strings.Replace(tempPath, tempExecDir+"/", "", 1)
 			newPath = strings.Replace(newPath, FSRootPlaceHolder+"/", "/", 1)
+			newPath = replacePlaceholdersWithParentDirs(newPath)
 			newPathDir := filepath.Dir(newPath)
 			if _, err := os.Stat(newPathDir); os.IsNotExist(err) {
 				os.MkdirAll(newPathDir, 0777)
@@ -439,4 +447,12 @@ func parentDirPath(path string) string {
 	}
 	// For relative paths, add ".." to get out of current dir
 	return "../" + path
+}
+
+func replaceParentDirsWithPlaceholder(pathSegment string) string {
+	return strings.ReplaceAll(pathSegment, "../", parentDirPlaceHolder)
+}
+
+func replacePlaceholdersWithParentDirs(pathSegment string) string {
+	return strings.ReplaceAll(pathSegment, parentDirPlaceHolder, "../")
 }

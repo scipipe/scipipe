@@ -31,6 +31,13 @@ func TestFormatCommand(t *testing.T) {
 			join:      false,
 			joinSep:   "",
 		},
+		"baa": &PortInfo{
+			portType:  "o",
+			extension: "",
+			doStream:  false,
+			join:      false,
+			joinSep:   "",
+		},
 	}
 	inIPs := map[string]*FileIP{
 		"foo": NewFileIP("data/foofile.txt"),
@@ -38,6 +45,7 @@ func TestFormatCommand(t *testing.T) {
 	}
 	outIPs := map[string]*FileIP{
 		"baz": NewFileIP("data/outfile.txt"),
+		"baa": NewFileIP("../../ref/ref.txt"),
 	}
 
 	for _, tt := range []struct {
@@ -53,6 +61,7 @@ func TestFormatCommand(t *testing.T) {
 		{cmdPat: "cat {i:foo|s/foo/bar/} > {o:baz|%.txt}", wantCmd: "cat ../data/barfile.txt > data/outfile"},
 		{cmdPat: "cat {i:foo|dirname}/newfile.txt {i:foo} > {o:baz}", wantCmd: "cat ../data/newfile.txt ../data/foofile.txt > data/outfile.txt"},
 		{cmdPat: "cat {i:foo} | tee {o:baz} > {o:baz|dirname}/hoge/{o:baz|basename|%.txt}.out.txt", wantCmd: "cat ../data/foofile.txt | tee data/outfile.txt > data/hoge/outfile.out.txt"},
+		{cmdPat: "cat {i:foo} > {o:baa}", wantCmd: "cat ../data/foofile.txt > __parent____parent__ref/ref.txt"},
 	} {
 		gotCmd := formatCommand(tt.cmdPat, portInfos, inIPs, nil, outIPs, nil, nil, "")
 		if gotCmd != tt.wantCmd {
@@ -138,5 +147,37 @@ func TestExtraFilesAtomizeAbsolute(t *testing.T) {
 	// Ensure tmpDir wasn't removed by Atomize
 	if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
 		t.Error("Atomize removed absolute directory")
+	}
+}
+
+func TestReplaceParentDirsWithPlaceHolder(t *testing.T) {
+	for _, tc := range []struct {
+		inputStr string
+		wantStr  string
+	}{
+		{inputStr: "../../some/dir", wantStr: "__parent____parent__some/dir"},
+		{inputStr: "../", wantStr: "__parent__"},
+		{inputStr: "./../", wantStr: "./__parent__"},
+	} {
+		haveStr := replaceParentDirsWithPlaceholder(tc.inputStr)
+		if haveStr != tc.wantStr {
+			t.Fatalf("String '%s' was replaced into '%s' and not '%s' as expected", tc.inputStr, haveStr, tc.wantStr)
+		}
+	}
+}
+
+func TestReplacePlaceholdersWithParentDirs(t *testing.T) {
+	for _, tc := range []struct {
+		inputStr string
+		wantStr  string
+	}{
+		{inputStr: "__parent____parent__some/dir", wantStr: "../../some/dir"},
+		{inputStr: "__parent__", wantStr: "../"},
+		{inputStr: "./__parent__", wantStr: "./../"},
+	} {
+		haveStr := replacePlaceholdersWithParentDirs(tc.inputStr)
+		if haveStr != tc.wantStr {
+			t.Fatalf("String '%s' was replaced into '%s' and not '%s' as expected", tc.inputStr, haveStr, tc.wantStr)
+		}
 	}
 }

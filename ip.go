@@ -103,10 +103,11 @@ func (ip *FileIP) TempDir() string {
 
 // TempPath returns the temporary path of the physical file
 func (ip *FileIP) TempPath() string {
-	if ip.path[0] == '/' {
-		return FSRootPlaceHolder + ip.path
+	path := replaceParentDirsWithPlaceholder(ip.path)
+	if path[0] == '/' {
+		return FSRootPlaceHolder + path
 	}
-	return ip.path
+	return path
 }
 
 // FSRootPlaceHolder is a string to use instead of an initial '/', to indicate
