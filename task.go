@@ -114,6 +114,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 			}
 			replacement = outIPs[portName].TempPath()
 			replacement = applyPathModifiers(replacement, placeHolder.modifiers)
+
 		case "os":
 			if outIPs[portName] == nil {
 				Fail("Missing outpath for outport '", portName, "' for command '", cmd, "'")
@@ -121,6 +122,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 			replacement = outIPs[portName].FifoPath()
 			replacement = applyPathModifiers(replacement, placeHolder.modifiers)
 			replacement = parentDirPath(replacement)
+
 		case "i":
 			if inIPs[portName] == nil {
 				Fail("Missing in-IP for inport '", portName, "' for command '", cmd, "'")
@@ -147,6 +149,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 				replacement = applyPathModifiers(replacement, placeHolder.modifiers)
 				replacement = parentDirPath(replacement)
 			}
+
 		case "p":
 			if params[portName] == "" {
 				msg := fmt.Sprint("Missing param value for param '", portName, "' for command '", cmd, "'")
@@ -155,6 +158,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 				replacement = params[portName]
 				replacement = applyPathModifiers(replacement, placeHolder.modifiers)
 			}
+
 		case "t":
 			if tags[portName] == "" {
 				msg := fmt.Sprint("Missing tag value for tag '", portName, "' for command '", cmd, "'")
@@ -163,6 +167,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 				replacement = tags[portName]
 				replacement = applyPathModifiers(replacement, placeHolder.modifiers)
 			}
+
 		default:
 			Fail("Replace failed for port ", portName, " for command '", cmd, "'")
 		}

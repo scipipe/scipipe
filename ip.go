@@ -245,8 +245,8 @@ func (ip *FileIP) Write(dat []byte) {
 }
 
 const (
-	maxTries      = 3
-	backoffFactor = 4
+	atomizeMaxTries      = 3
+	atomizeBackoffFactor = 4
 )
 
 // Atomize renames the temporary file name to the final file name, thus enabling
@@ -274,12 +274,12 @@ func (ip *FileIP) Atomize() {
 			doneAtomizing = true
 			Debug.Println("FileIP: Done atomizing", ip.TempPath(), "->", ip.Path())
 		} else {
-			if tries >= maxTries {
-				Failf("Failed to find .tmp file after %d tries, so shutting down: %s\nNote: If this problem persists, it could be a problem with your workflow, that the configured output filename in scipipe doesn't match what is written by the tool.\n", maxTries, ip.TempPath())
+			if tries >= atomizeMaxTries {
+				Failf("Failed to find .tmp file after %d tries, so shutting down: %s\nNote: If this problem persists, it could be a problem with your workflow, that the configured output filename in scipipe doesn't match what is written by the tool.\n", atomizeMaxTries, ip.TempPath())
 			}
 			Warning.Printf("Expected .tmp file missing: %s\nSleeping for %d seconds before checking again ...\n", ip.TempPath(), sleepDurationSec)
 			time.Sleep(time.Duration(sleepDurationSec) * time.Second)
-			sleepDurationSec *= backoffFactor
+			sleepDurationSec *= atomizeBackoffFactor
 			tries++
 		}
 	}
