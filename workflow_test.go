@@ -529,6 +529,8 @@ func TestEnsureFailOnMissingOutputs(t *testing.T) {
 		p.SetOut("bar", "bar.txt")
 		wf.Run()
 	}, t)
+	cleanFiles("_scipipe_tmp.file_creator.da39a3ee5e6b4b0d3255bfef95601890afd80709/foo.txt")
+	cleanFiles("_scipipe_tmp.file_creator.da39a3ee5e6b4b0d3255bfef95601890afd80709")
 }
 
 func TestPlotGraph(t *testing.T) {

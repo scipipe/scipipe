@@ -373,7 +373,7 @@ func (t *Task) writeAuditLogs(startTime time.Time, finishTime time.Time) {
 func (t *Task) ensureAllOutputsExist() {
 	for _, ip := range t.OutIPs {
 		filePath := filepath.Join(t.TempDir(), ip.TempPath())
-		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		if _, err := os.Stat(filePath); os.IsNotExist(err) && !ip.doStream {
 			Failf("Missing output temp-file (%s) for ip with path (%s) in task (%s) of process (%s)\n", filePath, ip.Path(), t.Name, t.Process.Name())
 		}
 	}
