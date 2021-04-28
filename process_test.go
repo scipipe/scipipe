@@ -129,3 +129,20 @@ func TestProcTaskBuffering(t *testing.T) {
 		wf.Run()
 	}
 }
+
+func TestInitPortsFromCommandPattern(t *testing.T) {
+	wf := NewWorkflow("testwf", 4)
+	p1 := wf.NewProc("p1", "echo hej > {o:out}")
+	p2 := wf.NewProc("p2", "echo {i:in} > {o:out} && cat {i:in} >> {o:out}")
+	p2.In("in").From(p1.Out("out"))
+	// The above should not crash
+}
+
+func TestEnsureFailOnSamePortNameMultipleTypes(t *testing.T) {
+	ensureFailsProgram("TestEnsureFailOnSamePortNameMultipleTypes", func() {
+		wf := NewWorkflow("testwf", 4)
+		p1 := wf.NewProc("p1", "echo hej > {o:out}")
+		p2 := wf.NewProc("p2", "cat {i:foo} > {o:foo}")
+		p2.In("foo").From(p1.Out("out"))
+	}, t)
+}

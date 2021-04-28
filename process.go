@@ -67,7 +67,7 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 	r := getShellCommandPlaceHolderRegex()
 	ms := r.FindAllStringSubmatch(cmd, -1)
 
-	seenPorts := map[string]string{}
+	portNameTypeCombos := map[string]map[string]string{}
 
 	for _, m := range ms {
 		portType := m[1]
@@ -75,10 +75,13 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 		splitParts := strings.Split(portRest, "|")
 		portName := splitParts[0]
 
-		if _, ok := seenPorts[portName]; ok {
-			Failf("Duplicate port-name (%s) in process (%s). Port names must be unique across all the in-, out- and parameter ports for each process.\n", portName, p.Name())
+		if _, ok := portNameTypeCombos[portName]; ok && len(portNameTypeCombos[portName]) > 1 {
+			Failf("Port-name (%s) in process (%s) used in multiple port-types. A name can not be used for e.g. both in-ports and out-ports in the same process.", portName, p.Name())
 		}
-		seenPorts[portName] = portName
+		if _, ok := portNameTypeCombos[portName]; !ok {
+			portNameTypeCombos[portName] = map[string]string{}
+		}
+		portNameTypeCombos[portName][portType] = portName
 
 		p.PortInfo[portName] = &PortInfo{portType: portType}
 
