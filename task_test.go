@@ -54,12 +54,13 @@ func TestFormatCommand(t *testing.T) {
 	}{
 		{cmdPat: "echo {i:foo}", wantCmd: "echo ../data/foofile.txt"},
 		{cmdPat: "echo {i:foo} {i:bar}", wantCmd: "echo ../data/foofile.txt ../barfile.txt"},
-		{cmdPat: "cat {i:foo|basename} {i:foo} > {o:baz}", wantCmd: "cat ../foofile.txt ../data/foofile.txt > data/outfile.txt"},
 		{cmdPat: "cat {i:foo} > {o:baz|%.txt}", wantCmd: "cat ../data/foofile.txt > data/outfile"},
 		{cmdPat: "cat {i:foo} > {o:baz|%.txt|basename}", wantCmd: "cat ../data/foofile.txt > outfile"},
 		{cmdPat: "cat {i:foo} | tee {o:baz} > {o:baz|basename|%.txt}", wantCmd: "cat ../data/foofile.txt | tee data/outfile.txt > outfile"},
 		{cmdPat: "cat {i:foo|s/foo/bar/} > {o:baz|%.txt}", wantCmd: "cat ../data/barfile.txt > data/outfile"},
 		{cmdPat: "cat {i:foo|dirname}/newfile.txt {i:foo} > {o:baz}", wantCmd: "cat ../data/newfile.txt ../data/foofile.txt > data/outfile.txt"},
+		{cmdPat: "cat {i:foo|dirname}/some_path/{i:foo|basename}", wantCmd: "cat ../data/some_path/foofile.txt"},
+		{cmdPat: "cat ../{i:foo|basename} {i:foo} > {o:baz}", wantCmd: "cat ../foofile.txt ../data/foofile.txt > data/outfile.txt"},
 		{cmdPat: "cat {i:foo} | tee {o:baz} > {o:baz|dirname}/hoge/{o:baz|basename|%.txt}.out.txt", wantCmd: "cat ../data/foofile.txt | tee data/outfile.txt > data/hoge/outfile.out.txt"},
 		{cmdPat: "cat {i:foo} > {o:baa}", wantCmd: "cat ../data/foofile.txt > __parent____parent__ref/ref.txt"},
 	} {

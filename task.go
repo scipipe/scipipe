@@ -127,7 +127,9 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 			}
 			replacement = outIPs[portName].FifoPath()
 			replacement = applyPathModifiers(replacement, placeHolder.modifiers)
-			replacement = parentDirPath(replacement)
+			if !strInSlice("basename", placeHolder.modifiers) {
+				replacement = prependParentDirPath(replacement)
+			}
 
 		case "i":
 			if inIPs[portName] == nil {
@@ -139,7 +141,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 				for _, ip := range subStreamIPs[portName] {
 					path := ip.Path()
 					path = applyPathModifiers(path, placeHolder.modifiers)
-					path = parentDirPath(path)
+					path = prependParentDirPath(path)
 					paths = append(paths, path)
 				}
 				replacement = strings.Join(paths, portInfo.joinSep)
@@ -153,7 +155,9 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 					replacement = inIPs[portName].Path()
 				}
 				replacement = applyPathModifiers(replacement, placeHolder.modifiers)
-				replacement = parentDirPath(replacement)
+				if !strInSlice("basename", placeHolder.modifiers) {
+					replacement = prependParentDirPath(replacement)
+				}
 			}
 
 		case "p":
@@ -453,7 +457,7 @@ func (t *Task) TempDir() string {
 	return pathSegment
 }
 
-func parentDirPath(path string) string {
+func prependParentDirPath(path string) string {
 	if path[0] == '/' {
 		return path
 	}

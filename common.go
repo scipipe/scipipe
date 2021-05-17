@@ -159,3 +159,12 @@ func createDirs(path string) {
 		Failf("Could not create directory %s: %v", dir, err)
 	}
 }
+
+func strInSlice(str string, slice []string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
