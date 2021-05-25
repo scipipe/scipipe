@@ -7,9 +7,8 @@ import (
 	"testing"
 )
 
-func TestFormatCommand(t *testing.T) {
-
-	portInfos := map[string]*PortInfo{
+func getTestPortInfos() map[string]*PortInfo {
+	return map[string]*PortInfo{
 		"foo": &PortInfo{
 			portType:  "i",
 			extension: "",
@@ -39,14 +38,26 @@ func TestFormatCommand(t *testing.T) {
 			joinSep:   "",
 		},
 	}
-	inIPs := map[string]*FileIP{
+}
+
+func getTestInIPs() map[string]*FileIP {
+	return map[string]*FileIP{
 		"foo": NewFileIP("data/foofile.txt"),
 		"bar": NewFileIP("barfile.txt"),
 	}
-	outIPs := map[string]*FileIP{
+}
+
+func getTestOutIPs() map[string]*FileIP {
+	return map[string]*FileIP{
 		"baz": NewFileIP("data/outfile.txt"),
 		"baa": NewFileIP("../../ref/ref.txt"),
 	}
+}
+
+func TestFormatCommand(t *testing.T) {
+	portInfos := getTestPortInfos()
+	inIPs := getTestInIPs()
+	outIPs := getTestOutIPs()
 
 	for _, tt := range []struct {
 		cmdPat  string

@@ -133,8 +133,15 @@ func applyPathModifiers(path string, modifiers []string) string {
 		if trimEndPtn.MatchString(modifier) {
 			mbits := trimEndPtn.FindStringSubmatch(modifier)
 			end := mbits[1]
-			if end == replacement[len(replacement)-len(end):] {
-				replacement = replacement[:len(replacement)-len(end)]
+			startPos := len(replacement) - len(end)
+			if startPos > 0 {
+				if end == replacement[len(replacement)-len(end):] {
+					replacement = replacement[:len(replacement)-len(end)]
+				} else {
+					Warning.Printf("Trying to remove piece (%s) that was not found in original path (%s)\n", end, replacement)
+				}
+			} else {
+				Warning.Printf("Trying to remove piece (%s) that is larger than original path (%s)\n", end, replacement)
 			}
 		}
 
