@@ -1,5 +1,7 @@
 package scipipe
 
+import "fmt"
+
 // BaseProcess provides a skeleton for processes, such as the main Process
 // component, and the custom components in the scipipe/components library
 type BaseProcess struct {
@@ -231,6 +233,12 @@ func (p *BaseProcess) CloseOutParamPorts() {
 func (p *BaseProcess) CloseAllOutPorts() {
 	p.CloseOutPorts()
 	p.CloseOutParamPorts()
+}
+
+// Failf fails with a message that includes the process name
+func (p *BaseProcess) Failf(message string, vs ...interface{}) {
+	message = fmt.Sprintf("[Process:%s] %s", p.Name(), message)
+	Failf(message, vs...)
 }
 
 func (p *BaseProcess) receiveOnInPorts() (ips map[string]*FileIP, inPortsOpen bool) {

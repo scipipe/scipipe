@@ -1,6 +1,8 @@
 package components
 
 import (
+	"strings"
+
 	"github.com/scipipe/scipipe"
 	sp "github.com/scipipe/scipipe"
 )
@@ -77,11 +79,34 @@ func (p *IPSelectorSync) syncRead() (ipSetChan chan map[string]*scipipe.FileIP) 
 
 func (p *IPSelectorSync) recvOneEach() (ips map[string]*scipipe.FileIP, ok bool) {
 	ips = make(map[string]*scipipe.FileIP)
-	ok = true
+	oks := map[string]bool{}
+
+	allOk := true
 	for inPortName, inPort := range p.InPorts() {
-		ip, ok2 := <-inPort.Chan
+		ip, ok := <-inPort.Chan
 		ips[inPortName] = ip
-		ok = ok && ok2
+		oks[inPortName] = ok
+		allOk = allOk && ok
 	}
-	return ips, ok
+
+	if !allOk {
+		// Check if there is any inconsistencies in the OKs (all ports should
+		// ideally close at the same iteration, otherwise the input streams are not
+		// in sync).
+		okPorts := []string{}
+		notOkPorts := []string{}
+		for inPortName, ok := range oks {
+			if ok {
+				okPorts = append(okPorts, inPortName)
+			} else {
+				notOkPorts = append(notOkPorts, inPortName)
+			}
+		}
+		okPortsStr := strings.Join(okPorts, ",")
+		notOkPortsStr := strings.Join(notOkPorts, ",")
+		if len(okPortsStr) > 0 {
+			p.Failf("In-port(s) '%s' still open, while in-port(s) '%s' are already closed!", okPortsStr, notOkPortsStr)
+		}
+	}
+	return ips, allOk
 }
