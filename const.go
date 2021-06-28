@@ -2,5 +2,5 @@ package scipipe
 
 const (
 	// Version is the SciPipe version in string format
-	Version = "0.10.1"
+	Version = "0.10.2"
 )
