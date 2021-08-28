@@ -3,20 +3,24 @@ version: 2
 jobs:
     build:
         docker:
-            - image: circleci/golang:1.12
-        working_directory: /go/src/github.com/scipipe/scipipe
+            - image: cimg/go:1.17
         environment: # environment variables for the build itself
             TEST_RESULTS: /tmp/test-results # path to where test results will be saved
         steps:
             - checkout
-            - run: go get github.com/jstemmer/go-junit-report
-            - run: go get github.com/axw/gocov/gocov
-            - run: go get github.com/AlekSi/gocov-xml
+            - run: go install github.com/jstemmer/go-junit-report@latest
+            - run: go install github.com/axw/gocov/gocov@latest
+            - run: go install github.com/AlekSi/gocov-xml@latest
             - run:
                 name: Run unit tests
                 command: |
                     mkdir -p $TEST_RESULTS/go-junit &&
-                    go test -v -race ./... | go-junit-report > $TEST_RESULTS/go-junit/report.xml &&
+                    go test -v -race ./... | go-junit-report > $TEST_RESULTS/go-junit/report.xml
+            - store_test_results:
+                path: $TEST_RESULTS
+            - run:
+                name: Run test coverage and upload to CodeCov
+                command: |
                     bash testcov.sh &&
                     gocov convert cover.out | gocov-xml > coverage.xml &&
                     bash <(curl -s https://codecov.io/bash)
