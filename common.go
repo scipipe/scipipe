@@ -52,7 +52,7 @@ func Fail(vs ...interface{}) {
 // Failf is like Fail but with msg being a formatter string for the message and
 // vs being items to format into the message
 func Failf(msg string, vs ...interface{}) {
-	Fail(fmt.Sprintf(msg, vs...))
+	Fail(fmt.Sprintf(msg+"\n", vs...))
 }
 
 // Return the regular expression used to parse the place-holder syntax for in-, out- and

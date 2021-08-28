@@ -28,7 +28,9 @@ func TestSetOut(t *testing.T) {
 	p := wf.NewProc("cat_foo", "cat {i:foo} > {o:bar} # {p:p1}")
 	p.InParam("p1").FromStr("p1val")
 
-	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("data/foo.txt")},
+	newIP, err := NewFileIP("data/foo.txt")
+	Check(err)
+	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": newIP},
 		nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)
 
 	inputsAndOutputs := map[string]string{
@@ -58,7 +60,9 @@ func TestDefaultPattern(t *testing.T) {
 	p := wf.NewProc("cat_foo", "cat {i:foo} > {o:bar|.txt} # {p:p1}")
 	p.InParam("p1").FromStr("p1val")
 
-	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": NewFileIP("foo.txt")}, nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)
+	newIP, err := NewFileIP("foo.txt")
+	Check(err)
+	mockTask := NewTask(wf, p, "echo_foo_task", "", map[string]*FileIP{"foo": newIP}, nil, nil, map[string]string{"p1": "p1val"}, nil, "", nil, 1)
 
 	// We expact a filename on the form: input filename . procname . paramname _ val . outport . extension
 	expected := "foo.txt.cat_foo.p1_p1val.bar.txt"

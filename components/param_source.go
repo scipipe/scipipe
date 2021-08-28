@@ -1,6 +1,8 @@
 package components
 
 import (
+	"fmt"
+
 	"github.com/scipipe/scipipe"
 )
 
@@ -31,4 +33,12 @@ func (p *ParamSource) Run() {
 	for _, param := range p.params {
 		p.Out().Send(param)
 	}
+}
+
+func (p *ParamSource) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *ParamSource) Fail(msg interface{}) {
+	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

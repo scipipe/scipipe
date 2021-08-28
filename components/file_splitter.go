@@ -3,7 +3,6 @@ package components
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -45,12 +44,12 @@ func (p *FileSplitter) Run() {
 	for inIP := range p.InFile().Chan {
 		lineNo := 1
 		splitNo := 1
-		splitIP := newSplitIPFromIndex(inIP.Path(), splitNo)
+		splitIP := p.newSplitIPFromIndex(inIP.Path(), splitNo)
 		if !splitIP.Exists() {
 			inFile, err := os.Open(inIP.Path())
 			if err != nil {
 				err = errWrapf(err, "[FileSplitter] Could not open file %s", inIP.Path())
-				log.Fatal(err)
+				p.Fail(err)
 			}
 			defer inFile.Close()
 			taskDir := "_scipipe_tmp_" + p.Name() + "." + filepath.Base(inIP.Path())
@@ -66,7 +65,7 @@ func (p *FileSplitter) Run() {
 					p.OutSplitFile().Send(splitIP)
 					// Create new IP
 					splitNo++
-					splitIP = newSplitIPFromIndex(inIP.Path(), splitNo)
+					splitIP = p.newSplitIPFromIndex(inIP.Path(), splitNo)
 					_, splitFile = p.createNewSplitFile(splitIP, taskDir)
 				}
 				lineNo++
@@ -77,10 +76,10 @@ func (p *FileSplitter) Run() {
 
 			if scanner.Err() != nil {
 				err = errWrapf(scanner.Err(), "[FileSplitter] Error when scanning input file %s", inIP.Path())
-				log.Fatal(err)
+				p.Fail(err)
 			}
 		} else {
-			scipipe.Audit.Printf("Split file already exists: %s, so skipping.\n", splitIP.Path())
+			p.Auditf("Split file already exists: %s, so skipping.", splitIP.Path())
 		}
 	}
 }
@@ -91,7 +90,7 @@ func (p *FileSplitter) createNewSplitFile(ip *scipipe.FileIP, basePath string) (
 	err := os.MkdirAll(tempDir, 0777)
 	if err != nil {
 		err = errWrapf(err, "[FileSplitter] Could not create dirs for file %s", tempPath)
-		log.Fatal(err)
+		p.Fail(err)
 	}
 	tempFile, err = os.Create(tempPath)
 	if err != nil {
@@ -112,6 +111,26 @@ func getRandString(n int) string {
 	return string(b)
 }
 
-func newSplitIPFromIndex(basePath string, splitIdx int) *scipipe.FileIP {
-	return scipipe.NewFileIP(basePath + fmt.Sprintf(".split_%v", splitIdx))
+func (p *FileSplitter) newSplitIPFromIndex(basePath string, splitIdx int) *scipipe.FileIP {
+	ip, err := scipipe.NewFileIP(basePath + fmt.Sprintf(".split_%v", splitIdx))
+	if err != nil {
+		p.Fail(err)
+	}
+	return ip
+}
+
+func (p *FileSplitter) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *FileSplitter) Fail(msg interface{}) {
+	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
+}
+
+func (p *FileSplitter) Auditf(msg string, parts ...interface{}) {
+	p.Audit(fmt.Sprintf(msg, parts...))
+}
+
+func (p *FileSplitter) Audit(msg interface{}) {
+	scipipe.Audit.Printf("[Process:%s] %s"+"\n", p.Name(), msg)
 }

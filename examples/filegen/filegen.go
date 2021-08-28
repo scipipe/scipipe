@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+
+	"github.com/scipipe/scipipe"
 	sp "github.com/scipipe/scipipe"
 	spc "github.com/scipipe/scipipe/components"
 )
@@ -48,6 +51,18 @@ func (p *FileIPGenerator) Out() *sp.OutPort {
 func (p *FileIPGenerator) Run() {
 	defer p.Out().Close()
 	for _, fp := range p.FilePaths {
-		p.Out().Send(sp.NewFileIP(fp))
+		ip, err := sp.NewFileIP(fp)
+		if err != nil {
+			p.Fail(err)
+		}
+		p.Out().Send(ip)
 	}
+}
+
+func (p *FileIPGenerator) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *FileIPGenerator) Fail(msg interface{}) {
+	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

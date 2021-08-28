@@ -51,6 +51,8 @@ type WorkflowProcess interface {
 	OutParamPorts() map[string]*OutParamPort
 	Ready() bool
 	Run()
+	Fail(interface{})
+	Failf(string, ...interface{})
 }
 
 // ----------------------------------------------------------------------------
@@ -113,7 +115,7 @@ func (wf *Workflow) NewProc(procName string, commandPattern string) *Process {
 // Proc returns the process with name procName from the workflow
 func (wf *Workflow) Proc(procName string) WorkflowProcess {
 	if _, ok := wf.procs[procName]; !ok {
-		Failf("No process named '%s' in workflow '%s'", procName, wf.Name())
+		wf.Failf("No process named (%s)", procName)
 	}
 	return wf.procs[procName]
 }
@@ -142,7 +144,7 @@ func (wf *Workflow) Procs() map[string]WorkflowProcess {
 // AddProc adds a Process to the workflow, to be run when the workflow runs
 func (wf *Workflow) AddProc(proc WorkflowProcess) {
 	if wf.procs[proc.Name()] != nil {
-		Failf(wf.name+" workflow: A process with name '%s' already exists in the workflow! Use a more unique name!\n", proc.Name())
+		wf.Failf("A process with name (%s) already exists in the workflow! Use a more unique name!", proc.Name())
 	}
 	wf.procs[proc.Name()] = proc
 }
@@ -163,7 +165,7 @@ func (wf *Workflow) Sink() *Sink {
 // SetSink sets the sink of the workflow to the provided sink process
 func (wf *Workflow) SetSink(sink *Sink) {
 	if wf.sink.Ready() {
-		Fail("Trying to replace a sink which is already connected. Are you combining SetSink() with ConnectFinalOutPort()? That is not allowed!")
+		wf.Fail("Trying to replace a sink which is already connected. Are you combining SetSink() with ConnectFinalOutPort()? That is not allowed!")
 	}
 	wf.sink = sink
 }
@@ -302,18 +304,18 @@ func (wf *Workflow) runProcs(procs map[string]WorkflowProcess) {
 	wf.reconnectDeadEndConnections(procs)
 
 	if !wf.readyToRun(procs) {
-		Fail("Workflow not ready to run, due to previously reported errors, so exiting.")
+		wf.Fail("Workflow not ready to run, due to previously reported errors, so exiting.")
 	}
 
 	for _, proc := range procs {
-		Debug.Printf(wf.name+": Starting process %s in new go-routine", proc.Name())
+		Debug.Printf(wf.name+": Starting process (%s) in new go-routine", proc.Name())
 		go proc.Run()
 	}
 
 	Debug.Printf("%s: Starting driver process (%s) in main go-routine", wf.name, wf.driver.Name())
-	Audit.Printf("| workflow:%-23s | Starting workflow (Writing log to %s)", wf.Name(), wf.logFile)
+	wf.Auditf("Starting workflow (Writing log to %s)", wf.logFile)
 	wf.driver.Run()
-	Audit.Printf("| workflow:%-23s | Finished workflow (Log written to %s)", wf.Name(), wf.logFile)
+	wf.Auditf("Finished workflow (Log written to %s)", wf.logFile)
 }
 
 func (wf *Workflow) readyToRun(procs map[string]WorkflowProcess) bool {
@@ -347,15 +349,15 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 			for iptName, ipt := range opt.RemotePorts {
 				// If the remotely connected process is not among the ones to run ...
 				if ipt.Process() == nil {
-					Debug.Printf("Disconnecting in-port %s from out-port %s", ipt.Name(), opt.Name())
+					Debug.Printf("Disconnecting in-port (%s) from out-port (%s)", ipt.Name(), opt.Name())
 					opt.Disconnect(iptName)
 				} else if _, ok := procs[ipt.Process().Name()]; !ok {
-					Debug.Printf("Disconnecting in-port %s from out-port %s", ipt.Name(), opt.Name())
+					Debug.Printf("Disconnecting in-port (%s) from out-port (%s)", ipt.Name(), opt.Name())
 					opt.Disconnect(iptName)
 				}
 			}
 			if !opt.Ready() {
-				Debug.Printf("Connecting disconnected out-port %s of process %s to workflow sink", opt.Name(), opt.Process().Name())
+				Debug.Printf("Connecting disconnected out-port (%s) of process (%s) to workflow sink", opt.Name(), opt.Process().Name())
 				wf.sink.From(opt)
 			}
 		}
@@ -365,22 +367,22 @@ func (wf *Workflow) reconnectDeadEndConnections(procs map[string]WorkflowProcess
 			for rppName, rpp := range pop.RemotePorts {
 				// If the remotely connected process is not among the ones to run ...
 				if rpp.Process() == nil {
-					Debug.Printf("Disconnecting in-port %s from out-port %s", rpp.Name(), pop.Name())
+					Debug.Printf("Disconnecting in-port (%s) from out-port (%s)", rpp.Name(), pop.Name())
 					pop.Disconnect(rppName)
 				} else if _, ok := procs[rpp.Process().Name()]; !ok {
-					Debug.Printf("Disconnecting in-port %s from out-port %s", rpp.Name(), pop.Name())
+					Debug.Printf("Disconnecting in-port (%s) from out-port (%s)", rpp.Name(), pop.Name())
 					pop.Disconnect(rppName)
 				}
 			}
 			if !pop.Ready() {
-				Debug.Printf("Connecting disconnected out-port %s of process %s to workflow sink", pop.Name(), pop.Process().Name())
+				Debug.Printf("Connecting disconnected out-port (%s) of process (%s) to workflow sink", pop.Name(), pop.Process().Name())
 				wf.sink.FromParam(pop)
 			}
 		}
 
 		if len(proc.OutPorts()) == 0 && len(proc.OutParamPorts()) == 0 {
 			if foundNewDriverProc {
-				Failf("Found more than one process without out-ports nor out-param ports. Cannot use both as drivers (One of them being '%s'). Adapt your workflow accordingly.", proc.Name())
+				wf.Failf("Found more than one process without out-ports nor out-param ports. Cannot use both as drivers (One of them being '%s'). Adapt your workflow accordingly.", proc.Name())
 			}
 			foundNewDriverProc = true
 			wf.driver = proc
@@ -419,4 +421,16 @@ func mergeWFMaps(a map[string]WorkflowProcess, b map[string]WorkflowProcess) map
 		a[k] = v
 	}
 	return a
+}
+
+func (wf *Workflow) Auditf(msg string, parts ...interface{}) {
+	Audit.Printf("[Workflow:%s] %s\n", wf.Name(), fmt.Sprintf(msg, parts...))
+}
+
+func (wf *Workflow) Failf(msg string, parts ...interface{}) {
+	wf.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (wf *Workflow) Fail(msg interface{}) {
+	Failf("[Workflow:%s] %s", wf.Name(), msg)
 }

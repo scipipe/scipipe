@@ -616,6 +616,14 @@ func (p *CombinatoricsProcess) Name() string {
 
 func (p *CombinatoricsProcess) Ready() bool { return true }
 
+func (p *CombinatoricsProcess) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *CombinatoricsProcess) Fail(msg interface{}) {
+	Failf("[Process:%s] %s", p.Name(), msg)
+}
+
 // --------------------------------------------------------------------------------
 // StreamToSubstream helper process
 // --------------------------------------------------------------------------------
@@ -640,10 +648,21 @@ func (p *StreamToSubStream) OutSubStream() *OutPort { return p.OutPort("substrea
 func (p *StreamToSubStream) Run() {
 	defer p.OutSubStream().Close()
 
-	subStreamIP := NewFileIP(".tmp/scipipe_streamtosubstream_dummyfile")
+	subStreamIP, err := NewFileIP(".tmp/scipipe_streamtosubstream_dummyfile")
+	if err != nil {
+		p.Fail(err)
+	}
 	subStreamIP.SubStream = p.In()
 
 	p.OutSubStream().Send(subStreamIP)
+}
+
+func (p *StreamToSubStream) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *StreamToSubStream) Fail(msg interface{}) {
+	Failf("[Process:%s] %s", p.Name(), msg)
 }
 
 // --------------------------------------------------------------------------------
@@ -679,6 +698,14 @@ func (p *MapToTags) Run() {
 	}
 }
 
+func (p *MapToTags) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *MapToTags) Fail(msg interface{}) {
+	Failf("[Process:%s] %s", p.Name(), msg)
+}
+
 // --------------------------------------------------------------------------------
 // FileSource helper process
 // --------------------------------------------------------------------------------
@@ -709,8 +736,19 @@ func (p *FileSource) Out() *OutPort { return p.OutPort("out") }
 func (p *FileSource) Run() {
 	defer p.CloseAllOutPorts()
 	for _, filePath := range p.filePaths {
-		p.Out().Send(NewFileIP(filePath))
+		newIP, err := NewFileIP(filePath)
+		if err != nil {
+			p.Fail(err)
+		}
+		p.Out().Send(newIP)
 	}
+}
+func (p *FileSource) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *FileSource) Fail(msg interface{}) {
+	Failf("[Process:%s] %s", p.Name(), msg)
 }
 
 // --------------------------------------------------------------------------------
@@ -745,6 +783,13 @@ func (p *ParamSource) Run() {
 		p.Out().Send(param)
 	}
 }
+func (p *ParamSource) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *ParamSource) Fail(msg interface{}) {
+	Failf("[Process:%s] %s", p.Name(), msg)
+}
 
 // --------------------------------
 // BogusProcess helper process
@@ -775,6 +820,14 @@ func (p *BogusProcess) Name() string {
 
 func (p *BogusProcess) Ready() bool {
 	return true
+}
+
+func (p *BogusProcess) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *BogusProcess) Fail(msg interface{}) {
+	Failf("[Process:%s] %s", p.Name(), msg)
 }
 
 func ensureFailsProgram(testName string, crasher func(), t *testing.T) {

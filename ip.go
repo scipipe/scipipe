@@ -3,6 +3,8 @@ package scipipe
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -59,9 +61,13 @@ type FileIP struct {
 }
 
 // NewFileIP creates a new FileIP
-func NewFileIP(path string) *FileIP {
-	if !pathIsValid(path) {
-		Failf(`Filename "%s" is invalid (perhaps contains invalid characters)`, path)
+func NewFileIP(path string) (*FileIP, error) {
+	isValid, err := pathIsValid(path)
+	if err != nil {
+		return nil, err
+	}
+	if !isValid {
+		return nil, errors.New(fmt.Sprintf(`Could not create new FileIP with filename "%s". File is invalid (perhaps contains invalid characters)`, path))
 	}
 
 	ip := &FileIP{
@@ -75,16 +81,16 @@ func NewFileIP(path string) *FileIP {
 	//Don't init buffer if not needed?
 	//buf := make([]byte, 0, 128)
 	//ip.buffer = bytes.NewBuffer(buf)
-	return ip
+	return ip, nil
 }
 
-func pathIsValid(path string) bool {
+func pathIsValid(path string) (bool, error) {
 	expr := `^[0-9A-Za-z\/\.\-_]+$`
 	ptn, err := regexp.Compile(expr)
 	if err != nil {
-		Fail("Could not compile regex")
+		return false, errors.New("Could not compile regex")
 	}
-	return ptn.MatchString(path)
+	return ptn.MatchString(path), nil
 }
 
 // ------------------------------------------------------------------------
@@ -188,7 +194,7 @@ func (ip *FileIP) OpenTemp() *os.File {
 
 // OpenWriteTemp opens the file for writing, and returns a file handle (*os.File)
 func (ip *FileIP) OpenWriteTemp() *os.File {
-	Warning.Println("OpenWriteTemp() is deprecated - You should stop using it!")
+	Warning.Printf("[FileIP:%s] OpenWriteTemp() is deprecated - You should stop using it!\n", ip.Path())
 	ip.createDirs()
 	f, err := os.Create(ip.TempPath())
 	CheckWithMsg(err, "Could not open temp file for writing: "+ip.TempPath())
@@ -207,7 +213,7 @@ func (ip *FileIP) CreateFifo() {
 	Debug.Println("Now creating FIFO with command:", cmd)
 
 	if _, err := os.Stat(ip.FifoPath()); err == nil {
-		Warning.Println("FIFO already exists, so not creating a new one:", ip.FifoPath())
+		Warning.Printf("[FileIP:%s] FIFO already exists, so not creating a new one: %s", ip.Path(), ip.FifoPath())
 	} else {
 		_, err := exec.Command("bash", "-c", cmd).Output()
 		CheckWithMsg(err, "Could not execute command: "+cmd)
@@ -276,9 +282,9 @@ func (ip *FileIP) Atomize() {
 			Debug.Println("FileIP: Done atomizing", ip.TempPath(), "->", ip.Path())
 		} else {
 			if tries >= atomizeMaxTries {
-				Failf("Failed to find .tmp file after %d tries, so shutting down: %s\nNote: If this problem persists, it could be a problem with your workflow, that the configured output filename in scipipe doesn't match what is written by the tool.\n", atomizeMaxTries, ip.TempPath())
+				ip.Failf("Failed to find .tmp file after %d tries, so shutting down: %s\nNote: If this problem persists, it could be a problem with your workflow, that the configured output filename in scipipe doesn't match what is written by the tool.", atomizeMaxTries, ip.TempPath())
 			}
-			Warning.Printf("Expected .tmp file missing: %s\nSleeping for %d seconds before checking again ...\n", ip.TempPath(), sleepDurationSec)
+			Warning.Printf("[FileIP:%s] Expected .tmp file missing: %s\nSleeping for %d seconds before checking again ...\n", ip.Path(), ip.TempPath(), sleepDurationSec)
 			time.Sleep(time.Duration(sleepDurationSec) * time.Second)
 			sleepDurationSec *= atomizeBackoffFactor
 			tries++
@@ -294,7 +300,7 @@ func (ip *FileIP) Atomize() {
 func (ip *FileIP) Param(key string) string {
 	val, ok := ip.AuditInfo().Params[key]
 	if !ok {
-		Failf("Could not find parameter %s in ip with path: %s\n", key, ip.Path())
+		ip.Failf("Could not find parameter %s", key)
 	}
 	return val
 }
@@ -307,7 +313,7 @@ func (ip *FileIP) Param(key string) string {
 func (ip *FileIP) Tag(k string) string {
 	v, ok := ip.AuditInfo().Tags[k]
 	if !ok {
-		Warning.Printf("No such tag, %s, in ip with path: %s\n", k, ip.Path())
+		Warning.Printf("[FileIP:%s] No such tag: (%s)\n", ip.Path(), k)
 		return ""
 	}
 	return v
@@ -322,7 +328,7 @@ func (ip *FileIP) Tags() map[string]string {
 func (ip *FileIP) AddTag(k string, v string) {
 	ai := ip.AuditInfo()
 	if ai.Tags[k] != "" && ai.Tags[k] != v {
-		Failf("Can not add value %s to existing tag %s with different value %s\n", v, k, ai.Tags[k])
+		ip.Failf("Can not add value (%s) to existing tag (%s) with different value (%s)", v, k, ai.Tags[k])
 	}
 	ai.Tags[k] = v
 }
@@ -403,6 +409,14 @@ func (ip *FileIP) UnMarshalJSON(v interface{}) {
 // ------------------------------------------------------------------------
 // Helper functions
 // ------------------------------------------------------------------------
+
+func (ip *FileIP) Failf(msg string, parts ...interface{}) {
+	ip.Fail(fmt.Sprintf(msg+"\n", parts...))
+}
+
+func (ip *FileIP) Fail(msg interface{}) {
+	Failf("[FileIP:%s]: %s", ip.Path(), msg)
+}
 
 // CreateDirs creates all directories needed to enable writing the IP to its
 // path (or temporary-path, which will have the same directory)

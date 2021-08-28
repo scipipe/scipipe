@@ -42,7 +42,8 @@ var (
 )
 
 func auditInfoToHTML(inFilePath string, outFilePath string, flatten bool) error {
-	ip := scipipe.NewFileIP(strings.Replace(inFilePath, ".audit.json", "", 1))
+	ip, err := scipipe.NewFileIP(strings.Replace(inFilePath, ".audit.json", "", 1))
+	scipipe.Check(err)
 	auditInfo := ip.AuditInfo()
 
 	outHTML := fmt.Sprintf(headHTMLPattern, ip.Path())

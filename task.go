@@ -3,6 +3,7 @@ package scipipe
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -64,7 +65,10 @@ func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, i
 	}
 	// Create Out-IPs
 	for oname, outPathFunc := range outPathFuncs {
-		oip := NewFileIP(outPathFunc(t))
+		oip, err := NewFileIP(outPathFunc(t))
+		if err != nil {
+			process.Fail(err.Error())
+		}
 		if ptInfo, ok := portInfos[oname]; ok {
 			if ptInfo.doStream {
 				oip.doStream = true
@@ -72,7 +76,7 @@ func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, i
 		}
 		t.OutIPs[oname] = oip
 	}
-	t.Command = formatCommand(cmdPat, portInfos, inIPs, t.subStreamIPs, t.OutIPs, params, tags, prepend)
+	t.Command = t.formatCommand(cmdPat, portInfos, inIPs, t.subStreamIPs, t.OutIPs, params, tags, prepend)
 	return t
 }
 
@@ -82,7 +86,7 @@ const (
 
 // formatCommand is a helper function for NewTask, that formats a shell command
 // based on concrete file paths and parameter values
-func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]*FileIP, subStreamIPs map[string][]*FileIP, outIPs map[string]*FileIP, params map[string]string, tags map[string]string, prepend string) string {
+func (t *Task) formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]*FileIP, subStreamIPs map[string][]*FileIP, outIPs map[string]*FileIP, params map[string]string, tags map[string]string, prepend string) string {
 	r := getShellCommandPlaceHolderRegex()
 	placeHolderMatches := r.FindAllStringSubmatch(cmd, -1)
 
@@ -115,7 +119,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 
 		case "o":
 			if outIPs[portName] == nil {
-				Fail("Missing outpath for outport '", portName, "' for command '", cmd, "'")
+				t.Failf("Missing outpath for outport (%s) for command (%s)", portName, cmd)
 			}
 			replacement = outIPs[portName].TempPath()
 			replacement = applyPathModifiers(replacement, placeHolder.modifiers)
@@ -123,7 +127,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 
 		case "os":
 			if outIPs[portName] == nil {
-				Fail("Missing outpath for outport '", portName, "' for command '", cmd, "'")
+				t.Failf("Missing outpath for outport (%s) for command (%s)", portName, cmd)
 			}
 			replacement = outIPs[portName].FifoPath()
 			replacement = applyPathModifiers(replacement, placeHolder.modifiers)
@@ -133,7 +137,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 
 		case "i":
 			if inIPs[portName] == nil {
-				Fail("Missing in-IP for inport '", portName, "' for command '", cmd, "'")
+				t.Failf("Missing in-IP for inport (%s) for command (%s)", portName, cmd)
 			}
 			if portInfo.join && portInfo.joinSep != "" {
 				// Merge multiple input paths from a substream on the IP, into one string
@@ -147,7 +151,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 				replacement = strings.Join(paths, portInfo.joinSep)
 			} else {
 				if inIPs[portName].Path() == "" {
-					Fail("Missing inpath for inport '", portName, "', and no substream, for command '", cmd, "'")
+					t.Failf("Missing inpath for inport (%s), and no substream, for command (%s)", portName, cmd)
 				}
 				if inIPs[portName].doStream {
 					replacement = inIPs[portName].FifoPath()
@@ -162,8 +166,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 
 		case "p":
 			if params[portName] == "" {
-				msg := fmt.Sprint("Missing param value for param '", portName, "' for command '", cmd, "'")
-				Fail(msg)
+				t.Failf("Missing param value for param (%s) for command (%s)", portName, cmd)
 			} else {
 				replacement = params[portName]
 				replacement = applyPathModifiers(replacement, placeHolder.modifiers)
@@ -171,15 +174,14 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 
 		case "t":
 			if tags[portName] == "" {
-				msg := fmt.Sprint("Missing tag value for tag '", portName, "' for command '", cmd, "'")
-				Fail(msg)
+				t.Failf("Missing tag value for tag (%s) for command (%s)", portName, cmd)
 			} else {
 				replacement = tags[portName]
 				replacement = applyPathModifiers(replacement, placeHolder.modifiers)
 			}
 
 		default:
-			Fail("Replace failed for port ", portName, " for command '", cmd, "'")
+			t.Failf("Replace failed for port (%s) for command (%s)", portName, cmd)
 		}
 
 		cmd = strings.Replace(cmd, placeHolder.match, replacement, -1)
@@ -200,7 +202,7 @@ func formatCommand(cmd string, portInfos map[string]*PortInfo, inIPs map[string]
 // InIP returns an IP for the in-port with name portName
 func (t *Task) InIP(portName string) *FileIP {
 	if t.InIPs[portName] == nil {
-		Failf("No such in-portname (%s) in task (%s)\n", portName, t.Name)
+		t.Failf("No such in-portname (%s)", portName)
 	}
 	return t.InIPs[portName]
 }
@@ -215,7 +217,7 @@ func (t *Task) OutIP(portName string) *FileIP {
 	if ip, ok := t.OutIPs[portName]; ok {
 		return ip
 	}
-	Failf("No such out-portname (%s) in task (%s)\n", portName, t.Name)
+	t.Failf("No such out-portname (%s)", portName)
 	return nil
 }
 
@@ -229,7 +231,7 @@ func (t *Task) Param(portName string) string {
 	if param, ok := t.Params[portName]; ok {
 		return param
 	}
-	Failf("No such param port '%s' for task '%s'\n", portName, t.Name)
+	t.Failf("No such param port (%s)", portName)
 	return "invalid"
 }
 
@@ -238,7 +240,7 @@ func (t *Task) Tag(tagName string) string {
 	if tag, ok := t.Tags[tagName]; ok {
 		return tag
 	}
-	Failf("No such tag '%s' for task '%s'\n", tagName, t.Name)
+	t.Failf("No such tag (%s)", tagName)
 	return "invalid"
 }
 
@@ -252,7 +254,7 @@ func (t *Task) Execute() {
 
 	// Do some sanity checks
 	if t.tempDirsExist() {
-		Failf("| %-32s | Existing temp folders found, so existing. Clean up temporary folders (starting with '%s') before restarting the workflow!", t.Name, tempDirPrefix)
+		t.Failf("Existing temp folders found, so existing. Clean up temporary folders (starting with %s) before restarting the workflow!", tempDirPrefix)
 	}
 
 	if t.anyOutputsExist() {
@@ -262,26 +264,32 @@ func (t *Task) Execute() {
 
 	// Execute task
 	t.workflow.IncConcurrentTasks(t.cores) // Will block if max concurrent tasks is reached
-	t.createDirs()                         // Create output directories needed for any outputs
+	err := t.createDirs()                  // Create output directories needed for any outputs
+	if err != nil {
+		t.Fail(err)
+	}
 	startTime := time.Now()
 	if t.CustomExecute != nil {
 		outputsStr := ""
 		for oipName, oip := range t.OutIPs {
 			outputsStr += " " + oipName + ": " + oip.Path()
 		}
-		LogAuditf(t.Name, "Executing: Custom Go function with outputs: %s", outputsStr)
+		t.Auditf("Executing: Custom Go function with outputs: %s", outputsStr)
 		t.CustomExecute(t)
-		LogAuditf(t.Name, "Finished: Custom Go function with outputs: %s", outputsStr)
+		t.Auditf("Finished: Custom Go function with outputs: %s", outputsStr)
 	} else {
-		LogAuditf(t.Name, "Executing: %s", t.Command)
+		t.Auditf("Executing: %s", t.Command)
 		t.executeCommand(t.Command)
-		LogAuditf(t.Name, "Finished: %s", t.Command)
+		t.Auditf("Finished: %s", t.Command)
 	}
 	finishTime := time.Now()
 	t.writeAuditLogs(startTime, finishTime)
 
 	t.ensureAllOutputsExist()
-	t.atomizeIPs()
+	atomizeErr := t.atomizeIPs()
+	if atomizeErr != nil {
+		t.Fail(atomizeErr)
+	}
 
 	t.workflow.DecConcurrentTasks(t.cores)
 
@@ -307,7 +315,7 @@ func (t *Task) anyOutputsExist() (anyFileExists bool) {
 		if !oip.doStream {
 			opath := oip.Path()
 			if _, err := os.Stat(opath); err == nil {
-				Audit.Printf("| %-32s | Output file already exists, so skipping: %s\n", t.Name, opath)
+				t.Auditf("Output file already exists, so skipping: %s", opath)
 				anyFileExists = true
 			}
 		}
@@ -316,7 +324,7 @@ func (t *Task) anyOutputsExist() (anyFileExists bool) {
 }
 
 // createDirs creates directories for out-IPs of the task
-func (t *Task) createDirs() {
+func (t *Task) createDirs() error {
 	os.MkdirAll(t.TempDir(), 0777)
 
 	for _, oip := range t.OutIPs {
@@ -327,9 +335,12 @@ func (t *Task) createDirs() {
 			oipDir = t.TempDir() + "/" + oipDir
 		}
 		err := os.MkdirAll(oipDir, 0777)
-		CheckWithMsg(err, "Could not create directory: "+oipDir)
+		if err != nil {
+			return errors.New(fmt.Sprintf("Could not create directory: %s: %s", oipDir, err))
+		}
 	}
 
+	return nil
 }
 
 // executeCommand executes the shell command cmd via bash
@@ -337,7 +348,7 @@ func (t *Task) executeCommand(cmd string) {
 	// cd into the task's tempdir, execute the command, and cd back
 	out, err := exec.Command("bash", "-c", "cd "+t.TempDir()+" && "+cmd+" && cd ..").CombinedOutput()
 	if err != nil {
-		Failf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\nOriginal error:%s\n", cmd, string(out), err.Error())
+		t.Failf("Command failed!\nCommand:\n%s\n\nOutput:\n%s\nOriginal error:%s", cmd, string(out), err)
 	}
 }
 
@@ -378,23 +389,39 @@ func (t *Task) ensureAllOutputsExist() {
 	for _, ip := range t.OutIPs {
 		filePath := filepath.Join(t.TempDir(), ip.TempPath())
 		if _, err := os.Stat(filePath); os.IsNotExist(err) && !ip.doStream {
-			Failf("Missing output temp-file (%s) for ip with path (%s) in task (%s) of process (%s)\n", filePath, ip.Path(), t.Name, t.Process.Name())
+			t.Failf("Missing output temp-file (%s) for ip with path (%s)", filePath, ip.Path())
 		}
 	}
 }
 
-func (t *Task) atomizeIPs() {
+func (t *Task) atomizeIPs() error {
 	outIPs := []*FileIP{}
 	for _, ip := range t.OutIPs {
 		outIPs = append(outIPs, ip)
 	}
-	AtomizeIPs(t.TempDir(), outIPs...)
+	return AtomizeIPs(t.TempDir(), outIPs...)
+}
+
+func (t *Task) Auditf(msg string, parts ...interface{}) {
+	t.Audit(fmt.Sprintf(msg+"\n", parts...))
+}
+
+func (t *Task) Audit(msg string) {
+	Audit.Printf("[Process:%s] %s", t.Process.Name(), msg)
+}
+
+func (t *Task) Failf(msg string, parts ...interface{}) {
+	t.Fail(fmt.Sprintf(msg+"\n", parts...))
+}
+
+func (t *Task) Fail(msg interface{}) {
+	Failf("[Process:%s] %s", t.Process.Name(), msg)
 }
 
 // AtomizeIPs renames temporary output files/directories to their proper paths.
 // It is called both from Task, and from Process that implement cutom execution
 // schedule.
-func AtomizeIPs(tempExecDir string, ips ...*FileIP) {
+func AtomizeIPs(tempExecDir string, ips ...*FileIP) error {
 	for _, oip := range ips {
 		// Move paths for ports, to final destinations
 		if !oip.doStream {
@@ -413,15 +440,20 @@ func AtomizeIPs(tempExecDir string, ips ...*FileIP) {
 			}
 			Debug.Println("Moving: ", tempPath, " -> ", newPath)
 			renameErr := os.Rename(tempPath, newPath)
-			CheckWithMsg(renameErr, "Could not rename file "+tempPath+" to "+newPath)
+			if renameErr != nil {
+				return errors.New(fmt.Sprintf("Could not rename file %s to %s: %s", tempPath, newPath, renameErr))
+			}
 		}
 		return err
 	})
 	// Remove temporary execution dir (but not for absolute paths, or current dir)
 	if tempExecDir != "" && tempExecDir != "." && tempExecDir[0] != '/' {
 		remErr := os.RemoveAll(tempExecDir)
-		CheckWithMsg(remErr, "Could not remove temp dir: "+tempExecDir)
+		if remErr != nil {
+			return errors.New(fmt.Sprintf("Could not remove temp dir: %s: %s", tempExecDir, remErr))
+		}
 	}
+	return nil
 }
 
 var tempDirPrefix = "_scipipe_tmp"

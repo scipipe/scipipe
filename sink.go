@@ -1,5 +1,7 @@
 package scipipe
 
+import "fmt"
+
 // Sink is a simple component that just receives IPs on its In-port without
 // doing anything with them. It is used to drive pipelines of processes
 type Sink struct {
@@ -56,4 +58,12 @@ func (p *Sink) Run() {
 	}
 	close(merged)
 	Debug.Printf("Caught up everything in sink")
+}
+
+func (p *Sink) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg+"\n", parts...))
+}
+
+func (p *Sink) Fail(msg interface{}) {
+	Failf("[Process:%s] %s", p.Name(), msg)
 }

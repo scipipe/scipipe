@@ -41,16 +41,24 @@ func getTestPortInfos() map[string]*PortInfo {
 }
 
 func getTestInIPs() map[string]*FileIP {
+	fooIP, err := NewFileIP("data/foofile.txt")
+	Check(err)
+	barIP, err := NewFileIP("barfile.txt")
+	Check(err)
 	return map[string]*FileIP{
-		"foo": NewFileIP("data/foofile.txt"),
-		"bar": NewFileIP("barfile.txt"),
+		"foo": fooIP,
+		"bar": barIP,
 	}
 }
 
 func getTestOutIPs() map[string]*FileIP {
+	bazIP, err := NewFileIP("data/outfile.txt")
+	Check(err)
+	baaIP, err := NewFileIP("../../ref/ref.txt")
+	Check(err)
 	return map[string]*FileIP{
-		"baz": NewFileIP("data/outfile.txt"),
-		"baa": NewFileIP("../../ref/ref.txt"),
+		"baz": bazIP,
+		"baa": baaIP,
 	}
 }
 
@@ -58,6 +66,8 @@ func TestFormatCommand(t *testing.T) {
 	portInfos := getTestPortInfos()
 	inIPs := getTestInIPs()
 	outIPs := getTestOutIPs()
+
+	emptyTask := &Task{}
 
 	for _, tt := range []struct {
 		cmdPat  string
@@ -75,7 +85,7 @@ func TestFormatCommand(t *testing.T) {
 		{cmdPat: "cat {i:foo} | tee {o:baz} > {o:baz|dirname}/hoge/{o:baz|basename|%.txt}.out.txt", wantCmd: "cat ../data/foofile.txt | tee data/outfile.txt > data/hoge/outfile.out.txt"},
 		{cmdPat: "cat {i:foo} > {o:baa}", wantCmd: "cat ../data/foofile.txt > __parent____parent__ref/ref.txt"},
 	} {
-		gotCmd := formatCommand(tt.cmdPat, portInfos, inIPs, nil, outIPs, nil, nil, "")
+		gotCmd := emptyTask.formatCommand(tt.cmdPat, portInfos, inIPs, nil, outIPs, nil, nil, "")
 		if gotCmd != tt.wantCmd {
 			t.Errorf("Wanted command: '%s', but got: '%s'", tt.wantCmd, gotCmd)
 		}
@@ -83,8 +93,12 @@ func TestFormatCommand(t *testing.T) {
 }
 
 func TestTempDirsExist(t *testing.T) {
-	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{"in1": NewFileIP("infile.txt"), "in2": NewFileIP("infile2.txt")}, nil, nil, map[string]string{"p1": "p1val", "p2": "p2val"}, nil, "", nil, 4)
-	err := os.Mkdir(tsk.TempDir(), 0644)
+	inIP1, err := NewFileIP("infile.txt")
+	Check(err)
+	inIP2, err := NewFileIP("infile2.txt")
+	Check(err)
+	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{"in1": inIP1, "in2": inIP2}, nil, nil, map[string]string{"p1": "p1val", "p2": "p2val"}, nil, "", nil, 4)
+	err = os.Mkdir(tsk.TempDir(), 0644)
 	Check(err)
 	exists := tsk.tempDirsExist()
 	if !exists {
@@ -95,7 +109,11 @@ func TestTempDirsExist(t *testing.T) {
 }
 
 func TestTempDir(t *testing.T) {
-	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{"in1": NewFileIP("infile.txt"), "in2": NewFileIP("infile2.txt")}, nil, nil, map[string]string{"p1": "p1val", "p2": "p2val"}, nil, "", nil, 4)
+	inIP1, err := NewFileIP("infile.txt")
+	Check(err)
+	inIP2, err := NewFileIP("infile2.txt")
+	Check(err)
+	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{"in1": inIP1, "in2": inIP2}, nil, nil, map[string]string{"p1": "p1val", "p2": "p2val"}, nil, "", nil, 4)
 
 	expected := tempDirPrefix + ".test_task.aaa94846ee057056e7f2d4d3aa2236bdf353d5a1"
 	actual := tsk.TempDir()
@@ -106,7 +124,10 @@ func TestTempDir(t *testing.T) {
 
 func TestTempDirNotOver255(t *testing.T) {
 	longFileName := "very_long_filename_______________________________50_______________________________________________100_______________________________________________150_______________________________________________200_______________________________________________250__255_____"
-	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{"in1": NewFileIP(longFileName), "in2": NewFileIP("infile2.txt")}, nil, nil, map[string]string{"p1": "p1val", "p2": "p2val"}, nil, "", nil, 4)
+	longFileIP, err := NewFileIP(longFileName)
+	inIP2, err := NewFileIP("infile2.txt")
+	Check(err)
+	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{"in1": longFileIP, "in2": inIP2}, nil, nil, map[string]string{"p1": "p1val", "p2": "p2val"}, nil, "", nil, 4)
 
 	actual := len(tsk.TempDir())
 	maxLen := 255

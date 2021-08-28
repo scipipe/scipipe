@@ -1,6 +1,7 @@
 package components
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/scipipe/scipipe"
@@ -122,4 +123,12 @@ func combine(inParams map[string][]string, keys []string) map[string][]string {
 	}
 
 	return outParams
+}
+
+func (p *ParamCombinator) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *ParamCombinator) Fail(msg interface{}) {
+	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

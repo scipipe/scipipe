@@ -42,7 +42,10 @@ func (p *Concatenator) Out() *scipipe.OutPort { return p.OutPort("out") }
 func (p *Concatenator) Run() {
 	defer p.CloseAllOutPorts()
 
-	outIP := scipipe.NewFileIP(p.OutPath)
+	outIP, err := scipipe.NewFileIP(p.OutPath)
+	if err != nil {
+		p.Fail(err)
+	}
 	outFh := outIP.OpenWriteTemp()
 
 	outIPsByTag := make(map[string]*scipipe.FileIP)
@@ -52,7 +55,11 @@ func (p *Concatenator) Run() {
 		tagVal := inIP.Tag(p.GroupByTag)
 		if tagVal != "" {
 			if _, ok := outIPsByTag[tagVal]; !ok {
-				outIPsByTag[tagVal] = scipipe.NewFileIP(fmt.Sprintf("%s.%s_%s", p.OutPath, p.GroupByTag, tagVal))
+				newIP, err := scipipe.NewFileIP(fmt.Sprintf("%s.%s_%s", p.OutPath, p.GroupByTag, tagVal))
+				if err != nil {
+					p.Fail(err)
+				}
+				outIPsByTag[tagVal] = newIP
 				outIPsByTag[tagVal].AddTag(p.GroupByTag, tagVal)
 				outFhsByTag[tagVal] = outIPsByTag[tagVal].OpenWriteTemp()
 			}
@@ -77,4 +84,12 @@ func (p *Concatenator) Run() {
 	for _, taggedIP := range outIPsByTag {
 		p.Out().Send(taggedIP)
 	}
+}
+
+func (p *Concatenator) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *Concatenator) Fail(msg interface{}) {
+	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

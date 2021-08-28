@@ -9,7 +9,8 @@ const (
 )
 
 func TestIPPaths(t *testing.T) {
-	ip := NewFileIP(TESTPATH)
+	ip, err := NewFileIP(TESTPATH)
+	Check(err)
 	assertPathsEqual(t, ip.Path(), TESTPATH)
 	assertPathsEqual(t, ip.TempPath(), TESTPATH)
 	assertPathsEqual(t, ip.FifoPath(), TESTPATH+".fifo")
@@ -31,7 +32,8 @@ func TestPathIsValid(t *testing.T) {
 		{path: "./directory/long-file_name.txt", wantValid: true},
 		{path: `\\Server\path`, wantValid: false},
 	} {
-		haveValid := pathIsValid(tc.path)
+		haveValid, err := pathIsValid(tc.path)
+		Check(err)
 		if haveValid != tc.wantValid {
 			t.Fatalf("Valid status for path '%s' was %v, not %v as expected", tc.path, haveValid, tc.wantValid)
 		}

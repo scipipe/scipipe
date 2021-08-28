@@ -1,6 +1,7 @@
 package components
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/scipipe/scipipe"
@@ -64,7 +65,19 @@ func (p *FileGlobber) globFiles() {
 		scipipe.CheckWithMsg(err, "FileGlobber: This glob pattern doesn't look right: "+globPtn)
 		for _, filePath := range matches {
 			scipipe.Audit.Printf("%s: Sending concrete file %s", p.Name(), filePath)
-			p.Out().Send(scipipe.NewFileIP(filePath))
+			newIP, err := scipipe.NewFileIP(filePath)
+			if err != nil {
+				p.Fail(err)
+			}
+			p.Out().Send(newIP)
 		}
 	}
+}
+
+func (p *FileGlobber) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *FileGlobber) Fail(msg interface{}) {
+	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

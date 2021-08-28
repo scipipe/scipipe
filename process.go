@@ -1,6 +1,7 @@
 package scipipe
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -76,7 +77,7 @@ func (p *Process) initPortsFromCmdPattern(cmd string, params map[string]string) 
 		portName := splitParts[0]
 
 		if _, ok := portNameTypeCombos[portName]; ok && len(portNameTypeCombos[portName]) > 1 {
-			Failf("Port-name (%s) in process (%s) used in multiple port-types. A name can not be used for e.g. both in-ports and out-ports in the same process.", portName, p.Name())
+			p.Failf("Port-name (%s) used in multiple port-types. A name can not be used for e.g. both in-ports and out-ports in the same process.", portName)
 		}
 		if _, ok := portNameTypeCombos[portName]; !ok {
 			portNameTypeCombos[portName] = map[string]string{}
@@ -259,7 +260,7 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 				replacement = t.InPath(portName)
 			case "o":
 				if _, ok := t.Process.PathFuncs[portName]; !ok {
-					Fail("No such pathfunc for out-port " + portName + " in task " + t.Name)
+					p.Failf("No such pathfunc for out-port " + portName + " in task " + t.Name)
 				}
 				replacement = t.Process.PathFuncs[portName](t)
 			case "p":
@@ -267,7 +268,7 @@ func (p *Process) SetOut(outPortName string, pathPattern string) {
 			case "t":
 				replacement = t.Tag(portName)
 			default:
-				Fail("Replace failed for placeholder ", portName, " for path patterh '", path, "'")
+				p.Failf("Replace failed for placeholder (%s) for path patterh (%s)", portName, path)
 			}
 
 			if len(restParts) > 0 {
@@ -303,7 +304,7 @@ func (p *Process) Run() {
 	defer p.CloseOutPorts()
 	// Check that CoresPerTask is a sane number
 	if p.CoresPerTask > cap(p.workflow.concurrentTasks) {
-		Failf("CoresPerTask (%d) can't be greater than maxConcurrentTasks of workflow (%d) in process (%s)\n", p.CoresPerTask, cap(p.workflow.concurrentTasks), p.Name())
+		p.Failf("CoresPerTask (%d) can't be greater than maxConcurrentTasks of workflow (%d)", p.CoresPerTask, cap(p.workflow.concurrentTasks))
 	}
 
 	// Using a slice to store unprocessed tasks allows us to receive tasks as
@@ -326,7 +327,7 @@ func (p *Process) Run() {
 				for oname, oip := range t.OutIPs {
 					if oip.doStream {
 						if oip.FifoFileExists() {
-							Fail("Fifo file exists, so exiting (clean up fifo files before restarting the workflow): ", oip.FifoPath())
+							p.Failf("Fifo file exists, so exiting (clean up fifo files before restarting the workflow): %s", oip.FifoPath())
 						}
 						oip.CreateFifo()
 						p.Out(oname).Send(oip)
@@ -412,4 +413,12 @@ func (tq taskQueue) NextTaskDone() chan int {
 		return tq[0].Done
 	}
 	return nil
+}
+
+func (p *Process) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg+"\n", parts...))
+}
+
+func (p *Process) Fail(msg interface{}) {
+	Failf("[Process:%s] %s", p.Name(), msg)
 }

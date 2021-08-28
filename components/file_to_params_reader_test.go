@@ -1,6 +1,7 @@
 package components
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -65,4 +66,12 @@ func (p *FileToParamsChecker) Run() {
 		}
 		i++
 	}
+}
+
+func (p *FileToParamsChecker) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *FileToParamsChecker) Fail(msg interface{}) {
+	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

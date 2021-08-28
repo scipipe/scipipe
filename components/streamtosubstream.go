@@ -1,8 +1,10 @@
 package components
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
+
 	"github.com/scipipe/scipipe"
 )
 
@@ -42,11 +44,22 @@ func (p *StreamToSubStream) Run() {
 	defer os.Remove(tmpfile.Name())
 
 	scipipe.Debug.Println("Creating new information packet for the substream...")
-	subStreamIP := scipipe.NewFileIP(tmpfile.Name())
+	subStreamIP, err := scipipe.NewFileIP(tmpfile.Name())
+	if err != nil {
+		p.Fail(err)
+	}
 	scipipe.Debug.Printf("Setting in-port of process %s to IP substream field\n", p.Name())
 	subStreamIP.SubStream = p.In()
 
 	scipipe.Debug.Printf("Sending sub-stream IP in process %s...\n", p.Name())
 	p.OutSubStream().Send(subStreamIP)
 	scipipe.Debug.Printf("Done sending sub-stream IP in process %s.\n", p.Name())
+}
+
+func (p *StreamToSubStream) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *StreamToSubStream) Fail(msg interface{}) {
+	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

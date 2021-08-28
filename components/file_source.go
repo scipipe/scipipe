@@ -1,6 +1,8 @@
 package components
 
 import (
+	"fmt"
+
 	"github.com/scipipe/scipipe"
 )
 
@@ -30,6 +32,18 @@ func (p *FileSource) Out() *scipipe.OutPort { return p.OutPort("out") }
 func (p *FileSource) Run() {
 	defer p.CloseAllOutPorts()
 	for _, filePath := range p.filePaths {
-		p.Out().Send(scipipe.NewFileIP(filePath))
+		ip, err := scipipe.NewFileIP(filePath)
+		if err != nil {
+			p.Fail(err)
+		}
+		p.Out().Send(ip)
 	}
+}
+
+func (p *FileSource) Failf(msg string, parts ...interface{}) {
+	p.Fail(fmt.Sprintf(msg, parts...))
+}
+
+func (p *FileSource) Fail(msg interface{}) {
+	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }
