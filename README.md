@@ -78,6 +78,20 @@ group as well.
   for details.
 - There is not (yet) support for the [Common Workflow Language](http://common-workflow-language.github.io).
 
+## Installing
+
+For full installation instructions, see the [intallation page](/install).
+For quick getting started steps, you can do:
+
+1. [Download](https://golang.org/dl/) and [install](https://golang.org/doc/install) Go
+2. Run the following command, to install the scipipe Go library (don't miss the
+   trailing dots!), and create a Go module for your script:
+
+```bash
+go install github.com/scipipe/scipipe/...@latest
+go mod init myfirstworkflow-module
+```
+
 ## Hello World example
 
 Let's look at an example workflow to get a feel for what writing workflows in
@@ -107,9 +121,24 @@ func main() {
 }
 ```
 
+To create a file with a similar simple example, you can run:
+
+```
+scipipe new hello_world.go
+```
+
 ## Running the example
 
-Let's put the code in a file named `hello_world.go` and run it:
+Let's put the code in a file named `hello_world.go` and run it.
+
+First you need to make sure that the dependencies (SciPipe in this case) is
+installed in your local Go module. This you can do with:
+
+```bash
+go mod tidy
+```
+
+Then you can go ahead and run the workflow:
 
 ```bash
 $ go run hello_world.go
@@ -167,8 +196,7 @@ func main() {
     hello.SetOut("out", "hello.txt")
 
     world := wf.NewProc("world", "echo $(cat {i:in}) World >> {o:out}")
-    // The modifier 's/.txt//' will replace '.txt' in the input path with ''
-    world.SetOut("out", "{i:in|s/.txt//}_world.txt")
+    world.SetOut("out", "{i:in|%.txt}_world.txt")
 
     // Connect network
     world.In("in").From(hello.Out("out"))
@@ -178,15 +206,19 @@ func main() {
 }
 ```
 
+In the `{i:in...` part, we are re-using the file path from the file received on
+the in-port named 'in', and then running a Bash-style trim-from-end command on
+it to remove the `.txt` extension.
+
 Now, if we run this, the file names get a little cleaner:
 
 ```bash
 $ ls -1 hello*
 hello.txt
 hello.txt.audit.json
-hello.txt.world.go
-hello.txt.world.txt
-hello.txt.world.txt.audit.json
+hello_world.go
+hello_world.txt
+hello_world.txt.audit.json
 ```
 
 ## The audit logs
@@ -194,11 +226,11 @@ hello.txt.world.txt.audit.json
 Finally, we could have a look at one of those audit file created:
 
 ```bash
-$ cat hello.txt.world.txt.audit.json
+$ cat hello_world.txt.audit.json
 {
     "ID": "99i5vxhtd41pmaewc8pr",
     "ProcessName": "world",
-    "Command": "echo $(cat hello.txt) World \u003e\u003e hello.txt.world.txt.tmp/hello.txt.world.txt",
+    "Command": "echo $(cat hello.txt) World \u003e\u003e hello_world.txt.tmp/hello_world.txt",
     "Params": {},
     "Tags": {},
     "StartTime": "2018-06-15T19:10:37.955602979+02:00",

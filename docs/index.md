@@ -41,6 +41,12 @@
 
 ## Introduction
 
+<img src="docs/images/fbp_factory.png" align="right">
+
+SciPipe is a library for writing [Scientific
+Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system), sometimes
+also called "pipelines", in the [Go programming language](http://golang.org).
+
 When you need to run many commandline programs that depend on each other in
 complex ways, SciPipe helps by making the process of running these programs
 flexible, robust and reproducible. SciPipe also lets you restart an interrupted
@@ -76,11 +82,16 @@ group as well.
 
 ## Installing
 
+For full installation instructions, see the [intallation page](/install).
+For quick getting started steps, you can do:
+
 1. [Download](https://golang.org/dl/) and [install](https://golang.org/doc/install) Go
-2. Run the following command, to install the scipipe Go library (don't miss the trailing dots!):
+2. Run the following command, to install the scipipe Go library (don't miss the
+   trailing dots!), and create a Go module for your script:
 
 ```bash
-go get github.com/scipipe/scipipe/...
+go install github.com/scipipe/scipipe/...@latest
+go mod init myfirstworkflow-module
 ```
 
 ## Hello World example
@@ -112,18 +123,33 @@ func main() {
 }
 ```
 
+To create a file with a similar simple example, you can run:
+
+```
+scipipe new hello_world.go
+```
+
 ## Running the example
 
-Let's put the code in a file named `hello_world.go` and run it:
+Let's put the code in a file named `hello_world.go` and run it.
+
+First you need to make sure that the dependencies (SciPipe in this case) is
+installed in your local Go module. This you can do with:
+
+```bash
+go mod tidy
+```
+
+Then you can go ahead and run the workflow:
 
 ```bash
 $ go run hello_world.go
-AUDIT   2018/06/15 19:04:22 | workflow:hello_world             | Starting workflow (Writing log to log/scipipe-20180615-190422-hello_world.log)
-AUDIT   2018/06/15 19:04:22 | hello                            | Executing: echo 'Hello ' > hello.out.txt.tmp/hello.out.txt
-AUDIT   2018/06/15 19:04:22 | hello                            | Finished:  echo 'Hello ' > hello.out.txt.tmp/hello.out.txt
-AUDIT   2018/06/15 19:04:22 | world                            | Executing: echo $(cat hello.out.txt) World > hello.out.txt.world.out.txt.tmp/hello.out.txt.world.out.txt
-AUDIT   2018/06/15 19:04:22 | world                            | Finished:  echo $(cat hello.out.txt) World > hello.out.txt.world.out.txt.tmp/hello.out.txt.world.out.txt
-AUDIT   2018/06/15 19:04:22 | workflow:hello_world             | Finished workflow (Log written to log/scipipe-20180615-190422-hello_world.log)
+AUDIT   2018/07/17 21:42:26 | workflow:hello_world             | Starting workflow (Writing log to log/scipipe-20180717-214226-hello_world.log)
+AUDIT   2018/07/17 21:42:26 | hello                            | Executing: echo 'Hello ' > hello.out.txt
+AUDIT   2018/07/17 21:42:26 | hello                            | Finished: echo 'Hello ' > hello.out.txt
+AUDIT   2018/07/17 21:42:26 | world                            | Executing: echo $(cat ../hello.out.txt) World > hello.out.txt.world.out.txt
+AUDIT   2018/07/17 21:42:26 | world                            | Finished: echo $(cat ../hello.out.txt) World > hello.out.txt.world.out.txt
+AUDIT   2018/07/17 21:42:26 | workflow:hello_world             | Finished workflow (Log written to log/scipipe-20180717-214226-hello_world.log)
 ```
 
 Let's check what file SciPipe has generated:
@@ -149,11 +175,11 @@ Hello World
 Now we can rejoice that it contains the text "Hello World", exactly as a proper
 Hello World example should :)
 
-Now, these were a little long and cumbersome filename, weren't they? SciPipe
+Now, these were a little long and cumbersome filenames, weren't they? SciPipe
 gives you very good control over how to name your files, if you don't want to
 rely on the automatic file naming. For example, we could set the first filename
-statically, and then use the first name as a basis for the file name for the
-second process, like so:
+to a static one, and then use the first name as a basis for the file name for
+the second process, like so:
 
 ```go
 package main
