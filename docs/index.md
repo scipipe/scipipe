@@ -41,11 +41,8 @@
 
 ## Introduction
 
-<img src="docs/images/fbp_factory.png" align="right">
-
-SciPipe is a library for writing [Scientific
-Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system), sometimes
-also called "pipelines", in the [Go programming language](http://golang.org).
+SciPipe is a library for writing [Scientific Workflows](https://en.wikipedia.org/wiki/Scientific_workflow_system),
+sometimes also called "pipelines", in the [Go programming language](http://golang.org).
 
 When you need to run many commandline programs that depend on each other in
 complex ways, SciPipe helps by making the process of running these programs

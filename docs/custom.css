@@ -1,6 +1,7 @@
 /* Code highlighting customizations */
 .md-logo {
     padding: 0!important;
+    margin-top: -.35em;
 }
 .md-logo img {
     width: 64px!important;
