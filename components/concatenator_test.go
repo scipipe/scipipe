@@ -13,12 +13,12 @@ import (
 var (
 	tempDir   = ".tmp"
 	testFiles = map[string]string{
-		"a.txt": "A A A",
-		"a.csv": "A A A",
-		"b.txt": "B B B",
-		"b.csv": "B B B",
-		"b.tsv": "B B B",
-		"c.txt": "C C C",
+		"a.txt": "A1",
+		"a.csv": "A2",
+		"b.txt": "B1",
+		"b.csv": "B2",
+		"b.tsv": "B3",
+		"c.txt": "C1",
 	}
 )
 
@@ -38,9 +38,9 @@ func TestConcatenator(t *testing.T) {
 	}
 	haveContent := string(haveContentByte)
 
-	wantContent := `A A A
-B B B
-C C C
+	wantContent := `A1
+B1
+C1
 `
 
 	if haveContent != wantContent {
@@ -80,13 +80,32 @@ func TestConcatenatorGroupByTag(t *testing.T) {
 	concat.GroupByTag = "dataset_name"
 	wf.Run()
 
-	for _, fn := range []string{
-		tempDir + "/concat.txt.dataset_name_a",
-		tempDir + "/concat.txt.dataset_name_b",
-		tempDir + "/concat.txt.dataset_name_c",
+	wantContent := map[string]string{"a": `A1
+A2
+`,
+		"b": `B1
+B2
+B3
+`,
+		"c": `C1
+`}
+
+	for tag, fn := range map[string]string{
+		"a": tempDir + "/concat.txt.dataset_name_a",
+		"b": tempDir + "/concat.txt.dataset_name_b",
+		"c": tempDir + "/concat.txt.dataset_name_c",
 	} {
 		if _, err := os.Stat(fn); os.IsNotExist(err) {
 			t.Fatalf("File does not exist: %s", fn)
+		}
+		haveContentByte, err := ioutil.ReadFile(fn)
+		if err != nil {
+			panic(err)
+		}
+		haveContent := string(haveContentByte)
+
+		if haveContent != wantContent[tag] {
+			t.Fatalf("Wanted: %s but got %s", wantContent[tag], haveContent)
 		}
 	}
 
