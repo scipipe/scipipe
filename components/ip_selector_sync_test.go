@@ -1,83 +1,87 @@
 package components
 
 import (
+	"errors"
+	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"testing"
 
+	"github.com/scipipe/scipipe"
 	sp "github.com/scipipe/scipipe"
+)
+
+const (
+	TEMPDIR = ".tmp"
 )
 
 func TestIPSelectorSync(t *testing.T) {
 	wf := sp.NewWorkflow("testwf", 4)
 
-	// Create a non-empty file
-	p1a := wf.NewProc("p1a", "echo foo > {o:foo}")
-	p1a.SetOut("foo", ".tmp/foo.txt")
+	err := os.Mkdir(TEMPDIR, 0755)
+	scipipe.Check(err)
 
-	// Create an EMPTY file
-	p2a := wf.NewProc("p2a", "touch {o:bar}")
-	p2a.SetOut("bar", ".tmp/bar.txt")
+	for _, fName := range []string{"nonempty1", "nonempty2", "pairedwithempty"} {
+		nonEmptyFile, err := os.Create(fmt.Sprintf("%s/%s.txt", TEMPDIR, fName))
+		scipipe.Check(err)
+		_, err = nonEmptyFile.WriteString(fmt.Sprintf("%s\n", fName))
+		err = nonEmptyFile.Close()
+		scipipe.Check(err)
+	}
 
-	// Create a non-empty file
-	p1b := wf.NewProc("p1b", "echo foz > {o:foz}")
-	p1b.SetOut("foz", ".tmp/foz.txt")
+	EmptyFile, err := os.Create(TEMPDIR + "/empty.txt")
+	scipipe.Check(err)
+	err = EmptyFile.Close()
+	scipipe.Check(err)
 
-	// Create a non-empty file
-	p2b := wf.NewProc("p2b", "echo baz > {o:baz}")
-	p2b.SetOut("baz", ".tmp/baz.txt")
+	fileSource1 := NewFileSource(wf, "file-source-1", TEMPDIR+"/nonempty1.txt", TEMPDIR+"/empty.txt")
+
+	fileSource2 := NewFileSource(wf, "file-source-2", TEMPDIR+"/nonempty2.txt", TEMPDIR+"/pairedwithempty.txt")
 
 	// This function should return true for any files to be INCLUDED and false
 	// for any files that should be DROPPED
-	filterEmptyFilesFunc := func(ip *sp.FileIP) bool {
-		return ip.Size() != 0
+	includeNonEmptyFunc := func(ip *sp.FileIP) bool {
+		return ip.Size() > 0
 	}
-	filterEmpty := NewIPSelectorSync(wf, "filter-empty", filterEmptyFilesFunc)
+	filterEmpty := NewIPSelectorSync(wf, "filter-empty", includeNonEmptyFunc)
+
 	// Note that the in-ports are created on-demand, so you just access them
 	// and use them
-	filterEmpty.In("foo").From(p1a.Out("foo"))
-	filterEmpty.In("bar").From(p2a.Out("bar"))
+	filterEmpty.In("p1").From(fileSource1.Out())
+	filterEmpty.In("p2").From(fileSource2.Out())
 
-	filterEmpty.In("foo").From(p1b.Out("foz"))
-	filterEmpty.In("bar").From(p2b.Out("baz"))
+	fileCopier := wf.NewProc("file-copier", "cat {i:in} > {o:out}")
+	fileCopier.SetOut("out", "{i:in}.copy.txt")
 
-	filePadder := wf.NewProc("filepadder", "cat {i:in} > {o:out}")
-	filePadder.SetOut("out", "{i:in}.padded.txt")
 	// ... but as you see here, we have to create and use out-ports with the
 	// same names as for the in-ports we created earlier ('foo' and 'bar')
-	filePadder.In("in").From(filterEmpty.Out("foo"))
-	filePadder.In("in").From(filterEmpty.Out("bar"))
+	fileCopier.In("in").From(filterEmpty.Out("p1"))
+	fileCopier.In("in").From(filterEmpty.Out("p2"))
 
 	wf.Run()
 
-	// Check that we don't have ANY of the downstream files of the first two
-	// ones, since one of those first ones (bar.txt) was empty
-	for _, fileName := range []string{".tmp/foo.txt.padded.txt", ".tmp/bar.txt.padded.txt"} {
+	// Check that we don't have ANY of the downstream files of the empty one,
+	// and the one that was sent "in pair" with that one, since one of them
+	// (empty.txt) was empty.
+	for _, fileName := range []string{TEMPDIR + "/empty.txt.copy.txt", TEMPDIR + "/pairedwithempty.txt.copy.txt"} {
 		_, err := os.Stat(fileName)
 		if err == nil {
 			t.Errorf("File should not exist, but should be filtered out: %s\n", fileName)
 		}
 	}
 
-	// Check that we DO have the outputs of the first second ones, which are
-	// both non-empty
-	for _, fileName := range []string{".tmp/foz.txt.padded.txt", ".tmp/baz.txt.padded.txt"} {
-		_, err := os.Stat(fileName)
-		if err != nil {
+	// Check that we DO have the outputs of the non empty pair
+	for _, fileName := range []string{TEMPDIR + "/nonempty1.txt.copy.txt", TEMPDIR + "/nonempty2.txt.copy.txt"} {
+		if _, err := os.Stat(fileName); errors.Is(err, fs.ErrNotExist) {
 			t.Errorf("File should exist, and not be filtered out: %s\n", fileName)
 		}
 	}
 
-	cleanFiles([]string{
-		".tmp/foo.txt",
-		".tmp/bar.txt",
-		".tmp/foz.txt",
-		".tmp/baz.txt",
-		".tmp/foo.txt.padded.txt",
-		".tmp/bar.txt.padded.txt",
-		".tmp/foz.txt.padded.txt",
-		".tmp/baz.txt.padded.txt",
-	}...)
+	remErr := os.RemoveAll(TEMPDIR)
+	if remErr != nil {
+		panic(remErr)
+	}
 }
 
 func TestIPSelectorSyncFailsOnInconsistentPortClosing(t *testing.T) {
