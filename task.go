@@ -463,7 +463,7 @@ var tempDirPrefix = "_scipipe_tmp"
 // values that a task takes as input, joined with dots.
 func (t *Task) TempDir() string {
 	pathPrefix := tempDirPrefix + "." + sanitizePathFragment(t.Name)
-	hashPcs := []string{}
+	hashPcs := []string{t.Name}
 	for _, ipName := range sortedFileIPMapKeys(t.InIPs) {
 		hashPcs = append(hashPcs, splitAllPaths(t.InIP(ipName).Path())...)
 	}

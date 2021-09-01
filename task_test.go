@@ -115,7 +115,7 @@ func TestTempDir(t *testing.T) {
 	Check(err)
 	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{"in1": inIP1, "in2": inIP2}, nil, nil, map[string]string{"p1": "p1val", "p2": "p2val"}, nil, "", nil, 4)
 
-	expected := tempDirPrefix + ".test_task.aaa94846ee057056e7f2d4d3aa2236bdf353d5a1"
+	expected := tempDirPrefix + ".test_task.59d80301296d143e0da61ed64e5756e72e268631"
 	actual := tsk.TempDir()
 	if actual != expected {
 		t.Errorf("TempDir() was %s Expected: %s", actual, expected)
