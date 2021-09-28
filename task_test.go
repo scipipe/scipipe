@@ -23,14 +23,21 @@ func getTestPortInfos() map[string]*PortInfo {
 			join:      false,
 			joinSep:   "",
 		},
-		"baz": &PortInfo{
+		"bax": &PortInfo{
 			portType:  "o",
 			extension: "",
 			doStream:  false,
 			join:      false,
 			joinSep:   "",
 		},
-		"baa": &PortInfo{
+		"bay": &PortInfo{
+			portType:  "o",
+			extension: "",
+			doStream:  false,
+			join:      false,
+			joinSep:   "",
+		},
+		"baz": &PortInfo{
 			portType:  "o",
 			extension: "",
 			doStream:  false,
@@ -54,11 +61,14 @@ func getTestInIPs() map[string]*FileIP {
 func getTestOutIPs() map[string]*FileIP {
 	bazIP, err := NewFileIP("data/outfile.txt")
 	Check(err)
-	baaIP, err := NewFileIP("../../ref/ref.txt")
+	bayIP, err := NewFileIP("/tmp/scipipe/bay_outfile.txt")
+	Check(err)
+	baxIP, err := NewFileIP("../../ref/ref.txt")
 	Check(err)
 	return map[string]*FileIP{
+		"bax": baxIP,
+		"bay": bayIP,
 		"baz": bazIP,
-		"baa": baaIP,
 	}
 }
 
@@ -83,7 +93,9 @@ func TestFormatCommand(t *testing.T) {
 		{cmdPat: "cat {i:foo|dirname}/some_path/{i:foo|basename}", wantCmd: "cat ../data/some_path/foofile.txt"},
 		{cmdPat: "cat ../{i:foo|basename} {i:foo} > {o:baz}", wantCmd: "cat ../foofile.txt ../data/foofile.txt > data/outfile.txt"},
 		{cmdPat: "cat {i:foo} | tee {o:baz} > {o:baz|dirname}/hoge/{o:baz|basename|%.txt}.out.txt", wantCmd: "cat ../data/foofile.txt | tee data/outfile.txt > data/hoge/outfile.out.txt"},
-		{cmdPat: "cat {i:foo} > {o:baa}", wantCmd: "cat ../data/foofile.txt > __parent____parent__ref/ref.txt"},
+		{cmdPat: "cat {i:foo} > {o:bax}", wantCmd: "cat ../data/foofile.txt > __parent____parent__ref/ref.txt"},
+		{cmdPat: "cat {i:foo} > {o:bay}", wantCmd: "cat ../data/foofile.txt > __fsroot__/tmp/scipipe/bay_outfile.txt"},
+		{cmdPat: "cat {i:foo} > data/{o:bay|basename|%.txt}.csv", wantCmd: "cat ../data/foofile.txt > data/bay_outfile.csv"},
 	} {
 		gotCmd := emptyTask.formatCommand(tt.cmdPat, portInfos, inIPs, nil, outIPs, nil, nil, "")
 		if gotCmd != tt.wantCmd {
