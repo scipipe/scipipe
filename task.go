@@ -415,7 +415,7 @@ func (t *Task) Failf(msg string, parts ...interface{}) {
 }
 
 func (t *Task) Fail(msg interface{}) {
-	Failf("[Process:%s] %s", t.Process.Name(), msg)
+	Failf("[Task:%s] %s", t.Process.Name(), msg)
 }
 
 // AtomizeIPs renames temporary output files/directories to their proper paths.

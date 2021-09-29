@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/scipipe/scipipe"
 )
@@ -46,7 +47,17 @@ func (p *Concatenator) Run() {
 	if err != nil {
 		p.Fail(err)
 	}
-	outFh := outIP.OpenWriteTemp()
+
+	oipDir := filepath.Dir(outIP.Path())
+	err = os.MkdirAll(oipDir, 0777)
+	if err != nil {
+		p.Failf("Could not create directory: (%s) for out-IP (%s):\n%s", oipDir, outIP.Path(), err)
+	}
+
+	outFh, err := os.Create(outIP.Path())
+	if err != nil {
+		p.Failf("Could not open temp file for writing: %s\n", outIP.Path())
+	}
 
 	outIPsByTag := make(map[string]*scipipe.FileIP)
 	outFhsByTag := make(map[string]*os.File)
@@ -61,21 +72,44 @@ func (p *Concatenator) Run() {
 				}
 				outIPsByTag[tagVal] = newIP
 				outIPsByTag[tagVal].AddTag(p.GroupByTag, tagVal)
-				outFhsByTag[tagVal] = outIPsByTag[tagVal].OpenWriteTemp()
+				outFh, err := os.Create(outIPsByTag[tagVal].Path())
+				if err != nil {
+					p.Failf("Could not open temp file for writing: %s\n", outIP.Path())
+				}
+				outFhsByTag[tagVal] = outFh
 			}
 			dat, err := ioutil.ReadFile(inIP.Path())
-			scipipe.Check(err)
-			outFhsByTag[tagVal].Write(dat)
-			outFhsByTag[tagVal].Write([]byte("\n"))
+			if err != nil {
+				p.Failf("Could not read file: %s\n", inIP.Path())
+			}
+			outFhsByTag[tagVal].Write(append(dat))
+			if err != nil {
+				p.Failf("Could not read file: %s\n", outIPsByTag[tagVal].Path())
+			}
+			outFhsByTag[tagVal].Write(append([]byte("\n")))
+			if err != nil {
+				p.Failf("Could not read file: %s\n", outIPsByTag[tagVal].Path())
+			}
 		} else {
 			dat, err := ioutil.ReadFile(inIP.Path())
-			scipipe.Check(err)
-			outFh.Write(dat)
-			outFh.Write([]byte("\n"))
+			if err != nil {
+				p.Failf("Could not read file: %s\n", inIP.Path())
+			}
+			_, err = outFh.Write(append(dat))
+			if err != nil {
+				p.Failf("Could not write file: %s\n", outIP.Path())
+			}
+			_, err = outFh.Write(append([]byte("\n")))
+			if err != nil {
+				p.Failf("Could not write file: %s\n", outIP.Path())
+			}
 		}
 	}
 	// Close file handles
-	outFh.Close()
+	err = outFh.Close()
+	if err != nil {
+		p.Failf("Could not close file handle: %s\n", outIP.Path())
+	}
 	for _, taggedFh := range outFhsByTag {
 		taggedFh.Close()
 	}
@@ -84,12 +118,4 @@ func (p *Concatenator) Run() {
 	for _, taggedIP := range outIPsByTag {
 		p.Out().Send(taggedIP)
 	}
-}
-
-func (p *Concatenator) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *Concatenator) Fail(msg interface{}) {
-	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

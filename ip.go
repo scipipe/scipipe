@@ -192,22 +192,13 @@ func (ip *FileIP) OpenTemp() *os.File {
 	return f
 }
 
-// OpenWriteTemp opens the file for writing, and returns a file handle (*os.File)
-func (ip *FileIP) OpenWriteTemp() *os.File {
-	Warning.Printf("[FileIP:%s] OpenWriteTemp() is deprecated - You should stop using it!\n", ip.Path())
-	ip.createDirs()
-	f, err := os.Create(ip.TempPath())
-	CheckWithMsg(err, "Could not open temp file for writing: "+ip.TempPath())
-	return f
-}
-
 // ------------------------------------------------------------------------
 // FIFO-specific stuff
 // ------------------------------------------------------------------------
 
 // CreateFifo creates a FIFO file for the FileIP
 func (ip *FileIP) CreateFifo() {
-	ip.createDirs()
+	ip.createDirs("")
 	ip.lock.Lock()
 	cmd := "mkfifo " + ip.FifoPath()
 	Debug.Println("Now creating FIFO with command:", cmd)
@@ -246,7 +237,7 @@ func (ip *FileIP) Read() []byte {
 
 // Write writes a byte array ([]byte) to the file's temp file path
 func (ip *FileIP) Write(dat []byte) {
-	ip.createDirs()
+	ip.createDirs("")
 	err := ioutil.WriteFile(ip.TempPath(), dat, 0644)
 	CheckWithMsg(err, "Could not write to temp file: "+ip.TempPath())
 }
@@ -361,7 +352,7 @@ func (ip *FileIP) WriteAuditLogToFile() {
 	auditInfo := ip.AuditInfo()
 	auditInfoJSON, jsonErr := json.MarshalIndent(auditInfo, "", "    ")
 	CheckWithMsg(jsonErr, "Could not marshall JSON")
-	ip.createDirs()
+	ip.createDirs("")
 	writeErr := ioutil.WriteFile(ip.AuditFilePath(), auditInfoJSON, 0644)
 	CheckWithMsg(writeErr, "Could not write audit file: "+ip.Path())
 }
@@ -419,11 +410,21 @@ func (ip *FileIP) Fail(msg interface{}) {
 }
 
 // CreateDirs creates all directories needed to enable writing the IP to its
-// path (or temporary-path, which will have the same directory)
-func (ip *FileIP) createDirs() {
-	dir := filepath.Dir(ip.Path())
-	err := os.MkdirAll(dir, 0777)
-	CheckWithMsg(err, "Could not create directory: "+dir)
+// path (or temporary-path). If baseDir is provided, it will be prepended
+// before all the IPs own temp path. This is to allow components to create their
+// own temporary directory, to create the tasks in.
+func (ip *FileIP) createDirs(baseDir string) {
+	ipDir := ip.TempDir()
+	if baseDir != "" {
+		ipDir = baseDir + "/" + ip.TempDir()
+	}
+	if ip.doStream {
+		ipDir = filepath.Dir(ip.FifoPath())
+	}
+	err := os.MkdirAll(ipDir, 0777)
+	if err != nil {
+		ip.Failf("Could not create directory: (%s): %s\n", ipDir, err)
+	}
 }
 
 func sanitizePathFragment(s string) (sanitized string) {
