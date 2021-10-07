@@ -51,9 +51,8 @@ func (p *FileGlobber) Run() {
 	// the process wait for IPs on that.
 	if _, ok := p.InPorts()["in_dep"]; ok {
 		for range p.InDependency().Chan {
-			p.globFiles()
+			// Do nothing, just empty the channel
 		}
-		return
 	}
 	p.globFiles()
 }
