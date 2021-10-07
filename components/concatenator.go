@@ -56,7 +56,7 @@ func (p *Concatenator) Run() {
 
 	outFh, err := os.Create(outIP.Path())
 	if err != nil {
-		p.Failf("Could not open temp file for writing: %s\n", outIP.Path())
+		p.Failf("Could not open path for writing: %s\n", outIP.Path())
 	}
 
 	outIPsByTag := make(map[string]*scipipe.FileIP)
@@ -105,6 +105,7 @@ func (p *Concatenator) Run() {
 			}
 		}
 	}
+
 	// Close file handles
 	err = outFh.Close()
 	if err != nil {
@@ -113,6 +114,7 @@ func (p *Concatenator) Run() {
 	for _, taggedFh := range outFhsByTag {
 		taggedFh.Close()
 	}
+
 	// Send IPs
 	p.Out().Send(outIP)
 	for _, taggedIP := range outIPsByTag {
