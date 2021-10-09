@@ -1,8 +1,6 @@
 package components
 
 import (
-	"fmt"
-
 	"github.com/scipipe/scipipe"
 )
 
@@ -38,12 +36,4 @@ func (p *FileSource) Run() {
 		}
 		p.Out().Send(ip)
 	}
-}
-
-func (p *FileSource) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *FileSource) Fail(msg interface{}) {
-	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

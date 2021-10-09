@@ -2,7 +2,6 @@ package components
 
 import (
 	"bufio"
-	"fmt"
 	"os/exec"
 	"strings"
 
@@ -43,12 +42,4 @@ func (p *CommandToParams) Run() {
 		param := scanner.Text()
 		p.OutParamPort("param").Send(param)
 	}
-}
-
-func (p *CommandToParams) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *CommandToParams) Fail(msg interface{}) {
-	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

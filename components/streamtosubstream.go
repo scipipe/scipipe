@@ -1,7 +1,6 @@
 package components
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -54,12 +53,4 @@ func (p *StreamToSubStream) Run() {
 	scipipe.Debug.Printf("Sending sub-stream IP in process %s...\n", p.Name())
 	p.OutSubStream().Send(subStreamIP)
 	scipipe.Debug.Printf("Done sending sub-stream IP in process %s.\n", p.Name())
-}
-
-func (p *StreamToSubStream) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *StreamToSubStream) Fail(msg interface{}) {
-	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

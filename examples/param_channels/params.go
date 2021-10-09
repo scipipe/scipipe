@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"runtime"
 
-	"github.com/scipipe/scipipe"
 	sci "github.com/scipipe/scipipe"
 )
 
@@ -63,12 +61,4 @@ func (p *CombinatoricsGen) Run() {
 			}
 		}
 	}
-}
-
-func (p *CombinatoricsGen) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *CombinatoricsGen) Fail(msg interface{}) {
-	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

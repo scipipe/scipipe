@@ -1,7 +1,6 @@
 package components
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/scipipe/scipipe"
@@ -124,12 +123,4 @@ func (p *FileCombinator) combine(inIPs map[string][]*scipipe.FileIP, keys []stri
 	}
 
 	return outIPs
-}
-
-func (p *FileCombinator) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *FileCombinator) Fail(msg interface{}) {
-	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

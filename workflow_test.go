@@ -555,6 +555,7 @@ func TestPlotGraph(t *testing.T) {
 // --------------------------------------------------------------------------------
 
 type CombinatoricsProcess struct {
+	BaseProcess
 	name string
 	A    *OutParamPort
 	B    *OutParamPort
@@ -616,14 +617,6 @@ func (p *CombinatoricsProcess) Name() string {
 
 func (p *CombinatoricsProcess) Ready() bool { return true }
 
-func (p *CombinatoricsProcess) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *CombinatoricsProcess) Fail(msg interface{}) {
-	Failf("[Process:%s] %s", p.Name(), msg)
-}
-
 // --------------------------------------------------------------------------------
 // StreamToSubstream helper process
 // --------------------------------------------------------------------------------
@@ -657,14 +650,6 @@ func (p *StreamToSubStream) Run() {
 	p.OutSubStream().Send(subStreamIP)
 }
 
-func (p *StreamToSubStream) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *StreamToSubStream) Fail(msg interface{}) {
-	Failf("[Process:%s] %s", p.Name(), msg)
-}
-
 // --------------------------------------------------------------------------------
 // MapToTag helper process
 // --------------------------------------------------------------------------------
@@ -696,14 +681,6 @@ func (p *MapToTags) Run() {
 		ip.WriteAuditLogToFile()
 		p.Out().Send(ip)
 	}
-}
-
-func (p *MapToTags) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *MapToTags) Fail(msg interface{}) {
-	Failf("[Process:%s] %s", p.Name(), msg)
 }
 
 // --------------------------------------------------------------------------------
@@ -743,13 +720,6 @@ func (p *FileSource) Run() {
 		p.Out().Send(newIP)
 	}
 }
-func (p *FileSource) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *FileSource) Fail(msg interface{}) {
-	Failf("[Process:%s] %s", p.Name(), msg)
-}
 
 // --------------------------------------------------------------------------------
 // ParamSource helper process
@@ -783,13 +753,6 @@ func (p *ParamSource) Run() {
 		p.Out().Send(param)
 	}
 }
-func (p *ParamSource) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *ParamSource) Fail(msg interface{}) {
-	Failf("[Process:%s] %s", p.Name(), msg)
-}
 
 // --------------------------------
 // BogusProcess helper process
@@ -820,14 +783,6 @@ func (p *BogusProcess) Name() string {
 
 func (p *BogusProcess) Ready() bool {
 	return true
-}
-
-func (p *BogusProcess) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *BogusProcess) Fail(msg interface{}) {
-	Failf("[Process:%s] %s", p.Name(), msg)
 }
 
 func ensureFailsProgram(testName string, crasher func(), t *testing.T) {

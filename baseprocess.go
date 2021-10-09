@@ -245,6 +245,14 @@ func (p *BaseProcess) Fail(msg interface{}) {
 	Failf("[Process:%s] %s", p.Name(), msg)
 }
 
+func (p *BaseProcess) Auditf(msg string, parts ...interface{}) {
+	p.Audit(fmt.Sprintf(msg, parts...))
+}
+
+func (p *BaseProcess) Audit(msg interface{}) {
+	Audit.Printf("[Process:%s] %s"+"\n", p.Name(), msg)
+}
+
 func (p *BaseProcess) receiveOnInPorts() (ips map[string]*FileIP, inPortsOpen bool) {
 	inPortsOpen = true
 	ips = make(map[string]*FileIP)

@@ -1,7 +1,6 @@
 package components
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/scipipe/scipipe"
@@ -110,12 +109,4 @@ func (p *IPSelectorSync) recvOneEach() (ips map[string]*scipipe.FileIP, ok bool)
 		}
 	}
 	return ips, allOk
-}
-
-func (p *IPSelectorSync) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *IPSelectorSync) Fail(msg interface{}) {
-	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

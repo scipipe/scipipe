@@ -1,7 +1,6 @@
 package components
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"github.com/scipipe/scipipe"
@@ -71,12 +70,4 @@ func (p *FileGlobber) globFiles() {
 			p.Out().Send(newIP)
 		}
 	}
-}
-
-func (p *FileGlobber) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *FileGlobber) Fail(msg interface{}) {
-	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

@@ -1,7 +1,6 @@
 package scipipe
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -413,12 +412,4 @@ func (tq taskQueue) NextTaskDone() chan int {
 		return tq[0].Done
 	}
 	return nil
-}
-
-func (p *Process) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg+"\n", parts...))
-}
-
-func (p *Process) Fail(msg interface{}) {
-	Failf("[Process:%s] %s", p.Name(), msg)
 }

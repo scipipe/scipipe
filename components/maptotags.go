@@ -1,8 +1,6 @@
 package components
 
 import (
-	"fmt"
-
 	"github.com/scipipe/scipipe"
 )
 
@@ -44,12 +42,4 @@ func (p *MapToTags) Run() {
 		ip.WriteAuditLogToFile()
 		p.Out().Send(ip)
 	}
-}
-
-func (p *MapToTags) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *MapToTags) Fail(msg interface{}) {
-	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }

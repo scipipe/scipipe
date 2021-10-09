@@ -118,19 +118,3 @@ func (p *FileSplitter) newSplitIPFromIndex(basePath string, splitIdx int) *scipi
 	}
 	return ip
 }
-
-func (p *FileSplitter) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *FileSplitter) Fail(msg interface{}) {
-	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
-}
-
-func (p *FileSplitter) Auditf(msg string, parts ...interface{}) {
-	p.Audit(fmt.Sprintf(msg, parts...))
-}
-
-func (p *FileSplitter) Audit(msg interface{}) {
-	scipipe.Audit.Printf("[Process:%s] %s"+"\n", p.Name(), msg)
-}

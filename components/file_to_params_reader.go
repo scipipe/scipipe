@@ -2,7 +2,6 @@ package components
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 
 	"github.com/scipipe/scipipe"
@@ -49,12 +48,4 @@ func (p *FileToParamsReader) Run() {
 		err = errWrapf(scan.Err(), "Error when scanning input file %s", p.filePath)
 		p.Fail(err)
 	}
-}
-
-func (p *FileToParamsReader) Failf(msg string, parts ...interface{}) {
-	p.Fail(fmt.Sprintf(msg, parts...))
-}
-
-func (p *FileToParamsReader) Fail(msg interface{}) {
-	scipipe.Failf("[Process:%s] %s", p.Name(), msg)
 }
