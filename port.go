@@ -1,6 +1,7 @@
 package scipipe
 
 import (
+	"fmt"
 	"strconv"
 	"sync"
 )
@@ -40,7 +41,7 @@ func (pt *InPort) Name() string {
 // Process returns the process connected to the port
 func (pt *InPort) Process() WorkflowProcess {
 	if pt.process == nil {
-		Failf("In-port (%s) has no connected process", pt.name)
+		pt.Fail("No connected process!")
 	}
 	return pt.process
 }
@@ -53,7 +54,7 @@ func (pt *InPort) SetProcess(p WorkflowProcess) {
 // AddRemotePort adds a remote OutPort to the InPort
 func (pt *InPort) AddRemotePort(rpt *OutPort) {
 	if pt.RemotePorts[rpt.Name()] != nil {
-		pt.Process().Failf("A remote port with name (%s) already exists, for param-port (%s) connected to process (%s)", rpt.Name(), pt.Name(), rpt.Process().Name())
+		pt.Failf("A remote port with name (%s) already exists", rpt.Name())
 	}
 	pt.RemotePorts[rpt.Name()] = rpt
 }
@@ -77,6 +78,9 @@ func (pt *InPort) Disconnect(rptName string) {
 
 // removeRemotePort removes the (out-)port with name rptName, from the InPort
 func (pt *InPort) removeRemotePort(rptName string) {
+	if _, ok := pt.RemotePorts[rptName]; !ok {
+		pt.Failf("No remote port with name (%s) exists", rptName)
+	}
 	delete(pt.RemotePorts, rptName)
 }
 
@@ -112,6 +116,16 @@ func (pt *InPort) CloseConnection(rptName string) {
 	pt.closeLock.Unlock()
 }
 
+// Failf fails with a message that includes the process name
+func (pt *InPort) Failf(msg string, parts ...interface{}) {
+	pt.Fail(fmt.Sprintf(msg, parts...))
+}
+
+// Fail fails with a message that includes the process name
+func (pt *InPort) Fail(msg interface{}) {
+	Failf("[In-Port:%s] %s", pt.Name(), msg)
+}
+
 // ------------------------------------------------------------------------
 // OutPort
 // ------------------------------------------------------------------------
@@ -144,7 +158,7 @@ func (pt *OutPort) Name() string {
 // Process returns the process connected to the port
 func (pt *OutPort) Process() WorkflowProcess {
 	if pt.process == nil {
-		Failf("Out-port (%s) has no connected process", pt.name)
+		pt.Fail("No connected process!")
 	}
 	return pt.process
 }
@@ -157,7 +171,7 @@ func (pt *OutPort) SetProcess(p WorkflowProcess) {
 // AddRemotePort adds a remote InPort to the OutPort
 func (pt *OutPort) AddRemotePort(rpt *InPort) {
 	if _, ok := pt.RemotePorts[rpt.Name()]; ok {
-		pt.Process().Failf("A remote port with name (%s) already exists, for param-port (%s) connected to process %s", rpt.Name(), pt.Name(), rpt.Process().Name())
+		pt.Failf("A remote port with name (%s) already exists", rpt.Name())
 	}
 	pt.RemotePorts[rpt.Name()] = rpt
 }
@@ -165,7 +179,7 @@ func (pt *OutPort) AddRemotePort(rpt *InPort) {
 // removeRemotePort removes the (in-)port with name rptName, from the OutPort
 func (pt *OutPort) removeRemotePort(rptName string) {
 	if _, ok := pt.RemotePorts[rptName]; !ok {
-		pt.Process().Failf("No remote port with name (%s) exists, for param-port (%s) connected to process %s", rptName, pt.Name(), pt.Process().Name())
+		pt.Failf("No remote port with name (%s) exists", rptName)
 	}
 	delete(pt.RemotePorts, rptName)
 }
@@ -216,6 +230,16 @@ func (pt *OutPort) Close() {
 	}
 }
 
+// Failf fails with a message that includes the process name
+func (pt *OutPort) Failf(msg string, parts ...interface{}) {
+	pt.Fail(fmt.Sprintf(msg, parts...))
+}
+
+// Fail fails with a message that includes the process name
+func (pt *OutPort) Fail(msg interface{}) {
+	Failf("[Out-Port:%s] %s", pt.Name(), msg)
+}
+
 // ------------------------------------------------------------------------
 // InParamPort
 // ------------------------------------------------------------------------
@@ -247,7 +271,7 @@ func (pip *InParamPort) Name() string {
 // Process returns the process that is connected to the port
 func (pip *InParamPort) Process() WorkflowProcess {
 	if pip.process == nil {
-		Failf("Parameter in-port (%s) has no connected process", pip.name)
+		pip.Failf("No connected process!")
 	}
 	return pip.process
 }
@@ -260,7 +284,7 @@ func (pip *InParamPort) SetProcess(p WorkflowProcess) {
 // AddRemotePort adds a remote OutParamPort to the InParamPort
 func (pip *InParamPort) AddRemotePort(pop *OutParamPort) {
 	if pip.RemotePorts[pop.Name()] != nil {
-		pip.Process().Failf("A remote param port with name (%s) already exists, for in-param-port (%s) connected to process %s", pop.Name(), pip.Name(), pop.Process().Name())
+		pip.Failf("A remote param port with name (%s) already exists", pop.Name())
 	}
 	pip.RemotePorts[pop.Name()] = pop
 }
@@ -337,6 +361,16 @@ func (pip *InParamPort) CloseConnection(popName string) {
 	pip.closeLock.Unlock()
 }
 
+// Failf fails with a message that includes the process name
+func (pt *InParamPort) Failf(msg string, parts ...interface{}) {
+	pt.Fail(fmt.Sprintf(msg, parts...))
+}
+
+// Fail fails with a message that includes the process name
+func (pt *InParamPort) Fail(msg interface{}) {
+	Failf("[In-Param-Port:%s] %s", pt.Name(), msg)
+}
+
 // ------------------------------------------------------------------------
 // OutParamPort
 // ------------------------------------------------------------------------
@@ -365,7 +399,7 @@ func (pop *OutParamPort) Name() string {
 // Process returns the process that is connected to the port
 func (pop *OutParamPort) Process() WorkflowProcess {
 	if pop.process == nil {
-		Failf("Parameter out-port (%s) has no connected process", pop.name)
+		pop.Failf("No connected process!")
 	}
 	return pop.process
 }
@@ -378,7 +412,7 @@ func (pop *OutParamPort) SetProcess(p WorkflowProcess) {
 // AddRemotePort adds a remote InParamPort to the OutParamPort
 func (pop *OutParamPort) AddRemotePort(pip *InParamPort) {
 	if pop.RemotePorts[pip.Name()] != nil {
-		pop.Process().Failf("A remote param port with name (%s) already exists, for in-param-port (%s) connected to process %s", pip.Name(), pop.Name(), pip.Process().Name())
+		pop.Failf("A remote param port with name (%s) already exists", pip.Name())
 	}
 	pop.RemotePorts[pip.Name()] = pip
 }
@@ -432,4 +466,14 @@ func (pop *OutParamPort) Close() {
 		pip.CloseConnection(pop.Name())
 		pop.removeRemotePort(pip.Name())
 	}
+}
+
+// Failf fails with a message that includes the process name
+func (pt *OutParamPort) Failf(msg string, parts ...interface{}) {
+	pt.Fail(fmt.Sprintf(msg, parts...))
+}
+
+// Fail fails with a message that includes the process name
+func (pt *OutParamPort) Fail(msg interface{}) {
+	Failf("[Out-Param-Port:%s] %s", pt.Name(), msg)
 }
