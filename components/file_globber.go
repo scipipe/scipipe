@@ -58,11 +58,11 @@ func (p *FileGlobber) Run() {
 
 func (p *FileGlobber) globFiles() {
 	for _, globPtn := range p.globPatterns {
-		scipipe.Audit.Printf("%s: Globbing for files, with pattern: %s", p.Name(), globPtn)
+		p.Auditf("Globbing for files, with pattern: %s", globPtn)
 		matches, err := filepath.Glob(globPtn)
 		scipipe.CheckWithMsg(err, "FileGlobber: This glob pattern doesn't look right: "+globPtn)
 		for _, filePath := range matches {
-			scipipe.Audit.Printf("%s: Sending concrete file %s", p.Name(), filePath)
+			p.Auditf("Sending concrete file %s", filePath)
 			newIP, err := scipipe.NewFileIP(filePath)
 			if err != nil {
 				p.Fail(err)
