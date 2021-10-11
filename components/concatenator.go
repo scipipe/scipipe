@@ -66,15 +66,16 @@ func (p *Concatenator) Run() {
 		tagVal := inIP.Tag(p.GroupByTag)
 		if tagVal != "" {
 			if _, ok := outIPsByTag[tagVal]; !ok {
-				newIP, err := scipipe.NewFileIP(fmt.Sprintf("%s.%s_%s", p.OutPath, p.GroupByTag, tagVal))
+				outIPForTagPath := fmt.Sprintf("%s.%s_%s", p.OutPath, p.GroupByTag, tagVal)
+				outIPForTag, err := scipipe.NewFileIP(outIPForTagPath)
 				if err != nil {
-					p.Fail(err)
+					p.Failf("Could not create FileIP with path: %s\nOriginal error: %v", outIPForTagPath, err)
 				}
-				outIPsByTag[tagVal] = newIP
-				outIPsByTag[tagVal].AddTag(p.GroupByTag, tagVal)
-				outFh, err := os.Create(outIPsByTag[tagVal].Path())
+				outIPForTag.AddTag(p.GroupByTag, tagVal)
+				outIPsByTag[tagVal] = outIPForTag
+				outFh, err := os.Create(outIPForTag.Path())
 				if err != nil {
-					p.Failf("Could not open temp file for writing: %s\n", outIP.Path())
+					p.Failf("Could not create path: %s\nOriginal error: %v", outIPForTag.Path(), err)
 				}
 				outFhsByTag[tagVal] = outFh
 			}
@@ -84,11 +85,11 @@ func (p *Concatenator) Run() {
 			}
 			outFhsByTag[tagVal].Write(append(dat))
 			if err != nil {
-				p.Failf("Could not read file: %s\n", outIPsByTag[tagVal].Path())
+				p.Failf("Could not write to file: %s\n", outIPsByTag[tagVal].Path())
 			}
 			outFhsByTag[tagVal].Write(append([]byte("\n")))
 			if err != nil {
-				p.Failf("Could not read file: %s\n", outIPsByTag[tagVal].Path())
+				p.Failf("Could not write to file: %s\n", outIPsByTag[tagVal].Path())
 			}
 		} else {
 			dat, err := ioutil.ReadFile(inIP.Path())
@@ -97,11 +98,11 @@ func (p *Concatenator) Run() {
 			}
 			_, err = outFh.Write(append(dat))
 			if err != nil {
-				p.Failf("Could not write file: %s\n", outIP.Path())
+				p.Failf("Could not write to file: %s\n", outIP.Path())
 			}
 			_, err = outFh.Write(append([]byte("\n")))
 			if err != nil {
-				p.Failf("Could not write file: %s\n", outIP.Path())
+				p.Failf("Could not write to file: %s\n", outIP.Path())
 			}
 		}
 	}
