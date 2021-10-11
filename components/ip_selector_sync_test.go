@@ -79,9 +79,7 @@ func TestIPSelectorSync(t *testing.T) {
 	}
 
 	remErr := os.RemoveAll(TEMPDIR)
-	if remErr != nil {
-		panic(remErr)
-	}
+	scipipe.Check(remErr)
 }
 
 func TestIPSelectorSyncFailsOnInconsistentPortClosing(t *testing.T) {

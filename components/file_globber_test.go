@@ -128,4 +128,5 @@ func TestFileGlobberDependent(t *testing.T) {
 	}
 	os.Remove(".tmp/done.txt")
 	os.Remove(".tmp/done.txt.audit.json")
+	os.RemoveAll(".tmp")
 }

@@ -36,6 +36,10 @@ func TestFileToParamsReader(tt *testing.T) {
 	if err != nil {
 		tt.Fatalf("Could not remove file: %s", filePath)
 	}
+	err = os.RemoveAll(".tmp")
+	if err != nil {
+		tt.Fatal("Could not remove temp folder: .tmp")
+	}
 }
 
 type FileToParamsChecker struct {

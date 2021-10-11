@@ -15,7 +15,7 @@ jobs:
                 name: Run unit tests
                 command: |
                     mkdir -p $TEST_RESULTS/go-junit &&
-                    go test -v -race ./... | go-junit-report > $TEST_RESULTS/go-junit/report.xml
+                    go test -p 1 -v -race ./... | go-junit-report > $TEST_RESULTS/go-junit/report.xml
             - store_test_results:
                 path: $TEST_RESULTS
             - run:

@@ -83,5 +83,6 @@ func TestFileCombinator(t *testing.T) {
 		}
 	}
 
-	os.RemoveAll(".tmp")
+	err := os.RemoveAll(".tmp")
+	scipipe.Check(err)
 }
