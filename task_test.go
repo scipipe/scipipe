@@ -148,8 +148,8 @@ func TestTempDirNotOver255(t *testing.T) {
 	}
 }
 
-func TestExtraFilesAtomize(t *testing.T) {
-	// Since Atomize calls Debug, the logger needs to be non-nil
+func TestExtraFilesFinalizePaths(t *testing.T) {
+	// Since FinalizePaths calls Debug, the logger needs to be non-nil
 	InitLogError()
 	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{}, nil, nil, map[string]string{}, nil, "", nil, 4)
 	// Create extra file
@@ -160,19 +160,19 @@ func TestExtraFilesAtomize(t *testing.T) {
 	if err != nil {
 		t.Fatalf("File could not be created: %s\n", fName)
 	}
-	tsk.atomizeIPs()
+	tsk.finalizePaths()
 	filePath := filepath.Join(".", "letterfile_a.txt")
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		t.Error("File did not exist: " + filePath)
 	}
 }
 
-func TestExtraFilesAtomizeAbsolute(t *testing.T) {
-	// Since Atomize calls Debug, the logger needs to be non-nil
+func TestExtraFilesFinalizePathsAbsolute(t *testing.T) {
+	// Since FinalizePaths calls Debug, the logger needs to be non-nil
 	InitLogError()
 
 	// Create extra file
-	tmpDir, err := ioutil.TempDir("", "TestExtraFilesAtomizeAbsolute")
+	tmpDir, err := ioutil.TempDir("", "TestExtraFilesFinalizePathsAbsolute")
 	if err != nil {
 		t.Fatal("could not create tmpDir: ", err)
 	}
@@ -184,14 +184,14 @@ func TestExtraFilesAtomizeAbsolute(t *testing.T) {
 	if err != nil {
 		t.Fatalf("File could not be created: %s\n", fName)
 	}
-	AtomizeIPs(tmpDir)
+	FinalizePaths(tmpDir)
 	filePath := filepath.Join(tmpDir, "letterfile_a.txt")
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		t.Error("File did not exist: " + filePath)
 	}
-	// Ensure tmpDir wasn't removed by Atomize
+	// Ensure tmpDir wasn't removed by FinalizePaths
 	if _, err := os.Stat(tmpDir); os.IsNotExist(err) {
-		t.Error("Atomize removed absolute directory")
+		t.Error("FinalizePaths removed absolute directory")
 	}
 }
 

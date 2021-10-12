@@ -286,9 +286,9 @@ func (t *Task) Execute() {
 	t.writeAuditLogs(startTime, finishTime)
 
 	t.ensureAllOutputsExist()
-	atomizeErr := t.atomizeIPs()
-	if atomizeErr != nil {
-		t.Fail(atomizeErr)
+	finErr := t.finalizePaths()
+	if finErr != nil {
+		t.Fail(finErr)
 	}
 
 	t.workflow.DecConcurrentTasks(t.cores)
@@ -394,12 +394,12 @@ func (t *Task) ensureAllOutputsExist() {
 	}
 }
 
-func (t *Task) atomizeIPs() error {
+func (t *Task) finalizePaths() error {
 	outIPs := []*FileIP{}
 	for _, ip := range t.OutIPs {
 		outIPs = append(outIPs, ip)
 	}
-	return AtomizeIPs(t.TempDir(), outIPs...)
+	return FinalizePaths(t.TempDir(), outIPs...)
 }
 
 func (t *Task) Auditf(msg string, parts ...interface{}) {
@@ -418,10 +418,10 @@ func (t *Task) Fail(msg interface{}) {
 	Failf("[Task:%s] %s", t.Process.Name(), msg)
 }
 
-// AtomizeIPs renames temporary output files/directories to their proper paths.
+// FinalizePaths renames temporary output files/directories to their proper paths.
 // It is called both from Task, and from Process that implement cutom execution
 // schedule.
-func AtomizeIPs(tempExecDir string, ips ...*FileIP) error {
+func FinalizePaths(tempExecDir string, ips ...*FileIP) error {
 	for _, oip := range ips {
 		// Move paths for ports, to final destinations
 		if !oip.doStream {

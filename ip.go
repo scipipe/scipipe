@@ -18,7 +18,7 @@ import (
 // IP Is the base interface which all other IPs need to adhere to
 type IP interface {
 	ID() string
-	Atomize()
+	FinalizePath()
 }
 
 // ------------------------------------------------------------------------
@@ -243,19 +243,19 @@ func (ip *FileIP) Write(dat []byte) {
 }
 
 const (
-	atomizeMaxTries      = 3
-	atomizeBackoffFactor = 4
+	finalizePathMaxTries      = 3
+	finalizePathBackoffFactor = 4
 )
 
-// Atomize renames the temporary file name to the final file name, thus enabling
+// FinalizePath renames the temporary file name to the final file name, thus enabling
 // to separate unfinished, and finished files
-func (ip *FileIP) Atomize() {
-	Debug.Println("FileIP: Atomizing", ip.TempPath(), "->", ip.Path())
-	doneAtomizing := false
+func (ip *FileIP) FinalizePath() {
+	Debug.Println("FileIP: Finalizing path ", ip.TempPath(), "->", ip.Path())
+	doneFinalizingPath := false
 	tries := 0
 
 	sleepDurationSec := 1
-	for !doneAtomizing {
+	for !doneFinalizingPath {
 		if ip.TempFileExists() {
 			ip.lock.Lock()
 			tempPaths, err := filepath.Glob(ip.TempDir() + "/*")
@@ -269,15 +269,15 @@ func (ip *FileIP) Atomize() {
 			err = os.Remove(ip.TempDir())
 			CheckWithMsg(err, "Could not remove temp dir: "+ip.TempDir())
 			ip.lock.Unlock()
-			doneAtomizing = true
-			Debug.Println("FileIP: Done atomizing", ip.TempPath(), "->", ip.Path())
+			doneFinalizingPath = true
+			Debug.Println("FileIP: Done finalizing path ", ip.TempPath(), "->", ip.Path())
 		} else {
-			if tries >= atomizeMaxTries {
-				ip.Failf("Failed to find .tmp file after %d tries, so shutting down: %s\nNote: If this problem persists, it could be a problem with your workflow, that the configured output filename in scipipe doesn't match what is written by the tool.", atomizeMaxTries, ip.TempPath())
+			if tries >= finalizePathMaxTries {
+				ip.Failf("Failed to find .tmp file after %d tries, so shutting down: %s\nNote: If this problem persists, it could be a problem with your workflow, that the configured output filename in scipipe doesn't match what is written by the tool.", finalizePathMaxTries, ip.TempPath())
 			}
 			Warning.Printf("[FileIP:%s] Expected .tmp file missing: %s\nSleeping for %d seconds before checking again ...\n", ip.Path(), ip.TempPath(), sleepDurationSec)
 			time.Sleep(time.Duration(sleepDurationSec) * time.Second)
-			sleepDurationSec *= atomizeBackoffFactor
+			sleepDurationSec *= finalizePathBackoffFactor
 			tries++
 		}
 	}
