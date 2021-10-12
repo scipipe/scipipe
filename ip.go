@@ -350,12 +350,12 @@ func (ip *FileIP) SetAuditInfo(ai *AuditInfo) {
 }
 
 // WriteAuditLogToFile writes the audit log to its designated file
-func (ip *FileIP) WriteAuditLogToFile() {
+func (ip *FileIP) WriteAuditLogToFile(baseDir string) {
 	auditInfo := ip.AuditInfo()
 	auditInfoJSON, jsonErr := json.MarshalIndent(auditInfo, "", "    ")
 	CheckWithMsg(jsonErr, "Could not marshall JSON")
-	ip.createDirs("")
 	Debug.Println("Creating directory for Audit log:")
+	ip.createDirs(baseDir)
 	writeErr := ioutil.WriteFile(ip.AuditFilePath(), auditInfoJSON, 0644)
 	CheckWithMsg(writeErr, "Could not write audit file: "+ip.Path())
 }

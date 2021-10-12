@@ -678,7 +678,7 @@ func (p *MapToTags) Run() {
 	for ip := range p.In().Chan {
 		newTags := p.mapFunc(ip)
 		ip.AddTags(newTags)
-		ip.WriteAuditLogToFile()
+		ip.WriteAuditLogToFile("")
 		p.Out().Send(ip)
 	}
 }

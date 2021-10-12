@@ -384,7 +384,7 @@ func (t *Task) writeAuditLogs(startTime time.Time, finishTime time.Time) {
 		for _, iip := range t.InIPs {
 			oip.AddTags(iip.Tags())
 		}
-		oip.WriteAuditLogToFile()
+		oip.WriteAuditLogToFile(t.TempDir())
 	}
 }
 
