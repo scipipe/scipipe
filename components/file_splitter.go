@@ -61,7 +61,7 @@ func (p *FileSplitter) Run() {
 				splitFile.WriteString(line)
 				if lineNo == splitNo*p.LinesPerSplit {
 					splitFile.Close()
-					scipipe.AtomizeIPs(taskDir, splitIP)
+					scipipe.FinalizePaths(taskDir, splitIP)
 					p.OutSplitFile().Send(splitIP)
 					// Create new IP
 					splitNo++
@@ -71,7 +71,7 @@ func (p *FileSplitter) Run() {
 				lineNo++
 			}
 			splitFile.Close()
-			scipipe.AtomizeIPs(taskDir, splitIP)
+			scipipe.FinalizePaths(taskDir, splitIP)
 			p.OutSplitFile().Send(splitIP)
 
 			if scanner.Err() != nil {
