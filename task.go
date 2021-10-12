@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -325,6 +326,7 @@ func (t *Task) anyOutputsExist() (anyFileExists bool) {
 
 // createDirs creates directories for out-IPs of the task
 func (t *Task) createDirs() error {
+	Debug.Printf("Creating task temp dir %s\n", t.TempDir())
 	os.MkdirAll(t.TempDir(), 0777)
 
 	for _, oip := range t.OutIPs {
@@ -334,6 +336,7 @@ func (t *Task) createDirs() error {
 		} else {
 			oipDir = t.TempDir() + "/" + oipDir
 		}
+		Debug.Printf("Creating out IP temp dir %s\n", oipDir)
 		err := os.MkdirAll(oipDir, 0777)
 		if err != nil {
 			return errors.New(fmt.Sprintf("Could not create directory: %s: %s", oipDir, err))
@@ -430,7 +433,12 @@ func FinalizePaths(tempExecDir string, ips ...*FileIP) error {
 			Debug.Println("Moving OutIP path: ", tempPath, " -> ", newPath)
 			renameErr := os.Rename(tempPath, newPath)
 			if renameErr != nil {
-				return errors.New(fmt.Sprintf("Could not rename out-IP file %s to %s: %s", tempPath, newPath, renameErr))
+				e := renameErr.(*os.LinkError)
+				oserr := e.Err.(syscall.Errno)
+				if !errors.Is(oserr, syscall.EXDEV) {
+					return errors.New(fmt.Sprintf("Could not rename out-IP file %s to %s: %s", tempPath, newPath, renameErr))
+				}
+				fmt.Printf("TODO: Implement moving instead of renaming here. Error: %v\n", oserr)
 			}
 		}
 	}
@@ -442,12 +450,18 @@ func FinalizePaths(tempExecDir string, ips ...*FileIP) error {
 			newPath = replacePlaceholdersWithParentDirs(newPath)
 			newPathDir := filepath.Dir(newPath)
 			if _, err := os.Stat(newPathDir); os.IsNotExist(err) {
+				Debug.Printf("Creating new final path dir %s\n", newPathDir)
 				os.MkdirAll(newPathDir, 0777)
 			}
-			Debug.Println("Moving: ", tempPath, " -> ", newPath)
+			Debug.Println("Moving remaining file: ", tempPath, " -> ", newPath)
 			renameErr := os.Rename(tempPath, newPath)
 			if renameErr != nil {
-				return errors.New(fmt.Sprintf("Could not rename out-IP file %s to %s: %s", tempPath, newPath, renameErr))
+				e := renameErr.(*os.LinkError)
+				oserr := e.Err.(syscall.Errno)
+				if !errors.Is(oserr, syscall.EXDEV) {
+					return errors.New(fmt.Sprintf("Could not rename out-IP file %s to %s: %s", tempPath, newPath, renameErr))
+				}
+				fmt.Printf("TODO: Implement moving instead of renaming here. Error: %v\n", oserr)
 			}
 		}
 		return err

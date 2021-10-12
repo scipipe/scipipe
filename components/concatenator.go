@@ -49,6 +49,7 @@ func (p *Concatenator) Run() {
 	}
 
 	oipDir := filepath.Dir(outIP.Path())
+	scipipe.Debug.Printf("Creating out IP dir %s\n", oipDir)
 	err = os.MkdirAll(oipDir, 0777)
 	if err != nil {
 		p.Failf("Could not create directory: (%s) for out-IP (%s):\n%s", oipDir, outIP.Path(), err)

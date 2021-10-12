@@ -198,6 +198,7 @@ func (ip *FileIP) OpenTemp() *os.File {
 
 // CreateFifo creates a FIFO file for the FileIP
 func (ip *FileIP) CreateFifo() {
+	Debug.Println("Creating directory for FIFO file:")
 	ip.createDirs("")
 	ip.lock.Lock()
 	cmd := "mkfifo " + ip.FifoPath()
@@ -237,6 +238,7 @@ func (ip *FileIP) Read() []byte {
 
 // Write writes a byte array ([]byte) to the file's temp file path
 func (ip *FileIP) Write(dat []byte) {
+	Debug.Println("Creating directory for writing directory to IP:")
 	ip.createDirs("")
 	err := ioutil.WriteFile(ip.TempPath(), dat, 0644)
 	CheckWithMsg(err, "Could not write to temp file: "+ip.TempPath())
@@ -353,6 +355,7 @@ func (ip *FileIP) WriteAuditLogToFile() {
 	auditInfoJSON, jsonErr := json.MarshalIndent(auditInfo, "", "    ")
 	CheckWithMsg(jsonErr, "Could not marshall JSON")
 	ip.createDirs("")
+	Debug.Println("Creating directory for Audit log:")
 	writeErr := ioutil.WriteFile(ip.AuditFilePath(), auditInfoJSON, 0644)
 	CheckWithMsg(writeErr, "Could not write audit file: "+ip.Path())
 }
@@ -421,6 +424,7 @@ func (ip *FileIP) createDirs(baseDir string) {
 	if ip.doStream {
 		ipDir = filepath.Dir(ip.FifoPath())
 	}
+	Debug.Printf("Creating IP directory: %s\n", ipDir)
 	err := os.MkdirAll(ipDir, 0777)
 	if err != nil {
 		ip.Failf("Could not create directory: (%s): %s\n", ipDir, err)
