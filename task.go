@@ -407,7 +407,7 @@ func (t *Task) Auditf(msg string, parts ...interface{}) {
 }
 
 func (t *Task) Audit(msg string) {
-	Audit.Printf("[Process:%s] %s", t.Process.Name(), msg)
+	Audit.Printf("[Task:%s] %s", t.Process.Name(), msg)
 }
 
 func (t *Task) Failf(msg string, parts ...interface{}) {
