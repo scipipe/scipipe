@@ -444,10 +444,10 @@ func AtomizeIPs(tempExecDir string, ips ...*FileIP) error {
 			if _, err := os.Stat(newPathDir); os.IsNotExist(err) {
 				os.MkdirAll(newPathDir, 0777)
 			}
-			Debug.Println("Moving: ", tempPath, " -> ", newPath)
+			Debug.Println("Moving remaining file path: ", tempPath, " -> ", newPath)
 			renameErr := os.Rename(tempPath, newPath)
 			if renameErr != nil {
-				return errors.New(fmt.Sprintf("Could not rename out-IP file %s to %s: %s", tempPath, newPath, renameErr))
+				return errors.New(fmt.Sprintf("Could not rename remaining file %s to %s: %s", tempPath, newPath, renameErr))
 			}
 		}
 		return err
