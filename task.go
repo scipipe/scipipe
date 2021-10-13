@@ -425,7 +425,13 @@ func AtomizeIPs(tempExecDir string, ips ...*FileIP) error {
 	for _, oip := range ips {
 		// Move paths for ports, to final destinations
 		if !oip.doStream {
-			os.Rename(tempExecDir+"/"+oip.TempPath(), oip.Path())
+			tempPath := tempExecDir + "/" + oip.TempPath()
+			newPath := oip.Path()
+			Debug.Println("Moving OutIP path: ", tempPath, " -> ", newPath)
+			renameErr := os.Rename(tempPath, newPath)
+			if renameErr != nil {
+				return errors.New(fmt.Sprintf("Could not rename out-IP file %s to %s: %s", tempPath, newPath, renameErr))
+			}
 		}
 	}
 	// For remaining paths in temporary execution dir, just move out of it
@@ -441,7 +447,7 @@ func AtomizeIPs(tempExecDir string, ips ...*FileIP) error {
 			Debug.Println("Moving: ", tempPath, " -> ", newPath)
 			renameErr := os.Rename(tempPath, newPath)
 			if renameErr != nil {
-				return errors.New(fmt.Sprintf("Could not rename file %s to %s: %s", tempPath, newPath, renameErr))
+				return errors.New(fmt.Sprintf("Could not rename out-IP file %s to %s: %s", tempPath, newPath, renameErr))
 			}
 		}
 		return err
