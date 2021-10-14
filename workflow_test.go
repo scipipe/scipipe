@@ -365,9 +365,12 @@ func TestStreaming(t *testing.T) {
 func TestSubStreamJoinInPlaceHolder(t *testing.T) {
 	initTestLogs()
 
-	exec.Command("bash", "-c", "echo 1 > .tmp/file1.txt").CombinedOutput()
-	exec.Command("bash", "-c", "echo 2 > .tmp/file2.txt").CombinedOutput()
-	exec.Command("bash", "-c", "echo 3 > .tmp/file3.txt").CombinedOutput()
+	_, err1 := exec.Command("bash", "-c", "echo 1 > .tmp/file1.txt").CombinedOutput()
+	Check(err1)
+	_, err2 := exec.Command("bash", "-c", "echo 2 > .tmp/file2.txt").CombinedOutput()
+	Check(err2)
+	_, err3 := exec.Command("bash", "-c", "echo 3 > .tmp/file3.txt").CombinedOutput()
+	Check(err3)
 
 	wf := NewWorkflow("TestSubStreamJoinInPlaceHolderWf", 16)
 
@@ -384,14 +387,14 @@ func TestSubStreamJoinInPlaceHolder(t *testing.T) {
 
 	wf.Run()
 
-	_, err1 := os.Stat(".tmp/file1.txt")
-	assertNil(t, err1, "File missing!")
+	_, err1b := os.Stat(".tmp/file1.txt")
+	assertNil(t, err1b, "File missing!")
 
-	_, err2 := os.Stat(".tmp/file2.txt")
-	assertNil(t, err2, "File missing!")
+	_, err2b := os.Stat(".tmp/file2.txt")
+	assertNil(t, err2b, "File missing!")
 
-	_, err3 := os.Stat(".tmp/file3.txt")
-	assertNil(t, err3, "File missing!")
+	_, err3b := os.Stat(".tmp/file3.txt")
+	assertNil(t, err3b, "File missing!")
 
 	_, err4 := os.Stat(".tmp/substream_merged.txt")
 	assertNil(t, err4, "File missing!")

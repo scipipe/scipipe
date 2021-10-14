@@ -346,7 +346,10 @@ func (p *Process) Run() {
 				}
 				// Remove any FIFO file
 				if oip.doStream && oip.FifoFileExists() {
-					os.Remove(oip.FifoPath())
+					err := os.Remove(oip.FifoPath())
+					if err != nil {
+						p.Failf("Could not remove Fifo path %s", oip.FifoPath())
+					}
 				}
 			}
 		}

@@ -11,6 +11,10 @@ jobs:
             - run: go install github.com/jstemmer/go-junit-report@latest
             - run: go install github.com/axw/gocov/gocov@latest
             - run: go install github.com/AlekSi/gocov-xml@latest
+            - run: go install github.com/kisielk/errcheck@latest
+            - run:
+                name: Check for unhandled errors
+                command: errcheck
             - run:
                 name: Run unit tests
                 command: |

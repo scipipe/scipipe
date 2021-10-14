@@ -26,11 +26,13 @@ func cleanFiles(fileNames ...string) {
 	for _, fileName := range fileNames {
 		auditFileName := fileName + ".audit.json"
 		if _, err := os.Stat(fileName); err == nil {
-			os.Remove(fileName)
+			errRem := os.Remove(fileName)
+			Check(errRem)
 			Debug.Println("Successfully removed file", fileName)
 		}
 		if _, err := os.Stat(auditFileName); err == nil {
-			os.Remove(auditFileName)
+			errRem := os.Remove(auditFileName)
+			Check(errRem)
 			Debug.Println("Successfully removed audit.json file", auditFileName)
 		}
 	}

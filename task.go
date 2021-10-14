@@ -67,7 +67,7 @@ func NewTask(workflow *Workflow, process *Process, name string, cmdPat string, i
 	for oname, outPathFunc := range outPathFuncs {
 		oip, err := NewFileIP(outPathFunc(t))
 		if err != nil {
-			process.Fail(err.Error())
+			process.Failf("Could not create out IP %s: %v", oname, err)
 		}
 		if ptInfo, ok := portInfos[oname]; ok {
 			if ptInfo.doStream {
@@ -266,7 +266,7 @@ func (t *Task) Execute() {
 	t.workflow.IncConcurrentTasks(t.cores) // Will block if max concurrent tasks is reached
 	err := t.createDirs()                  // Create output directories needed for any outputs
 	if err != nil {
-		t.Fail(err)
+		t.Failf("Could not create directories: %v", err)
 	}
 	startTime := time.Now()
 	if t.CustomExecute != nil {
@@ -325,7 +325,10 @@ func (t *Task) anyOutputsExist() (anyFileExists bool) {
 
 // createDirs creates directories for out-IPs of the task
 func (t *Task) createDirs() error {
-	os.MkdirAll(t.TempDir(), 0777)
+	err := os.MkdirAll(t.TempDir(), 0777)
+	if err != nil {
+		t.Failf("Could not create tempdir %s: %v", t.TempDir(), err)
+	}
 
 	for _, oip := range t.OutIPs {
 		oipDir := oip.TempDir() // This will create all out dirs, including the temp dir
@@ -336,7 +339,7 @@ func (t *Task) createDirs() error {
 		}
 		err := os.MkdirAll(oipDir, 0777)
 		if err != nil {
-			return errors.New(fmt.Sprintf("Could not create directory: %s: %s", oipDir, err))
+			return errors.New(fmt.Sprintf("Could not create directory %s: %v", oipDir, err))
 		}
 	}
 
@@ -426,32 +429,38 @@ func FinalizePaths(tempExecDir string, ips ...*FileIP) error {
 		// Move paths for ports, to final destinations
 		if !oip.doStream {
 			tempPath := tempExecDir + "/" + oip.TempPath()
-			newPath := oip.Path()
-			Debug.Println("Moving OutIP path: ", tempPath, " -> ", newPath)
-			renameErr := os.Rename(tempPath, newPath)
+			finPath := oip.Path()
+			Debug.Println("Moving OutIP path: ", tempPath, " -> ", finPath)
+			renameErr := os.Rename(tempPath, finPath)
 			if renameErr != nil {
-				return errors.New(fmt.Sprintf("Could not rename out-IP file %s to %s: %s", tempPath, newPath, renameErr))
+				return errors.New(fmt.Sprintf("Could not rename out-IP file %s to %s: %s", tempPath, finPath, renameErr))
 			}
 		}
 	}
 	// For remaining paths in temporary execution dir, just move out of it
-	filepath.Walk(tempExecDir, func(tempPath string, fileInfo os.FileInfo, err error) error {
+	err := filepath.Walk(tempExecDir, func(tempPath string, fileInfo os.FileInfo, err error) error {
 		if !fileInfo.IsDir() {
-			newPath := strings.Replace(tempPath, tempExecDir+"/", "", 1)
-			newPath = strings.Replace(newPath, FSRootPlaceHolder+"/", "/", 1)
-			newPath = replacePlaceholdersWithParentDirs(newPath)
-			newPathDir := filepath.Dir(newPath)
-			if _, err := os.Stat(newPathDir); os.IsNotExist(err) {
-				os.MkdirAll(newPathDir, 0777)
+			finPath := strings.Replace(tempPath, tempExecDir+"/", "", 1)
+			finPath = strings.Replace(finPath, FSRootPlaceHolder+"/", "/", 1)
+			finPath = replacePlaceholdersWithParentDirs(finPath)
+			finPathDir := filepath.Dir(finPath)
+			if _, err := os.Stat(finPathDir); os.IsNotExist(err) {
+				errMkdir := os.MkdirAll(finPathDir, 0777)
+				if errMkdir != nil {
+					Error.Printf("Failed to create directory for final path: %s\n", finPathDir)
+				}
 			}
-			Debug.Println("Moving remaining file path: ", tempPath, " -> ", newPath)
-			renameErr := os.Rename(tempPath, newPath)
+			Debug.Println("Moving remaining file path: ", tempPath, " -> ", finPath)
+			renameErr := os.Rename(tempPath, finPath)
 			if renameErr != nil {
-				return errors.New(fmt.Sprintf("Could not rename remaining file %s to %s: %s", tempPath, newPath, renameErr))
+				return errors.New(fmt.Sprintf("Could not rename remaining file %s to %s: %s", tempPath, finPath, renameErr))
 			}
 		}
 		return err
 	})
+	if err != nil {
+		Error.Printf("Failed walking temporary execution directory %s: %v\n", tempExecDir, err)
+	}
 	// Remove temporary execution dir (but not for absolute paths, or current dir)
 	if tempExecDir != "" && tempExecDir != "." && tempExecDir[0] != '/' {
 		remErr := os.RemoveAll(tempExecDir)

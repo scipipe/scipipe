@@ -154,13 +154,15 @@ func TestExtraFilesFinalizePaths(t *testing.T) {
 	tsk := NewTask(nil, nil, "test_task", "echo foo", map[string]*FileIP{}, nil, nil, map[string]string{}, nil, "", nil, 4)
 	// Create extra file
 	tmpDir := tsk.TempDir()
-	os.MkdirAll(tmpDir, 0777)
+	err := os.MkdirAll(tmpDir, 0777)
+	Check(err)
 	fName := filepath.Join(tmpDir, "letterfile_a.txt")
-	_, err := os.Create(fName)
-	if err != nil {
+	_, errCreate := os.Create(fName)
+	if errCreate != nil {
 		t.Fatalf("File could not be created: %s\n", fName)
 	}
-	tsk.finalizePaths()
+	errFin := tsk.finalizePaths()
+	Check(errFin)
 	filePath := filepath.Join(".", "letterfile_a.txt")
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		t.Error("File did not exist: " + filePath)
@@ -178,13 +180,15 @@ func TestExtraFilesFinalizePathsAbsolute(t *testing.T) {
 	}
 
 	absDir := filepath.Join(tmpDir, FSRootPlaceHolder, tmpDir)
-	os.MkdirAll(absDir, 0777)
+	errMkdir := os.MkdirAll(absDir, 0777)
+	Check(errMkdir)
 	fName := filepath.Join(absDir, "letterfile_a.txt")
 	_, err = os.Create(fName)
 	if err != nil {
 		t.Fatalf("File could not be created: %s\n", fName)
 	}
-	FinalizePaths(tmpDir)
+	errFin := FinalizePaths(tmpDir)
+	Check(errFin)
 	filePath := filepath.Join(tmpDir, "letterfile_a.txt")
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		t.Error("File did not exist: " + filePath)

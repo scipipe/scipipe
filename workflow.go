@@ -197,7 +197,10 @@ func (wf *Workflow) PlotGraph(filePath string) {
 	createDirs(filePath)
 	dotFile, err := os.Create(filePath)
 	CheckWithMsg(err, "Could not create dot file "+filePath)
-	dotFile.WriteString(dot)
+	_, errDot := dotFile.WriteString(dot)
+	if errDot != nil {
+		wf.Failf("Could not write to DOT-file %s: %s", dotFile.Name(), errDot)
+	}
 }
 
 // PlotGraphPDF writes the workflow structure to a dot file, and also runs the
