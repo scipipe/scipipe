@@ -1,0 +1,21 @@
+name: SciPipe
+
+headline: Robust, flexible and resource-efficient pipelines using Go and the commandline.
+
+description: SciPipe is a library for writing Scientific Workflows, sometimes
+  also called "pipelines", in the Go programming language. When you need to run
+  many commandline programs that depend on each other in complex ways, SciPipe
+  helps by making the process of running these programs flexible, robust and
+  reproducible. SciPipe also lets you restart an interrupted run without
+  over-writing already produced output and produces an audit report of what was
+  run, among many other things.
+
+language: Go
+            
+documentation:
+  general: https://scipipe.org
+  installation: https://scipipe.org/install/
+  tutorial: https://scipipe.org/writing_workflows/
+            
+social:
+  twitter: scipipe
