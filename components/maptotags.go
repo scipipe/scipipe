@@ -5,10 +5,10 @@ import (
 )
 
 // MapToTags is a process that runs a function provided by the user, upon
-// initialization, that will provide a map of tag:value pairs, based in IPs read
-// on the In-port. The tag:value pairs (maps) are added to the IPs on the
-// out-port, which are identical to the incoming IPs, except for the new
-// tag:value map
+// initialization, that should provide a map of tag:value pairs, based in IPs
+// read on the In-port. The tag:value pairs (maps) are then added to the IPs on
+// the out-port. These IPs will be identical to the incoming IPs, except for
+// the new tag:value map
 type MapToTags struct {
 	scipipe.BaseProcess
 	mapFunc func(ip *scipipe.FileIP) map[string]string
