@@ -24,7 +24,6 @@ func main() {
 	err := parseFlags(flag.Args())
 	if err != nil {
 		log.Fatalln(err.Error())
-		os.Exit(1)
 	}
 }
 
