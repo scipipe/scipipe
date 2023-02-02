@@ -13,14 +13,47 @@ import (
 var (
 	tempDir   = ".tmp"
 	testFiles = map[string]string{
-		"a.txt": "A1",
-		"a.csv": "A2",
-		"b.txt": "B1",
-		"b.csv": "B2",
-		"b.tsv": "B3",
-		"c.txt": "C1",
+		"a.txt": "A1................................................................................",
+		"a.csv": "A2................................................................................",
+		"b.txt": "B1................................................................................",
+		"b.csv": "B2................................................................................",
+		"b.tsv": "B3................................................................................",
+		"c.txt": "C1................................................................................",
 	}
 )
+
+func TestConcatenatorConcurrentWrites(t *testing.T) {
+	createTestFiles()
+
+	// Create and run workflow
+	wf := scipipe.NewWorkflow("wf", 4)
+	fileSrcTxt := NewFileSource(wf, "filesrc_txt", tempDir+"/a.txt", tempDir+"/b.txt", tempDir+"/c.txt")
+	fileSrcCsv := NewFileSource(wf, "filesrc_csv", tempDir+"/a.csv", tempDir+"/b.csv", tempDir+"/b.tsv")
+	concat := NewConcatenator(wf, "concat", tempDir+"/concatenated.txt")
+	concat.In().From(fileSrcTxt.Out())
+	concat.In().From(fileSrcCsv.Out())
+	wf.Run()
+
+	haveContentByte, err := ioutil.ReadFile(tempDir + "/concatenated.txt")
+	if err != nil {
+		panic(err)
+	}
+	haveContent := string(haveContentByte)
+
+	wantContent := `A1................................................................................
+A2................................................................................
+B1................................................................................
+B2................................................................................
+C1................................................................................
+B3................................................................................
+`
+
+	if haveContent != wantContent {
+		t.Fatalf("Wanted: %s but got %s", wantContent, haveContent)
+	}
+
+	cleanUpTestFiles()
+}
 
 func TestConcatenator(t *testing.T) {
 	createTestFiles()
@@ -38,9 +71,9 @@ func TestConcatenator(t *testing.T) {
 	}
 	haveContent := string(haveContentByte)
 
-	wantContent := `A1
-B1
-C1
+	wantContent := `A1................................................................................
+B1................................................................................
+C1................................................................................
 `
 
 	if haveContent != wantContent {
@@ -80,14 +113,14 @@ func TestConcatenatorGroupByTag(t *testing.T) {
 	concat.GroupByTag = "dataset_name"
 	wf.Run()
 
-	wantContent := map[string]string{"a": `A1
-A2
+	wantContent := map[string]string{"a": `A1................................................................................
+A2................................................................................
 `,
-		"b": `B1
-B2
-B3
+		"b": `B1................................................................................
+B2................................................................................
+B3................................................................................
 `,
-		"c": `C1
+		"c": `C1................................................................................
 `}
 
 	for tag, fn := range map[string]string{
