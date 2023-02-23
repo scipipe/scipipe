@@ -28,10 +28,6 @@ you could create your processes with this string added manually:
 helloWriter := scipipe.NewProc("helloWriter", "echo hello > {o:outfile}")
 ```
 
-### See also
-
-- [Static parameters example](https://github.com/scipipe/scipipe/blob/master/examples/static_params/staticparams.go)
-
 ## Receive parameters dynamically
 
 Receiving parameters dynamically is a much more technically demandning solution
