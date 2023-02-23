@@ -66,5 +66,4 @@ if you need this information fast, and we can prioritize writing it asap.*
 
 ## Relevant examples
 
-- [Static parameters](https://github.com/scipipe/scipipe/blob/master/examples/static_params/staticparams.go)
-- [Receive parameters dynamically](https://github.com/scipipe/scipipe/blob/master/examples/param_channels/params.go)
+- [Parameter channels](https://github.com/scipipe/scipipe/blob/master/examples/param_channels/params.go)

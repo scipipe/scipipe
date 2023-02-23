@@ -1,5 +1,5 @@
 site_name: SciPipe Docs
-pages:
+nav:
   - 'Introduction': 'index.md'
   - 'Installing': 'install.md'
   - 'Basic Concepts': 'basic_concepts.md'
