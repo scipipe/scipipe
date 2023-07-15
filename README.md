@@ -80,7 +80,7 @@ group as well.
 
 ## Installing
 
-For full installation instructions, see the [intallation page](/install).
+For full installation instructions, see the [intallation page](https://scipipe.org/install/).
 For quick getting started steps, you can do:
 
 1. [Download](https://golang.org/dl/) and [install](https://golang.org/doc/install) Go
