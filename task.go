@@ -254,7 +254,7 @@ func (t *Task) Execute() {
 
 	// Do some sanity checks
 	if t.tempDirsExist() {
-		t.Failf("Existing temp folders found, so existing. Clean up temporary folders (starting with %s) before restarting the workflow!", tempDirPrefix)
+		t.Failf("Existing temp folders found, so exiting. Clean up temporary folders (starting with %s) before restarting the workflow!", tempDirPrefix)
 	}
 
 	if t.anyOutputsExist() {
