@@ -28,6 +28,7 @@
 [![GoDoc](https://godoc.org/github.com/scipipe/scipipe?status.svg)](https://godoc.org/github.com/scipipe/scipipe)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/scipipe/scipipe)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1157941.svg)](https://doi.org/10.5281/zenodo.1157941)
+<span class="__dimensions_badge_embed__" style="display:inline-block; margin-bottom:1em;" data-doi="10.1093/gigascience/giz044" data-style="small_rectangle"></span><script async src="https://badge.dimensions.ai/badge.js" charset="utf-8"></script>
 
 <div style="width:37%; float: right; font-size: 0.8em; padding: 1em; margin: 0 0 1em 1em;">
 <h4>Project updates</h4>
