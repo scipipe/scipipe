@@ -3,7 +3,7 @@ version: 2
 jobs:
     build:
         docker:
-            - image: cimg/go:1.17
+            - image: cimg/go:1.18
         environment: # environment variables for the build itself
             TEST_RESULTS: /tmp/test-results # path to where test results will be saved
         steps:
